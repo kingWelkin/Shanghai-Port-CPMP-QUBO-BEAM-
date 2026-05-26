@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yard-greedy"
+version = "0.1.0"
+description = "Greedy and optional QUBO relocation planner for paired yard bays."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "dimod>=0.12",
+  "dwave-neal>=0.6",
+]
+
+[project.scripts]
+greedy-yard = "greedy.run_batch:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,20 @@
+greedy_qubo 批量 mode=multi_bay
+合并贝位: 01,26
+
+OK A1_01_26_paired: 0.4s moves=23 sorted=False
+OK A2_01_26_paired: 0.3s moves=24 sorted=False
+OK A3_01_26_paired: 0.4s moves=29 sorted=False
+OK A4_01_26_paired: 0.4s moves=35 sorted=False
+OK A5_01_26_paired: 0.4s moves=26 sorted=False
+OK B1_01_26_paired: 0.4s moves=32 sorted=False
+OK B2_01_26_paired: 0.4s moves=24 sorted=False
+OK B3_01_26_paired: 0.4s moves=29 sorted=False
+OK B4_01_26_paired: 0.3s moves=30 sorted=False
+OK B5_01_26_paired: 0.4s moves=28 sorted=False
+OK C1_01_26_paired: 0.3s moves=22 sorted=False
+OK C2_01_26_paired: 0.3s moves=27 sorted=False
+OK C3_01_26_paired: 0.5s moves=27 sorted=False
+OK C4_01_26_paired: 0.4s moves=26 sorted=False
+OK C5_01_26_paired: 0.4s moves=25 sorted=False
+
+成功 15  失败 0  合计 5.6s

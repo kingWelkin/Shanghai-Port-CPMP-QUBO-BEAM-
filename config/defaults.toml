@@ -1,0 +1,23 @@
+[paths]
+input_dir = "data/input"
+out_dir = "data/results"
+
+[batch]
+bays = "01,26"
+per_file = false
+
+[greedy]
+seed = 42
+max_greedy_moves = 0
+skip_if_moves_above = 0
+
+[qubo]
+enabled = false
+refine_always = false
+sub_size = 40
+iters = 3
+penalty = 30.0
+reloc_scale = 0.3
+stack_order_scale = 5.0
+terminal_stack_scale = 50.0
+sa_reads = 80
