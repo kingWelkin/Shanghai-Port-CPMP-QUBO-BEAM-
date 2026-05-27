@@ -1,0 +1,17 @@
+solver,source,feasible,optimal,moves,gap_vs_best_moves,runtime_sec,validation_passed,entropy_max,entropy_limit,disorder_total,expanded_states,generated_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,mip_node_count,mip_var_count,mip_constr_count,status
+random,misc,False,False,,,0.00034159999631810933,False,,,,0,0,0,0,0.0,0,,,,NO_FEASIBLE_FOUND
+greedy_retrieval,misc,False,False,,,0.0,False,,,,0,0,0,0,0.0,0,,,,NOT_APPLICABLE
+greedy_cpmp,unified,False,False,,,0.0001993000041693449,False,,,,0,0,0,0,0.0,0,,,,NO_FEASIBLE_FOUND
+beam,unified,True,False,8,0.0,0.19684489999781363,True,8.0,9.0,29.0,885,4738,0,0,0.0,0,,,,FEASIBLE
+diverse_beam,unified,True,False,8,0.0,117.25816900000791,True,8.0,9.0,29.0,726,4196,0,0,0.0,0,,,,FEASIBLE
+rolling_horizon,unified,False,False,,,0.06857119999767747,False,,,,428,2635,0,0,0.0,0,,,,NO_FEASIBLE_FOUND
+qubo_beam,qbeam_fast,True,False,8,0.0,0.698362700000871,True,8.0,9.0,29.0,646,3876,2,90,0.4001745999994455,0,,,,FEASIBLE; samplers=simulated_annealing
+qubo_beam_api,qbeam_api_fast,True,False,8,0.0,1.3564898000040557,True,8.0,9.0,29.0,646,3876,2,90,0.40020049999293406,0,,,,FEASIBLE; samplers=ising_matrix_api_fallback_simulated_annealing
+qubo_rolling_horizon,unified,False,False,,,5.029586000004201,False,,,,0,0,1,1164,5.000216999993427,1,,,,NO_FEASIBLE_FOUND
+qubo_batch_relocation,misc,False,False,,,0.0,False,,,,0,0,0,0,0.0,0,,,,NOT_APPLICABLE
+stack_assignment_guided_cpmp,unified,True,False,8,0.0,5.102532600008999,True,8.0,9.0,29.0,730,4285,1,60,5.000036099998397,0,,,,FEASIBLE
+mip_4d,mip_enhanced,True,True,8,0.0,8.754582800000207,True,8.0,9.0,29.0,0,0,0,0,0.0,0,37.0,7388,13683,OPTIMAL
+mip_3d,mip_enhanced,True,True,8,0.0,24.15739590000885,True,8.0,9.0,29.0,0,0,0,0,0.0,0,510.0,4236,7976,OPTIMAL
+rolling_horizon_mip,hybrid,True,False,9,1.0,3.292293199992855,True,9.0,9.0,32.0,0,0,0,0,0.0,0,7.0,26295,44667,FEASIBLE; mip_calls=9; window_statuses=OPTIMAL
+final_assignment_mip,hybrid,True,False,8,0.0,11.51637790001405,True,8.0,9.0,29.0,0,0,0,0,0.0,0,1.0,7493,13847,OPTIMAL; first_target=INFEASIBLE; repair=beam_target; realization_optimal=True; master=OPTIMAL
+pattern_column_mip,hybrid,True,False,8,0.0,11.901148300006753,True,8.0,9.0,29.0,0,0,0,0,0.0,0,1.0,11358,13712,OPTIMAL; first_target=INFEASIBLE; repair=beam_target; realization_optimal=True; master=OPTIMAL

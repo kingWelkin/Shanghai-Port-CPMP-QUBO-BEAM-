@@ -1,0 +1,5 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,status,validation_passed
+large_cpmp_6x5_n20_seed3,premarshalling_cpmp,greedy_cpmp,20,6,5,0.666667,True,False,5.0,0.00010019999172072858,0,0,0,0,0,0.0,0,,,,,,,FEASIBLE,True
+large_cpmp_6x5_n20_seed3,premarshalling_cpmp,beam,20,6,5,0.666667,True,False,5.0,0.15705069999967236,391,6119,6120,0,0,0.0,0,,,,,,,FEASIBLE,True
+large_cpmp_6x5_n20_seed3,premarshalling_cpmp,diverse_beam,20,6,5,0.666667,True,False,5.0,83.55270980000205,273,4294,4295,0,0,0.0,0,0.794201680672281,,,,,,FEASIBLE,True
+large_cpmp_6x5_n20_seed3,premarshalling_cpmp,rolling_horizon,20,6,5,0.666667,True,False,9.0,0.682620899999165,1742,43298,10,0,0,0.0,0,,,,,,,FEASIBLE,True

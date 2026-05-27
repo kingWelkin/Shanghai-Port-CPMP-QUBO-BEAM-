@@ -1,0 +1,25 @@
+{
+  "instance_paths": [
+    "instances/larger_cpmp_6x5_n25_seed5.json"
+  ],
+  "max_depth": 45,
+  "beam_width": 180,
+  "max_candidates_per_layer": 2500,
+  "candidate_limit_per_state": 35,
+  "max_qubo_vars": 360,
+  "rolling_depth": 4,
+  "prefix_commit_length": 1,
+  "time_limit_sec": 30.0,
+  "qubo_penalty_a": 50.0,
+  "diversity_weight": 0.0,
+  "qubo_call_interval": 16,
+  "qubo_min_candidates_for_call": 360,
+  "entropy_alpha": 1.3,
+  "random_seed": 37,
+  "solver_names": [
+    "qubo_beam",
+    "qubo_beam_api"
+  ],
+  "output_csv": "docs/experiments/larger_cpmp_business_qubo_beams.csv",
+  "output_json": "docs/experiments/larger_cpmp_business_qubo_beams.json"
+}

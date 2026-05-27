@@ -1,0 +1,263 @@
+[
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_business_5x4_n12_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [],
+        [
+          1,
+          7,
+          10,
+          4
+        ],
+        [
+          8
+        ],
+        [
+          2,
+          12,
+          3,
+          9
+        ],
+        [
+          11,
+          5,
+          6
+        ]
+      ]
+    },
+    "solver": "random",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 0.00034159999631810933,
+      "status": "NO_FEASIBLE_FOUND",
+      "moves": []
+    },
+    "final_stacks": [
+      [],
+      [
+        1,
+        7,
+        10,
+        4
+      ],
+      [
+        8
+      ],
+      [
+        2,
+        12,
+        3,
+        9
+      ],
+      [
+        11,
+        5,
+        6
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NO_FEASIBLE_FOUND",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null,
+      "entropy_max": null,
+      "entropy_limit": null,
+      "entropy_alpha": null,
+      "disorder_total": null,
+      "disorder_initial": null,
+      "disorder_final": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_business_5x4_n12_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [],
+        [
+          1,
+          7,
+          10,
+          4
+        ],
+        [
+          8
+        ],
+        [
+          2,
+          12,
+          3,
+          9
+        ],
+        [
+          11,
+          5,
+          6
+        ]
+      ]
+    },
+    "solver": "greedy_retrieval",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 0.0,
+      "status": "NOT_APPLICABLE",
+      "moves": []
+    },
+    "final_stacks": [
+      [],
+      [
+        1,
+        7,
+        10,
+        4
+      ],
+      [
+        8
+      ],
+      [
+        2,
+        12,
+        3,
+        9
+      ],
+      [
+        11,
+        5,
+        6
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NOT_APPLICABLE",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null,
+      "entropy_max": null,
+      "entropy_limit": null,
+      "entropy_alpha": null,
+      "disorder_total": null,
+      "disorder_initial": null,
+      "disorder_final": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_business_5x4_n12_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [],
+        [
+          1,
+          7,
+          10,
+          4
+        ],
+        [
+          8
+        ],
+        [
+          2,
+          12,
+          3,
+          9
+        ],
+        [
+          11,
+          5,
+          6
+        ]
+      ]
+    },
+    "solver": "qubo_batch_relocation",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 0.0,
+      "status": "NOT_APPLICABLE",
+      "moves": []
+    },
+    "final_stacks": [
+      [],
+      [
+        1,
+        7,
+        10,
+        4
+      ],
+      [
+        8
+      ],
+      [
+        2,
+        12,
+        3,
+        9
+      ],
+      [
+        11,
+        5,
+        6
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NOT_APPLICABLE",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null,
+      "entropy_max": null,
+      "entropy_limit": null,
+      "entropy_alpha": null,
+      "disorder_total": null,
+      "disorder_initial": null,
+      "disorder_final": null
+    }
+  }
+]

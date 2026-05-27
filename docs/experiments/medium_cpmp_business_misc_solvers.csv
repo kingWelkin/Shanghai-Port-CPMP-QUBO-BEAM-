@@ -1,0 +1,4 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,entropy_max,entropy_limit,entropy_alpha,disorder_total,disorder_initial,disorder_final,status,validation_passed
+medium_cpmp_business_5x4_n12_seed3,premarshalling_cpmp,random,12,5,4,0.600000,False,False,inf,0.00034159999631810933,0,0,0,0,0,0.0,0,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+medium_cpmp_business_5x4_n12_seed3,premarshalling_cpmp,greedy_retrieval,12,5,4,0.600000,False,False,inf,0.0,0,0,0,0,0,0.0,0,,,,,,,,,,,,,NOT_APPLICABLE,False
+medium_cpmp_business_5x4_n12_seed3,premarshalling_cpmp,qubo_batch_relocation,12,5,4,0.600000,False,False,inf,0.0,0,0,0,0,0,0.0,0,,,,,,,,,,,,,NOT_APPLICABLE,False

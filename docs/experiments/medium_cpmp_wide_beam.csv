@@ -1,0 +1,2 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,status,validation_passed
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,beam,12,5,4,0.600000,True,False,6.0,0.3747795999952359,1720,15557,15558,0,0,0.0,0,,,,,,,FEASIBLE,True

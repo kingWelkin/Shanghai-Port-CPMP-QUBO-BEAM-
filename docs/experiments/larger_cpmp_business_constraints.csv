@@ -1,0 +1,5 @@
+solver,feasible,objective,runtime_sec,expanded_states,generated_states,qubo_calls,entropy_max,entropy_limit,disorder_total,status,validation_passed,source_file
+greedy_cpmp,False,inf,0.0001548000000184402,0,0,0,,,,NO_FEASIBLE_FOUND,False,larger_cpmp_baselines.csv
+beam,False,inf,0.5346298999938881,1676,12179,0,,,,NO_FEASIBLE_FOUND,False,larger_cpmp_baselines.csv
+rolling_horizon,False,inf,0.3578529000078561,1320,15777,0,,,,NO_FEASIBLE_FOUND,False,larger_cpmp_baselines.csv
+qubo_beam_api_sparse_k16,False,inf,1.172090499996557,1676,12179,0,,,,NO_FEASIBLE_FOUND,False,larger_cpmp_qubo_beam_api_sparse_k16.csv

@@ -1,0 +1,4 @@
+Set parameter LicenseID to value 2757959
+Wrote docs/experiments/larger_cpmp_business_mip_4d_10min.csv
+Wrote docs/experiments/larger_cpmp_business_mip_4d_10min.json
+Rows: 1

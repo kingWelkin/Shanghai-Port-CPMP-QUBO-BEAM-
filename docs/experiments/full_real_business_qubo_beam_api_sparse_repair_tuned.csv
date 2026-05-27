@@ -1,0 +1,16 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,qubo_beam_api_sparse_repair,29,37,43,15,18,11,33,33,True,True,6.187603400001535,183,504,505,2,33,4.3273362000181805,BEST_EFFORT; samplers=ising_matrix_api
+A2_01_26_paired,qubo_beam_api_sparse_repair,27,35,40,27,4,23,31,31,True,True,7.518631100014318,303,832,833,2,33,4.6296133999712765,BEST_EFFORT; samplers=ising_matrix_api
+A3_01_26_paired,qubo_beam_api_sparse_repair,30,39,45,26,10,20,36,36,True,True,6.964502499991795,282,782,783,2,31,4.236776900012046,BEST_EFFORT; samplers=ising_matrix_api
+A4_01_26_paired,qubo_beam_api_sparse_repair,33,42,49,27,13,20,40,40,True,True,7.079254999989644,283,806,807,2,32,4.4242333000293,BEST_EFFORT; samplers=ising_matrix_api
+A5_01_26_paired,qubo_beam_api_sparse_repair,32,41,48,21,15,17,36,36,True,True,6.705627599993022,251,705,706,2,33,4.4744901999947615,BEST_EFFORT; samplers=ising_matrix_api
+B1_01_26_paired,qubo_beam_api_sparse_repair,30,39,45,33,6,24,39,39,True,True,9.150064999994356,318,812,813,3,38,6.650271299993619,BEST_EFFORT; samplers=ising_matrix_api
+B2_01_26_paired,qubo_beam_api_sparse_repair,26,33,39,22,9,17,31,31,True,True,6.604404300014721,233,660,661,2,33,4.421682400017744,BEST_EFFORT; samplers=ising_matrix_api
+B3_01_26_paired,qubo_beam_api_sparse_repair,27,35,40,16,12,15,28,28,True,True,6.576818600005936,223,611,612,2,29,4.413938499987125,BEST_EFFORT; samplers=ising_matrix_api
+B4_01_26_paired,qubo_beam_api_sparse_repair,27,35,40,20,10,17,30,30,True,True,6.819106199982343,243,685,686,2,33,4.446763300016755,BEST_EFFORT; samplers=ising_matrix_api
+B5_01_26_paired,qubo_beam_api_sparse_repair,30,39,45,36,3,27,39,39,True,True,9.679998600011459,343,934,935,3,55,6.56482070000493,BEST_EFFORT; samplers=ising_matrix_api
+C1_01_26_paired,qubo_beam_api_sparse_repair,23,29,34,18,7,16,25,25,True,True,6.502147599996533,212,581,582,2,33,4.404572900006315,BEST_EFFORT; samplers=ising_matrix_api
+C2_01_26_paired,qubo_beam_api_sparse_repair,29,37,43,26,10,19,36,36,True,True,6.749383999995189,262,711,712,2,33,4.429688699980034,BEST_EFFORT; samplers=ising_matrix_api
+C3_01_26_paired,qubo_beam_api_sparse_repair,33,42,49,23,17,16,40,40,True,True,6.714543600013712,243,678,679,2,32,4.4471087000274565,BEST_EFFORT; samplers=ising_matrix_api
+C4_01_26_paired,qubo_beam_api_sparse_repair,31,40,46,29,11,20,40,40,True,True,6.784725300007267,275,759,760,2,33,4.41986709999037,BEST_EFFORT; samplers=ising_matrix_api
+C5_01_26_paired,qubo_beam_api_sparse_repair,29,37,43,21,16,13,37,37,True,True,6.204557899996871,201,519,520,2,30,4.447799100016709,BEST_EFFORT; samplers=ising_matrix_api

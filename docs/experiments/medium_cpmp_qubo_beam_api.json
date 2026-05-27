@@ -1,0 +1,134 @@
+[
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "qubo_beam_api",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 6.0,
+      "runtime_sec": 12.60712980000244,
+      "status": "FEASIBLE; samplers=ising_matrix_api",
+      "moves": [
+        {
+          "step": 0,
+          "box": 2,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 1,
+          "box": 11,
+          "from_stack": 0,
+          "to_stack": 3,
+          "from_level": 2,
+          "to_level": 4
+        },
+        {
+          "step": 2,
+          "box": 4,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 1,
+          "to_level": 2
+        },
+        {
+          "step": 3,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 3,
+          "to_level": 1
+        },
+        {
+          "step": 4,
+          "box": 11,
+          "from_stack": 3,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 2
+        },
+        {
+          "step": 5,
+          "box": 8,
+          "from_stack": 3,
+          "to_stack": 0,
+          "from_level": 3,
+          "to_level": 3
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        12,
+        11,
+        8
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        7,
+        3,
+        2
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        6,
+        4
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 328,
+      "generated_states": 3661,
+      "visited_states": 3662,
+      "qubo_calls": 5,
+      "qubo_total_vars": 819,
+      "qubo_total_time_sec": 12.248301300001913,
+      "qubo_repair_count": 5,
+      "selected_avg_similarity": 0.7215028869642466,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  }
+]

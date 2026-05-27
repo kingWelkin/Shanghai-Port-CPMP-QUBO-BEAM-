@@ -15,6 +15,9 @@ dist/
 # Generated local outputs. Keep curated baseline results only when intentional.
 data/results/*_ERROR.txt
 data/results/tmp/
+mip_diagnostics/
+tmp/
+examples/results/
 
 # Notebook/runtime noise.
 .ipynb_checkpoints/

@@ -1,0 +1,46 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,fused_beam,29,37,43,19,16,13,35,35,True,True,10.4604127999919,309,1097,1098,5,243,0.08419679998769425,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A1_01_26_paired,feature_adaptive_beam,29,37,43,18,16,13,34,34,True,True,7.679110500001116,287,956,957,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=97071; feature_choice=enhanced
+A1_01_26_paired,beam_post_repair,29,37,43,18,16,13,34,34,True,True,4.369641900004353,293,812,814,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A2_01_26_paired,fused_beam,27,35,40,21,9,18,30,30,True,True,10.022809399990365,330,1220,1221,5,235,0.0824630000279285,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A2_01_26_paired,feature_adaptive_beam,27,35,40,27,4,23,31,31,True,True,2.882731599995168,303,829,830,0,0,0.0,BEST_EFFORT; feature_choice=beam
+A2_01_26_paired,beam_post_repair,27,35,40,30,4,23,34,34,True,True,4.477205499977572,403,946,948,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A3_01_26_paired,fused_beam,30,39,45,22,11,19,33,33,True,True,10.021805099997437,337,1160,1161,5,209,0.08264420003979467,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A3_01_26_paired,feature_adaptive_beam,30,39,45,26,10,20,36,36,True,True,3.320858399994904,282,781,782,6,142,0.10249769996153191,BEST_EFFORT; samplers=simulated_annealing; feature_choice=qubo
+A3_01_26_paired,beam_post_repair,30,39,45,25,13,17,38,38,True,True,2.5203907000250183,257,688,690,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A4_01_26_paired,fused_beam,33,42,49,20,17,16,37,37,True,True,10.034485799988033,304,1130,1131,5,245,0.08260219995281659,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A4_01_26_paired,feature_adaptive_beam,33,42,49,32,9,24,41,41,True,True,9.780089699983364,424,1434,1435,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126420; feature_choice=enhanced
+A4_01_26_paired,beam_post_repair,33,42,49,29,13,20,42,42,True,True,2.8245289999758825,278,763,765,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A5_01_26_paired,fused_beam,32,41,48,25,14,18,39,39,True,True,10.024951300001703,367,1437,1438,5,258,0.08445360005134717,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A5_01_26_paired,feature_adaptive_beam,32,41,48,21,15,17,36,36,True,True,2.163331999996444,251,705,706,0,0,0.0,BEST_EFFORT; feature_choice=beam
+A5_01_26_paired,beam_post_repair,32,41,48,26,14,18,40,40,True,True,2.4203820999828167,260,712,714,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B1_01_26_paired,fused_beam,30,39,45,21,11,19,32,32,True,True,10.062627000006614,321,1164,1165,5,236,0.08350880001671612,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B1_01_26_paired,feature_adaptive_beam,30,39,45,33,6,24,39,39,True,True,2.4359545999905095,318,812,813,0,0,0.0,BEST_EFFORT; feature_choice=beam
+B1_01_26_paired,beam_post_repair,30,39,45,34,4,26,38,38,True,True,3.0261529000126757,330,933,935,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B2_01_26_paired,fused_beam,26,33,39,21,11,15,32,32,True,True,9.4506790000014,338,1066,1067,5,212,0.0834401000465732,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B2_01_26_paired,feature_adaptive_beam,26,33,39,22,9,17,31,31,True,True,2.2780020000063814,233,660,661,0,0,0.0,BEST_EFFORT; feature_choice=beam
+B2_01_26_paired,beam_post_repair,26,33,39,22,11,15,33,33,True,True,3.0647749999770895,261,682,684,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B3_01_26_paired,fused_beam,27,35,40,17,10,17,27,27,True,True,10.022011799999746,330,1109,1110,5,201,0.08256919999257661,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B3_01_26_paired,feature_adaptive_beam,27,35,40,18,9,18,27,27,True,True,8.566874899988761,346,857,858,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=113295; feature_choice=enhanced
+B3_01_26_paired,beam_post_repair,27,35,40,17,11,16,28,28,True,True,4.842343499971321,343,912,914,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B4_01_26_paired,fused_beam,27,35,40,18,10,17,28,28,True,True,10.272885199985467,307,1155,1156,5,235,0.0838109000469558,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B4_01_26_paired,feature_adaptive_beam,27,35,40,20,10,17,30,30,True,True,2.298773499991512,243,685,686,0,0,0.0,BEST_EFFORT; feature_choice=beam
+B4_01_26_paired,beam_post_repair,27,35,40,24,9,18,33,33,True,True,4.657245899987174,352,933,935,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B5_01_26_paired,fused_beam,30,39,45,22,8,22,30,30,True,True,10.02127619998646,338,1153,1154,5,228,0.08286049994057976,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B5_01_26_paired,feature_adaptive_beam,30,39,45,26,8,22,34,34,True,True,10.02234719999251,371,1229,1230,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=132449; feature_choice=enhanced
+B5_01_26_paired,beam_post_repair,30,39,45,35,3,27,38,38,True,True,4.593812100007199,382,1034,1036,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C1_01_26_paired,fused_beam,23,29,34,22,2,21,24,24,True,True,10.02167859999463,318,1186,1187,5,237,0.08298790000844747,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C1_01_26_paired,feature_adaptive_beam,23,29,34,21,5,18,26,26,True,True,8.769843799993396,319,1275,1276,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=109780; feature_choice=enhanced
+C1_01_26_paired,beam_post_repair,23,29,34,21,6,17,27,27,True,True,3.5397368999838363,289,768,770,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C2_01_26_paired,fused_beam,29,37,43,23,11,18,34,34,True,True,10.023689000023296,353,1282,1283,5,224,0.08362040005158633,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C2_01_26_paired,feature_adaptive_beam,29,37,43,30,7,22,37,37,True,True,2.785347199998796,287,776,777,6,146,0.10250139998970553,BEST_EFFORT; samplers=simulated_annealing; feature_choice=qubo
+C2_01_26_paired,beam_post_repair,29,37,43,22,14,15,36,36,True,True,2.116341300017666,227,608,610,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C3_01_26_paired,fused_beam,33,42,49,17,18,15,35,35,True,True,10.068619600002421,310,1104,1105,5,235,0.08452019997639582,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C3_01_26_paired,feature_adaptive_beam,33,42,49,27,15,18,42,42,True,True,9.318752199993469,361,1319,1320,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=120748; feature_choice=enhanced
+C3_01_26_paired,beam_post_repair,33,42,49,26,16,17,42,42,True,True,3.006371499999659,290,767,769,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C4_01_26_paired,fused_beam,31,40,46,22,12,19,34,34,True,True,10.045719000016106,334,1135,1136,5,208,0.08341500000096858,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C4_01_26_paired,feature_adaptive_beam,31,40,46,30,10,21,40,40,True,True,9.517144800018286,403,1170,1171,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124345; feature_choice=enhanced
+C4_01_26_paired,beam_post_repair,31,40,46,29,11,20,40,40,True,True,2.630860200006282,276,756,758,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C5_01_26_paired,fused_beam,29,37,43,17,16,13,33,33,True,True,10.079200100008165,303,1037,1038,5,226,0.08335989998886362,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C5_01_26_paired,feature_adaptive_beam,29,37,43,21,16,13,37,37,True,True,1.708303799998248,201,519,520,0,0,0.0,BEST_EFFORT; feature_choice=beam
+C5_01_26_paired,beam_post_repair,29,37,43,21,16,13,37,37,True,True,1.8917732000118122,204,544,546,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair

@@ -1,0 +1,145 @@
+% !TEX program = xelatex
+\documentclass[11pt,a4paper]{ctexart}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{\texttt{chen\_greedy\_algorithm}：每一步怎么定「搬哪个箱、搬到哪」}
+\author{上港堆场整理 --- \texttt{greedy} 包}
+\date{}
+
+\newcommand{\capG}{G_{\mathrm{上限}}}
+
+\begin{document}
+\maketitle
+
+\section{一句话}
+
+算法\textbf{反复做同一件事}：在当前堆场上，挑\textbf{一个}合法搬箱动作——从某堆\textbf{顶}上取走一箱，放到\textbf{另一堆顶}上——执行后进入下一步，直到要么全场排好，要么再也挑不出合法动作。
+
+\textbf{关键：}每一步\textbf{只动顶箱}，且\textbf{不能同堆内倒层}（只能从堆 $i$ 搬到堆 $k$，$i\neq k$）。
+
+\section{每一步的六步流程（白话）}
+
+下面用「当前已经搬了 $m$ 步」时的状态说明。记全场逆序箱数为 $N$，初始为 $N^{(0)}$，允许的上限为
+\[
+  \capG = \bigl\lfloor 1.3 \times N^{(0)} \bigr\rfloor,
+  \qquad
+  G = m + N \quad \text{（搬箱步数 + 当前逆序箱数）}.
+\]
+
+\begin{enumerate}[label=\textbf{第 \arabic* 步}, leftmargin=2.2em]
+
+  \item \textbf{先看哪些堆「值得动」}
+
+  只从下面两类堆里往外搬箱（源堆）：
+  \begin{itemize}
+    \item 这堆还有逆序（$N_i>0$），或
+    \item 这堆还没排好（自下而上关序号不是「下面大、上面小」）。
+  \end{itemize}
+  其它已经排好的空问题堆，这一步\textbf{不会}从它往外搬。
+
+  \item \textbf{定「搬哪个箱」——只能是源堆最顶上那一箱}
+
+  对每个源堆 $i$，没有选择权：\textbf{被搬的箱已经定了}，就是堆 $i$ 最上面那一箱（顶箱）。
+  程序里记它的秩为 $n$，源层号 $j=|S_i|$（当前堆高）。
+
+  \item \textbf{定「能搬到哪」——枚举所有别的堆的顶}
+
+  对源堆 $i$，逐个看目标堆 $k$（$k\neq i$）：
+  \begin{itemize}
+    \item 若堆 $k$ 已满（层数 $=H$），跳过；
+    \item 否则允许：把该顶箱放到堆 $k$ 的\textbf{新顶层}（层号 $\ell=|S_k|+1$）。
+  \end{itemize}
+  于是得到一个候选：\textbf{「堆 $i$ 的顶箱 $\to$ 堆 $k$ 的顶」}。
+  所有源堆 $\times$ 所有能接箱的目标堆，组成这一步的\textbf{候选动作表}。
+
+  \item \textbf{对每个候选先「试搬」再打分，不合格的划掉}
+
+  对表里每一条「$i$ 顶箱 $\to$ $k$ 顶」，在内存里复制当前布局、模拟搬一次（不真改现场），然后检查：
+  \begin{enumerate}[label=(\alph*)]
+    \item 搬完之后 $G' = (m+1) + N'$ 是否 $\le \capG$？超过则\textbf{淘汰}（翻箱代价超标）；
+    \item 搬完后的整盘布局是否\textbf{以前出现过}？若重复且已有更低累计逆序代价，则\textbf{淘汰}（防止来回打转）。
+  \end{enumerate}
+  剩下的就是\textbf{合法候选}。
+
+  \item \textbf{在合法候选里挑「最好」的一条——这就是本步真正执行的动作}
+
+  对每条合法候选算以下指标：
+  \begin{itemize}
+    \item $\sum_{\tau=0}^{t}N_\tau$：截至当前路径的累计未来逆序箱数（主目标，优先\textbf{尽量小}）；
+    \item $N'$：搬完后的当前未来逆序箱数（次目标，优先\textbf{尽量小}）；
+    \item $m+1$：搬箱步数（再次级目标，优先\textbf{尽量小}）；
+    \item 多贝时加分 $B$：源堆在初始逆序最多的贝（\texttt{drain\_bay}）$+2$，目标堆在初始逆序最少的贝（\texttt{fill\_bay}）$+1$（在仍打平时优先\textbf{大}）。
+  \end{itemize}
+
+  \textbf{排序规则（从上到下比，先比赢的优先）：}
+  \[
+    \sum_\tau N_\tau \ \text{小}
+    \ \rightarrow\
+    N' \ \text{小}
+    \ \rightarrow\
+    m+1 \ \text{小}
+    \ \rightarrow\
+    B \ \text{大}.
+  \]
+  取排在最前面的一档；若这一档还有多条，\textbf{随机抽一条}执行。
+
+  \item \textbf{真搬、记步、进入下一轮}
+
+  把选中的「堆 $i^\ast$ 顶箱 $\to$ 堆 $k^\ast$ 顶」写入动作序列，更新现场堆场，$m\leftarrow m+1$，把新布局记入「已出现」集合。
+  若此时每一堆都已良序，\textbf{结束}；否则回到第 1 步。
+
+\end{enumerate}
+
+\section{小例子（帮助对齐直觉）}
+
+假设当前只有两堆有问题：堆 $3$ 顶箱关序号偏大（有逆序），堆 $7$ 还能再接一箱。
+\begin{itemize}
+  \item \textbf{搬哪个箱？} 若 $3\in\mathcal{I}_{\mathrm{src}}$，本步只可能搬\textbf{堆 3 顶箱}，不能搬堆 3 下面的箱。
+  \item \textbf{搬到哪？} 若堆 $7$ 未满，则产生候选「$3$ 顶 $\to$ $7$ 顶」；若堆 $5,7,9$ 都能接，则产生三条候选，分别试搬、过滤、再比 $\Delta N$ 和 $G'$。
+  \item \textbf{为何可能不搬 $3\to 5$？} 试搬后若 $N$ 反而变大，或 $G'$ 超过 $\capG$，或布局重复，该候选会被划掉，最终可能只剩 $3\to 7$ 合法。
+\end{itemize}
+
+\section{指标（需要时再查公式）}
+
+\subsection{什么叫「排好」}
+
+从一堆\textbf{底}往\textbf{顶}看关序号：每一层都要比上面一层\textbf{更大}（先提的箱关序号更小）。满足则该堆良序。
+
+\subsection{逆序箱数 $N_i$（单堆）}
+
+从第 2 层往上找\textbf{第一处}「上面关序号 $>$ 下面关序号」的层 $j^\ast$；从 $j^\ast$ 到堆顶所有非空箱的个数，即该堆 $N_i$。全场 $N=\sum_i N_i$。
+
+\subsection{为何用 $G=m+N$}
+
+每搬一步 $m$ 加 1，逆序 $N$ 可能变；要求任意时刻 $m+N \le \lfloor 1.3 N^{(0)}\rfloor$，控制「搬箱次数 + 剩余乱度」的总代价。搜索排序时以累计未来逆序箱数$\sum_t N_t$为主目标，而不是硬性要求每一步$N$都下降。
+
+\section{何时停}
+
+\begin{itemize}
+  \item \textbf{成功：} 所有堆都良序；
+  \item \textbf{卡住：} 第 4 步后合法候选为空（在满足 $G\le\capG$ 的前提下无路可走）；
+  \item \textbf{保底：} 步数达到程序上限 \texttt{hard\_cap}。
+\end{itemize}
+
+\section{和代码的对应}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{p{5.5cm}p{6.5cm}}
+    \toprule
+    白话步骤 & 函数 \\
+    \midrule
+    哪些堆当源堆 & \texttt{greedy\_plan.\_src\_stacks} \\
+    顶箱搬到哪些堆顶 & \texttt{greedy\_plan.\_enumerate\_cross} \\
+    试搬 + 三条过滤 & \texttt{simulate\_move} + \texttt{\_pick\_best\_move} \\
+    比累计 $N$、当前 $N$、步数和 $B$ 并随机 tie & \texttt{\_pick\_best\_move} 内排序 \\
+    真搬并循环 & \texttt{apply\_move} + \texttt{plan\_greedy\_until\_terminal} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\end{document}

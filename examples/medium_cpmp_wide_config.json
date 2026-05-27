@@ -1,0 +1,15 @@
+﻿{
+  "solver_names": ["beam", "diverse_beam", "qubo_beam", "stack_assignment_guided_cpmp"],
+  "instance_paths": ["instances/medium_cpmp_5x4_n12_seed1.json"],
+  "max_depth": 7,
+  "beam_width": 300,
+  "max_candidates_per_layer": 5000,
+  "candidate_limit_per_state": 30,
+  "max_qubo_vars": 300,
+  "time_limit_sec": 60.0,
+  "qubo_penalty_a": 10.0,
+  "diversity_weight": 0.3,
+  "random_seed": 7,
+  "output_csv": "docs/experiments/medium_cpmp_wide_search.csv",
+  "output_json": "docs/experiments/medium_cpmp_wide_search.json"
+}

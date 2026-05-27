@@ -1,0 +1,12 @@
+﻿{
+  "solver_names": ["beam"],
+  "instance_paths": ["instances/medium_cpmp_5x4_n12_seed1.json"],
+  "max_depth": 7,
+  "beam_width": 500,
+  "max_candidates_per_layer": 10000,
+  "candidate_limit_per_state": 30,
+  "time_limit_sec": 60.0,
+  "random_seed": 7,
+  "output_csv": "docs/experiments/medium_cpmp_wide_beam.csv",
+  "output_json": "docs/experiments/medium_cpmp_wide_beam.json"
+}

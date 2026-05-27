@@ -77,12 +77,13 @@ def format_greedy_placement_report(
     )
     g_end = meta.get("g_end", "?")
     g_cap = meta.get("g_cap", "?")
+    g_ratio = meta.get("g_ratio", 1.5)
     lines = [
         "--- 箱位摆放 (贪心轨迹) ---",
         f"箱区={zone}  合并贝位={bays_txt}  步数={len(moves)}  "
         f"终态良序={meta.get('terminal_sorted')}",
-        f"G=翻箱+N  末态 G={g_end}  须≤{g_cap}(1.5×N0)  合规={meta.get('g_ok')}",
-        "说明: 仅跨堆/跨贝(i≠k)；G=翻箱次数+逆序不得超过1.5×初始逆序",
+        f"G=翻箱+N  末态 G={g_end}  须≤{g_cap}(={g_ratio}×N0)  合规={meta.get('g_ok')}",
+        f"说明: 仅跨堆/跨贝(i≠k)；G=翻箱次数+逆序不得超过{g_ratio}×初始逆序",
         "",
         "【初始】关序号:",
     ]

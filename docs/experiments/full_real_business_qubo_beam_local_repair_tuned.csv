@@ -1,0 +1,16 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,qubo_beam_repair,29,37,43,15,18,11,33,33,True,True,2.417160500015598,183,504,505,4,93,0.062383700016653165,BEST_EFFORT; samplers=simulated_annealing
+A2_01_26_paired,qubo_beam_repair,27,35,40,27,4,23,31,31,True,True,4.415504700009478,303,831,832,7,165,0.12255559998448007,BEST_EFFORT; samplers=simulated_annealing
+A3_01_26_paired,qubo_beam_repair,30,39,45,26,10,20,36,36,True,True,3.812849500012817,282,781,782,6,142,0.10260209997068159,BEST_EFFORT; samplers=simulated_annealing
+A4_01_26_paired,qubo_beam_repair,33,42,49,26,13,20,39,39,True,True,3.751806700020097,283,806,807,6,149,0.10240239993436262,BEST_EFFORT; samplers=simulated_annealing
+A5_01_26_paired,qubo_beam_repair,32,41,48,21,15,17,36,36,True,True,3.699235200008843,251,705,706,6,151,0.10243969998555258,BEST_EFFORT; samplers=simulated_annealing
+B1_01_26_paired,qubo_beam_repair,30,39,45,33,5,25,38,38,True,True,4.640815299993847,333,910,911,7,176,0.12249169996357523,BEST_EFFORT; samplers=simulated_annealing
+B2_01_26_paired,qubo_beam_repair,26,33,39,22,9,17,31,31,True,True,3.2047904999926686,233,660,661,5,121,0.08414270001230761,BEST_EFFORT; samplers=simulated_annealing
+B3_01_26_paired,qubo_beam_repair,27,35,40,16,12,15,28,28,True,True,3.1366809999744873,223,607,608,5,116,0.0824447000049986,BEST_EFFORT; samplers=simulated_annealing
+B4_01_26_paired,qubo_beam_repair,27,35,40,20,10,17,30,30,True,True,3.525964800006477,243,685,686,5,123,0.08248089998960495,BEST_EFFORT; samplers=simulated_annealing
+B5_01_26_paired,qubo_beam_repair,30,39,45,36,3,27,39,39,True,True,4.3891798999975435,348,939,940,8,184,0.12657809996744618,BEST_EFFORT; samplers=simulated_annealing
+C1_01_26_paired,qubo_beam_repair,23,29,34,18,7,16,25,25,True,True,2.953074299992295,212,582,583,5,119,0.08244480000576004,BEST_EFFORT; samplers=simulated_annealing
+C2_01_26_paired,qubo_beam_repair,29,37,43,28,9,20,37,37,True,True,3.5841460000083316,272,739,740,6,143,0.10249119999934919,BEST_EFFORT; samplers=simulated_annealing
+C3_01_26_paired,qubo_beam_repair,33,42,49,23,17,16,40,40,True,True,3.1132317000010516,243,678,679,5,120,0.08252660001744516,BEST_EFFORT; samplers=simulated_annealing
+C4_01_26_paired,qubo_beam_repair,31,40,46,29,11,20,40,40,True,True,3.4892027000023518,275,752,753,6,150,0.10268480004742742,BEST_EFFORT; samplers=simulated_annealing
+C5_01_26_paired,qubo_beam_repair,29,37,43,21,16,13,37,37,True,True,2.5307396999851335,201,519,520,5,100,0.07151969996630214,BEST_EFFORT; samplers=simulated_annealing

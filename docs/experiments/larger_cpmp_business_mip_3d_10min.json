@@ -1,0 +1,121 @@
+[
+  {
+    "instance": {
+      "instance_id": "larger_cpmp_6x5_n25_seed5",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 6,
+      "max_height": 5,
+      "container_count": 25,
+      "stacks": [
+        [
+          5,
+          24,
+          7,
+          12
+        ],
+        [
+          11,
+          13,
+          23,
+          19,
+          4
+        ],
+        [
+          18,
+          16,
+          22,
+          8,
+          1
+        ],
+        [
+          3,
+          25,
+          6,
+          2,
+          17
+        ],
+        [
+          10,
+          14,
+          9,
+          20
+        ],
+        [
+          15,
+          21
+        ]
+      ]
+    },
+    "solver": "mip_3d",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 623.445495299995,
+      "status": "TIME_LIMIT",
+      "moves": []
+    },
+    "final_stacks": [
+      [
+        5,
+        24,
+        7,
+        12
+      ],
+      [
+        11,
+        13,
+        23,
+        19,
+        4
+      ],
+      [
+        18,
+        16,
+        22,
+        8,
+        1
+      ],
+      [
+        3,
+        25,
+        6,
+        2,
+        17
+      ],
+      [
+        10,
+        14,
+        9,
+        20
+      ],
+      [
+        15,
+        21
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "TIME_LIMIT",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": 1.0,
+      "mip_best_bound": 1940.0,
+      "mip_gap": null,
+      "mip_var_count": 39659,
+      "mip_constr_count": 61733,
+      "entropy_max": null,
+      "entropy_limit": 23.0,
+      "entropy_alpha": 1.3,
+      "disorder_total": null,
+      "disorder_initial": null,
+      "disorder_final": null
+    }
+  }
+]

@@ -194,11 +194,7 @@ def plan_greedy_until_terminal(
     moves: List[GreedyMove] = []
 
     n0 = total_n_future(stacks, W, H, rank_to_seq)
-    g_limit = (
-        g_cap_from_n0(n0)
-        if g_ratio == 1.5
-        else max(0, int(g_ratio * n0))
-    )
+    g_limit = g_cap_from_n0(n0, g_ratio)
 
     if use_bay_bias and getattr(problem, "combined_bays", None):
         drain_bay = drain_bay if drain_bay is not None else getattr(
@@ -213,7 +209,7 @@ def plan_greedy_until_terminal(
 
     if verbose:
         print(
-            f"  [贪心] N(0)={n0}  G上限={g_limit} (=1.5×N0，不得超过)  "
+            f"  [贪心] N(0)={n0}  G上限={g_limit} (={g_ratio}×N0，不得超过)  "
             f"仅跨堆 i≠k"
         )
         if drain_bay is not None:
@@ -285,12 +281,12 @@ def terminal_sort_reached(problem, moves: List[GreedyMove]) -> bool:
     return _all_stacks_ok(stacks, rank_to_seq, W)
 
 
-def greedy_plan_stats(problem, moves: List[GreedyMove]) -> dict:
+def greedy_plan_stats(problem, moves: List[GreedyMove], g_ratio: float = 1.5) -> dict:
     W, H = problem.W, problem.H
     stacks = _stacks_from_problem(problem)
     rank_to_seq = build_rank_to_seq(problem)
     n_init = total_n_future(stacks, W, H, rank_to_seq)
-    g_limit = g_cap_from_n0(n_init)
+    g_limit = g_cap_from_n0(n_init, g_ratio)
     for mv in moves:
         apply_move(stacks, mv)
     n_end = total_n_future(stacks, W, H, rank_to_seq)
@@ -301,6 +297,7 @@ def greedy_plan_stats(problem, moves: List[GreedyMove]) -> dict:
         "n_future_delta": n_init - n_end,
         "greedy_moves": m,
         "g_cap": g_limit,
+        "g_ratio": float(g_ratio),
         "g_init": g_value(0, n_init),
         "g_end": g_value(m, n_end),
         "g_ok": g_value(m, n_end) <= g_limit,

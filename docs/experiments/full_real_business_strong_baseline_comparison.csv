@@ -1,0 +1,76 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,15,22,7,37,37,True,True,0.1059,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A1_01_26_paired,multi_start_greedy_repair,29,37,43,18,16,13,34,34,True,True,10.246241700020619,566,189486,512,0,0,0.0,BEST_EFFORT; rollouts=28; rules=6
+A1_01_26_paired,beam,29,37,43,15,18,11,33,33,True,True,1.836562699987553,183,503,504,0,0,0.0,BEST_EFFORT
+A1_01_26_paired,qubo_beam,29,37,43,15,18,11,33,33,True,True,2.060562500002561,183,504,505,4,93,0.06249579996801913,BEST_EFFORT; samplers=simulated_annealing
+A2_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,19,16,11,35,35,True,True,0.095,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A2_01_26_paired,multi_start_greedy_repair,27,35,40,26,6,21,32,32,True,True,10.264683799992781,543,182935,486,0,0,0.0,BEST_EFFORT; rollouts=21; rules=6
+A2_01_26_paired,beam,27,35,40,27,4,23,31,31,True,True,2.883430899993982,303,829,830,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,qubo_beam,27,35,40,29,5,22,34,34,True,True,3.0318260000203736,283,748,749,6,148,0.10270180006045848,BEST_EFFORT; samplers=simulated_annealing
+A3_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1356,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A3_01_26_paired,multi_start_greedy_repair,30,39,45,30,9,21,39,39,True,True,10.15956699999515,560,187635,503,0,0,0.0,BEST_EFFORT; rollouts=21; rules=6
+A3_01_26_paired,beam,30,39,45,26,10,20,36,36,True,True,2.8807189999788534,282,783,784,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,qubo_beam,30,39,45,26,10,20,36,36,True,True,3.567848700011382,282,781,782,6,142,0.10526499999104999,BEST_EFFORT; samplers=simulated_annealing
+A4_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,26,16,17,42,42,True,True,0.1104,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A4_01_26_paired,multi_start_greedy_repair,33,42,49,25,17,16,42,42,True,True,10.201156600000104,575,189925,551,0,0,0.0,BEST_EFFORT; rollouts=24; rules=6
+A4_01_26_paired,beam,33,42,49,27,13,20,40,40,True,True,2.7827982000017073,283,806,807,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,qubo_beam,33,42,49,26,13,20,39,39,True,True,3.2664961999980733,283,806,807,6,149,0.10246900003403425,BEST_EFFORT; samplers=simulated_annealing
+A5_01_26_paired,chen_greedy_algorithm_1p3,32,41,48,19,22,10,41,41,True,True,0.1251,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A5_01_26_paired,multi_start_greedy_repair,32,41,48,21,16,16,37,37,True,True,10.224494599999161,609,194322,504,0,0,0.0,BEST_EFFORT; rollouts=31; rules=6
+A5_01_26_paired,beam,32,41,48,21,15,17,36,36,True,True,2.2840078999870457,251,705,706,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,qubo_beam,32,41,48,21,15,17,36,36,True,True,2.9641164999920875,251,705,706,6,151,0.10249390004901215,BEST_EFFORT; samplers=simulated_annealing
+B1_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,25,14,16,39,39,True,True,0.1445,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B1_01_26_paired,multi_start_greedy_repair,30,39,45,27,12,18,39,39,True,True,10.124601499992423,575,185357,554,0,0,0.0,BEST_EFFORT; rollouts=24; rules=6
+B1_01_26_paired,beam,30,39,45,33,6,24,39,39,True,True,2.897254999988945,318,812,813,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,qubo_beam,30,39,45,32,6,24,38,38,True,True,3.9740306999883614,323,864,865,7,167,0.12315229995874688,BEST_EFFORT; samplers=simulated_annealing
+B2_01_26_paired,chen_greedy_algorithm_1p3,26,33,39,18,15,11,33,33,True,True,0.111,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B2_01_26_paired,multi_start_greedy_repair,26,33,39,20,10,16,30,30,True,True,10.03828649999923,533,172805,461,0,0,0.0,BEST_EFFORT; rollouts=25; rules=6
+B2_01_26_paired,beam,26,33,39,22,9,17,31,31,True,True,2.3882769999909215,233,660,661,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,qubo_beam,26,33,39,22,9,17,31,31,True,True,2.846500700019533,233,660,661,5,121,0.08247099997242913,BEST_EFFORT; samplers=simulated_annealing
+B3_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,24,11,16,35,35,True,True,0.1277,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B3_01_26_paired,multi_start_greedy_repair,27,35,40,28,7,20,35,35,True,True,10.036869400006253,562,189342,413,0,0,0.0,BEST_EFFORT; rollouts=26; rules=6
+B3_01_26_paired,beam,27,35,40,16,12,15,28,28,True,True,2.1434907999937423,223,610,611,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,qubo_beam,27,35,40,16,12,15,28,28,True,True,2.513518699997803,223,607,608,5,116,0.08273269995697774,BEST_EFFORT; samplers=simulated_annealing
+B4_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,21,14,13,35,35,True,True,0.1159,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B4_01_26_paired,multi_start_greedy_repair,27,35,40,25,10,17,35,35,True,True,10.20491430000402,541,184549,451,0,0,0.0,BEST_EFFORT; rollouts=24; rules=6
+B4_01_26_paired,beam,27,35,40,20,10,17,30,30,True,True,2.369298700010404,243,685,686,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,qubo_beam,27,35,40,20,10,17,30,30,True,True,2.684941300016362,243,684,685,5,123,0.08246090001193807,BEST_EFFORT; samplers=simulated_annealing
+B5_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1187,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B5_01_26_paired,multi_start_greedy_repair,30,39,45,23,7,23,30,30,True,True,10.509275299991714,603,207259,490,0,0,0.0,BEST_EFFORT; rollouts=20; rules=6
+B5_01_26_paired,beam,30,39,45,36,3,27,39,39,True,True,3.1344454999780282,348,939,940,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,qubo_beam,30,39,45,36,3,27,39,39,True,True,3.8292522999981884,348,939,940,8,184,0.12650019995635375,BEST_EFFORT; samplers=simulated_annealing
+C1_01_26_paired,chen_greedy_algorithm_1p3,23,29,34,17,12,11,29,29,True,True,0.0907,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C1_01_26_paired,multi_start_greedy_repair,23,29,34,23,6,17,29,29,True,True,10.127359500009334,555,190301,477,0,0,0.0,BEST_EFFORT; rollouts=26; rules=6
+C1_01_26_paired,beam,23,29,34,18,7,16,25,25,True,True,2.263074600021355,212,581,582,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,qubo_beam,23,29,34,18,7,16,25,25,True,True,2.4887005999917164,212,582,583,5,119,0.0828489999694284,BEST_EFFORT; samplers=simulated_annealing
+C2_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,20,17,12,37,37,True,True,0.1032,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C2_01_26_paired,multi_start_greedy_repair,29,37,43,24,12,17,36,36,True,True,10.076792599982582,584,189746,499,0,0,0.0,BEST_EFFORT; rollouts=28; rules=6
+C2_01_26_paired,beam,29,37,43,28,9,20,37,37,True,True,2.360169399995357,272,739,740,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,qubo_beam,29,37,43,30,7,22,37,37,True,True,2.868631199991796,287,776,777,6,146,0.10257370004546829,BEST_EFFORT; samplers=simulated_annealing
+C3_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,18,24,9,42,42,True,True,0.1197,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C3_01_26_paired,multi_start_greedy_repair,33,42,49,28,14,19,42,42,True,True,10.100707300007343,560,186478,524,0,0,0.0,BEST_EFFORT; rollouts=23; rules=6
+C3_01_26_paired,beam,33,42,49,23,17,16,40,40,True,True,2.2646992999943905,243,678,679,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,qubo_beam,33,42,49,23,17,16,40,40,True,True,2.735363400017377,243,678,679,5,120,0.08244129997910932,BEST_EFFORT; samplers=simulated_annealing
+C4_01_26_paired,chen_greedy_algorithm_1p3,31,40,46,20,20,11,40,40,True,True,0.1201,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C4_01_26_paired,multi_start_greedy_repair,31,40,46,27,11,20,38,38,True,True,10.190090299991425,536,181171,488,0,0,0.0,BEST_EFFORT; rollouts=20; rules=6
+C4_01_26_paired,beam,31,40,46,29,11,20,40,40,True,True,2.5035440999781713,275,759,760,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,qubo_beam,31,40,46,29,11,20,40,40,True,True,2.90270460001193,275,755,756,6,150,0.1024664000433404,BEST_EFFORT; samplers=simulated_annealing
+C5_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,17,20,9,37,37,True,True,0.1018,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C5_01_26_paired,multi_start_greedy_repair,29,37,43,15,16,13,31,31,True,True,10.126220099977218,553,186048,481,0,0,0.0,BEST_EFFORT; rollouts=28; rules=6
+C5_01_26_paired,beam,29,37,43,21,16,13,37,37,True,True,1.9097496999893337,201,519,520,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,qubo_beam,29,37,43,21,16,13,37,37,True,True,2.242638600000646,201,519,520,5,100,0.07269359997007996,BEST_EFFORT; samplers=simulated_annealing
+A1_01_26_paired,wide_beam_baseline,29,37,43,15,18,11,33,33,True,True,5.16326209998806,537,2385,2386,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,wide_beam_baseline,27,35,40,30,4,23,34,34,True,True,8.097546600009082,895,3755,3756,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,wide_beam_baseline,30,39,45,26,12,18,38,38,True,True,7.317600000009406,777,3538,3539,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,wide_beam_baseline,33,42,49,27,13,20,40,40,True,True,8.112662400002591,836,3857,3858,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,wide_beam_baseline,32,41,48,21,15,17,36,36,True,True,6.5842912000080105,747,3421,3422,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,wide_beam_baseline,30,39,45,33,6,24,39,39,True,True,7.4685034999856725,948,3793,3794,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,wide_beam_baseline,26,33,39,20,10,16,30,30,True,True,6.3617889000161085,657,2960,2961,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,wide_beam_baseline,27,35,40,14,13,14,27,27,True,True,6.137682899978245,627,2824,2825,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,wide_beam_baseline,27,35,40,20,10,17,30,30,True,True,7.106391000008443,717,3341,3342,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,wide_beam_baseline,30,39,45,35,3,27,38,38,True,True,9.705352500022855,1047,4743,4744,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,wide_beam_baseline,23,29,34,22,6,17,28,28,True,True,6.279793800000334,655,2855,2856,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,wide_beam_baseline,29,37,43,26,10,19,36,36,True,True,6.979665399994701,777,3478,3479,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,wide_beam_baseline,33,42,49,23,17,16,40,40,True,True,6.79398799999035,721,3299,3300,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,wide_beam_baseline,31,40,46,29,11,20,40,40,True,True,7.2750900000100955,818,3574,3575,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,wide_beam_baseline,29,37,43,21,16,13,37,37,True,True,5.130972399987513,592,2488,2489,0,0,0.0,BEST_EFFORT

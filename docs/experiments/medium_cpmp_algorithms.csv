@@ -1,0 +1,9 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,status,validation_passed
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,random,12,5,4,0.600000,False,False,inf,0.00018350000027567148,0,0,0,0,0,0.0,0,,,,,,,NO_FEASIBLE_FOUND,False
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,greedy_cpmp,12,5,4,0.600000,False,False,inf,0.00013309999485500157,0,0,0,0,0,0.0,0,,,,,,,NO_FEASIBLE_FOUND,False
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,beam,12,5,4,0.600000,True,False,7.0,0.08991500000411179,421,4598,4599,0,0,0.0,0,,,,,,,FEASIBLE,True
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,diverse_beam,12,5,4,0.600000,True,False,7.0,24.663820600006147,346,3765,3766,0,0,0.0,0,0.6847573839662471,,,,,,FEASIBLE,True
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,rolling_horizon,12,5,4,0.600000,True,False,7.0,0.08306189998984337,421,7123,8,0,0,0.0,0,,,,,,,FEASIBLE,True
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,qubo_beam,12,5,4,0.600000,True,False,7.0,30.25789719999011,345,3798,3799,6,1019,29.837230399993132,5,0.6696376027093055,,,,,,FEASIBLE,True
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,qubo_rolling_horizon,12,5,4,0.600000,False,False,inf,20.10186419999809,0,0,0,4,4723,20.001092099992093,1,,,,,,,NO_FEASIBLE_FOUND,False
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,stack_assignment_guided_cpmp,12,5,4,0.600000,True,False,7.0,4.570280500003719,343,3696,3697,1,60,4.52574199999799,1,,,,,,,FEASIBLE,True

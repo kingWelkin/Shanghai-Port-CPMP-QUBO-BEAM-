@@ -11,13 +11,27 @@ dependencies = [
   "numpy>=1.24",
   "dimod>=0.12",
   "dwave-neal>=0.6",
+  "gurobipy>=13.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8",
 ]
 
 [project.scripts]
 greedy-yard = "greedy.run_batch:main"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+packages = [
+  "greedy",
+  "container_reshuffle",
+  "container_reshuffle.solvers",
+  "container_reshuffle.qubo",
+  "container_reshuffle.mip",
+  "container_reshuffle.experiments",
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools.package-dir]
+greedy = "src/greedy"
+container_reshuffle = "container_reshuffle"

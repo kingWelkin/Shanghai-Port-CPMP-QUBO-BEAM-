@@ -1,0 +1,14 @@
+{
+  "instance_id": "medium_cpmp_business_5x4_n12_seed3",
+  "variant": "premarshalling_cpmp",
+  "stack_count": 5,
+  "max_height": 4,
+  "container_count": 12,
+  "stacks": [
+    [],
+    [1, 7, 10, 4],
+    [8],
+    [2, 12, 3, 9],
+    [11, 5, 6]
+  ]
+}

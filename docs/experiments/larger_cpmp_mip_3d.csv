@@ -1,0 +1,2 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,status,validation_passed
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,mip_3d,25,6,5,0.833333,False,False,inf,60.82595330000913,0,0,0,0,0,0.0,0,,1.0,5.0,,27962,72383,TIME_LIMIT,False

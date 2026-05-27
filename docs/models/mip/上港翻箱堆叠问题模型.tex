@@ -1,0 +1,708 @@
+\documentclass[11pt,a4paper]{ctexart}
+
+% ==================== 页面设置 ====================
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.25}
+\usepackage{parskip}
+
+% ==================== 字体设置 ====================
+\usepackage{fontspec}
+\usepackage{ctex}
+
+% ==================== 数学与表格 ====================
+\usepackage{amsmath,amssymb,amsthm,bm,mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{tabularx}
+
+% ==================== 图片与颜色 ====================
+\usepackage{xcolor}
+\definecolor{mainblue}{RGB}{33,73,120}
+\definecolor{lightgray}{RGB}{245,247,250}
+\definecolor{textgray}{RGB}{70,70,70}
+
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=mainblue,
+    urlcolor=mainblue,
+    citecolor=mainblue
+}
+
+% ==================== 标题格式 ====================
+\usepackage{titlesec}
+\titleformat{\section}
+{\Large\bfseries\color{mainblue}}
+{\thesection}{0.8em}{}
+
+\titleformat{\subsection}
+{\large\bfseries\color{mainblue}}
+{\thesubsection}{0.8em}{}
+
+\titleformat{\subsubsection}
+{\normalsize\bfseries\color{textgray}}
+{\thesubsubsection}{0.8em}{}
+
+\titlespacing*{\section}{0pt}{1.2em}{0.6em}
+\titlespacing*{\subsection}{0pt}{0.9em}{0.4em}
+\titlespacing*{\subsubsection}{0pt}{0.7em}{0.3em}
+
+% ==================== 页眉页脚 ====================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\color{textgray}预倒箱精确MIP建模说明书}
+\rhead{\color{textgray}\thepage}
+\lfoot{\color{mainblue} \CompanyName}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ==================== 列表 ====================
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=2em,itemsep=0.2em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.2em,topsep=0.2em}
+
+% ==================== 定理环境 ====================
+\newtheorem{assumption}{假设}[section]
+\newtheorem{definition}{定义}[section]
+
+% ==================== 自定义命令 ====================
+\newcommand{\DocTitle}{集装箱预倒箱3D/4D精确MIP建模说明书}
+\newcommand{\ProjectName}{上港堆叠装箱优化项目}
+\newcommand{\CompanyName}{北京伊辛智能科技有限公司}
+\newcommand{\DocVersion}{V1.0}
+\newcommand{\DocDate}{2026年5月26日}
+\newcommand{\AuthorName}{建模组}
+\newcommand{\highlight}[1]{\textbf{\color{mainblue}#1}}
+
+% ==================== 正文开始 ====================
+\begin{document}
+
+% ==================== 封面 ====================
+\begin{titlepage}
+    \centering
+    \vspace*{2.5cm}
+
+    {\Huge\bfseries\color{mainblue}\DocTitle\par}
+    \vspace{0.8cm}
+    {\Large\ProjectName\par}
+
+    \vspace{1.8cm}
+
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{>{\bfseries}r l}
+        公司名称： & \CompanyName \\
+        文档版本： & \DocVersion \\
+        编制日期： & \DocDate \\
+        编制人员： & \AuthorName \\
+    \end{tabular}
+
+    \vfill
+
+    {\large\color{textgray}
+    本文档用于说明集装箱预倒箱问题的精确混合整数规划建模方案，重点给出3D整数位置模型与4D显式槽位模型的变量、约束和目标函数。}
+
+    \vspace{1.2cm}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ==================== 1. 项目背景 ====================
+\section{项目背景}
+
+\subsection{业务背景}
+在集装箱堆场装船作业前，箱子通常按照既有堆存状态分布在若干堆中。由于船舶装载顺序、关序号优先级和堆场空间限制的共同作用，某些优先级较高的箱子可能被优先级较低的箱子压住，从而在后续提箱时产生额外倒箱。
+
+预倒箱问题的目标是在不执行提箱作业的前提下，通过有限次跨堆搬移顶箱，将堆场调整为满足优先级顺序的布局。该问题具有明显的离散决策特征：每一步只能选择一个源堆顶箱，并放置到另一个未满目标堆的顶部。因此，使用混合整数规划（Mixed Integer Programming, MIP）可以给出小规模实例的精确最优解，并为启发式算法提供基准。
+
+\subsection{建模目标}
+本文档建立两个精确MIP模型：
+\begin{itemize}
+    \item \highlight{3D整数位置模型}：以“箱子--堆--时间”占用变量为主体，并用整数层位变量描述箱子在堆内的位置。
+    \item \highlight{4D显式槽位模型}：以“箱子--堆--层--时间”槽位占用变量为主体，直接刻画每个箱子在每一时刻所处槽位。
+\end{itemize}
+
+两个模型均以业务定义的未来逆序箱数$N(\mathrm{Future})$为主要优化目标，并在任意中间时刻满足
+$G=M(\mathrm{Now})+N(\mathrm{Future})$的业务上限约束。在相同未来逆序水平下，模型再尽量减少真实搬箱次数。
+
+% ==================== 2. 问题定义 ====================
+\section{问题定义}
+
+\subsection{决策问题描述}
+给定$m$个堆，每个堆最大高度为$H$，共有$n$个集装箱，编号为$p=1,\ldots,n$。编号越小表示提取优先级越高。输入堆栈按自底向上顺序给出。
+
+每一步允许执行如下操作：从某一非空源堆顶部取出一个箱子，并放到另一个未满目标堆顶部。源堆与目标堆必须不同；模型中不允许提箱作业。
+
+最终布局要求每个堆自底向上严格递减。例如，堆$[9,6,3,1]$为良序，因为下层箱号均大于上层箱号。
+
+\subsection{模型输入}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}c >{\raggedright\arraybackslash}X}
+\toprule
+输入 & 含义 \\
+\midrule
+$m$ & 堆数量 \\
+$H$ & 每个堆最大高度 \\
+$n$ & 集装箱数量，箱号集合为$\{1,\ldots,n\}$ \\
+$S_i^0$ & 初始时刻第$i$个堆的箱序列，按自底向上给出 \\
+$K$ & 允许的最大搬箱步数，即时间窗长度 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{模型输出}
+模型输出为一组按时间排序的搬箱动作：
+\[
+(s,p,i,k,\ell,r),
+\]
+表示第$s$步将箱$p$从源堆$i$的第$\ell$层搬到目标堆$k$的第$r$层。若在最大步数$K$内已完成整理，则允许后续步骤为空闲动作。
+
+% ==================== 3. 建模范围与假设 ====================
+\section{建模范围与假设}
+
+\subsection{建模范围}
+本文档仅考虑单次预倒箱决策周期内的确定性堆场整理问题。模型纳入以下规则：
+\begin{itemize}
+    \item 每次最多移动一个箱子；
+    \item 只能移动源堆顶部箱子；
+    \item 只能放置到另一个堆的顶部；
+    \item 任一时刻堆高不能超过$H$；
+    \item 最终每个堆必须满足自底向上严格递减。
+\end{itemize}
+
+本文档暂不考虑设备行走距离、吊机冲突、多作业线协同、贝位空间几何约束和不确定到港信息。
+
+\subsection{基本假设}
+\begin{assumption}
+输入箱号已重编码为$1,\ldots,n$，且箱号越小表示越高提取优先级。
+\end{assumption}
+
+\begin{assumption}
+所有初始堆栈满足无悬空条件，即若某层有箱，则其下方所有层均有箱。
+\end{assumption}
+
+\begin{assumption}
+搬箱动作耗时在模型中统一视为一个离散时间步；空闲步骤允许出现在有效搬箱序列之后。
+\end{assumption}
+
+% ==================== 4. 符号说明 ====================
+\section{符号说明}
+
+\subsection{集合与索引}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}c >{\raggedright\arraybackslash}X}
+\toprule
+符号 & 含义 \\
+\midrule
+$P=\{1,\ldots,n\}$ & 集装箱集合，索引为$p,q$ \\
+$I=\{1,\ldots,m\}$ & 堆集合，索引为$i,k$ \\
+$L=\{1,\ldots,H\}$ & 层集合，索引为$\ell,r$，第1层为最底层 \\
+$\mathcal{T}=\{0,\ldots,K\}$ & 布局时刻集合 \\
+$\mathcal{S}=\{1,\ldots,K\}$ & 搬箱步骤集合，步骤$s$表示从时刻$s-1$转移到时刻$s$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{参数}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}c >{\raggedright\arraybackslash}X}
+\toprule
+符号 & 含义 \\
+\midrule
+$m$ & 堆数量 \\
+$H$ & 堆最大高度 \\
+$n$ & 集装箱数量 \\
+$K$ & 最大允许搬箱步数 \\
+$\gamma$ & 业务熵上限系数，默认取$\gamma=1.3$，且不超过2.0 \\
+$\alpha_p$ & 箱$p$在初始时刻所在堆 \\
+$\beta_p$ & 箱$p$在初始时刻所在层 \\
+$M$ & 足够大的常数。本文可取$M=H$或$M=n$，视具体约束而定 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{公共变量}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}c >{\raggedright\arraybackslash}X}
+\toprule
+变量 & 含义 \\
+\midrule
+$a_s \in \{0,1\}$ & 若第$s$步执行一次真实搬箱，则$a_s=1$；否则为0 \\
+$h_s \in \{0,1\}$ & 若第$s$步为空闲步骤，则$h_s=1$；否则为0 \\
+$N_t \in \mathbb{Z}_{+}$ & 时刻$t$的未来逆序箱数，即$N(\mathrm{Future})$ \\
+$M_t \in \mathbb{Z}_{+}$ & 时刻$t$之前已经执行的真实搬箱次数，即$M(\mathrm{Now})$ \\
+$G_t \in \mathbb{Z}_{+}$ & 时刻$t$的业务熵值，$G_t=M_t+N_t$ \\
+$\xi_{pi\ell t}\in\{0,1\}$ & 业务逆序计算用槽位占用变量；4D中等于$u_{pi\ell t}$，3D中为辅助变量 \\
+$v_{i\ell t}\in\{0,1\}$ & 第$i$堆第$\ell$层与下层相比是否出现相邻层违例 \\
+$r_{i\ell t}\in\{0,1\}$ & 第$i$堆自底至第$\ell$层是否已经触发逆序后缀 \\
+$d_{i\ell t}\in\{0,1\}$ & 第$i$堆第$\ell$层箱是否被计入$N_t$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{3D模型变量}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}c >{\raggedright\arraybackslash}X}
+\toprule
+变量 & 含义 \\
+\midrule
+$z_{pit} \in \{0,1\}$ & 若箱$p$在时刻$t$位于堆$i$，则为1 \\
+$\lambda_{pt} \in \{1,\ldots,H\}$ & 箱$p$在时刻$t$所在层位 \\
+$b_{pqt} \in \{0,1\}$ & 若箱$p$在时刻$t$位于箱$q$下方，则为1 \\
+$w_{pqt} \in \{0,1\}$ & 若箱$p$与箱$q$在时刻$t$位于同一堆，则为1，定义于$p<q$ \\
+$x_{piks} \in \{0,1\}$ & 若第$s$步将箱$p$从堆$i$搬到堆$k$，则为1，要求$i\ne k$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{4D模型变量}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.92\textwidth}{>{\bfseries}c >{\raggedright\arraybackslash}X}
+\toprule
+变量 & 含义 \\
+\midrule
+$u_{pi\ell t} \in \{0,1\}$ & 若箱$p$在时刻$t$位于堆$i$第$\ell$层，则为1 \\
+$y_{pi\ell krs} \in \{0,1\}$ & 若第$s$步将箱$p$从槽位$(i,\ell)$搬到槽位$(k,r)$，则为1，要求$i\ne k$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ==================== 5. 公共建模结构 ====================
+\section{公共建模结构}
+
+\subsection{未来逆序箱数定义}
+业务定义的单堆逆序箱数按如下方式计算：从第2层开始向上查找第一个箱号大于其下方箱号的位置；一旦找到该位置，则该层及其上方所有非空箱均计为逆序箱。全场逆序箱数为所有堆逆序箱数之和。
+
+为进行线性建模，定义槽位占用变量$\xi_{pi\ell t}$表示箱$p$在时刻$t$位于堆$i$第$\ell$层。对4D模型有$\xi_{pi\ell t}=u_{pi\ell t}$；对3D模型，$\xi_{pi\ell t}$作为辅助槽位变量，并与$z_{pit}$和$\lambda_{pt}$绑定。
+
+定义第$i$堆第$\ell$层在时刻$t$的占用和箱号值：
+\begin{align}
+o_{i\ell t} &= \sum_{p\in P}\xi_{pi\ell t},\\
+c_{i\ell t} &= \sum_{p\in P}p\,\xi_{pi\ell t}.
+\end{align}
+
+对$\ell=2,\ldots,H$，定义相邻层违例变量$v_{i\ell t}$：
+\begin{equation}
+v_{i\ell t}=1
+\quad\Longleftrightarrow\quad
+o_{i\ell t}=1,\ c_{i\ell t}>c_{i,\ell-1,t}.
+\end{equation}
+其线性化可用大$M=n$给出：
+\begin{align}
+v_{i\ell t} &\le o_{i\ell t},\\
+c_{i\ell t}-c_{i,\ell-1,t}
+&\le n v_{i\ell t}+n(1-o_{i\ell t}),\\
+c_{i\ell t}-c_{i,\ell-1,t}
+&\ge 1-n(1-v_{i\ell t})-n(1-o_{i\ell t}).
+\end{align}
+
+定义后缀触发变量$r_{i\ell t}$，表示从第2层至第$\ell$层是否已经出现首个相邻层违例：
+\begin{align}
+r_{i1t} &=0,\\
+r_{i\ell t} &\ge r_{i,\ell-1,t},\\
+r_{i\ell t} &\ge v_{i\ell t},\\
+r_{i\ell t} &\le r_{i,\ell-1,t}+v_{i\ell t}.
+\end{align}
+
+定义逆序箱变量$d_{i\ell t}$，若该层有箱且已经处于违例后缀中，则$d_{i\ell t}=1$：
+\begin{align}
+d_{i\ell t} &\le o_{i\ell t},\\
+d_{i\ell t} &\le r_{i\ell t},\\
+d_{i\ell t} &\ge o_{i\ell t}+r_{i\ell t}-1.
+\end{align}
+
+于是时刻$t$的未来逆序箱数为：
+\begin{equation}
+N_t=\sum_{i\in I}\sum_{\ell\in L}d_{i\ell t}.
+\end{equation}
+
+\subsection{业务熵上限约束}
+定义时刻$t$之前已经执行的真实搬箱次数：
+\begin{equation}
+M_t=\sum_{s=1}^{t} a_s,\quad t=0,\ldots,K,
+\end{equation}
+其中$M_0=0$。业务熵值为：
+\begin{equation}
+G_t=M_t+N_t.
+\end{equation}
+
+令$N_0$为初始布局的未来逆序箱数，业务要求任意时刻均满足：
+\begin{equation}
+G_t\le \left\lfloor \gamma N_0\right\rfloor,
+\quad \forall t\in\mathcal{T},
+\end{equation}
+其中默认$\gamma=1.3$，且$\gamma$最大不超过2.0。该约束是业务硬约束，不能作为可选启发式省略。
+
+\subsection{目标函数}
+由于最终良序时$N_K=0$，若仅最小化末态$N_K$会退化为常数目标。因此模型最小化全路径累计未来逆序箱数，并以搬箱次数作为二级平局项：
+\begin{equation}
+\min \quad (K+1)\sum_{t\in\mathcal{T}}N_t+\sum_{s\in\mathcal{S}} a_s .
+\end{equation}
+
+其中$(K+1)$保证主目标优先级高于搬箱次数：模型首先选择累计$N(\mathrm{Future})$最低的路径；若累计未来逆序箱数相同，再选择搬箱次数更少的路径。
+
+\subsection{搬箱与空闲步骤关系}
+\begin{equation}
+a_s + h_s = 1, \quad \forall s\in\mathcal{S}.
+\end{equation}
+
+每个步骤要么执行一次搬箱，要么为空闲步骤。
+
+\subsection{空闲后缀对称性约束}
+\begin{equation}
+h_s \le h_{s+1}, \quad \forall s=1,\ldots,K-1.
+\end{equation}
+
+该约束表示一旦某一步为空闲，则其后所有步骤均为空闲。它不改变最优值，但可以消除“搬箱动作之间夹杂空闲”的对称解，提高求解效率。
+
+% ==================== 6. 3D整数位置MIP模型 ====================
+\section{3D整数位置MIP模型}
+
+\subsection{初始条件}
+\begin{align}
+z_{pi0} &= 
+\begin{cases}
+1, & i=\alpha_p,\\
+0, & i\ne \alpha_p,
+\end{cases}
+\quad \forall p\in P,\ i\in I,\\
+\lambda_{p0} &= \beta_p,\quad \forall p\in P.
+\end{align}
+
+若初始时刻箱$p$在箱$q$下方，则固定$b_{pq0}=1$；否则固定为0：
+\begin{equation}
+b_{pq0} =
+\begin{cases}
+1, & \alpha_p=\alpha_q,\ \beta_p<\beta_q,\\
+0, & \text{otherwise},
+\end{cases}
+\quad \forall p,q\in P,\ p\ne q.
+\end{equation}
+
+\subsection{箱子唯一所在堆与堆容量}
+\begin{align}
+\sum_{i\in I} z_{pit} &= 1,\quad \forall p\in P,\ t\in\mathcal{T},\\
+\sum_{p\in P} z_{pit} &\le H,\quad \forall i\in I,\ t\in\mathcal{T}.
+\end{align}
+
+\subsection{同堆关系定义}
+对任意$p<q$，变量$w_{pqt}$表示两个箱是否同堆：
+\begin{align}
+w_{pqt} &\ge z_{pit}+z_{qit}-1,
+&& \forall p<q,\ i\in I,\ t\in\mathcal{T},\\
+w_{pqt} &\le 1-z_{pit}+z_{qit},
+&& \forall p<q,\ i\in I,\ t\in\mathcal{T},\\
+w_{pqt} &\le 1-z_{qit}+z_{pit},
+&& \forall p<q,\ i\in I,\ t\in\mathcal{T}.
+\end{align}
+
+\subsection{上下关系与层位定义}
+若两个箱在同一堆，则二者之间必须存在唯一上下关系：
+\begin{equation}
+b_{pqt}+b_{qpt}=w_{\min(p,q),\max(p,q),t},
+\quad \forall p,q\in P,\ p\ne q,\ t\in\mathcal{T}.
+\end{equation}
+
+上下关系应满足传递性：
+\begin{equation}
+b_{pqt}+b_{qrt}-1 \le b_{prt},
+\quad \forall p,q,r\in P,\ p,q,r\ \text{两两不同},\ t\in\mathcal{T}.
+\end{equation}
+
+层位等于其下方箱数加1：
+\begin{equation}
+\lambda_{pt} = 1+\sum_{\substack{q\in P\\q\ne p}} b_{qpt},
+\quad \forall p\in P,\ t\in\mathcal{T}.
+\end{equation}
+
+若箱$p$在箱$q$下方，则$p$的层位必须严格小于$q$的层位：
+\begin{equation}
+\lambda_{pt}+1 \le \lambda_{qt}+H(1-b_{pqt}),
+\quad \forall p,q\in P,\ p\ne q,\ t\in\mathcal{T}.
+\end{equation}
+
+\subsection{一步搬箱数量}
+\begin{equation}
+\sum_{p\in P}\sum_{i\in I}\sum_{\substack{k\in I\\k\ne i}} x_{piks}
+= a_s,\quad \forall s\in\mathcal{S}.
+\end{equation}
+
+\subsection{堆归属转移}
+\begin{equation}
+z_{pis}=z_{pi,s-1}
+-\sum_{\substack{k\in I\\k\ne i}}x_{piks}
++\sum_{\substack{k\in I\\k\ne i}}x_{pkis},
+\quad \forall p\in P,\ i\in I,\ s\in\mathcal{S}.
+\end{equation}
+
+\subsection{未移动箱层位保持}
+定义箱$p$在第$s$步是否被移动：
+\begin{equation}
+\rho_{ps}=\sum_{i\in I}\sum_{\substack{k\in I\\k\ne i}}x_{piks}.
+\end{equation}
+则未移动箱的层位保持不变：
+\begin{align}
+\lambda_{ps}-\lambda_{p,s-1} &\le H\rho_{ps},
+&& \forall p\in P,\ s\in\mathcal{S},\\
+\lambda_{p,s-1}-\lambda_{ps} &\le H\rho_{ps},
+&& \forall p\in P,\ s\in\mathcal{S}.
+\end{align}
+
+\subsection{移动合法性约束}
+若$x_{piks}=1$，则箱$p$在移动前必须位于源堆$i$：
+\begin{equation}
+x_{piks}\le z_{pi,s-1},
+\quad \forall p\in P,\ i,k\in I,\ i\ne k,\ s\in\mathcal{S}.
+\end{equation}
+
+源箱必须为源堆顶箱。源堆在时刻$s-1$的高度为$\sum_{q\in P}z_{qi,s-1}$，故有：
+\begin{align}
+\lambda_{p,s-1}-\sum_{q\in P}z_{qi,s-1}
+&\le H(1-x_{piks}),\\
+\sum_{q\in P}z_{qi,s-1}-\lambda_{p,s-1}
+&\le H(1-x_{piks}),
+\end{align}
+\[
+\forall p\in P,\ i,k\in I,\ i\ne k,\ s\in\mathcal{S}.
+\]
+
+目标堆移动前不能满：
+\begin{equation}
+\sum_{q\in P}z_{qk,s-1}\le H-1+H(1-x_{piks}),
+\quad \forall p\in P,\ i,k\in I,\ i\ne k,\ s\in\mathcal{S}.
+\end{equation}
+
+移动后，箱$p$位于目标堆原高度加1的位置：
+\begin{align}
+\lambda_{ps}-\left(1+\sum_{q\in P}z_{qk,s-1}\right)
+&\le H(1-x_{piks}),\\
+\left(1+\sum_{q\in P}z_{qk,s-1}\right)-\lambda_{ps}
+&\le H(1-x_{piks}),
+\end{align}
+\[
+\forall p\in P,\ i,k\in I,\ i\ne k,\ s\in\mathcal{S}.
+\]
+
+\subsection{最终良序约束}
+若$p<q$，则箱$p$优先级高于箱$q$。最终布局中不允许$p$位于$q$下方：
+\begin{equation}
+b_{pqK}=0,\quad \forall p,q\in P,\ p<q.
+\end{equation}
+
+\subsection{3D完整模型}
+\begin{equation}
+\begin{aligned}
+\min\quad
+& (K+1)\sum_{t\in\mathcal{T}}N_t+\sum_{s\in\mathcal{S}} a_s\\
+\textrm{s.t.}\quad
+& \text{初始条件、唯一所在堆、堆容量约束},\\
+& \text{同堆关系、上下关系、层位定义与传递性约束},\\
+& \text{搬箱数量、堆归属转移、层位保持约束},\\
+& \text{源堆顶箱、目标堆未满、目标层位约束},\\
+& \text{未来逆序箱数定义与业务熵上限约束},\\
+& \text{最终良序约束与空闲后缀约束},\\
+& z_{pit},b_{pqt},w_{pqt},x_{piks},a_s,h_s,\xi_{pi\ell t},v_{i\ell t},r_{i\ell t},d_{i\ell t}\in\{0,1\},\\
+& \lambda_{pt}\in\{1,\ldots,H\}.
+\end{aligned}
+\end{equation}
+
+% ==================== 7. 4D显式槽位MIP模型 ====================
+\section{4D显式槽位MIP模型}
+
+\subsection{初始条件}
+\begin{equation}
+u_{pi\ell 0}=
+\begin{cases}
+1, & i=\alpha_p,\ \ell=\beta_p,\\
+0, & \text{otherwise},
+\end{cases}
+\quad \forall p\in P,\ i\in I,\ \ell\in L.
+\end{equation}
+
+\subsection{箱子唯一槽位与槽位容量}
+\begin{align}
+\sum_{i\in I}\sum_{\ell\in L}u_{pi\ell t} &= 1,
+&& \forall p\in P,\ t\in\mathcal{T},\\
+\sum_{p\in P}u_{pi\ell t} &\le 1,
+&& \forall i\in I,\ \ell\in L,\ t\in\mathcal{T}.
+\end{align}
+
+\subsection{无悬空约束}
+\begin{equation}
+\sum_{p\in P}u_{pi,\ell+1,t}
+\le
+\sum_{p\in P}u_{pi\ell t},
+\quad \forall i\in I,\ \ell=1,\ldots,H-1,\ t\in\mathcal{T}.
+\end{equation}
+
+\subsection{一步搬箱数量}
+\begin{equation}
+\sum_{p\in P}
+\sum_{i\in I}\sum_{\ell\in L}
+\sum_{\substack{k\in I\\k\ne i}}\sum_{r\in L}
+y_{pi\ell krs}
+=a_s,\quad \forall s\in\mathcal{S}.
+\end{equation}
+
+\subsection{源槽位占用与源堆顶箱}
+若$y_{pi\ell krs}=1$，则移动前箱$p$必须位于源槽位$(i,\ell)$：
+\begin{equation}
+y_{pi\ell krs}\le u_{pi\ell,s-1},
+\quad \forall p,i,\ell,k,r,s,\ i\ne k.
+\end{equation}
+
+源槽位上方不能有任何箱：
+\begin{equation}
+y_{pi\ell krs}
+\sum_{q\in P}u_{qi\ell',s-1}
+\le 1,
+\quad
+\forall \ell'=\ell+1,\ldots,H.
+\end{equation}
+
+\subsection{目标槽位可放置}
+目标槽位在移动前必须为空：
+\begin{equation}
+y_{pi\ell krs}
+\sum_{q\in P}u_{qkr,s-1}
+\le 1,
+\quad \forall p,i,\ell,k,r,s,\ i\ne k.
+\end{equation}
+
+若目标层$r>1$，则目标槽位下方所有层必须已有箱支撑：
+\begin{equation}
+y_{pi\ell krs}
+\le
+\sum_{q\in P}u_{qk r',s-1},
+\quad \forall r'=1,\ldots,r-1.
+\end{equation}
+
+\subsection{槽位状态转移}
+对任意箱$p$、堆$i$、层$\ell$和步骤$s$：
+\begin{equation}
+\begin{aligned}
+u_{pi\ell s}
+=\;&u_{pi\ell,s-1}
+-\sum_{\substack{k\in I\\k\ne i}}\sum_{r\in L}
+y_{pi\ell krs}\\
+&+\sum_{\substack{k\in I\\k\ne i}}\sum_{r\in L}
+y_{pkr i\ell s}.
+\end{aligned}
+\end{equation}
+
+该约束表示，若箱$p$从槽位$(i,\ell)$移出，则该槽位占用消失；若箱$p$从其他槽位移入$(i,\ell)$，则该槽位被占用；未被移动的箱保持原槽位。
+
+\subsection{最终良序约束}
+对任意相邻层$\ell$与$\ell+1$，若$p<q$，则不允许箱$p$在下、箱$q$在上：
+\begin{equation}
+u_{pi\ell K}+u_{qi,\ell+1,K}\le 1,
+\quad \forall i\in I,\ \ell=1,\ldots,H-1,\ p,q\in P,\ p<q.
+\end{equation}
+
+由于堆内无悬空且相邻层均满足下层箱号大于上层箱号，上式即可保证每个最终堆自底向上严格递减。
+
+\subsection{4D完整模型}
+\begin{equation}
+\begin{aligned}
+\min\quad
+& (K+1)\sum_{t\in\mathcal{T}}N_t+\sum_{s\in\mathcal{S}} a_s\\
+\textrm{s.t.}\quad
+& \text{初始条件、唯一槽位、槽位容量、无悬空约束},\\
+& \text{一步至多一次搬箱与空闲后缀约束},\\
+& \text{源槽位占用、源堆顶箱、目标槽位为空与支撑约束},\\
+& \text{槽位状态转移约束与最终良序约束},\\
+& \text{未来逆序箱数定义与业务熵上限约束},\\
+& u_{pi\ell t},y_{pi\ell krs},a_s,h_s,v_{i\ell t},r_{i\ell t},d_{i\ell t}\in\{0,1\}.
+\end{aligned}
+\end{equation}
+
+% ==================== 8. 模型结构说明 ====================
+\section{模型结构说明}
+
+\subsection{模型类型}
+3D模型和4D模型均为混合整数线性规划模型。二者目标函数和绝大部分约束均为线性形式，离散性主要来自箱子位置、搬箱动作、未来逆序后缀触发变量和空闲步骤等二元变量。
+
+\subsection{两种模型的差异}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.95\textwidth}{>{\bfseries}p{3.0cm} X X}
+\toprule
+维度 & 3D整数位置模型 & 4D显式槽位模型 \\
+\midrule
+位置表达 & 用$z_{pit}$表示箱所在堆，用$\lambda_{pt}$表示层位 & 用$u_{pi\ell t}$直接表示箱所在槽位 \\
+堆内顺序 & 通过$b_{pqt}$、$w_{pqt}$和传递性约束表达 & 通过槽位占用和相邻层良序约束表达 \\
+业务逆序计算 & 额外引入$\xi_{pi\ell t}$辅助槽位变量，并与$z_{pit}$、$\lambda_{pt}$绑定 & 直接令$\xi_{pi\ell t}=u_{pi\ell t}$，逆序定义最直观 \\
+变量规模 & 主位置变量低于4D槽位模型，但加入业务逆序辅助槽位后规模会增加 & 变量含层位维度，移动变量规模较大 \\
+可解释性 & 层位和上下关系显式，但约束较抽象 & 槽位状态直观，便于检查每一步布局 \\
+适用场景 & 已封存为历史对照模型，不再作为推荐主模型 & 推荐作为当前业务约束下的小规模精确基准 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{业务规则与模型映射关系}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.95\textwidth}{>{\bfseries}p{4.0cm} X}
+\toprule
+业务规则 & 数学表达 \\
+\midrule
+每个箱任一时刻只能在一个位置 & 3D中$\sum_i z_{pit}=1$；4D中$\sum_{i,\ell}u_{pi\ell t}=1$ \\
+堆高不能超过$H$ & 3D中$\sum_p z_{pit}\le H$；4D中槽位容量和无悬空共同保证 \\
+只能搬源堆顶箱 & 3D中层位等于源堆高度；4D中源槽位上方无箱 \\
+只能放到目标堆顶部 & 3D中目标层位等于目标堆高度加1；4D中目标槽位为空且下方有支撑 \\
+源堆与目标堆不同 & 移动变量仅定义于$i\ne k$ \\
+最终良序 & 3D中禁止高优先级箱在低优先级箱下方；4D中禁止相邻层出现下小上大的组合 \\
+业务逆序箱数 & 自第2层向上寻找首个上层箱号大于下层箱号的位置，并将该层及上方箱计入$N_t$ \\
+业务熵上限 & 任意时刻满足$G_t=M_t+N_t\le \lfloor \gamma N_0\rfloor$ \\
+优化目标 & 最小化$\sum_t N_t$，并以$\sum_s a_s$作为二级平局项 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ==================== 9. 预期求解算法 ====================
+\section{预期求解算法}
+
+\subsection{总体思路}
+对于小规模实例，可直接调用Gurobi等商业MIP求解器精确求解，设置目标函数为累计未来逆序箱数$\sum_t N_t$最小，并将MIPGap设为0以证明该业务目标下的最优性。若模型在给定步数$K$和业务熵上限$\lfloor\gamma N_0\rfloor$内不可行，可通过导出LP文件和IIS不可行子系统定位冲突约束。
+
+\subsection{规模扩展建议}
+随着$m$、$H$、$n$、$K$增大，模型变量和约束数量会迅速增长。特别是4D模型的移动变量规模约为：
+\[
+O(nm^2H^2K).
+\]
+因此，大规模生产实例建议采用如下策略：
+\begin{itemize}
+    \item 用贪心或局部搜索生成高质量初始解；
+    \item 只对少量冲突堆或短时间窗口建立精确MIP子问题；
+    \item 对可选目标堆和源堆进行候选集裁剪；
+    \item 使用4D模型作为优先精确基准，3D模型仅作为历史对照模型保留。
+\end{itemize}
+
+% ==================== 10. 小结 ====================
+\section{小结}
+
+本文档给出了集装箱预倒箱问题的两个精确MIP建模方案。3D整数位置模型通过箱子所在堆、整数层位和上下关系变量刻画堆内结构，并额外引入辅助槽位变量计算业务逆序箱数；4D显式槽位模型直接描述每个箱子在每一时刻的槽位占用。二者均能精确表达顶箱搬移、目标堆未满、空闲后缀、业务熵上限和最终良序要求，并以累计$N(\mathrm{Future})$最低为主要优化目标。
+
+从当前业务口径看，4D模型虽然变量数更多，但直接表达槽位与相邻层关系，线性松弛更强，适合作为小规模精确基准。3D模型因业务逆序计算仍需辅助槽位变量，同时保留整数层位和大M约束，当前已封存为历史对照模型。
+
+\end{document}

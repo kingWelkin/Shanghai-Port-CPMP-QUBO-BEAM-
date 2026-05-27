@@ -1,0 +1,115 @@
+[
+  {
+    "instance": {
+      "instance_id": "larger_cpmp_6x5_n25_seed5",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 6,
+      "max_height": 5,
+      "container_count": 25,
+      "stacks": [
+        [
+          5,
+          24,
+          7,
+          12
+        ],
+        [
+          11,
+          13,
+          23,
+          19,
+          4
+        ],
+        [
+          18,
+          16,
+          22,
+          8,
+          1
+        ],
+        [
+          3,
+          25,
+          6,
+          2,
+          17
+        ],
+        [
+          10,
+          14,
+          9,
+          20
+        ],
+        [
+          15,
+          21
+        ]
+      ]
+    },
+    "solver": "qubo_beam_api",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 133.7556568,
+      "status": "NO_FEASIBLE_FOUND; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing",
+      "moves": []
+    },
+    "final_stacks": [
+      [
+        5,
+        24,
+        7,
+        12
+      ],
+      [
+        11,
+        13,
+        23,
+        19,
+        4
+      ],
+      [
+        18,
+        16,
+        22,
+        8,
+        1
+      ],
+      [
+        3,
+        25,
+        6,
+        2,
+        17
+      ],
+      [
+        10,
+        14,
+        9,
+        20
+      ],
+      [
+        15,
+        21
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NO_FEASIBLE_FOUND; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing",
+    "diagnostics": {
+      "expanded_states": 5176,
+      "generated_states": 60903,
+      "visited_states": 60904,
+      "qubo_calls": 45,
+      "qubo_total_vars": 13060,
+      "qubo_total_time_sec": 100.8700282000209,
+      "qubo_repair_count": 44,
+      "selected_avg_similarity": 0.8001582321818459,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  }
+]

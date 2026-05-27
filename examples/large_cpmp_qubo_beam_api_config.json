@@ -1,0 +1,19 @@
+{
+  "solver_names": [
+    "qubo_beam_api"
+  ],
+  "instance_paths": [
+    "instances/large_cpmp_6x5_n20_seed3.json"
+  ],
+  "max_depth": 30,
+  "beam_width": 100,
+  "max_candidates_per_layer": 1200,
+  "candidate_limit_per_state": 30,
+  "max_qubo_vars": 300,
+  "time_limit_sec": 10.0,
+  "qubo_penalty_a": 10.0,
+  "diversity_weight": 0.5,
+  "random_seed": 11,
+  "output_csv": "docs/experiments/large_cpmp_qubo_beam_api.csv",
+  "output_json": "docs/experiments/large_cpmp_qubo_beam_api.json"
+}

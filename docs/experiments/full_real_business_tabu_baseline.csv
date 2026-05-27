@@ -1,0 +1,31 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,15,22,7,37,37,True,True,0.1059,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A1_01_26_paired,tabu_search_baseline,29,37,43,21,16,13,37,37,True,True,4.406759800011059,224,72353,208,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A2_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,19,16,11,35,35,True,True,0.095,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A2_01_26_paired,tabu_search_baseline,27,35,40,21,10,17,31,31,True,True,4.823588400002336,225,79335,223,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A3_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1356,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A3_01_26_paired,tabu_search_baseline,30,39,45,23,13,17,36,36,True,True,5.046304199990118,226,80096,224,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A4_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,26,16,17,42,42,True,True,0.1104,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A4_01_26_paired,tabu_search_baseline,33,42,49,29,13,20,42,42,True,True,5.001505799998995,236,81316,232,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A5_01_26_paired,chen_greedy_algorithm_1p3,32,41,48,19,22,10,41,41,True,True,0.1251,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A5_01_26_paired,tabu_search_baseline,32,41,48,20,16,16,36,36,True,True,4.602529199997662,232,76493,228,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B1_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,25,14,16,39,39,True,True,0.1445,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B1_01_26_paired,tabu_search_baseline,30,39,45,26,12,18,38,38,True,True,4.61333629998262,227,78616,225,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B2_01_26_paired,chen_greedy_algorithm_1p3,26,33,39,18,15,11,33,33,True,True,0.111,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B2_01_26_paired,tabu_search_baseline,26,33,39,23,10,16,33,33,True,True,4.825332899985369,228,77694,222,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B3_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,24,11,16,35,35,True,True,0.1277,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B3_01_26_paired,tabu_search_baseline,27,35,40,13,14,13,27,27,True,True,4.870462899998529,226,81010,222,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B4_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,21,14,13,35,35,True,True,0.1159,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B4_01_26_paired,tabu_search_baseline,27,35,40,21,10,17,31,31,True,True,4.842249200009974,225,81953,223,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B5_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1187,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B5_01_26_paired,tabu_search_baseline,30,39,45,33,6,24,39,39,True,True,4.7679506999847945,233,81043,231,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C1_01_26_paired,chen_greedy_algorithm_1p3,23,29,34,17,12,11,29,29,True,True,0.0907,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C1_01_26_paired,tabu_search_baseline,23,29,34,23,6,17,29,29,True,True,5.256621699983953,240,81410,228,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C2_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,20,17,12,37,37,True,True,0.1032,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C2_01_26_paired,tabu_search_baseline,29,37,43,18,14,15,32,32,True,True,4.49699650000548,227,77507,221,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C3_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,18,24,9,42,42,True,True,0.1197,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C3_01_26_paired,tabu_search_baseline,33,42,49,22,18,15,40,40,True,True,4.718118399992818,224,79653,222,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C4_01_26_paired,chen_greedy_algorithm_1p3,31,40,46,20,20,11,40,40,True,True,0.1201,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C4_01_26_paired,tabu_search_baseline,31,40,46,30,10,21,40,40,True,True,4.7442372999794316,230,80100,228,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C5_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,17,20,9,37,37,True,True,0.1018,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C5_01_26_paired,tabu_search_baseline,29,37,43,21,16,13,37,37,True,True,4.7937428999866825,225,76637,213,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9

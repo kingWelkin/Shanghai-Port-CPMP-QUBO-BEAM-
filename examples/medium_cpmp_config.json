@@ -1,0 +1,30 @@
+﻿{
+  "solver_names": [
+    "random",
+    "greedy_cpmp",
+    "beam",
+    "diverse_beam",
+    "rolling_horizon",
+    "qubo_beam",
+    "qubo_rolling_horizon",
+    "stack_assignment_guided_cpmp"
+  ],
+  "instance_paths": [
+    "instances/medium_cpmp_5x4_n12_seed1.json"
+  ],
+  "max_depth": 12,
+  "beam_width": 80,
+  "max_candidates_per_layer": 800,
+  "candidate_limit_per_state": 25,
+  "max_qubo_vars": 200,
+  "rolling_depth": 3,
+  "prefix_commit_length": 1,
+  "time_limit_sec": 30.0,
+  "qubo_penalty_a": 10.0,
+  "diversity_weight": 0.5,
+  "random_seed": 7,
+  "enable_visited_pruning": true,
+  "enable_canonical_hash": false,
+  "output_csv": "docs/experiments/medium_cpmp_algorithms.csv",
+  "output_json": "docs/experiments/medium_cpmp_algorithms.json"
+}

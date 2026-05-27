@@ -85,6 +85,7 @@ def _run_one_case(
             verbose_iter=True,
             verbose_build=args.timing,
             greedy_max_moves=max_g,
+            g_ratio=args.g_ratio,
         )
 
         if args.skip_if_moves_above > 0 and len(planned) > args.skip_if_moves_above:
@@ -190,6 +191,7 @@ def main() -> None:
     ap.add_argument("--terminal-stack-scale", type=float, default=50.0)
     ap.add_argument("--sa-reads", type=int, default=80)
     ap.add_argument("--max-greedy-moves", type=int, default=0)
+    ap.add_argument("--g-ratio", type=float, default=1.5, help="G cap multiplier; e.g. 1.3 means floor(1.3*N0)")
     ap.add_argument("--skip-if-moves-above", type=int, default=0)
     ap.add_argument("--timing", action="store_true")
     args = ap.parse_args()

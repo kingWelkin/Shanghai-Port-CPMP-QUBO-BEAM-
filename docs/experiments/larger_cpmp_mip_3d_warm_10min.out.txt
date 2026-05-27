@@ -1,0 +1,15 @@
+Set parameter LicenseID to value 2757959
+{
+  "solver": "mip_3d",
+  "feasible": true,
+  "optimal": false,
+  "objective": 32.0,
+  "runtime_sec": 600.8778830000083,
+  "status": "TIME_LIMIT",
+  "best_bound": 6.0,
+  "mip_gap": 0.8125,
+  "node_count": 1.0,
+  "var_count": 27962,
+  "constr_count": 72383,
+  "validation_passed": true
+}

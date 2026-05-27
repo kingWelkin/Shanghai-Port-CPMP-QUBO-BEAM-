@@ -1,0 +1,76 @@
+case,solver,moves,final_n,reduction,g_end,max_g,g_ok_13,runtime_sec,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,chen_greedy_algorithm_1p3,15,22,7,37,37,True,0.1059,0,0,0.0,rerun; cap=1.3*N0
+A1_01_26_paired,beam,15,18,11,33,33,True,2.966942300001392,0,0,0.0,BEST_EFFORT
+A1_01_26_paired,qubo_beam,15,18,11,33,33,True,3.060974299994996,4,93,0.06436439999379218,BEST_EFFORT
+A2_01_26_paired,chen_greedy_algorithm_1p3,19,16,11,35,35,True,0.095,0,0,0.0,rerun; cap=1.3*N0
+A2_01_26_paired,beam,27,4,23,31,31,True,3.613466900002095,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,qubo_beam,30,4,23,34,34,True,3.592422699992312,7,148,0.10776540001097601,BEST_EFFORT
+A3_01_26_paired,chen_greedy_algorithm_1p3,22,17,13,39,39,True,0.1356,0,0,0.0,rerun; cap=1.3*N0
+A3_01_26_paired,beam,26,10,20,36,36,True,4.424261300009675,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,qubo_beam,26,10,20,36,36,True,4.611268699998618,6,142,0.10466270001779776,BEST_EFFORT
+A4_01_26_paired,chen_greedy_algorithm_1p3,26,16,17,42,42,True,0.1104,0,0,0.0,rerun; cap=1.3*N0
+A4_01_26_paired,beam,27,13,20,40,40,True,4.600849299997208,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,qubo_beam,29,13,20,42,42,True,4.364611299999524,6,147,0.1045194000180345,BEST_EFFORT
+A5_01_26_paired,chen_greedy_algorithm_1p3,19,22,10,41,41,True,0.1251,0,0,0.0,rerun; cap=1.3*N0
+A5_01_26_paired,beam,21,15,17,36,36,True,3.7112937000056263,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,qubo_beam,21,15,17,36,36,True,3.9913155999965966,6,151,0.10360480000963435,BEST_EFFORT
+B1_01_26_paired,chen_greedy_algorithm_1p3,25,14,16,39,39,True,0.1445,0,0,0.0,rerun; cap=1.3*N0
+B1_01_26_paired,beam,33,6,24,39,39,True,3.4719630999898072,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,qubo_beam,33,5,25,38,38,True,5.108968400003505,7,171,0.1245340000023134,BEST_EFFORT
+B2_01_26_paired,chen_greedy_algorithm_1p3,18,15,11,33,33,True,0.111,0,0,0.0,rerun; cap=1.3*N0
+B2_01_26_paired,beam,22,9,17,31,31,True,3.732784799998626,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,qubo_beam,22,9,17,31,31,True,3.637262100004591,5,121,0.08341900000232272,BEST_EFFORT
+B3_01_26_paired,chen_greedy_algorithm_1p3,24,11,16,35,35,True,0.1277,0,0,0.0,rerun; cap=1.3*N0
+B3_01_26_paired,beam,16,12,15,28,28,True,3.811194100009743,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,qubo_beam,16,12,15,28,28,True,3.5257014999951934,5,116,0.09751680001500063,BEST_EFFORT
+B4_01_26_paired,chen_greedy_algorithm_1p3,21,14,13,35,35,True,0.1159,0,0,0.0,rerun; cap=1.3*N0
+B4_01_26_paired,beam,20,10,17,30,30,True,3.66108279999753,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,qubo_beam,20,10,17,30,30,True,4.264699099992868,5,123,0.08446239998738747,BEST_EFFORT
+B5_01_26_paired,chen_greedy_algorithm_1p3,22,17,13,39,39,True,0.1187,0,0,0.0,rerun; cap=1.3*N0
+B5_01_26_paired,beam,36,3,27,39,39,True,4.1713981999928365,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,qubo_beam,36,3,27,39,39,True,5.213048000005074,8,183,0.14037299998744857,BEST_EFFORT
+C1_01_26_paired,chen_greedy_algorithm_1p3,17,12,11,29,29,True,0.0907,0,0,0.0,rerun; cap=1.3*N0
+C1_01_26_paired,beam,18,7,16,25,25,True,3.3982800000085263,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,qubo_beam,18,7,16,25,25,True,3.652899199994863,5,119,0.0845469000050798,BEST_EFFORT
+C2_01_26_paired,chen_greedy_algorithm_1p3,20,17,12,37,37,True,0.1032,0,0,0.0,rerun; cap=1.3*N0
+C2_01_26_paired,beam,28,9,20,37,37,True,3.9505185000016354,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,qubo_beam,30,7,22,37,37,True,4.0621419999952195,6,131,0.11313910000899341,BEST_EFFORT
+C3_01_26_paired,chen_greedy_algorithm_1p3,18,24,9,42,42,True,0.1197,0,0,0.0,rerun; cap=1.3*N0
+C3_01_26_paired,beam,23,17,16,40,40,True,3.6203153999958886,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,qubo_beam,23,17,16,40,40,True,3.3579039000032935,5,120,0.08503800000471529,BEST_EFFORT
+C4_01_26_paired,chen_greedy_algorithm_1p3,20,20,11,40,40,True,0.1201,0,0,0.0,rerun; cap=1.3*N0
+C4_01_26_paired,beam,29,11,20,40,40,True,3.2270356000080938,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,qubo_beam,29,11,20,40,40,True,4.067193099996075,6,150,0.1036269999895012,BEST_EFFORT
+C5_01_26_paired,chen_greedy_algorithm_1p3,17,20,9,37,37,True,0.1018,0,0,0.0,rerun; cap=1.3*N0
+C5_01_26_paired,beam,21,16,13,37,37,True,2.9684877000108827,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,qubo_beam,21,16,13,37,37,True,3.0710606000066036,5,118,0.08336020000569988,BEST_EFFORT
+A1_01_26_paired,qubo_beam_api_dense,15,18,11,33,33,True,11.163902800006326,4,93,7.192490999994334,"BEST_EFFORT; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing"
+A2_01_26_paired,qubo_beam_api_dense,16,12,15,28,28,True,10.614330699987477,4,88,6.663683499995386,"BEST_EFFORT; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing"
+A3_01_26_paired,qubo_beam_api_dense,16,14,16,30,30,True,10.083784599992214,4,89,8.627049100032309,BEST_EFFORT; samplers=ising_matrix_api
+A4_01_26_paired,qubo_beam_api_dense,15,21,12,36,36,True,10.269675999996252,4,89,8.889759099954972,BEST_EFFORT; samplers=ising_matrix_api
+A5_01_26_paired,qubo_beam_api_dense,14,18,14,32,32,True,10.153785300004529,4,91,8.890485300013097,BEST_EFFORT; samplers=ising_matrix_api
+B1_01_26_paired,qubo_beam_api_dense,16,14,16,30,30,True,10.365747700008797,4,88,8.899313100031577,BEST_EFFORT; samplers=ising_matrix_api
+B2_01_26_paired,qubo_beam_api_dense,15,11,15,26,26,True,10.220426700019743,4,93,8.822546599956695,BEST_EFFORT; samplers=ising_matrix_api
+B3_01_26_paired,qubo_beam_api_dense,16,12,15,28,28,True,10.33154069999,4,87,8.856440300005488,BEST_EFFORT; samplers=ising_matrix_api
+B4_01_26_paired,qubo_beam_api_dense,15,12,15,27,27,True,10.324092800001381,4,93,8.885438799974509,BEST_EFFORT; samplers=ising_matrix_api
+B5_01_26_paired,qubo_beam_api_dense,16,14,16,30,30,True,10.343153099995106,4,93,8.978908599965507,BEST_EFFORT; samplers=ising_matrix_api
+C1_01_26_paired,qubo_beam_api_dense,14,9,14,23,23,True,10.332933600002434,4,93,8.855817900010152,BEST_EFFORT; samplers=ising_matrix_api
+C2_01_26_paired,qubo_beam_api_dense,15,14,15,29,29,True,10.210278700018534,4,88,8.815636900020763,BEST_EFFORT; samplers=ising_matrix_api
+C3_01_26_paired,qubo_beam_api_dense,13,20,13,33,33,True,10.222111100010807,4,91,8.794183300051372,BEST_EFFORT; samplers=ising_matrix_api
+C4_01_26_paired,qubo_beam_api_dense,15,16,15,31,31,True,10.150732799986145,4,90,8.747961800021585,BEST_EFFORT; samplers=ising_matrix_api
+C5_01_26_paired,qubo_beam_api_dense,10,19,10,29,29,True,10.241695000004256,4,91,8.777074699988589,BEST_EFFORT; samplers=ising_matrix_api
+A1_01_26_paired,qubo_beam_api_sparse,15,18,11,33,33,True,6.337459899979876,2,33,4.464961299992865,BEST_EFFORT; samplers=ising_matrix_api
+A2_01_26_paired,qubo_beam_api_sparse,30,4,23,34,34,True,7.11153930000728,2,33,4.380919899995206,BEST_EFFORT; samplers=ising_matrix_api
+A3_01_26_paired,qubo_beam_api_sparse,26,10,20,36,36,True,7.080367499991553,2,31,4.405268400005298,BEST_EFFORT; samplers=ising_matrix_api
+A4_01_26_paired,qubo_beam_api_sparse,27,13,20,40,40,True,7.000261900015175,2,32,4.413149200001499,BEST_EFFORT; samplers=ising_matrix_api
+A5_01_26_paired,qubo_beam_api_sparse,21,15,17,36,36,True,6.658353200007696,2,33,4.4672748999728356,BEST_EFFORT; samplers=ising_matrix_api
+B1_01_26_paired,qubo_beam_api_sparse,33,6,24,39,39,True,9.128904999990482,3,38,6.587712000036845,BEST_EFFORT; samplers=ising_matrix_api
+B2_01_26_paired,qubo_beam_api_sparse,22,9,17,31,31,True,6.564173999999184,2,33,4.366744500002824,BEST_EFFORT; samplers=ising_matrix_api
+B3_01_26_paired,qubo_beam_api_sparse,16,12,15,28,28,True,6.88993780000601,2,29,2.2436899000022095,"BEST_EFFORT; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing"
+B4_01_26_paired,qubo_beam_api_sparse,20,10,17,30,30,True,6.518138299987186,2,33,4.166633200016804,BEST_EFFORT; samplers=ising_matrix_api
+B5_01_26_paired,qubo_beam_api_sparse,36,3,27,39,39,True,9.850843100022757,3,55,6.593359699996654,BEST_EFFORT; samplers=ising_matrix_api
+C1_01_26_paired,qubo_beam_api_sparse,18,7,16,25,25,True,6.449845700000878,2,33,4.407626500003971,BEST_EFFORT; samplers=ising_matrix_api
+C2_01_26_paired,qubo_beam_api_sparse,26,10,19,36,36,True,6.813230500003556,2,33,4.436355199984973,BEST_EFFORT; samplers=ising_matrix_api
+C3_01_26_paired,qubo_beam_api_sparse,23,17,16,40,40,True,6.873331999988295,2,32,4.401550399983535,BEST_EFFORT; samplers=ising_matrix_api
+C4_01_26_paired,qubo_beam_api_sparse,29,11,20,40,40,True,6.837722299998859,2,33,4.4066069000109565,BEST_EFFORT; samplers=ising_matrix_api
+C5_01_26_paired,qubo_beam_api_sparse,21,16,13,37,37,True,6.195189799997024,2,30,4.413136800023494,BEST_EFFORT; samplers=ising_matrix_api

@@ -1,0 +1,301 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,15,22,7,37,37,True,True,0.1059,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A1_01_26_paired,multi_start_greedy_repair,29,37,43,18,16,13,34,34,True,True,10.246241700020619,566,189486,512,0,0,0.0,BEST_EFFORT; rollouts=28; rules=6
+A1_01_26_paired,beam,29,37,43,15,18,11,33,33,True,True,1.836562699987553,183,503,504,0,0,0.0,BEST_EFFORT
+A1_01_26_paired,qubo_beam,29,37,43,15,18,11,33,33,True,True,2.060562500002561,183,504,505,4,93,0.06249579996801913,BEST_EFFORT; samplers=simulated_annealing
+A2_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,19,16,11,35,35,True,True,0.095,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A2_01_26_paired,multi_start_greedy_repair,27,35,40,26,6,21,32,32,True,True,10.264683799992781,543,182935,486,0,0,0.0,BEST_EFFORT; rollouts=21; rules=6
+A2_01_26_paired,beam,27,35,40,27,4,23,31,31,True,True,2.883430899993982,303,829,830,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,qubo_beam,27,35,40,29,5,22,34,34,True,True,3.0318260000203736,283,748,749,6,148,0.10270180006045848,BEST_EFFORT; samplers=simulated_annealing
+A3_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1356,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A3_01_26_paired,multi_start_greedy_repair,30,39,45,30,9,21,39,39,True,True,10.15956699999515,560,187635,503,0,0,0.0,BEST_EFFORT; rollouts=21; rules=6
+A3_01_26_paired,beam,30,39,45,26,10,20,36,36,True,True,2.8807189999788534,282,783,784,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,qubo_beam,30,39,45,26,10,20,36,36,True,True,3.567848700011382,282,781,782,6,142,0.10526499999104999,BEST_EFFORT; samplers=simulated_annealing
+A4_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,26,16,17,42,42,True,True,0.1104,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A4_01_26_paired,multi_start_greedy_repair,33,42,49,25,17,16,42,42,True,True,10.201156600000104,575,189925,551,0,0,0.0,BEST_EFFORT; rollouts=24; rules=6
+A4_01_26_paired,beam,33,42,49,27,13,20,40,40,True,True,2.7827982000017073,283,806,807,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,qubo_beam,33,42,49,26,13,20,39,39,True,True,3.2664961999980733,283,806,807,6,149,0.10246900003403425,BEST_EFFORT; samplers=simulated_annealing
+A5_01_26_paired,chen_greedy_algorithm_1p3,32,41,48,19,22,10,41,41,True,True,0.1251,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A5_01_26_paired,multi_start_greedy_repair,32,41,48,21,16,16,37,37,True,True,10.224494599999161,609,194322,504,0,0,0.0,BEST_EFFORT; rollouts=31; rules=6
+A5_01_26_paired,beam,32,41,48,21,15,17,36,36,True,True,2.2840078999870457,251,705,706,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,qubo_beam,32,41,48,21,15,17,36,36,True,True,2.9641164999920875,251,705,706,6,151,0.10249390004901215,BEST_EFFORT; samplers=simulated_annealing
+B1_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,25,14,16,39,39,True,True,0.1445,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B1_01_26_paired,multi_start_greedy_repair,30,39,45,27,12,18,39,39,True,True,10.124601499992423,575,185357,554,0,0,0.0,BEST_EFFORT; rollouts=24; rules=6
+B1_01_26_paired,beam,30,39,45,33,6,24,39,39,True,True,2.897254999988945,318,812,813,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,qubo_beam,30,39,45,32,6,24,38,38,True,True,3.9740306999883614,323,864,865,7,167,0.12315229995874688,BEST_EFFORT; samplers=simulated_annealing
+B2_01_26_paired,chen_greedy_algorithm_1p3,26,33,39,18,15,11,33,33,True,True,0.111,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B2_01_26_paired,multi_start_greedy_repair,26,33,39,20,10,16,30,30,True,True,10.03828649999923,533,172805,461,0,0,0.0,BEST_EFFORT; rollouts=25; rules=6
+B2_01_26_paired,beam,26,33,39,22,9,17,31,31,True,True,2.3882769999909215,233,660,661,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,qubo_beam,26,33,39,22,9,17,31,31,True,True,2.846500700019533,233,660,661,5,121,0.08247099997242913,BEST_EFFORT; samplers=simulated_annealing
+B3_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,24,11,16,35,35,True,True,0.1277,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B3_01_26_paired,multi_start_greedy_repair,27,35,40,28,7,20,35,35,True,True,10.036869400006253,562,189342,413,0,0,0.0,BEST_EFFORT; rollouts=26; rules=6
+B3_01_26_paired,beam,27,35,40,16,12,15,28,28,True,True,2.1434907999937423,223,610,611,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,qubo_beam,27,35,40,16,12,15,28,28,True,True,2.513518699997803,223,607,608,5,116,0.08273269995697774,BEST_EFFORT; samplers=simulated_annealing
+B4_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,21,14,13,35,35,True,True,0.1159,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B4_01_26_paired,multi_start_greedy_repair,27,35,40,25,10,17,35,35,True,True,10.20491430000402,541,184549,451,0,0,0.0,BEST_EFFORT; rollouts=24; rules=6
+B4_01_26_paired,beam,27,35,40,20,10,17,30,30,True,True,2.369298700010404,243,685,686,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,qubo_beam,27,35,40,20,10,17,30,30,True,True,2.684941300016362,243,684,685,5,123,0.08246090001193807,BEST_EFFORT; samplers=simulated_annealing
+B5_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1187,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B5_01_26_paired,multi_start_greedy_repair,30,39,45,23,7,23,30,30,True,True,10.509275299991714,603,207259,490,0,0,0.0,BEST_EFFORT; rollouts=20; rules=6
+B5_01_26_paired,beam,30,39,45,36,3,27,39,39,True,True,3.1344454999780282,348,939,940,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,qubo_beam,30,39,45,36,3,27,39,39,True,True,3.8292522999981884,348,939,940,8,184,0.12650019995635375,BEST_EFFORT; samplers=simulated_annealing
+C1_01_26_paired,chen_greedy_algorithm_1p3,23,29,34,17,12,11,29,29,True,True,0.0907,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C1_01_26_paired,multi_start_greedy_repair,23,29,34,23,6,17,29,29,True,True,10.127359500009334,555,190301,477,0,0,0.0,BEST_EFFORT; rollouts=26; rules=6
+C1_01_26_paired,beam,23,29,34,18,7,16,25,25,True,True,2.263074600021355,212,581,582,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,qubo_beam,23,29,34,18,7,16,25,25,True,True,2.4887005999917164,212,582,583,5,119,0.0828489999694284,BEST_EFFORT; samplers=simulated_annealing
+C2_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,20,17,12,37,37,True,True,0.1032,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C2_01_26_paired,multi_start_greedy_repair,29,37,43,24,12,17,36,36,True,True,10.076792599982582,584,189746,499,0,0,0.0,BEST_EFFORT; rollouts=28; rules=6
+C2_01_26_paired,beam,29,37,43,28,9,20,37,37,True,True,2.360169399995357,272,739,740,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,qubo_beam,29,37,43,30,7,22,37,37,True,True,2.868631199991796,287,776,777,6,146,0.10257370004546829,BEST_EFFORT; samplers=simulated_annealing
+C3_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,18,24,9,42,42,True,True,0.1197,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C3_01_26_paired,multi_start_greedy_repair,33,42,49,28,14,19,42,42,True,True,10.100707300007343,560,186478,524,0,0,0.0,BEST_EFFORT; rollouts=23; rules=6
+C3_01_26_paired,beam,33,42,49,23,17,16,40,40,True,True,2.2646992999943905,243,678,679,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,qubo_beam,33,42,49,23,17,16,40,40,True,True,2.735363400017377,243,678,679,5,120,0.08244129997910932,BEST_EFFORT; samplers=simulated_annealing
+C4_01_26_paired,chen_greedy_algorithm_1p3,31,40,46,20,20,11,40,40,True,True,0.1201,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C4_01_26_paired,multi_start_greedy_repair,31,40,46,27,11,20,38,38,True,True,10.190090299991425,536,181171,488,0,0,0.0,BEST_EFFORT; rollouts=20; rules=6
+C4_01_26_paired,beam,31,40,46,29,11,20,40,40,True,True,2.5035440999781713,275,759,760,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,qubo_beam,31,40,46,29,11,20,40,40,True,True,2.90270460001193,275,755,756,6,150,0.1024664000433404,BEST_EFFORT; samplers=simulated_annealing
+C5_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,17,20,9,37,37,True,True,0.1018,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C5_01_26_paired,multi_start_greedy_repair,29,37,43,15,16,13,31,31,True,True,10.126220099977218,553,186048,481,0,0,0.0,BEST_EFFORT; rollouts=28; rules=6
+C5_01_26_paired,beam,29,37,43,21,16,13,37,37,True,True,1.9097496999893337,201,519,520,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,qubo_beam,29,37,43,21,16,13,37,37,True,True,2.242638600000646,201,519,520,5,100,0.07269359997007996,BEST_EFFORT; samplers=simulated_annealing
+A1_01_26_paired,wide_beam_baseline,29,37,43,15,18,11,33,33,True,True,5.16326209998806,537,2385,2386,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,wide_beam_baseline,27,35,40,30,4,23,34,34,True,True,8.097546600009082,895,3755,3756,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,wide_beam_baseline,30,39,45,26,12,18,38,38,True,True,7.317600000009406,777,3538,3539,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,wide_beam_baseline,33,42,49,27,13,20,40,40,True,True,8.112662400002591,836,3857,3858,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,wide_beam_baseline,32,41,48,21,15,17,36,36,True,True,6.5842912000080105,747,3421,3422,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,wide_beam_baseline,30,39,45,33,6,24,39,39,True,True,7.4685034999856725,948,3793,3794,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,wide_beam_baseline,26,33,39,20,10,16,30,30,True,True,6.3617889000161085,657,2960,2961,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,wide_beam_baseline,27,35,40,14,13,14,27,27,True,True,6.137682899978245,627,2824,2825,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,wide_beam_baseline,27,35,40,20,10,17,30,30,True,True,7.106391000008443,717,3341,3342,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,wide_beam_baseline,30,39,45,35,3,27,38,38,True,True,9.705352500022855,1047,4743,4744,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,wide_beam_baseline,23,29,34,22,6,17,28,28,True,True,6.279793800000334,655,2855,2856,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,wide_beam_baseline,29,37,43,26,10,19,36,36,True,True,6.979665399994701,777,3478,3479,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,wide_beam_baseline,33,42,49,23,17,16,40,40,True,True,6.79398799999035,721,3299,3300,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,wide_beam_baseline,31,40,46,29,11,20,40,40,True,True,7.2750900000100955,818,3574,3575,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,wide_beam_baseline,29,37,43,21,16,13,37,37,True,True,5.130972399987513,592,2488,2489,0,0,0.0,BEST_EFFORT
+A1_01_26_paired,tabu_search_baseline,29,37,43,21,16,13,37,37,True,True,4.406759800011059,224,72353,208,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A2_01_26_paired,tabu_search_baseline,27,35,40,21,10,17,31,31,True,True,4.823588400002336,225,79335,223,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A3_01_26_paired,tabu_search_baseline,30,39,45,23,13,17,36,36,True,True,5.046304199990118,226,80096,224,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A4_01_26_paired,tabu_search_baseline,33,42,49,29,13,20,42,42,True,True,5.001505799998995,236,81316,232,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A5_01_26_paired,tabu_search_baseline,32,41,48,20,16,16,36,36,True,True,4.602529199997662,232,76493,228,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B1_01_26_paired,tabu_search_baseline,30,39,45,26,12,18,38,38,True,True,4.61333629998262,227,78616,225,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B2_01_26_paired,tabu_search_baseline,26,33,39,23,10,16,33,33,True,True,4.825332899985369,228,77694,222,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B3_01_26_paired,tabu_search_baseline,27,35,40,13,14,13,27,27,True,True,4.870462899998529,226,81010,222,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B4_01_26_paired,tabu_search_baseline,27,35,40,21,10,17,31,31,True,True,4.842249200009974,225,81953,223,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+B5_01_26_paired,tabu_search_baseline,30,39,45,33,6,24,39,39,True,True,4.7679506999847945,233,81043,231,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C1_01_26_paired,tabu_search_baseline,23,29,34,23,6,17,29,29,True,True,5.256621699983953,240,81410,228,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C2_01_26_paired,tabu_search_baseline,29,37,43,18,14,15,32,32,True,True,4.49699650000548,227,77507,221,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C3_01_26_paired,tabu_search_baseline,33,42,49,22,18,15,40,40,True,True,4.718118399992818,224,79653,222,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C4_01_26_paired,tabu_search_baseline,31,40,46,30,10,21,40,40,True,True,4.7442372999794316,230,80100,228,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+C5_01_26_paired,tabu_search_baseline,29,37,43,21,16,13,37,37,True,True,4.7937428999866825,225,76637,213,0,0,0.0,BEST_EFFORT; restarts=12; tenure=9
+A1_01_26_paired,grasp_baseline,29,37,43,19,17,12,36,36,True,True,5.002845300012268,300,93919,284,0,0,0.0,BEST_EFFORT; restarts=17; rcl=8
+A1_01_26_paired,simulated_annealing_baseline,29,37,43,18,19,10,37,37,True,True,2.5727379999880213,154,43306,144,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A1_01_26_paired,vns_baseline,29,37,43,19,16,13,35,35,True,True,4.274763299996266,268,77554,222,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A2_01_26_paired,grasp_baseline,27,35,40,23,8,19,31,31,True,True,5.008960000006482,272,95392,270,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+A2_01_26_paired,simulated_annealing_baseline,27,35,40,22,13,14,35,35,True,True,3.524256900011096,201,63563,191,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A2_01_26_paired,vns_baseline,27,35,40,22,10,17,32,32,True,True,5.001867499988293,308,93501,271,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A3_01_26_paired,grasp_baseline,30,39,45,20,13,17,33,33,True,True,5.000290199997835,260,90692,256,0,0,0.0,BEST_EFFORT; restarts=12; rcl=8
+A3_01_26_paired,simulated_annealing_baseline,30,39,45,27,12,18,39,39,True,True,4.640192699996987,230,76060,223,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A3_01_26_paired,vns_baseline,30,39,45,17,13,17,30,30,True,True,5.018407199997455,305,100861,285,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A4_01_26_paired,grasp_baseline,33,42,49,25,14,19,39,39,True,True,5.003690499986988,264,91842,261,0,0,0.0,BEST_EFFORT; restarts=13; rcl=8
+A4_01_26_paired,simulated_annealing_baseline,33,42,49,24,18,15,42,42,True,True,3.5996517000021413,224,67447,214,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A4_01_26_paired,vns_baseline,33,42,49,24,18,15,42,42,True,True,4.948515999974916,315,92428,270,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A5_01_26_paired,grasp_baseline,32,41,48,17,19,13,36,36,True,True,5.011416599998483,287,94844,278,0,0,0.0,BEST_EFFORT; restarts=15; rcl=8
+A5_01_26_paired,simulated_annealing_baseline,32,41,48,12,22,10,34,34,True,True,2.876476700010244,182,53800,172,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A5_01_26_paired,vns_baseline,32,41,48,17,18,14,35,35,True,True,3.97272309998516,258,80954,241,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B1_01_26_paired,grasp_baseline,30,39,45,24,14,16,38,38,True,True,5.014101100008702,285,99640,282,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+B1_01_26_paired,simulated_annealing_baseline,30,39,45,27,12,18,39,39,True,True,3.5234136000217404,224,71944,215,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B1_01_26_paired,vns_baseline,30,39,45,24,13,17,37,37,True,True,4.583890600013547,326,93698,278,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B2_01_26_paired,grasp_baseline,26,33,39,22,11,15,33,33,True,True,5.001590100000612,308,99828,296,0,0,0.0,BEST_EFFORT; restarts=17; rcl=8
+B2_01_26_paired,simulated_annealing_baseline,26,33,39,20,13,13,33,33,True,True,2.9175295000022743,190,56686,180,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B2_01_26_paired,vns_baseline,26,33,39,22,11,15,33,33,True,True,3.7891505000006873,250,77503,227,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B3_01_26_paired,grasp_baseline,27,35,40,16,11,16,27,27,True,True,5.00081389999832,274,95020,268,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+B3_01_26_paired,simulated_annealing_baseline,27,35,40,22,13,14,35,35,True,True,3.4055015000049025,207,67387,197,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B3_01_26_paired,vns_baseline,27,35,40,27,8,19,35,35,True,True,4.433696899999632,283,88076,259,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B4_01_26_paired,grasp_baseline,27,35,40,22,10,17,32,32,True,True,5.016413699981058,290,102789,283,0,0,0.0,BEST_EFFORT; restarts=15; rcl=8
+B4_01_26_paired,simulated_annealing_baseline,27,35,40,25,10,17,35,35,True,True,3.71458430000348,213,68162,203,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B4_01_26_paired,vns_baseline,27,35,40,18,11,16,29,29,True,True,5.004400699981488,284,97098,268,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B5_01_26_paired,grasp_baseline,30,39,45,27,10,20,37,37,True,True,5.004692100017564,263,92031,261,0,0,0.0,BEST_EFFORT; restarts=13; rcl=8
+B5_01_26_paired,simulated_annealing_baseline,30,39,45,29,10,20,39,39,True,True,4.285864300007233,244,84723,242,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B5_01_26_paired,vns_baseline,30,39,45,31,8,22,39,39,True,True,5.009561000013491,295,97023,278,0,0,0.0,BEST_EFFORT; restarts=10; neighborhoods=5
+C1_01_26_paired,grasp_baseline,23,29,34,21,8,15,29,29,True,True,5.008394700009376,233,79619,223,0,0,0.0,BEST_EFFORT; restarts=13; rcl=8
+C1_01_26_paired,simulated_annealing_baseline,23,29,34,19,10,13,29,29,True,True,3.08306070000981,180,57864,170,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C1_01_26_paired,vns_baseline,23,29,34,21,6,17,27,27,True,True,4.474482399993576,272,88930,246,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C2_01_26_paired,grasp_baseline,29,37,43,21,14,15,35,35,True,True,5.002853700018022,307,99327,292,0,0,0.0,BEST_EFFORT; restarts=17; rcl=8
+C2_01_26_paired,simulated_annealing_baseline,29,37,43,20,16,13,36,36,True,True,2.780875399999786,179,56333,169,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C2_01_26_paired,vns_baseline,29,37,43,20,16,13,36,36,True,True,3.793822400009958,266,77026,227,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C3_01_26_paired,grasp_baseline,33,42,49,22,17,16,39,39,True,True,5.000212700018892,293,104000,290,0,0,0.0,BEST_EFFORT; restarts=15; rcl=8
+C3_01_26_paired,simulated_annealing_baseline,33,42,49,23,19,14,42,42,True,True,3.5493192999856547,215,67080,205,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C3_01_26_paired,vns_baseline,33,42,49,24,17,16,41,41,True,True,4.931959999987157,312,97692,278,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C4_01_26_paired,grasp_baseline,31,40,46,30,9,22,39,39,True,True,5.015038200013805,289,100511,287,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+C4_01_26_paired,simulated_annealing_baseline,31,40,46,25,15,16,40,40,True,True,3.784519300010288,231,72584,225,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C4_01_26_paired,vns_baseline,31,40,46,29,10,21,39,39,True,True,5.0063825999968685,313,95561,279,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C5_01_26_paired,grasp_baseline,29,37,43,19,16,13,35,35,True,True,5.00265420001233,298,98819,283,0,0,0.0,BEST_EFFORT; restarts=16; rcl=8
+C5_01_26_paired,simulated_annealing_baseline,29,37,43,21,16,13,37,37,True,True,3.4309836000029463,195,60360,185,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C5_01_26_paired,vns_baseline,29,37,43,23,14,15,37,37,True,True,4.246401799988234,279,80935,233,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A1_01_26_paired,genetic_tabu_baseline,29,37,43,18,16,13,34,34,True,True,6.232514000002993,438,137160,408,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=21
+A2_01_26_paired,genetic_tabu_baseline,27,35,40,21,10,17,31,31,True,True,6.012744400009979,412,134066,390,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=16
+A3_01_26_paired,genetic_tabu_baseline,30,39,45,28,10,20,38,38,True,True,6.1914717000036035,425,138247,404,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=15
+A4_01_26_paired,genetic_tabu_baseline,33,42,49,23,17,16,40,40,True,True,6.0581141999864485,428,138499,405,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=17
+A5_01_26_paired,genetic_tabu_baseline,32,41,48,16,19,13,35,35,True,True,6.248248399992008,437,138037,407,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=21
+B1_01_26_paired,genetic_tabu_baseline,30,39,45,27,12,18,39,39,True,True,6.06699269998353,411,131354,389,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=16
+B2_01_26_paired,genetic_tabu_baseline,26,33,39,23,10,16,33,33,True,True,6.367199200001778,446,141383,418,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=20
+B3_01_26_paired,genetic_tabu_baseline,27,35,40,27,8,19,35,35,True,True,6.161634399992181,427,136550,406,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=17
+B4_01_26_paired,genetic_tabu_baseline,27,35,40,24,11,16,35,35,True,True,6.084106599999359,392,132773,370,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=16
+B5_01_26_paired,genetic_tabu_baseline,30,39,45,36,3,27,39,39,True,True,6.031784399994649,392,129281,375,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=12
+C1_01_26_paired,genetic_tabu_baseline,23,29,34,21,6,17,27,27,True,True,6.204930600011721,324,110155,304,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=14
+C2_01_26_paired,genetic_tabu_baseline,29,37,43,15,16,13,31,31,True,True,6.17981560001499,439,138465,409,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=21
+C3_01_26_paired,genetic_tabu_baseline,33,42,49,23,17,16,40,40,True,True,6.273067700007232,438,144178,415,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=17
+C4_01_26_paired,genetic_tabu_baseline,31,40,46,35,5,26,40,40,True,True,6.137987100024475,445,141128,424,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=15
+C5_01_26_paired,genetic_tabu_baseline,29,37,43,19,16,13,35,35,True,True,6.374822400015546,386,128945,362,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=18
+A1_01_26_paired,enhanced_beam_fast,29,37,43,18,16,13,34,34,True,True,7.466679900011513,287,956,957,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=97071
+A1_01_26_paired,enhanced_beam_wide,29,37,43,14,18,11,32,32,True,True,10.06284699999378,298,1576,1577,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=109193
+A2_01_26_paired,enhanced_beam_fast,27,35,40,27,7,20,34,34,True,True,9.241328800009796,375,1402,1403,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=116487
+A2_01_26_paired,enhanced_beam_wide,27,35,40,15,12,15,27,27,True,True,10.077981299982639,297,1709,1710,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106761
+A3_01_26_paired,enhanced_beam_fast,30,39,45,23,13,17,36,36,True,True,8.949341500003356,348,1181,1182,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=115690
+A3_01_26_paired,enhanced_beam_wide,30,39,45,15,15,15,30,30,True,True,10.01956159999827,313,1608,1609,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=110542
+A4_01_26_paired,enhanced_beam_fast,33,42,49,32,9,24,41,41,True,True,9.73112900002161,424,1434,1435,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126420
+A4_01_26_paired,enhanced_beam_wide,33,42,49,16,19,14,35,35,True,True,10.014196999982232,311,1826,1827,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=107749
+A5_01_26_paired,enhanced_beam_fast,32,41,48,24,15,17,39,39,True,True,8.724333999998635,357,1431,1432,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=112862
+A5_01_26_paired,enhanced_beam_wide,32,41,48,14,18,14,32,32,True,True,10.131187199993292,313,2062,2063,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=102030
+B1_01_26_paired,enhanced_beam_fast,30,39,45,29,10,20,39,39,True,True,9.526011399982963,393,1559,1560,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=120892
+B1_01_26_paired,enhanced_beam_wide,30,39,45,13,17,13,30,30,True,True,10.010258800000884,271,2027,2028,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=97736
+B2_01_26_paired,enhanced_beam_fast,26,33,39,23,10,16,33,33,True,True,7.801482699986082,311,971,972,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=99416
+B2_01_26_paired,enhanced_beam_wide,26,33,39,14,12,14,26,26,True,True,10.19127860001754,314,1530,1531,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=109003
+B3_01_26_paired,enhanced_beam_fast,27,35,40,18,9,18,27,27,True,True,8.83117210000637,346,857,858,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=113295
+B3_01_26_paired,enhanced_beam_wide,27,35,40,15,12,15,27,27,True,True,10.074746199999936,307,1033,1034,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=110295
+B4_01_26_paired,enhanced_beam_fast,27,35,40,26,6,21,32,32,True,True,10.013586299988674,345,1302,1303,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126407
+B4_01_26_paired,enhanced_beam_wide,27,35,40,14,13,14,27,27,True,True,10.191938700008905,291,1739,1740,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106742
+B5_01_26_paired,enhanced_beam_fast,30,39,45,26,8,22,34,34,True,True,10.01208869999391,363,1197,1198,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=129561
+B5_01_26_paired,enhanced_beam_wide,30,39,45,16,14,16,30,30,True,True,10.126316000008956,325,1294,1295,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=113240
+C1_01_26_paired,enhanced_beam_fast,23,29,34,21,5,18,26,26,True,True,8.784624699997948,319,1275,1276,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=109780
+C1_01_26_paired,enhanced_beam_wide,23,29,34,13,10,13,23,23,True,True,10.276868599990848,262,2043,2044,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=98724
+C2_01_26_paired,enhanced_beam_fast,29,37,43,23,14,15,37,37,True,True,7.391142899985425,308,1060,1061,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=95069
+C2_01_26_paired,enhanced_beam_wide,29,37,43,15,15,14,30,30,True,True,10.031091599987121,300,1723,1724,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106761
+C3_01_26_paired,enhanced_beam_fast,33,42,49,27,15,18,42,42,True,True,9.345221600000514,361,1319,1320,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=120748
+C3_01_26_paired,enhanced_beam_wide,33,42,49,13,20,13,33,33,True,True,10.197688599990215,297,1796,1797,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106077
+C4_01_26_paired,enhanced_beam_fast,31,40,46,30,10,21,40,40,True,True,9.541361699986737,403,1170,1171,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124345
+C4_01_26_paired,enhanced_beam_wide,31,40,46,16,15,16,31,31,True,True,10.151759800006403,338,1481,1482,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=116128
+C5_01_26_paired,enhanced_beam_fast,29,37,43,17,16,13,33,33,True,True,7.024320500000613,275,820,821,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=92935
+C5_01_26_paired,enhanced_beam_wide,29,37,43,12,18,11,30,30,True,True,10.224415999982739,307,1327,1328,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=113012
+A1_01_26_paired,hybrid_enhanced_beam,29,37,43,18,16,13,34,34,True,True,10.00085010001203,354,1229,1230,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124153
+A2_01_26_paired,hybrid_enhanced_beam,27,35,40,20,8,19,28,28,True,True,10.029310799989616,363,1401,1402,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=125134
+A3_01_26_paired,hybrid_enhanced_beam,30,39,45,20,14,16,34,34,True,True,10.031772099988302,361,1221,1222,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=128269
+A4_01_26_paired,hybrid_enhanced_beam,33,42,49,22,15,18,37,37,True,True,10.034936399984872,358,1351,1352,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=125761
+A5_01_26_paired,hybrid_enhanced_beam,32,41,48,21,15,17,36,36,True,True,10.005428400007077,352,1480,1481,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=116812
+B1_01_26_paired,hybrid_enhanced_beam,30,39,45,19,12,18,31,31,True,True,10.021786500001326,351,1394,1395,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=119814
+B2_01_26_paired,hybrid_enhanced_beam,26,33,39,20,11,15,31,31,True,True,10.037128800002392,356,1151,1152,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=122876
+B3_01_26_paired,hybrid_enhanced_beam,27,35,40,17,10,17,27,27,True,True,10.029388499999186,352,1090,1091,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126844
+B4_01_26_paired,hybrid_enhanced_beam,27,35,40,21,8,19,29,29,True,True,10.032288799993694,342,1305,1306,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124811
+B5_01_26_paired,hybrid_enhanced_beam,30,39,45,22,8,22,30,30,True,True,10.057566699979361,349,1001,1002,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=122588
+C1_01_26_paired,hybrid_enhanced_beam,23,29,34,17,7,16,24,24,True,True,10.030877899989719,323,1319,1320,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=117895
+C2_01_26_paired,hybrid_enhanced_beam,29,37,43,18,12,17,30,30,True,True,10.047093500004848,305,1162,1163,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=107255
+C3_01_26_paired,hybrid_enhanced_beam,33,42,49,18,17,16,35,35,True,True,10.048111299984157,328,1190,1191,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=118807
+C4_01_26_paired,hybrid_enhanced_beam,31,40,46,19,13,18,32,32,True,True,10.011658200004604,326,1022,1023,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=112062
+C5_01_26_paired,hybrid_enhanced_beam,29,37,43,17,16,13,33,33,True,True,10.00084870000137,340,1075,1076,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=114132
+A1_01_26_paired,beam_portfolio_plain,29,37,43,18,16,13,34,34,True,True,34.53020179999294,1659,6649,6654,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+A1_01_26_paired,beam_portfolio_with_qubo,29,37,43,18,16,13,34,34,True,True,36.5907642999955,1842,7153,7159,4,93,0.06249579996801913,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+A2_01_26_paired,beam_portfolio_plain,27,35,40,27,4,23,31,31,True,True,40.329598399985116,2233,9096,9101,0,0,0.0,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+A2_01_26_paired,beam_portfolio_with_qubo,27,35,40,27,4,23,31,31,True,True,43.36142440000549,2516,9844,9850,6,148,0.10270180006045848,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+A3_01_26_paired,beam_portfolio_plain,30,39,45,26,10,20,36,36,True,True,39.19899419997819,2081,8331,8336,0,0,0.0,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+A3_01_26_paired,beam_portfolio_with_qubo,30,39,45,26,10,20,36,36,True,True,42.76684289998957,2363,9112,9118,6,142,0.10526499999104999,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+A4_01_26_paired,beam_portfolio_plain,33,42,49,32,9,24,41,41,True,True,40.67572299999301,2212,9274,9279,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+A4_01_26_paired,beam_portfolio_with_qubo,33,42,49,32,9,24,41,41,True,True,43.94221919999109,2495,10080,10086,6,149,0.10246900003403425,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+A5_01_26_paired,beam_portfolio_plain,32,41,48,21,15,17,36,36,True,True,37.72924869999406,2020,9099,9104,0,0,0.0,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+A5_01_26_paired,beam_portfolio_with_qubo,32,41,48,21,15,17,36,36,True,True,40.69336519998615,2271,9804,9810,6,151,0.10249390004901215,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+B1_01_26_paired,beam_portfolio_plain,30,39,45,33,6,24,39,39,True,True,39.92381519995979,2281,9585,9590,0,0,0.0,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+B1_01_26_paired,beam_portfolio_with_qubo,30,39,45,32,6,24,38,38,True,True,43.89784589994815,2604,10449,10455,7,167,0.12315229995874688,"PORTFOLIO_SELECTED=qubo_beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+B2_01_26_paired,beam_portfolio_plain,26,33,39,22,9,17,31,31,True,True,36.779956000013044,1871,7272,7277,0,0,0.0,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+B2_01_26_paired,beam_portfolio_with_qubo,26,33,39,22,9,17,31,31,True,True,39.62645670003258,2104,7932,7938,5,121,0.08247099997242913,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+B3_01_26_paired,beam_portfolio_plain,27,35,40,18,9,18,27,27,True,True,37.21648049997748,1855,6414,6419,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+B3_01_26_paired,beam_portfolio_with_qubo,27,35,40,18,9,18,27,27,True,True,39.72999919997528,2078,7021,7027,5,116,0.08273269995697774,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+B4_01_26_paired,beam_portfolio_plain,27,35,40,26,6,21,32,32,True,True,39.71350350001012,1938,8372,8377,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+B4_01_26_paired,beam_portfolio_with_qubo,27,35,40,26,6,21,32,32,True,True,42.39844480002648,2181,9056,9062,5,123,0.08246090001193807,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+B5_01_26_paired,beam_portfolio_plain,30,39,45,35,3,27,38,38,True,True,43.03576939998311,2432,9174,9179,0,0,0.0,"PORTFOLIO_SELECTED=wide_beam_baseline; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+B5_01_26_paired,beam_portfolio_with_qubo,30,39,45,35,3,27,38,38,True,True,46.8650216999813,2780,10113,10119,8,184,0.12650019995635375,"PORTFOLIO_SELECTED=wide_beam_baseline; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+C1_01_26_paired,beam_portfolio_plain,23,29,34,21,5,18,26,26,True,True,37.635239600000205,1771,8073,8078,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+C1_01_26_paired,beam_portfolio_with_qubo,23,29,34,21,5,18,26,26,True,True,40.12394019999192,1983,8655,8661,5,119,0.0828489999694284,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+C2_01_26_paired,beam_portfolio_plain,29,37,43,28,9,20,37,37,True,True,36.80916279996745,1962,8162,8167,0,0,0.0,"PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+C2_01_26_paired,beam_portfolio_with_qubo,29,37,43,30,7,22,37,37,True,True,39.67779399995925,2249,8938,8944,6,146,0.10257370004546829,"PORTFOLIO_SELECTED=qubo_beam; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+C3_01_26_paired,beam_portfolio_plain,33,42,49,27,15,18,42,42,True,True,38.649708799959626,1950,8282,8287,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+C3_01_26_paired,beam_portfolio_with_qubo,33,42,49,27,15,18,42,42,True,True,41.385072199977,2193,8960,8966,5,120,0.08244129997910932,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+C4_01_26_paired,beam_portfolio_plain,31,40,46,30,10,21,40,40,True,True,39.48341379998601,2160,8006,8011,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+C4_01_26_paired,beam_portfolio_with_qubo,31,40,46,30,10,21,40,40,True,True,42.38611839999794,2435,8761,8767,6,150,0.1024664000433404,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+C5_01_26_paired,beam_portfolio_plain,29,37,43,17,16,13,33,33,True,True,34.29030729996157,1715,6229,6234,0,0,0.0,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,wide_beam_baseline"
+C5_01_26_paired,beam_portfolio_with_qubo,29,37,43,17,16,13,33,33,True,True,36.532945899962215,1916,6748,6754,5,100,0.07269359997007996,"PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,enhanced_beam_wide,hybrid_enhanced_beam,qubo_beam,wide_beam_baseline"
+A1_01_26_paired,beam_focused_plain,29,37,43,18,16,13,34,34,True,True,9.303242599999066,470,1459,1461,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+A1_01_26_paired,beam_focused_with_qubo,29,37,43,18,16,13,34,34,True,True,11.363805100001628,653,1963,1966,4,93,0.06249579996801913,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+A2_01_26_paired,beam_focused_plain,27,35,40,27,4,23,31,31,True,True,12.124759700003779,678,2231,2233,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+A2_01_26_paired,beam_focused_with_qubo,27,35,40,27,4,23,31,31,True,True,15.156585700024152,961,2979,2982,6,148,0.10270180006045848,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,qubo_beam"
+A3_01_26_paired,beam_focused_plain,30,39,45,26,10,20,36,36,True,True,11.83006049998221,630,1964,1966,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+A3_01_26_paired,beam_focused_with_qubo,30,39,45,26,10,20,36,36,True,True,15.397909199993592,912,2745,2748,6,142,0.10526499999104999,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,qubo_beam"
+A4_01_26_paired,beam_focused_plain,33,42,49,32,9,24,41,41,True,True,12.513927200023318,707,2240,2242,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+A4_01_26_paired,beam_focused_with_qubo,33,42,49,32,9,24,41,41,True,True,15.780423400021391,990,3046,3049,6,149,0.10246900003403425,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+A5_01_26_paired,beam_focused_plain,32,41,48,21,15,17,36,36,True,True,11.00834189998568,608,2136,2138,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+A5_01_26_paired,beam_focused_with_qubo,32,41,48,21,15,17,36,36,True,True,13.972458399977768,859,2841,2844,6,151,0.10249390004901215,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,qubo_beam"
+B1_01_26_paired,beam_focused_plain,30,39,45,33,6,24,39,39,True,True,12.423266399971908,711,2371,2373,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+B1_01_26_paired,beam_focused_with_qubo,30,39,45,32,6,24,38,38,True,True,16.39729709996027,1034,3235,3238,7,167,0.12315229995874688,"FOCUSED_PORTFOLIO_SELECTED=qubo_beam; components=beam,enhanced_beam_fast,qubo_beam"
+B2_01_26_paired,beam_focused_plain,26,33,39,22,9,17,31,31,True,True,10.189759699977003,544,1631,1633,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+B2_01_26_paired,beam_focused_with_qubo,26,33,39,22,9,17,31,31,True,True,13.036260399996536,777,2291,2294,5,121,0.08247099997242913,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,qubo_beam"
+B3_01_26_paired,beam_focused_plain,27,35,40,18,9,18,27,27,True,True,10.974662900000112,569,1467,1469,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+B3_01_26_paired,beam_focused_with_qubo,27,35,40,18,9,18,27,27,True,True,13.488181599997915,792,2074,2077,5,116,0.08273269995697774,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+B4_01_26_paired,beam_focused_plain,27,35,40,26,6,21,32,32,True,True,12.382884999999078,588,1987,1989,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+B4_01_26_paired,beam_focused_with_qubo,27,35,40,26,6,21,32,32,True,True,15.06782630001544,831,2671,2674,5,123,0.08246090001193807,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+B5_01_26_paired,beam_focused_plain,30,39,45,36,3,27,39,39,True,True,13.146534199971939,711,2136,2138,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+B5_01_26_paired,beam_focused_with_qubo,30,39,45,36,3,27,39,39,True,True,16.975786499970127,1059,3075,3078,8,184,0.12650019995635375,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast,qubo_beam"
+C1_01_26_paired,beam_focused_plain,23,29,34,21,5,18,26,26,True,True,11.047699300019303,531,1856,1858,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+C1_01_26_paired,beam_focused_with_qubo,23,29,34,21,5,18,26,26,True,True,13.53639990001102,743,2438,2441,5,119,0.0828489999694284,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+C2_01_26_paired,beam_focused_plain,29,37,43,28,9,20,37,37,True,True,9.751312299980782,580,1799,1801,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=beam; components=beam,enhanced_beam_fast"
+C2_01_26_paired,beam_focused_with_qubo,29,37,43,30,7,22,37,37,True,True,12.619943499972578,867,2575,2578,6,146,0.10257370004546829,"FOCUSED_PORTFOLIO_SELECTED=qubo_beam; components=beam,enhanced_beam_fast,qubo_beam"
+C3_01_26_paired,beam_focused_plain,33,42,49,27,15,18,42,42,True,True,11.609920899994904,604,1997,1999,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+C3_01_26_paired,beam_focused_with_qubo,33,42,49,27,15,18,42,42,True,True,14.345284300012281,847,2675,2678,5,120,0.08244129997910932,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+C4_01_26_paired,beam_focused_plain,31,40,46,30,10,21,40,40,True,True,12.044905799964909,678,1929,1931,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+C4_01_26_paired,beam_focused_with_qubo,31,40,46,30,10,21,40,40,True,True,14.947610399976838,953,2684,2687,6,150,0.1024664000433404,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+C5_01_26_paired,beam_focused_plain,29,37,43,17,16,13,33,33,True,True,8.934070199989947,476,1339,1341,0,0,0.0,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast"
+C5_01_26_paired,beam_focused_with_qubo,29,37,43,17,16,13,33,33,True,True,11.176708799990593,677,1858,1861,5,100,0.07269359997007996,"FOCUSED_PORTFOLIO_SELECTED=enhanced_beam_fast; components=beam,enhanced_beam_fast,qubo_beam"
+A1_01_26_paired,fused_beam,29,37,43,19,16,13,35,35,True,True,10.4604127999919,309,1097,1098,5,243,0.08419679998769425,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A1_01_26_paired,feature_adaptive_beam,29,37,43,18,16,13,34,34,True,True,7.679110500001116,287,956,957,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=97071; feature_choice=enhanced
+A1_01_26_paired,beam_post_repair,29,37,43,18,16,13,34,34,True,True,4.369641900004353,293,812,814,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A2_01_26_paired,fused_beam,27,35,40,21,9,18,30,30,True,True,10.022809399990365,330,1220,1221,5,235,0.0824630000279285,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A2_01_26_paired,feature_adaptive_beam,27,35,40,27,4,23,31,31,True,True,2.882731599995168,303,829,830,0,0,0.0,BEST_EFFORT; feature_choice=beam
+A2_01_26_paired,beam_post_repair,27,35,40,30,4,23,34,34,True,True,4.477205499977572,403,946,948,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A3_01_26_paired,fused_beam,30,39,45,22,11,19,33,33,True,True,10.021805099997437,337,1160,1161,5,209,0.08264420003979467,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A3_01_26_paired,feature_adaptive_beam,30,39,45,26,10,20,36,36,True,True,3.320858399994904,282,781,782,6,142,0.10249769996153191,BEST_EFFORT; samplers=simulated_annealing; feature_choice=qubo
+A3_01_26_paired,beam_post_repair,30,39,45,25,13,17,38,38,True,True,2.5203907000250183,257,688,690,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A4_01_26_paired,fused_beam,33,42,49,20,17,16,37,37,True,True,10.034485799988033,304,1130,1131,5,245,0.08260219995281659,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A4_01_26_paired,feature_adaptive_beam,33,42,49,32,9,24,41,41,True,True,9.780089699983364,424,1434,1435,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126420; feature_choice=enhanced
+A4_01_26_paired,beam_post_repair,33,42,49,29,13,20,42,42,True,True,2.8245289999758825,278,763,765,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+A5_01_26_paired,fused_beam,32,41,48,25,14,18,39,39,True,True,10.024951300001703,367,1437,1438,5,258,0.08445360005134717,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+A5_01_26_paired,feature_adaptive_beam,32,41,48,21,15,17,36,36,True,True,2.163331999996444,251,705,706,0,0,0.0,BEST_EFFORT; feature_choice=beam
+A5_01_26_paired,beam_post_repair,32,41,48,26,14,18,40,40,True,True,2.4203820999828167,260,712,714,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B1_01_26_paired,fused_beam,30,39,45,21,11,19,32,32,True,True,10.062627000006614,321,1164,1165,5,236,0.08350880001671612,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B1_01_26_paired,feature_adaptive_beam,30,39,45,33,6,24,39,39,True,True,2.4359545999905095,318,812,813,0,0,0.0,BEST_EFFORT; feature_choice=beam
+B1_01_26_paired,beam_post_repair,30,39,45,34,4,26,38,38,True,True,3.0261529000126757,330,933,935,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B2_01_26_paired,fused_beam,26,33,39,21,11,15,32,32,True,True,9.4506790000014,338,1066,1067,5,212,0.0834401000465732,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B2_01_26_paired,feature_adaptive_beam,26,33,39,22,9,17,31,31,True,True,2.2780020000063814,233,660,661,0,0,0.0,BEST_EFFORT; feature_choice=beam
+B2_01_26_paired,beam_post_repair,26,33,39,22,11,15,33,33,True,True,3.0647749999770895,261,682,684,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B3_01_26_paired,fused_beam,27,35,40,17,10,17,27,27,True,True,10.022011799999746,330,1109,1110,5,201,0.08256919999257661,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B3_01_26_paired,feature_adaptive_beam,27,35,40,18,9,18,27,27,True,True,8.566874899988761,346,857,858,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=113295; feature_choice=enhanced
+B3_01_26_paired,beam_post_repair,27,35,40,17,11,16,28,28,True,True,4.842343499971321,343,912,914,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B4_01_26_paired,fused_beam,27,35,40,18,10,17,28,28,True,True,10.272885199985467,307,1155,1156,5,235,0.0838109000469558,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B4_01_26_paired,feature_adaptive_beam,27,35,40,20,10,17,30,30,True,True,2.298773499991512,243,685,686,0,0,0.0,BEST_EFFORT; feature_choice=beam
+B4_01_26_paired,beam_post_repair,27,35,40,24,9,18,33,33,True,True,4.657245899987174,352,933,935,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+B5_01_26_paired,fused_beam,30,39,45,22,8,22,30,30,True,True,10.02127619998646,338,1153,1154,5,228,0.08286049994057976,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+B5_01_26_paired,feature_adaptive_beam,30,39,45,26,8,22,34,34,True,True,10.02234719999251,371,1229,1230,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=132449; feature_choice=enhanced
+B5_01_26_paired,beam_post_repair,30,39,45,35,3,27,38,38,True,True,4.593812100007199,382,1034,1036,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C1_01_26_paired,fused_beam,23,29,34,22,2,21,24,24,True,True,10.02167859999463,318,1186,1187,5,237,0.08298790000844747,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C1_01_26_paired,feature_adaptive_beam,23,29,34,21,5,18,26,26,True,True,8.769843799993396,319,1275,1276,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=109780; feature_choice=enhanced
+C1_01_26_paired,beam_post_repair,23,29,34,21,6,17,27,27,True,True,3.5397368999838363,289,768,770,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C2_01_26_paired,fused_beam,29,37,43,23,11,18,34,34,True,True,10.023689000023296,353,1282,1283,5,224,0.08362040005158633,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C2_01_26_paired,feature_adaptive_beam,29,37,43,30,7,22,37,37,True,True,2.785347199998796,287,776,777,6,146,0.10250139998970553,BEST_EFFORT; samplers=simulated_annealing; feature_choice=qubo
+C2_01_26_paired,beam_post_repair,29,37,43,22,14,15,36,36,True,True,2.116341300017666,227,608,610,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C3_01_26_paired,fused_beam,33,42,49,17,18,15,35,35,True,True,10.068619600002421,310,1104,1105,5,235,0.08452019997639582,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C3_01_26_paired,feature_adaptive_beam,33,42,49,27,15,18,42,42,True,True,9.318752199993469,361,1319,1320,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=120748; feature_choice=enhanced
+C3_01_26_paired,beam_post_repair,33,42,49,26,16,17,42,42,True,True,3.006371499999659,290,767,769,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C4_01_26_paired,fused_beam,31,40,46,22,12,19,34,34,True,True,10.045719000016106,334,1135,1136,5,208,0.08341500000096858,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C4_01_26_paired,feature_adaptive_beam,31,40,46,30,10,21,40,40,True,True,9.517144800018286,403,1170,1171,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124345; feature_choice=enhanced
+C4_01_26_paired,beam_post_repair,31,40,46,29,11,20,40,40,True,True,2.630860200006282,276,756,758,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair
+C5_01_26_paired,fused_beam,29,37,43,17,16,13,33,33,True,True,10.079200100008165,303,1037,1038,5,226,0.08335989998886362,BEST_EFFORT; combined_expansions=True; qbo_selection=True
+C5_01_26_paired,feature_adaptive_beam,29,37,43,21,16,13,37,37,True,True,1.708303799998248,201,519,520,0,0,0.0,BEST_EFFORT; feature_choice=beam
+C5_01_26_paired,beam_post_repair,29,37,43,21,16,13,37,37,True,True,1.8917732000118122,204,544,546,0,0,0.0,BEST_EFFORT; phase1=plain_beam; phase2=suffix_repair

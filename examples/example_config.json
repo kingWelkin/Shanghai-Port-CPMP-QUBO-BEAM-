@@ -1,0 +1,33 @@
+{
+  "solver_names": [
+    "greedy_retrieval",
+    "greedy_cpmp",
+    "beam",
+    "diverse_beam",
+    "qubo_beam",
+    "rolling_horizon",
+    "qubo_rolling_horizon",
+    "qubo_batch_relocation",
+    "stack_assignment_guided_cpmp",
+    "mip_4d"
+  ],
+  "instance_paths": [
+    "instances/tiny_cpmp_1.json",
+    "instances/tiny_crp_1.json"
+  ],
+  "max_depth": 4,
+  "beam_width": 8,
+  "max_candidates_per_layer": 50,
+  "candidate_limit_per_state": 10,
+  "max_qubo_vars": 50,
+  "rolling_depth": 2,
+  "prefix_commit_length": 1,
+  "time_limit_sec": 10.0,
+  "qubo_penalty_a": 10.0,
+  "diversity_weight": 0.5,
+  "random_seed": 1,
+  "enable_visited_pruning": true,
+  "enable_canonical_hash": false,
+  "output_csv": "examples/results/results.csv",
+  "output_json": "examples/results/results.json"
+}

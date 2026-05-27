@@ -1,0 +1,19 @@
+{
+  "solver_names": [
+    "greedy_cpmp",
+    "beam",
+    "diverse_beam",
+    "rolling_horizon"
+  ],
+  "instance_paths": [
+    "instances/large_cpmp_6x5_n20_seed3.json"
+  ],
+  "max_depth": 30,
+  "beam_width": 120,
+  "max_candidates_per_layer": 1500,
+  "candidate_limit_per_state": 30,
+  "time_limit_sec": 60.0,
+  "random_seed": 11,
+  "output_csv": "docs/experiments/large_cpmp_baselines.csv",
+  "output_json": "docs/experiments/large_cpmp_baselines.json"
+}

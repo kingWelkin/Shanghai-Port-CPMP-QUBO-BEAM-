@@ -1,0 +1,13 @@
+solver,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,mip_best_bound,mip_gap,mip_node_count,mip_var_count,mip_constr_count,status,validation_passed,source_file
+greedy_cpmp,False,False,inf,0.00012599999899975955,0,0,0,0,0.0,0,,,,,,NO_FEASIBLE_FOUND,False,larger_cpmp_baselines.csv
+beam,True,False,32.0,1.4700626000121702,5381,56937,0,0,0.0,0,,,,,,FEASIBLE,True,larger_cpmp_baselines.csv
+rolling_horizon,False,False,inf,4.155248900002334,16420,251205,0,0,0.0,0,,,,,,NO_FEASIBLE_FOUND,False,larger_cpmp_baselines.csv
+qubo_beam_api_raw,False,False,inf,133.7556568,5176,60903,45,13060,100.8700282000209,44,,,,,,"NO_FEASIBLE_FOUND; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing",False,larger_cpmp_qubo_beam_api.csv
+qubo_beam_api_elite_repair_every_layer,True,False,33.0,93.42264170000271,5524,60183,32,10960,79.54408379999222,62,,,,,,FEASIBLE; samplers=ising_matrix_api,True,larger_cpmp_qubo_beam_api_conservative.csv
+qubo_beam_api_sparse_k4,True,False,32.0,23.702396099994075,5253,56158,7,2520,17.941002599996864,14,,,,,,FEASIBLE; samplers=ising_matrix_api,True,larger_cpmp_qubo_beam_api_sparse_k4.csv
+qubo_beam_api_sparse_k8,True,False,32.0,12.346628100000089,5253,55500,3,1080,7.764507900021272,6,,,,,,FEASIBLE; samplers=ising_matrix_api,True,larger_cpmp_qubo_beam_api_sparse_k8.csv
+qubo_beam_api_sparse_k16,True,False,32.0,6.828198599992902,5253,55655,1,360,2.733846100003575,2,,,,,,FEASIBLE; samplers=ising_matrix_api,True,larger_cpmp_qubo_beam_api_sparse_k16.csv
+mip_3d_cold_60s,False,False,inf,60.82595330000913,0,0,0,0,0.0,0,5.0,,1.0,27962,72383,TIME_LIMIT,False,larger_cpmp_mip_3d.csv
+mip_4d_cold_60s,False,False,inf,61.629633199991076,0,0,0,0,0.0,0,6.0,,1.0,75858,131184,TIME_LIMIT,False,larger_cpmp_mip_4d.csv
+mip_3d_warm_10min,True,False,32.0,600.8778830000083,0,0,0,0,0.0,0,6.0,0.8125,1.0,27962,72383,TIME_LIMIT,True,larger_cpmp_mip_3d_warm_10min.csv
+mip_4d_warm_10min,True,False,32.0,601.7843513999978,0,0,0,0,0.0,0,0.0,1.0,1.0,75858,131184,TIME_LIMIT,True,larger_cpmp_mip_4d_warm_10min.csv

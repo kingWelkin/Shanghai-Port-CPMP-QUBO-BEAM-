@@ -1,0 +1,16 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,hybrid_enhanced_beam,29,37,43,18,16,13,34,34,True,True,10.00085010001203,354,1229,1230,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124153
+A2_01_26_paired,hybrid_enhanced_beam,27,35,40,20,8,19,28,28,True,True,10.029310799989616,363,1401,1402,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=125134
+A3_01_26_paired,hybrid_enhanced_beam,30,39,45,20,14,16,34,34,True,True,10.031772099988302,361,1221,1222,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=128269
+A4_01_26_paired,hybrid_enhanced_beam,33,42,49,22,15,18,37,37,True,True,10.034936399984872,358,1351,1352,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=125761
+A5_01_26_paired,hybrid_enhanced_beam,32,41,48,21,15,17,36,36,True,True,10.005428400007077,352,1480,1481,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=116812
+B1_01_26_paired,hybrid_enhanced_beam,30,39,45,19,12,18,31,31,True,True,10.021786500001326,351,1394,1395,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=119814
+B2_01_26_paired,hybrid_enhanced_beam,26,33,39,20,11,15,31,31,True,True,10.037128800002392,356,1151,1152,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=122876
+B3_01_26_paired,hybrid_enhanced_beam,27,35,40,17,10,17,27,27,True,True,10.029388499999186,352,1090,1091,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126844
+B4_01_26_paired,hybrid_enhanced_beam,27,35,40,21,8,19,29,29,True,True,10.032288799993694,342,1305,1306,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124811
+B5_01_26_paired,hybrid_enhanced_beam,30,39,45,22,8,22,30,30,True,True,10.057566699979361,349,1001,1002,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=122588
+C1_01_26_paired,hybrid_enhanced_beam,23,29,34,17,7,16,24,24,True,True,10.030877899989719,323,1319,1320,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=117895
+C2_01_26_paired,hybrid_enhanced_beam,29,37,43,18,12,17,30,30,True,True,10.047093500004848,305,1162,1163,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=107255
+C3_01_26_paired,hybrid_enhanced_beam,33,42,49,18,17,16,35,35,True,True,10.048111299984157,328,1190,1191,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=118807
+C4_01_26_paired,hybrid_enhanced_beam,31,40,46,19,13,18,32,32,True,True,10.011658200004604,326,1022,1023,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=112062
+C5_01_26_paired,hybrid_enhanced_beam,29,37,43,17,16,13,33,33,True,True,10.00084870000137,340,1075,1076,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=114132

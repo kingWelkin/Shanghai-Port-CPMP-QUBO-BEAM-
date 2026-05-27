@@ -9,11 +9,14 @@ from typing import List, Tuple
 GreedyMove = Tuple
 
 
-def g_cap_from_n0(n0: int) -> int:
-    """G 上限 = floor(1.5×N(0))；约束为 翻箱次数+逆序 ≤ 该值，非「须减少」。"""
+def g_cap_from_n0(n0: int, ratio: float = 1.5) -> int:
+    """Return ``floor(ratio * N(0))`` for the business G cap."""
     if n0 <= 0:
         return 0
-    return max(0, int(math.floor(1.5 * float(n0) + 1e-9)))
+    r = min(float(ratio), 2.0)
+    if r <= 0:
+        raise ValueError("ratio must be positive")
+    return max(0, int(math.floor(r * float(n0) + 1e-9)))
 
 
 def g_value(num_moves: int, n_future: int) -> int:

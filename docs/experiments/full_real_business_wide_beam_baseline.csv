@@ -1,0 +1,16 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,wide_beam_baseline,29,37,43,15,18,11,33,33,True,True,5.16326209998806,537,2385,2386,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,wide_beam_baseline,27,35,40,30,4,23,34,34,True,True,8.097546600009082,895,3755,3756,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,wide_beam_baseline,30,39,45,26,12,18,38,38,True,True,7.317600000009406,777,3538,3539,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,wide_beam_baseline,33,42,49,27,13,20,40,40,True,True,8.112662400002591,836,3857,3858,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,wide_beam_baseline,32,41,48,21,15,17,36,36,True,True,6.5842912000080105,747,3421,3422,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,wide_beam_baseline,30,39,45,33,6,24,39,39,True,True,7.4685034999856725,948,3793,3794,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,wide_beam_baseline,26,33,39,20,10,16,30,30,True,True,6.3617889000161085,657,2960,2961,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,wide_beam_baseline,27,35,40,14,13,14,27,27,True,True,6.137682899978245,627,2824,2825,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,wide_beam_baseline,27,35,40,20,10,17,30,30,True,True,7.106391000008443,717,3341,3342,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,wide_beam_baseline,30,39,45,35,3,27,38,38,True,True,9.705352500022855,1047,4743,4744,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,wide_beam_baseline,23,29,34,22,6,17,28,28,True,True,6.279793800000334,655,2855,2856,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,wide_beam_baseline,29,37,43,26,10,19,36,36,True,True,6.979665399994701,777,3478,3479,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,wide_beam_baseline,33,42,49,23,17,16,40,40,True,True,6.79398799999035,721,3299,3300,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,wide_beam_baseline,31,40,46,29,11,20,40,40,True,True,7.2750900000100955,818,3574,3575,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,wide_beam_baseline,29,37,43,21,16,13,37,37,True,True,5.130972399987513,592,2488,2489,0,0,0.0,BEST_EFFORT

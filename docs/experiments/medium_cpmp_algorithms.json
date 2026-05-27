@@ -1,0 +1,951 @@
+[
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "random",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 0.00018350000027567148,
+      "status": "NO_FEASIBLE_FOUND",
+      "moves": []
+    },
+    "final_stacks": [
+      [
+        4,
+        11,
+        2
+      ],
+      [
+        9,
+        1,
+        12
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        10,
+        5,
+        8
+      ],
+      [
+        6
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NO_FEASIBLE_FOUND",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "greedy_cpmp",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 0.00013309999485500157,
+      "status": "NO_FEASIBLE_FOUND",
+      "moves": []
+    },
+    "final_stacks": [
+      [
+        4,
+        11,
+        2
+      ],
+      [
+        9,
+        1,
+        12
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        10,
+        5,
+        8
+      ],
+      [
+        6
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NO_FEASIBLE_FOUND",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "beam",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 7.0,
+      "runtime_sec": 0.08991500000411179,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 6,
+          "from_stack": 4,
+          "to_stack": 3,
+          "from_level": 1,
+          "to_level": 4
+        },
+        {
+          "step": 1,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 4,
+          "from_level": 3,
+          "to_level": 1
+        },
+        {
+          "step": 2,
+          "box": 2,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 3,
+          "box": 11,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 2,
+          "to_level": 2
+        },
+        {
+          "step": 4,
+          "box": 6,
+          "from_stack": 3,
+          "to_stack": 4,
+          "from_level": 4,
+          "to_level": 3
+        },
+        {
+          "step": 5,
+          "box": 4,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 1,
+          "to_level": 4
+        },
+        {
+          "step": 6,
+          "box": 8,
+          "from_stack": 3,
+          "to_stack": 0,
+          "from_level": 3,
+          "to_level": 1
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        8
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        7,
+        3,
+        2
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        12,
+        11,
+        6,
+        4
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 421,
+      "generated_states": 4598,
+      "visited_states": 4599,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "diverse_beam",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 7.0,
+      "runtime_sec": 24.663820600006147,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 6,
+          "from_stack": 4,
+          "to_stack": 3,
+          "from_level": 1,
+          "to_level": 4
+        },
+        {
+          "step": 1,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 4,
+          "from_level": 3,
+          "to_level": 1
+        },
+        {
+          "step": 2,
+          "box": 2,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 3,
+          "box": 11,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 2,
+          "to_level": 2
+        },
+        {
+          "step": 4,
+          "box": 1,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 2,
+          "to_level": 2
+        },
+        {
+          "step": 5,
+          "box": 6,
+          "from_stack": 3,
+          "to_stack": 1,
+          "from_level": 4,
+          "to_level": 2
+        },
+        {
+          "step": 6,
+          "box": 8,
+          "from_stack": 3,
+          "to_stack": 4,
+          "from_level": 3,
+          "to_level": 3
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        4,
+        1
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        7,
+        3,
+        2
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        12,
+        11,
+        8
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 346,
+      "generated_states": 3765,
+      "visited_states": 3766,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": 0.6847573839662471,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "rolling_horizon",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 7.0,
+      "runtime_sec": 0.08306189998984337,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 2,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 1,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 2,
+          "box": 1,
+          "from_stack": 1,
+          "to_stack": 2,
+          "from_level": 2,
+          "to_level": 4
+        },
+        {
+          "step": 3,
+          "box": 8,
+          "from_stack": 3,
+          "to_stack": 1,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 4,
+          "box": 6,
+          "from_stack": 4,
+          "to_stack": 1,
+          "from_level": 1,
+          "to_level": 3
+        },
+        {
+          "step": 5,
+          "box": 12,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 3,
+          "to_level": 1
+        },
+        {
+          "step": 6,
+          "box": 11,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 2,
+          "to_level": 2
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        4
+      ],
+      [
+        9,
+        8,
+        6
+      ],
+      [
+        7,
+        3,
+        2,
+        1
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        12,
+        11
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 421,
+      "generated_states": 7123,
+      "visited_states": 8,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "qubo_beam",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 7.0,
+      "runtime_sec": 30.25789719999011,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 2,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 1,
+          "box": 6,
+          "from_stack": 4,
+          "to_stack": 0,
+          "from_level": 1,
+          "to_level": 3
+        },
+        {
+          "step": 2,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 4,
+          "from_level": 3,
+          "to_level": 1
+        },
+        {
+          "step": 3,
+          "box": 1,
+          "from_stack": 1,
+          "to_stack": 2,
+          "from_level": 2,
+          "to_level": 4
+        },
+        {
+          "step": 4,
+          "box": 8,
+          "from_stack": 3,
+          "to_stack": 1,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 5,
+          "box": 6,
+          "from_stack": 0,
+          "to_stack": 1,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 6,
+          "box": 11,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 2,
+          "to_level": 2
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        4
+      ],
+      [
+        9,
+        8,
+        6
+      ],
+      [
+        7,
+        3,
+        2,
+        1
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        12,
+        11
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 345,
+      "generated_states": 3798,
+      "visited_states": 3799,
+      "qubo_calls": 6,
+      "qubo_total_vars": 1019,
+      "qubo_total_time_sec": 29.837230399993132,
+      "qubo_repair_count": 5,
+      "selected_avg_similarity": 0.6696376027093055,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "qubo_rolling_horizon",
+    "solution": {
+      "feasible": false,
+      "optimal": false,
+      "objective": Infinity,
+      "runtime_sec": 20.10186419999809,
+      "status": "NO_FEASIBLE_FOUND",
+      "moves": []
+    },
+    "final_stacks": [
+      [
+        4,
+        11,
+        2
+      ],
+      [
+        9,
+        1,
+        12
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        10,
+        5,
+        8
+      ],
+      [
+        6
+      ]
+    ],
+    "validation_passed": false,
+    "validation_message": "NO_FEASIBLE_FOUND",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 4,
+      "qubo_total_vars": 4723,
+      "qubo_total_time_sec": 20.001092099992093,
+      "qubo_repair_count": 1,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "medium_cpmp_5x4_n12_seed1",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 5,
+      "max_height": 4,
+      "container_count": 12,
+      "stacks": [
+        [
+          4,
+          11,
+          2
+        ],
+        [
+          9,
+          1,
+          12
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          10,
+          5,
+          8
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    "solver": "stack_assignment_guided_cpmp",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 7.0,
+      "runtime_sec": 4.570280500003719,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 3,
+          "to_level": 4
+        },
+        {
+          "step": 1,
+          "box": 1,
+          "from_stack": 1,
+          "to_stack": 2,
+          "from_level": 2,
+          "to_level": 3
+        },
+        {
+          "step": 2,
+          "box": 8,
+          "from_stack": 3,
+          "to_stack": 1,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 3,
+          "box": 6,
+          "from_stack": 4,
+          "to_stack": 1,
+          "from_level": 1,
+          "to_level": 3
+        },
+        {
+          "step": 4,
+          "box": 12,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 4,
+          "to_level": 1
+        },
+        {
+          "step": 5,
+          "box": 2,
+          "from_stack": 0,
+          "to_stack": 1,
+          "from_level": 3,
+          "to_level": 4
+        },
+        {
+          "step": 6,
+          "box": 11,
+          "from_stack": 0,
+          "to_stack": 4,
+          "from_level": 2,
+          "to_level": 2
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        4
+      ],
+      [
+        9,
+        8,
+        6,
+        2
+      ],
+      [
+        7,
+        3,
+        1
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        12,
+        11
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 343,
+      "generated_states": 3696,
+      "visited_states": 3697,
+      "qubo_calls": 1,
+      "qubo_total_vars": 60,
+      "qubo_total_time_sec": 4.52574199999799,
+      "qubo_repair_count": 1,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  }
+]

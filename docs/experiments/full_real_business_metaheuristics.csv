@@ -1,0 +1,61 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,15,22,7,37,37,True,True,0.1059,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A1_01_26_paired,grasp_baseline,29,37,43,19,17,12,36,36,True,True,5.002845300012268,300,93919,284,0,0,0.0,BEST_EFFORT; restarts=17; rcl=8
+A1_01_26_paired,simulated_annealing_baseline,29,37,43,18,19,10,37,37,True,True,2.5727379999880213,154,43306,144,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A1_01_26_paired,vns_baseline,29,37,43,19,16,13,35,35,True,True,4.274763299996266,268,77554,222,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A2_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,19,16,11,35,35,True,True,0.095,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A2_01_26_paired,grasp_baseline,27,35,40,23,8,19,31,31,True,True,5.008960000006482,272,95392,270,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+A2_01_26_paired,simulated_annealing_baseline,27,35,40,22,13,14,35,35,True,True,3.524256900011096,201,63563,191,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A2_01_26_paired,vns_baseline,27,35,40,22,10,17,32,32,True,True,5.001867499988293,308,93501,271,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A3_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1356,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A3_01_26_paired,grasp_baseline,30,39,45,20,13,17,33,33,True,True,5.000290199997835,260,90692,256,0,0,0.0,BEST_EFFORT; restarts=12; rcl=8
+A3_01_26_paired,simulated_annealing_baseline,30,39,45,27,12,18,39,39,True,True,4.640192699996987,230,76060,223,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A3_01_26_paired,vns_baseline,30,39,45,17,13,17,30,30,True,True,5.018407199997455,305,100861,285,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A4_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,26,16,17,42,42,True,True,0.1104,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A4_01_26_paired,grasp_baseline,33,42,49,25,14,19,39,39,True,True,5.003690499986988,264,91842,261,0,0,0.0,BEST_EFFORT; restarts=13; rcl=8
+A4_01_26_paired,simulated_annealing_baseline,33,42,49,24,18,15,42,42,True,True,3.5996517000021413,224,67447,214,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A4_01_26_paired,vns_baseline,33,42,49,24,18,15,42,42,True,True,4.948515999974916,315,92428,270,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+A5_01_26_paired,chen_greedy_algorithm_1p3,32,41,48,19,22,10,41,41,True,True,0.1251,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A5_01_26_paired,grasp_baseline,32,41,48,17,19,13,36,36,True,True,5.011416599998483,287,94844,278,0,0,0.0,BEST_EFFORT; restarts=15; rcl=8
+A5_01_26_paired,simulated_annealing_baseline,32,41,48,12,22,10,34,34,True,True,2.876476700010244,182,53800,172,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+A5_01_26_paired,vns_baseline,32,41,48,17,18,14,35,35,True,True,3.97272309998516,258,80954,241,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B1_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,25,14,16,39,39,True,True,0.1445,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B1_01_26_paired,grasp_baseline,30,39,45,24,14,16,38,38,True,True,5.014101100008702,285,99640,282,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+B1_01_26_paired,simulated_annealing_baseline,30,39,45,27,12,18,39,39,True,True,3.5234136000217404,224,71944,215,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B1_01_26_paired,vns_baseline,30,39,45,24,13,17,37,37,True,True,4.583890600013547,326,93698,278,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B2_01_26_paired,chen_greedy_algorithm_1p3,26,33,39,18,15,11,33,33,True,True,0.111,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B2_01_26_paired,grasp_baseline,26,33,39,22,11,15,33,33,True,True,5.001590100000612,308,99828,296,0,0,0.0,BEST_EFFORT; restarts=17; rcl=8
+B2_01_26_paired,simulated_annealing_baseline,26,33,39,20,13,13,33,33,True,True,2.9175295000022743,190,56686,180,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B2_01_26_paired,vns_baseline,26,33,39,22,11,15,33,33,True,True,3.7891505000006873,250,77503,227,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B3_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,24,11,16,35,35,True,True,0.1277,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B3_01_26_paired,grasp_baseline,27,35,40,16,11,16,27,27,True,True,5.00081389999832,274,95020,268,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+B3_01_26_paired,simulated_annealing_baseline,27,35,40,22,13,14,35,35,True,True,3.4055015000049025,207,67387,197,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B3_01_26_paired,vns_baseline,27,35,40,27,8,19,35,35,True,True,4.433696899999632,283,88076,259,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B4_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,21,14,13,35,35,True,True,0.1159,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B4_01_26_paired,grasp_baseline,27,35,40,22,10,17,32,32,True,True,5.016413699981058,290,102789,283,0,0,0.0,BEST_EFFORT; restarts=15; rcl=8
+B4_01_26_paired,simulated_annealing_baseline,27,35,40,25,10,17,35,35,True,True,3.71458430000348,213,68162,203,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B4_01_26_paired,vns_baseline,27,35,40,18,11,16,29,29,True,True,5.004400699981488,284,97098,268,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+B5_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1187,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B5_01_26_paired,grasp_baseline,30,39,45,27,10,20,37,37,True,True,5.004692100017564,263,92031,261,0,0,0.0,BEST_EFFORT; restarts=13; rcl=8
+B5_01_26_paired,simulated_annealing_baseline,30,39,45,29,10,20,39,39,True,True,4.285864300007233,244,84723,242,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+B5_01_26_paired,vns_baseline,30,39,45,31,8,22,39,39,True,True,5.009561000013491,295,97023,278,0,0,0.0,BEST_EFFORT; restarts=10; neighborhoods=5
+C1_01_26_paired,chen_greedy_algorithm_1p3,23,29,34,17,12,11,29,29,True,True,0.0907,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C1_01_26_paired,grasp_baseline,23,29,34,21,8,15,29,29,True,True,5.008394700009376,233,79619,223,0,0,0.0,BEST_EFFORT; restarts=13; rcl=8
+C1_01_26_paired,simulated_annealing_baseline,23,29,34,19,10,13,29,29,True,True,3.08306070000981,180,57864,170,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C1_01_26_paired,vns_baseline,23,29,34,21,6,17,27,27,True,True,4.474482399993576,272,88930,246,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C2_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,20,17,12,37,37,True,True,0.1032,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C2_01_26_paired,grasp_baseline,29,37,43,21,14,15,35,35,True,True,5.002853700018022,307,99327,292,0,0,0.0,BEST_EFFORT; restarts=17; rcl=8
+C2_01_26_paired,simulated_annealing_baseline,29,37,43,20,16,13,36,36,True,True,2.780875399999786,179,56333,169,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C2_01_26_paired,vns_baseline,29,37,43,20,16,13,36,36,True,True,3.793822400009958,266,77026,227,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C3_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,18,24,9,42,42,True,True,0.1197,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C3_01_26_paired,grasp_baseline,33,42,49,22,17,16,39,39,True,True,5.000212700018892,293,104000,290,0,0,0.0,BEST_EFFORT; restarts=15; rcl=8
+C3_01_26_paired,simulated_annealing_baseline,33,42,49,23,19,14,42,42,True,True,3.5493192999856547,215,67080,205,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C3_01_26_paired,vns_baseline,33,42,49,24,17,16,41,41,True,True,4.931959999987157,312,97692,278,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C4_01_26_paired,chen_greedy_algorithm_1p3,31,40,46,20,20,11,40,40,True,True,0.1201,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C4_01_26_paired,grasp_baseline,31,40,46,30,9,22,39,39,True,True,5.015038200013805,289,100511,287,0,0,0.0,BEST_EFFORT; restarts=14; rcl=8
+C4_01_26_paired,simulated_annealing_baseline,31,40,46,25,15,16,40,40,True,True,3.784519300010288,231,72584,225,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C4_01_26_paired,vns_baseline,31,40,46,29,10,21,39,39,True,True,5.0063825999968685,313,95561,279,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5
+C5_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,17,20,9,37,37,True,True,0.1018,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C5_01_26_paired,grasp_baseline,29,37,43,19,16,13,35,35,True,True,5.00265420001233,298,98819,283,0,0,0.0,BEST_EFFORT; restarts=16; rcl=8
+C5_01_26_paired,simulated_annealing_baseline,29,37,43,21,16,13,37,37,True,True,3.4309836000029463,195,60360,185,0,0,0.0,BEST_EFFORT; restarts=10; pool=16
+C5_01_26_paired,vns_baseline,29,37,43,23,14,15,37,37,True,True,4.246401799988234,279,80935,233,0,0,0.0,BEST_EFFORT; restarts=12; neighborhoods=5

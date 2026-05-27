@@ -1,0 +1,31 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,15,22,7,37,37,True,True,0.1059,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A1_01_26_paired,genetic_tabu_baseline,29,37,43,18,16,13,34,34,True,True,6.232514000002993,438,137160,408,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=21
+A2_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,19,16,11,35,35,True,True,0.095,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A2_01_26_paired,genetic_tabu_baseline,27,35,40,21,10,17,31,31,True,True,6.012744400009979,412,134066,390,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=16
+A3_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1356,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A3_01_26_paired,genetic_tabu_baseline,30,39,45,28,10,20,38,38,True,True,6.1914717000036035,425,138247,404,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=15
+A4_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,26,16,17,42,42,True,True,0.1104,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A4_01_26_paired,genetic_tabu_baseline,33,42,49,23,17,16,40,40,True,True,6.0581141999864485,428,138499,405,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=17
+A5_01_26_paired,chen_greedy_algorithm_1p3,32,41,48,19,22,10,41,41,True,True,0.1251,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+A5_01_26_paired,genetic_tabu_baseline,32,41,48,16,19,13,35,35,True,True,6.248248399992008,437,138037,407,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=21
+B1_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,25,14,16,39,39,True,True,0.1445,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B1_01_26_paired,genetic_tabu_baseline,30,39,45,27,12,18,39,39,True,True,6.06699269998353,411,131354,389,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=16
+B2_01_26_paired,chen_greedy_algorithm_1p3,26,33,39,18,15,11,33,33,True,True,0.111,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B2_01_26_paired,genetic_tabu_baseline,26,33,39,23,10,16,33,33,True,True,6.367199200001778,446,141383,418,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=20
+B3_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,24,11,16,35,35,True,True,0.1277,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B3_01_26_paired,genetic_tabu_baseline,27,35,40,27,8,19,35,35,True,True,6.161634399992181,427,136550,406,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=17
+B4_01_26_paired,chen_greedy_algorithm_1p3,27,35,40,21,14,13,35,35,True,True,0.1159,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B4_01_26_paired,genetic_tabu_baseline,27,35,40,24,11,16,35,35,True,True,6.084106599999359,392,132773,370,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=16
+B5_01_26_paired,chen_greedy_algorithm_1p3,30,39,45,22,17,13,39,39,True,True,0.1187,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+B5_01_26_paired,genetic_tabu_baseline,30,39,45,36,3,27,39,39,True,True,6.031784399994649,392,129281,375,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=12
+C1_01_26_paired,chen_greedy_algorithm_1p3,23,29,34,17,12,11,29,29,True,True,0.0907,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C1_01_26_paired,genetic_tabu_baseline,23,29,34,21,6,17,27,27,True,True,6.204930600011721,324,110155,304,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=14
+C2_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,20,17,12,37,37,True,True,0.1032,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C2_01_26_paired,genetic_tabu_baseline,29,37,43,15,16,13,31,31,True,True,6.17981560001499,439,138465,409,0,0,0.0,BEST_EFFORT; pop=18; generations=2; evals=21
+C3_01_26_paired,chen_greedy_algorithm_1p3,33,42,49,18,24,9,42,42,True,True,0.1197,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C3_01_26_paired,genetic_tabu_baseline,33,42,49,23,17,16,40,40,True,True,6.273067700007232,438,144178,415,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=17
+C4_01_26_paired,chen_greedy_algorithm_1p3,31,40,46,20,20,11,40,40,True,True,0.1201,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C4_01_26_paired,genetic_tabu_baseline,31,40,46,35,5,26,40,40,True,True,6.137987100024475,445,141128,424,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=15
+C5_01_26_paired,chen_greedy_algorithm_1p3,29,37,43,17,20,9,37,37,True,True,0.1018,0,0,0,0,0,0.0,rerun; cap=1.3*N0
+C5_01_26_paired,genetic_tabu_baseline,29,37,43,19,16,13,35,35,True,True,6.374822400015546,386,128945,362,0,0,0.0,BEST_EFFORT; pop=18; generations=1; evals=18

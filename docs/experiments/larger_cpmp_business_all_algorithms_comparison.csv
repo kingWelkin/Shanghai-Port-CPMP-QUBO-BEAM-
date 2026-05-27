@@ -1,0 +1,12 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,entropy_max,entropy_limit,entropy_alpha,disorder_total,disorder_initial,disorder_final,status,validation_passed
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,random,25,6,5,0.833333,False,False,inf,0.0006159000040497631,0,0,0,0,0,0.0,0,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,greedy_cpmp,25,6,5,0.833333,False,False,inf,0.00013099999341648072,0,0,0,0,0,0.0,0,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,beam,25,6,5,0.833333,False,False,inf,0.533540799995535,1676,12179,12180,0,0,0.0,0,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,diverse_beam,25,6,5,0.833333,False,False,inf,30.291087600009632,589,4306,4307,0,0,0.0,0,0.9021212121212112,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,rolling_horizon,25,6,5,0.833333,False,False,inf,0.34110799999325536,1320,15777,5,0,0,0.0,0,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,qubo_beam,25,6,5,0.833333,False,False,inf,2.4541927999962354,774,5812,5813,2,195,2.0008080000116024,0,0.7939367518513348,,,,,,,,,,,,NO_FEASIBLE_FOUND; samplers=simulated_annealing,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,qubo_beam_api,25,6,5,0.833333,False,False,inf,8.957975800003624,795,5894,5895,2,195,5.369319699995685,2,0.8731059829762625,,,,,,,,,,,,"NO_FEASIBLE_FOUND; samplers=ising_matrix_api,ising_matrix_api_fallback_simulated_annealing",False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,qubo_rolling_horizon,25,6,5,0.833333,False,False,inf,1.0052859999996144,0,0,0,1,165,1.0000203999952646,1,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,stack_assignment_guided_cpmp,25,6,5,0.833333,False,False,inf,5.194253599998774,977,7334,7335,1,150,5.000076600001194,2,,,,,,,,,,,,,NO_FEASIBLE_FOUND,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,mip_3d,25,6,5,0.833333,False,False,inf,623.445495299995,0,0,0,0,0,0.0,0,,1.0,1940.0,,39659,61733,,23.0,1.3,,,,TIME_LIMIT,False
+larger_cpmp_6x5_n25_seed5,premarshalling_cpmp,mip_4d,25,6,5,0.833333,False,False,inf,601.2011146000004,0,0,0,0,0,0.0,0,,1.0,1062.0,,55115,99384,,23.0,1.3,,,,TIME_LIMIT,False

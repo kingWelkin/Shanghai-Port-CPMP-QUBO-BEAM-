@@ -1,0 +1,610 @@
+[
+  {
+    "instance": {
+      "instance_id": "large_cpmp_6x5_n20_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 6,
+      "max_height": 5,
+      "container_count": 20,
+      "stacks": [
+        [
+          20,
+          15,
+          18,
+          8
+        ],
+        [
+          17,
+          3,
+          1,
+          12
+        ],
+        [
+          19
+        ],
+        [
+          7,
+          6,
+          14
+        ],
+        [
+          9,
+          4,
+          2,
+          5
+        ],
+        [
+          16,
+          13,
+          11,
+          10
+        ]
+      ]
+    },
+    "solver": "greedy_cpmp",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 5.0,
+      "runtime_sec": 0.00010019999172072858,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 8,
+          "from_stack": 0,
+          "to_stack": 5,
+          "from_level": 4,
+          "to_level": 5
+        },
+        {
+          "step": 1,
+          "box": 18,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 2,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 3
+        },
+        {
+          "step": 3,
+          "box": 14,
+          "from_stack": 3,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 4,
+          "box": 5,
+          "from_stack": 4,
+          "to_stack": 3,
+          "from_level": 4,
+          "to_level": 3
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        20,
+        15,
+        12
+      ],
+      [
+        17,
+        3,
+        1
+      ],
+      [
+        19,
+        18,
+        14
+      ],
+      [
+        7,
+        6,
+        5
+      ],
+      [
+        9,
+        4,
+        2
+      ],
+      [
+        16,
+        13,
+        11,
+        10,
+        8
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 0,
+      "generated_states": 0,
+      "visited_states": 0,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "large_cpmp_6x5_n20_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 6,
+      "max_height": 5,
+      "container_count": 20,
+      "stacks": [
+        [
+          20,
+          15,
+          18,
+          8
+        ],
+        [
+          17,
+          3,
+          1,
+          12
+        ],
+        [
+          19
+        ],
+        [
+          7,
+          6,
+          14
+        ],
+        [
+          9,
+          4,
+          2,
+          5
+        ],
+        [
+          16,
+          13,
+          11,
+          10
+        ]
+      ]
+    },
+    "solver": "beam",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 5.0,
+      "runtime_sec": 0.15705069999967236,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 8,
+          "from_stack": 0,
+          "to_stack": 5,
+          "from_level": 4,
+          "to_level": 5
+        },
+        {
+          "step": 1,
+          "box": 18,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 2,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 3
+        },
+        {
+          "step": 3,
+          "box": 14,
+          "from_stack": 3,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        },
+        {
+          "step": 4,
+          "box": 5,
+          "from_stack": 4,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 4
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        20,
+        15,
+        12,
+        5
+      ],
+      [
+        17,
+        3,
+        1
+      ],
+      [
+        19,
+        18,
+        14
+      ],
+      [
+        7,
+        6
+      ],
+      [
+        9,
+        4,
+        2
+      ],
+      [
+        16,
+        13,
+        11,
+        10,
+        8
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 391,
+      "generated_states": 6119,
+      "visited_states": 6120,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "large_cpmp_6x5_n20_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 6,
+      "max_height": 5,
+      "container_count": 20,
+      "stacks": [
+        [
+          20,
+          15,
+          18,
+          8
+        ],
+        [
+          17,
+          3,
+          1,
+          12
+        ],
+        [
+          19
+        ],
+        [
+          7,
+          6,
+          14
+        ],
+        [
+          9,
+          4,
+          2,
+          5
+        ],
+        [
+          16,
+          13,
+          11,
+          10
+        ]
+      ]
+    },
+    "solver": "diverse_beam",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 5.0,
+      "runtime_sec": 83.55270980000205,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 8,
+          "from_stack": 0,
+          "to_stack": 5,
+          "from_level": 4,
+          "to_level": 5
+        },
+        {
+          "step": 1,
+          "box": 18,
+          "from_stack": 0,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 2,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 3
+        },
+        {
+          "step": 3,
+          "box": 5,
+          "from_stack": 4,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 4
+        },
+        {
+          "step": 4,
+          "box": 14,
+          "from_stack": 3,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 3
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        20,
+        15,
+        12,
+        5
+      ],
+      [
+        17,
+        3,
+        1
+      ],
+      [
+        19,
+        18,
+        14
+      ],
+      [
+        7,
+        6
+      ],
+      [
+        9,
+        4,
+        2
+      ],
+      [
+        16,
+        13,
+        11,
+        10,
+        8
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 273,
+      "generated_states": 4294,
+      "visited_states": 4295,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": 0.794201680672281,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  },
+  {
+    "instance": {
+      "instance_id": "large_cpmp_6x5_n20_seed3",
+      "variant": "premarshalling_cpmp",
+      "stack_count": 6,
+      "max_height": 5,
+      "container_count": 20,
+      "stacks": [
+        [
+          20,
+          15,
+          18,
+          8
+        ],
+        [
+          17,
+          3,
+          1,
+          12
+        ],
+        [
+          19
+        ],
+        [
+          7,
+          6,
+          14
+        ],
+        [
+          9,
+          4,
+          2,
+          5
+        ],
+        [
+          16,
+          13,
+          11,
+          10
+        ]
+      ]
+    },
+    "solver": "rolling_horizon",
+    "solution": {
+      "feasible": true,
+      "optimal": false,
+      "objective": 9.0,
+      "runtime_sec": 0.682620899999165,
+      "status": "FEASIBLE",
+      "moves": [
+        {
+          "step": 0,
+          "box": 14,
+          "from_stack": 3,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 2
+        },
+        {
+          "step": 1,
+          "box": 12,
+          "from_stack": 1,
+          "to_stack": 2,
+          "from_level": 4,
+          "to_level": 3
+        },
+        {
+          "step": 2,
+          "box": 5,
+          "from_stack": 4,
+          "to_stack": 2,
+          "from_level": 4,
+          "to_level": 4
+        },
+        {
+          "step": 3,
+          "box": 8,
+          "from_stack": 0,
+          "to_stack": 5,
+          "from_level": 4,
+          "to_level": 5
+        },
+        {
+          "step": 4,
+          "box": 1,
+          "from_stack": 1,
+          "to_stack": 2,
+          "from_level": 3,
+          "to_level": 5
+        },
+        {
+          "step": 5,
+          "box": 3,
+          "from_stack": 1,
+          "to_stack": 3,
+          "from_level": 2,
+          "to_level": 3
+        },
+        {
+          "step": 6,
+          "box": 18,
+          "from_stack": 0,
+          "to_stack": 3,
+          "from_level": 3,
+          "to_level": 4
+        },
+        {
+          "step": 7,
+          "box": 15,
+          "from_stack": 0,
+          "to_stack": 1,
+          "from_level": 2,
+          "to_level": 2
+        },
+        {
+          "step": 8,
+          "box": 18,
+          "from_stack": 3,
+          "to_stack": 0,
+          "from_level": 4,
+          "to_level": 2
+        }
+      ]
+    },
+    "final_stacks": [
+      [
+        20,
+        18
+      ],
+      [
+        17,
+        15
+      ],
+      [
+        19,
+        14,
+        12,
+        5,
+        1
+      ],
+      [
+        7,
+        6,
+        3
+      ],
+      [
+        9,
+        4,
+        2
+      ],
+      [
+        16,
+        13,
+        11,
+        10,
+        8
+      ]
+    ],
+    "validation_passed": true,
+    "validation_message": "ok",
+    "diagnostics": {
+      "expanded_states": 1742,
+      "generated_states": 43298,
+      "visited_states": 10,
+      "qubo_calls": 0,
+      "qubo_total_vars": 0,
+      "qubo_total_time_sec": 0.0,
+      "qubo_repair_count": 0,
+      "selected_avg_similarity": null,
+      "mip_node_count": null,
+      "mip_best_bound": null,
+      "mip_gap": null,
+      "mip_var_count": null,
+      "mip_constr_count": null
+    }
+  }
+]

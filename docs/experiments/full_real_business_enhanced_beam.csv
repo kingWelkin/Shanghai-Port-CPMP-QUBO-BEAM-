@@ -1,0 +1,61 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,beam,29,37,43,15,18,11,33,33,True,True,1.7293665000179317,183,503,504,0,0,0.0,BEST_EFFORT
+A1_01_26_paired,qubo_beam,29,37,43,15,18,11,33,33,True,True,2.059079300001031,183,504,505,4,93,0.06251089999568649,BEST_EFFORT; samplers=simulated_annealing
+A1_01_26_paired,enhanced_beam_fast,29,37,43,18,16,13,34,34,True,True,7.466679900011513,287,956,957,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=97071
+A1_01_26_paired,enhanced_beam_wide,29,37,43,14,18,11,32,32,True,True,10.06284699999378,298,1576,1577,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=109193
+A2_01_26_paired,beam,27,35,40,27,4,23,31,31,True,True,2.8049191999889445,303,829,830,0,0,0.0,BEST_EFFORT
+A2_01_26_paired,qubo_beam,27,35,40,29,5,22,34,34,True,True,3.048635799990734,283,748,749,6,148,0.10253689993987791,BEST_EFFORT; samplers=simulated_annealing
+A2_01_26_paired,enhanced_beam_fast,27,35,40,27,7,20,34,34,True,True,9.241328800009796,375,1402,1403,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=116487
+A2_01_26_paired,enhanced_beam_wide,27,35,40,15,12,15,27,27,True,True,10.077981299982639,297,1709,1710,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106761
+A3_01_26_paired,beam,30,39,45,26,10,20,36,36,True,True,2.6315038000175264,282,783,784,0,0,0.0,BEST_EFFORT
+A3_01_26_paired,qubo_beam,30,39,45,26,10,20,36,36,True,True,3.2079084000142757,282,781,782,6,142,0.10240599999087863,BEST_EFFORT; samplers=simulated_annealing
+A3_01_26_paired,enhanced_beam_fast,30,39,45,23,13,17,36,36,True,True,8.949341500003356,348,1181,1182,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=115690
+A3_01_26_paired,enhanced_beam_wide,30,39,45,15,15,15,30,30,True,True,10.01956159999827,313,1608,1609,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=110542
+A4_01_26_paired,beam,33,42,49,27,13,20,40,40,True,True,2.5081767000083346,283,806,807,0,0,0.0,BEST_EFFORT
+A4_01_26_paired,qubo_beam,33,42,49,26,13,20,39,39,True,True,3.0940237999893725,283,806,807,6,149,0.10251190001145005,BEST_EFFORT; samplers=simulated_annealing
+A4_01_26_paired,enhanced_beam_fast,33,42,49,32,9,24,41,41,True,True,9.73112900002161,424,1434,1435,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126420
+A4_01_26_paired,enhanced_beam_wide,33,42,49,16,19,14,35,35,True,True,10.014196999982232,311,1826,1827,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=107749
+A5_01_26_paired,beam,32,41,48,21,15,17,36,36,True,True,2.157212599995546,251,705,706,0,0,0.0,BEST_EFFORT
+A5_01_26_paired,qubo_beam,32,41,48,21,15,17,36,36,True,True,2.7230793999915477,251,705,706,6,151,0.10243120003724471,BEST_EFFORT; samplers=simulated_annealing
+A5_01_26_paired,enhanced_beam_fast,32,41,48,24,15,17,39,39,True,True,8.724333999998635,357,1431,1432,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=112862
+A5_01_26_paired,enhanced_beam_wide,32,41,48,14,18,14,32,32,True,True,10.131187199993292,313,2062,2063,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=102030
+B1_01_26_paired,beam,30,39,45,33,6,24,39,39,True,True,2.436819700000342,318,812,813,0,0,0.0,BEST_EFFORT
+B1_01_26_paired,qubo_beam,30,39,45,32,6,24,38,38,True,True,3.4013578000012785,323,864,865,7,167,0.12246659994707443,BEST_EFFORT; samplers=simulated_annealing
+B1_01_26_paired,enhanced_beam_fast,30,39,45,29,10,20,39,39,True,True,9.526011399982963,393,1559,1560,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=120892
+B1_01_26_paired,enhanced_beam_wide,30,39,45,13,17,13,30,30,True,True,10.010258800000884,271,2027,2028,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=97736
+B2_01_26_paired,beam,26,33,39,22,9,17,31,31,True,True,2.1459869999962393,233,660,661,0,0,0.0,BEST_EFFORT
+B2_01_26_paired,qubo_beam,26,33,39,22,9,17,31,31,True,True,2.5359457999875303,233,660,661,5,121,0.0828516999608837,BEST_EFFORT; samplers=simulated_annealing
+B2_01_26_paired,enhanced_beam_fast,26,33,39,23,10,16,33,33,True,True,7.801482699986082,311,971,972,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=99416
+B2_01_26_paired,enhanced_beam_wide,26,33,39,14,12,14,26,26,True,True,10.19127860001754,314,1530,1531,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=109003
+B3_01_26_paired,beam,27,35,40,16,12,15,28,28,True,True,2.137062599998899,223,610,611,0,0,0.0,BEST_EFFORT
+B3_01_26_paired,qubo_beam,27,35,40,16,12,15,28,28,True,True,2.5018511000089347,223,607,608,5,116,0.08257990001584403,BEST_EFFORT; samplers=simulated_annealing
+B3_01_26_paired,enhanced_beam_fast,27,35,40,18,9,18,27,27,True,True,8.83117210000637,346,857,858,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=113295
+B3_01_26_paired,enhanced_beam_wide,27,35,40,15,12,15,27,27,True,True,10.074746199999936,307,1033,1034,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=110295
+B4_01_26_paired,beam,27,35,40,20,10,17,30,30,True,True,2.3602747000113595,243,685,686,0,0,0.0,BEST_EFFORT
+B4_01_26_paired,qubo_beam,27,35,40,20,10,17,30,30,True,True,2.712955499999225,243,684,685,5,123,0.08246599999256432,BEST_EFFORT; samplers=simulated_annealing
+B4_01_26_paired,enhanced_beam_fast,27,35,40,26,6,21,32,32,True,True,10.013586299988674,345,1302,1303,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=126407
+B4_01_26_paired,enhanced_beam_wide,27,35,40,14,13,14,27,27,True,True,10.191938700008905,291,1739,1740,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106742
+B5_01_26_paired,beam,30,39,45,36,3,27,39,39,True,True,3.100502899993444,348,939,940,0,0,0.0,BEST_EFFORT
+B5_01_26_paired,qubo_beam,30,39,45,36,3,27,39,39,True,True,3.741982299980009,348,939,940,8,184,0.12656470001093112,BEST_EFFORT; samplers=simulated_annealing
+B5_01_26_paired,enhanced_beam_fast,30,39,45,26,8,22,34,34,True,True,10.01208869999391,363,1197,1198,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=129561
+B5_01_26_paired,enhanced_beam_wide,30,39,45,16,14,16,30,30,True,True,10.126316000008956,325,1294,1295,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=113240
+C1_01_26_paired,beam,23,29,34,18,7,16,25,25,True,True,2.0853293999971356,212,581,582,0,0,0.0,BEST_EFFORT
+C1_01_26_paired,qubo_beam,23,29,34,18,7,16,25,25,True,True,2.591766900004586,212,582,583,5,119,0.0824185999808833,BEST_EFFORT; samplers=simulated_annealing
+C1_01_26_paired,enhanced_beam_fast,23,29,34,21,5,18,26,26,True,True,8.784624699997948,319,1275,1276,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=109780
+C1_01_26_paired,enhanced_beam_wide,23,29,34,13,10,13,23,23,True,True,10.276868599990848,262,2043,2044,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=98724
+C2_01_26_paired,beam,29,37,43,28,9,20,37,37,True,True,2.2585207000083756,272,739,740,0,0,0.0,BEST_EFFORT
+C2_01_26_paired,qubo_beam,29,37,43,30,7,22,37,37,True,True,2.8140700999938417,287,776,777,6,146,0.10276350000640377,BEST_EFFORT; samplers=simulated_annealing
+C2_01_26_paired,enhanced_beam_fast,29,37,43,23,14,15,37,37,True,True,7.391142899985425,308,1060,1061,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=95069
+C2_01_26_paired,enhanced_beam_wide,29,37,43,15,15,14,30,30,True,True,10.031091599987121,300,1723,1724,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106761
+C3_01_26_paired,beam,33,42,49,23,17,16,40,40,True,True,2.246203400020022,243,678,679,0,0,0.0,BEST_EFFORT
+C3_01_26_paired,qubo_beam,33,42,49,23,17,16,40,40,True,True,2.6924598999903537,243,678,679,5,120,0.08245260000694543,BEST_EFFORT; samplers=simulated_annealing
+C3_01_26_paired,enhanced_beam_fast,33,42,49,27,15,18,42,42,True,True,9.345221600000514,361,1319,1320,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=120748
+C3_01_26_paired,enhanced_beam_wide,33,42,49,13,20,13,33,33,True,True,10.197688599990215,297,1796,1797,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=106077
+C4_01_26_paired,beam,31,40,46,29,11,20,40,40,True,True,2.404953799996292,275,759,760,0,0,0.0,BEST_EFFORT
+C4_01_26_paired,qubo_beam,31,40,46,29,11,20,40,40,True,True,2.849184199993033,275,755,756,6,150,0.10242209999705665,BEST_EFFORT; samplers=simulated_annealing
+C4_01_26_paired,enhanced_beam_fast,31,40,46,30,10,21,40,40,True,True,9.541361699986737,403,1170,1171,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=124345
+C4_01_26_paired,enhanced_beam_wide,31,40,46,16,15,16,31,31,True,True,10.151759800006403,338,1481,1482,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=116128
+C5_01_26_paired,beam,29,37,43,21,16,13,37,37,True,True,1.8385925999900792,201,519,520,0,0,0.0,BEST_EFFORT
+C5_01_26_paired,qubo_beam,29,37,43,21,16,13,37,37,True,True,2.064211899996735,201,519,520,5,100,0.07204359999741428,BEST_EFFORT; samplers=simulated_annealing
+C5_01_26_paired,enhanced_beam_fast,29,37,43,17,16,13,33,33,True,True,7.024320500000613,275,820,821,0,0,0.0,BEST_EFFORT; per_rule=2; evaluated_moves=92935
+C5_01_26_paired,enhanced_beam_wide,29,37,43,12,18,11,30,30,True,True,10.224415999982739,307,1327,1328,0,0,0.0,BEST_EFFORT; per_rule=3; evaluated_moves=113012

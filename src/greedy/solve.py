@@ -22,6 +22,7 @@ def run_greedy_phase(
     *,
     seed: int = 42,
     greedy_max_moves: int | None = None,
+    g_ratio: float = 1.5,
     verbose: bool = True,
 ) -> Tuple[List, bool, Dict]:
     """仅贪心规划 + 重放校验，不建 QUBO。"""
@@ -30,10 +31,11 @@ def run_greedy_phase(
         problem,
         seed=seed,
         max_moves=greedy_max_moves,
+        g_ratio=g_ratio,
         verbose=verbose,
     )
     sorted_ok = terminal_sort_reached(problem, planned)
-    stats = greedy_plan_stats(problem, planned)
+    stats = greedy_plan_stats(problem, planned, g_ratio=g_ratio)
     elapsed = time.perf_counter() - t0
     layout = (
         "multi_bay"
@@ -196,6 +198,7 @@ def run_greedy_yard_solve(
     verbose_iter: bool = True,
     verbose_build: bool = False,
     greedy_max_moves: int | None = None,
+    g_ratio: float = 1.5,
     refine_if_unsorted: bool = True,
 ) -> Tuple[Optional[np.ndarray], float, Dict, int, Dict, Dict, List]:
     """
@@ -207,6 +210,7 @@ def run_greedy_yard_solve(
         problem,
         seed=seed,
         greedy_max_moves=greedy_max_moves,
+        g_ratio=g_ratio,
         verbose=verbose_iter,
     )
 
@@ -256,7 +260,7 @@ def report_greedy_metrics(
         )
         lines.append(
             f"G=翻箱+N  {meta.get('g_init')}→{meta.get('g_end')}  "
-            f"须≤{meta.get('g_cap')}(=1.5×N0)  合规={meta.get('g_ok')}"
+            f"须≤{meta.get('g_cap')}(={meta.get('g_ratio', 1.5)}×N0)  合规={meta.get('g_ok')}"
         )
     if meta.get("refined"):
         lines.extend(

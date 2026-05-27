@@ -1,0 +1,20 @@
+greedy 批量 mode=multi_bay
+合并贝位: 01,26
+
+OK A1_01_26_paired: 0.1s moves=15 sorted=False
+OK A2_01_26_paired: 0.1s moves=19 sorted=False
+OK A3_01_26_paired: 0.1s moves=22 sorted=False
+OK A4_01_26_paired: 0.1s moves=26 sorted=False
+OK A5_01_26_paired: 0.1s moves=19 sorted=False
+OK B1_01_26_paired: 0.1s moves=25 sorted=False
+OK B2_01_26_paired: 0.1s moves=18 sorted=False
+OK B3_01_26_paired: 0.1s moves=24 sorted=False
+OK B4_01_26_paired: 0.1s moves=21 sorted=False
+OK B5_01_26_paired: 0.1s moves=22 sorted=False
+OK C1_01_26_paired: 0.1s moves=17 sorted=False
+OK C2_01_26_paired: 0.1s moves=20 sorted=False
+OK C3_01_26_paired: 0.1s moves=18 sorted=False
+OK C4_01_26_paired: 0.1s moves=20 sorted=False
+OK C5_01_26_paired: 0.1s moves=17 sorted=False
+
+成功 15  失败 0  合计 1.7s

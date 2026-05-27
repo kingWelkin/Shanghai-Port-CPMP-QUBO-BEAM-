@@ -1,0 +1,2 @@
+instance_id,variant,solver,n,m,H,occupancy,feasible,optimal,objective,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_total_time_sec,qubo_repair_count,selected_avg_similarity,mip_node_count,mip_best_bound,mip_gap,mip_var_count,mip_constr_count,status,validation_passed
+medium_cpmp_5x4_n12_seed1,premarshalling_cpmp,qubo_beam_api,12,5,4,0.600000,True,False,6.0,12.60712980000244,328,3661,3662,5,819,12.248301300001913,5,0.7215028869642466,,,,,,FEASIBLE; samplers=ising_matrix_api,True
