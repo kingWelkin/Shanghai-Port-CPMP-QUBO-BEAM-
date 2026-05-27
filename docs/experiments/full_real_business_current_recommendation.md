@@ -9,6 +9,8 @@ MIP optimality gap 解读。
 
 ## 推荐接入
 
+完整扩展总表见：[完整真实配对算例扩展算法对比](full_real_business_all_algorithms_extended_comparison.md)。
+
 | 路线 | 平均最终 N | 平均搬移数 | 平均运行时间 | 口径 |
 |---|---:|---:|---:|---|
 | `beam_focused_with_qubo_portfolio` | 8.53 | 26.80 | 37.313s | 当前最高质量综合 route |
@@ -122,10 +124,12 @@ python scripts/benchmark_full_real_enhanced_qubo_beam.py
 python scripts/benchmark_full_real_qubo_standalone_tuning.py
 python scripts/benchmark_full_real_lns_astar.py
 python scripts/benchmark_full_real_weighted_astar_tuning.py
+python scripts/build_full_real_all_algorithms_extended_report.py
 ```
 
 核心报告：
 
+- [完整真实配对算例扩展算法总表](full_real_business_all_algorithms_extended_comparison.md)
 - [focused beam 对照](full_real_business_focused_beam_comparison.md)
 - [beam 改进路线对照](full_real_business_beam_improvements_comparison.md)
 - [enhanced beam 后接 QUBO 对照](full_real_business_enhanced_qubo_beam_comparison.md)

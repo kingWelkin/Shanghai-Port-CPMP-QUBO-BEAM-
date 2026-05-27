@@ -6,6 +6,8 @@
 
 下，尽量降低最终 `N(Future)`。
 
+本文的实验结论均基于 15 个真实 `01+26` 配对业务算例，比较指标为最终 `N(Future)`。所有轨迹均由经典状态引擎生成合法动作，并检查中间状态是否满足 `1.3N0` 业务约束。
+
 ## 1. 问题口径
 
 当前业务版本采用如下定义：
@@ -103,17 +105,20 @@ QUBO branch 的价值在于：
 
 这对当前业务目标尤其重要，因为在 `G <= 1.3N0` 的预算内，有些路线短期看起来不占优，但后续可能显著降低 `N(Future)`。
 
-## 6. 当前实验结果
+## 6. 当前扩展实验结果
 
-在 15 个真实 `01+26` 配对业务算例上，当前结果如下：
+在 15 个真实 `01+26` 配对业务算例上，已汇总 beam、QUBO、tabu、GRASP、VNS、simulated annealing、genetic+tabu、LNS、weighted A* 等 44 条算法路线。下表列出主要代表算法：
 
 | 算法路线 | 平均最终 `N(Future)` | 平均搬移数 | 平均运行时间 |
 |---|---:|---:|---:|
 | `chen_greedy_algorithm_1p3` | 17.13 | 20.20 | 0.115s |
 | `beam` | 10.67 | 24.13 | 2.460s |
-| `qubo_beam` 原始版 | 10.60 | 24.27 | 2.932s |
+| `qubo_beam` | 10.60 | 24.27 | 2.932s |
+| `weighted_astar_business_portfolio` | 10.13 | 25.80 | 30.053s |
 | `beam_focused_plain` | 9.47 | 25.47 | 11.286s |
 | `qbo_beam_standalone_portfolio` | 9.00 | 26.87 | 26.027s |
+| `beam_focused_with_dense_qubo` | 8.93 | 26.33 | 18.559s |
+| `beam_focused_with_tuned_qubo` | 8.80 | 26.47 | 21.491s |
 | `beam_focused_with_qubo_portfolio` | 8.53 | 26.80 | 37.313s |
 
 可以看到：
@@ -121,6 +126,23 @@ QUBO branch 的价值在于：
 - QUBO 单独增强有效：`qubo_beam` 从 `10.60` 改进到 QUBO-only portfolio 的 `9.00`。
 - QUBO 与 focused beam 组合后继续有效：无 QUBO 的 `beam_focused_plain` 为 `9.47`，加入 tuned QUBO branch 后达到 `8.53`。
 - QUBO 的主要贡献是质量提升，不是速度提升。
+
+与其他元启发式基线相比：
+
+| 算法路线 | 平均最终 `N(Future)` | 说明 |
+|---|---:|---|
+| `genetic_tabu_baseline` | 11.73 | genetic + tabu 能改善贪心，但弱于 beam/QUBO 系列 |
+| `tabu_search_baseline` | 12.27 | 可作为非 QUBO local-search baseline |
+| `vns_baseline` | 12.60 | 个别算例有效，平均不占优 |
+| `grasp_baseline` | 12.73 | 构造型随机贪心，对业务约束较敏感 |
+| `lns_beam_repair` | 13.87 | suffix repair 搬移较少，但最终 `N(Future)` 降幅不足 |
+| `simulated_annealing_baseline` | 14.53 | 容易消耗有限 `G` 预算 |
+
+完整扩展结果见：
+
+- `docs/experiments/full_real_business_all_algorithms_extended_comparison.md`
+- `docs/experiments/full_real_business_all_algorithms_extended_summary.csv`
+- `docs/experiments/full_real_business_all_algorithms_extended_detail.csv`
 
 ## 7. 当前判断
 
@@ -136,11 +158,31 @@ QUBO branch 的价值在于：
 
 QUBO 当前最适合作为候选选择和 portfolio 分支，不适合作为单独直接求解器。
 
-## 8. 后续方向
+如果需要按运行时间分层，当前建议如下：
+
+| 场景 | 建议路线 | 平均最终 `N(Future)` | 平均时间 |
+|---|---|---:|---:|
+| 最高质量 | `beam_focused_with_qubo_portfolio` | 8.53 | 37.313s |
+| 质量/时间折中 | `beam_focused_with_tuned_qubo` | 8.80 | 21.491s |
+| 20 秒以内质量路线 | `beam_focused_with_dense_qubo` | 8.93 | 18.559s |
+| 不使用 QUBO/API | `beam_focused_plain` | 9.47 | 11.286s |
+| 快速 baseline | `beam` | 10.67 | 2.460s |
+| 生产最快 baseline | `chen_greedy_algorithm_1p3` | 17.13 | 0.115s |
+
+## 8. 关于 MIP 的位置
+
+MIP 当前主要作为 small/medium benchmark，用于验证模型和小规模最优性，不作为真实全量主算法。原因是完整真实配对算例规模较大，time-expanded MIP 很难在可接受时间内给出稳定可比的 validated incumbent。
+
+因此，本简报中的真实 15 例主排序没有加入 MIP。已有 MIP 结果应单独解读：
+
+- small/medium CPMP 上，4D MIP 可以证明最优；
+- 中型业务算例上，4D MIP 明显快于 3D MIP；
+- 大规模真实业务算例上，MIP 当前仍是参考和长时探索工具，而不是主生产路线。
+
+## 9. 后续方向
 
 后续可以继续推进三件事：
 
 1. 提高 QUBO branch 的效率，减少不必要的 QUBO 调用。
 2. 引入外部 QUBO / Ising API，但必须保留 decode、repair、validate。
 3. 分析每个算例中 QUBO 胜出的具体结构，形成更可解释的业务规则。
-
