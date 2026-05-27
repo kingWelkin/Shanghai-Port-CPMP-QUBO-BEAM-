@@ -1,0 +1,46 @@
+case,solver,n0,cap_13,cap_15,moves,final_n,reduction,g_end,max_g,g_ok_13,g_ok_15,runtime_sec,expanded_states,generated_states,visited_states,qubo_calls,qubo_total_vars,qubo_time_sec,status
+A1_01_26_paired,weighted_astar_business,29,37,43,21,16,13,37,37,True,True,10.001813399983803,1809,1970,1971,0,0,0.0,BEST_EFFORT; open=162
+A1_01_26_paired,lns_beam_repair,29,37,43,18,17,12,35,35,True,True,24.031007599987788,889,3854,3861,20,531,0.22202260000631213,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+A1_01_26_paired,lns_qubo_repair,29,37,43,18,17,12,35,35,True,True,30.283832800021628,627,2186,2194,68,2186,0.8584745001571719,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+A2_01_26_paired,weighted_astar_business,27,35,40,25,10,17,35,35,True,True,10.00184330000775,2176,2562,2563,0,0,0.0,BEST_EFFORT; open=387
+A2_01_26_paired,lns_beam_repair,27,35,40,18,9,18,27,27,True,True,24.0169057000021,1099,4590,4597,24,645,0.27098749997094274,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+A2_01_26_paired,lns_qubo_repair,27,35,40,18,9,18,27,27,True,True,30.248949500004528,782,2731,2740,84,2731,1.0645721001492348,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=8; suffix=qbo
+A3_01_26_paired,weighted_astar_business,30,39,45,26,13,17,39,39,True,True,10.005142599984538,1005,1887,1888,0,0,0.0,BEST_EFFORT; open=883
+A3_01_26_paired,lns_beam_repair,30,39,45,15,15,15,30,30,True,True,24.032656600000337,595,2463,2470,17,435,0.18990190004114993,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+A3_01_26_paired,lns_qubo_repair,30,39,45,15,15,15,30,30,True,True,30.071263399993768,452,1551,1559,56,1551,0.7022937000729144,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+A4_01_26_paired,weighted_astar_business,33,42,49,29,12,21,41,41,True,True,10.001312299980782,1119,1344,1337,0,0,0.0,BEST_EFFORT; open=226
+A4_01_26_paired,lns_beam_repair,33,42,49,16,19,14,35,35,True,True,24.015985899983207,595,2554,2561,17,431,0.188144099956844,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+A4_01_26_paired,lns_qubo_repair,33,42,49,18,18,15,36,36,True,True,30.374550400010776,485,1729,1737,57,1729,0.7300791000307072,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+A5_01_26_paired,weighted_astar_business,32,41,48,21,18,14,39,39,True,True,10.007146599993575,850,1056,1057,0,0,0.0,BEST_EFFORT; open=207
+A5_01_26_paired,lns_beam_repair,32,41,48,16,17,15,33,33,True,True,24.02957409998635,548,2215,2222,16,405,0.18047230000956915,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+A5_01_26_paired,lns_qubo_repair,32,41,48,15,18,14,33,33,True,True,30.30639529999462,491,1652,1660,57,1652,0.729027200024575,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+B1_01_26_paired,weighted_astar_business,30,39,45,25,12,18,37,37,True,True,10.004634599987185,1026,1715,1658,0,0,0.0,BEST_EFFORT; open=690
+B1_01_26_paired,lns_beam_repair,30,39,45,17,13,17,30,30,True,True,24.00767530000303,609,2397,2404,18,438,0.19476700003724545,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+B1_01_26_paired,lns_qubo_repair,30,39,45,17,13,17,30,30,True,True,30.362681200000225,481,1597,1605,56,1597,0.709405099885771,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+B2_01_26_paired,weighted_astar_business,26,33,39,20,11,15,31,31,True,True,10.001069500023732,976,1184,1185,0,0,0.0,BEST_EFFORT; open=209
+B2_01_26_paired,lns_beam_repair,26,33,39,18,12,14,30,30,True,True,24.007970699982252,572,2323,2330,18,442,0.20530130004044622,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+B2_01_26_paired,lns_qubo_repair,26,33,39,15,13,13,28,28,True,True,30.273469899984775,463,1567,1575,57,1567,0.7128589001076762,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+B3_01_26_paired,weighted_astar_business,27,35,40,17,10,17,27,27,True,True,10.006309299991699,564,2969,2970,0,0,0.0,BEST_EFFORT; open=2406
+B3_01_26_paired,lns_beam_repair,27,35,40,16,11,16,27,27,True,True,24.009651100001065,575,2336,2343,16,401,0.178576900070766,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+B3_01_26_paired,lns_qubo_repair,27,35,40,17,10,17,27,27,True,True,30.311181199998828,469,1617,1625,56,1617,0.7098854000214487,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+B4_01_26_paired,weighted_astar_business,27,35,40,30,5,22,35,35,True,True,10.007754099991871,1124,1479,1476,0,0,0.0,BEST_EFFORT; open=356
+B4_01_26_paired,lns_beam_repair,27,35,40,17,11,16,28,28,True,True,24.008263399999123,588,2497,2504,17,448,0.19028449998586439,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+B4_01_26_paired,lns_qubo_repair,27,35,40,17,11,16,28,28,True,True,30.35089830000652,483,1704,1712,57,1704,0.7371662000659853,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+B5_01_26_paired,weighted_astar_business,30,39,45,25,9,21,34,34,True,True,10.000602800020715,488,2990,2991,0,0,0.0,BEST_EFFORT; open=2503
+B5_01_26_paired,lns_beam_repair,30,39,45,17,13,17,30,30,True,True,24.00980410000193,629,2754,2761,17,453,0.19380830007139593,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+B5_01_26_paired,lns_qubo_repair,30,39,45,17,13,17,30,30,True,True,30.05001100001391,507,1833,1841,59,1833,0.741228099912405,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+C1_01_26_paired,weighted_astar_business,23,29,34,21,6,17,27,27,True,True,10.006064300017897,923,1268,1269,0,0,0.0,BEST_EFFORT; open=346
+C1_01_26_paired,lns_beam_repair,23,29,34,17,7,16,24,24,True,True,24.015142399992328,507,2092,2099,15,350,0.16913179997936822,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+C1_01_26_paired,lns_qubo_repair,23,29,34,15,8,15,23,23,True,True,30.793503599998076,467,1617,1625,55,1617,0.6980315001565032,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+C2_01_26_paired,weighted_astar_business,29,37,43,23,14,15,37,37,True,True,10.003269600012572,932,1169,1169,0,0,0.0,BEST_EFFORT; open=238
+C2_01_26_paired,lns_beam_repair,29,37,43,17,14,15,31,31,True,True,24.000480699993204,594,2460,2467,17,437,0.1901703999901656,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+C2_01_26_paired,lns_qubo_repair,29,37,43,15,16,13,31,31,True,True,30.117551099974662,484,1626,1634,59,1626,0.7432504001189955,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+C3_01_26_paired,weighted_astar_business,33,42,49,27,15,18,42,42,True,True,10.00453869998455,983,1263,1264,0,0,0.0,BEST_EFFORT; open=281
+C3_01_26_paired,lns_beam_repair,33,42,49,17,18,15,35,35,True,True,24.016982500004815,573,2445,2452,17,445,0.1941001999657601,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+C3_01_26_paired,lns_qubo_repair,33,42,49,17,18,15,35,35,True,True,30.044949000002816,505,1800,1808,58,1800,0.7363022999779787,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+C4_01_26_paired,weighted_astar_business,31,40,46,21,14,17,35,35,True,True,10.006144999992102,281,2329,2330,0,0,0.0,BEST_EFFORT; open=2049
+C4_01_26_paired,lns_beam_repair,31,40,46,17,15,16,32,32,True,True,24.00918389999424,643,2694,2701,18,447,0.1956009000132326,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+C4_01_26_paired,lns_qubo_repair,31,40,46,17,15,16,32,32,True,True,30.34800660001929,508,1804,1812,60,1804,0.7490887999301776,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo
+C5_01_26_paired,weighted_astar_business,29,37,43,28,9,20,37,37,True,True,10.002547999989474,1233,1420,1421,0,0,0.0,BEST_EFFORT; open=188
+C5_01_26_paired,lns_beam_repair,29,37,43,16,17,12,33,33,True,True,24.009203299996443,568,2400,2407,17,425,0.19490069992025383,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=6; suffix=beam
+C5_01_26_paired,lns_qubo_repair,29,37,43,12,18,11,30,30,True,True,30.311506400001235,463,1622,1630,57,1622,0.7229050000023562,BEST_EFFORT; incumbent=qbo_beam_dense; lns_attempts=7; suffix=qbo

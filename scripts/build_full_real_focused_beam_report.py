@@ -11,6 +11,7 @@ from benchmark_full_real_business_algorithms import ROOT, TrajectoryResult
 SOURCE_FILES = [
     ROOT / "docs" / "experiments" / "full_real_business_beam_portfolio_comparison.csv",
     ROOT / "docs" / "experiments" / "full_real_business_enhanced_beam.csv",
+    ROOT / "docs" / "experiments" / "full_real_business_qubo_standalone_tuning.csv",
 ]
 
 
@@ -71,6 +72,30 @@ def main() -> None:
     for case in cases:
         focused_rows.append(_make_portfolio(case, rows, "beam_focused_plain", {"beam", "enhanced_beam_fast"}))
         focused_rows.append(_make_portfolio(case, rows, "beam_focused_with_qubo", {"beam", "qubo_beam", "enhanced_beam_fast"}))
+        focused_rows.append(
+            _make_portfolio(
+                case,
+                rows,
+                "beam_focused_with_dense_qubo",
+                {"beam", "enhanced_beam_fast", "qbo_beam_dense"},
+            )
+        )
+        focused_rows.append(
+            _make_portfolio(
+                case,
+                rows,
+                "beam_focused_with_tuned_qubo",
+                {"beam", "enhanced_beam_fast", "qubo_beam", "qbo_beam_dense"},
+            )
+        )
+        focused_rows.append(
+            _make_portfolio(
+                case,
+                rows,
+                "beam_focused_with_qubo_portfolio",
+                {"beam", "enhanced_beam_fast", "qbo_beam_standalone_portfolio"},
+            )
+        )
 
     combined = rows + focused_rows
     by_solver: dict[str, list[dict[str, str]]] = {}
@@ -136,6 +161,9 @@ def main() -> None:
             "",
             "- `beam_focused_plain` runs only `beam` and `enhanced_beam_fast`.",
             "- `beam_focused_with_qubo` adds `qubo_beam` to recover cases where QUBO improves the standard beam.",
+            "- `beam_focused_with_dense_qubo` replaces the original QUBO branch with the denser standalone QUBO configuration.",
+            "- `beam_focused_with_tuned_qubo` keeps both original `qubo_beam` and `qbo_beam_dense`.",
+            "- `beam_focused_with_qubo_portfolio` plugs the QUBO-only mini-portfolio into the original focused algorithm.",
             "- Runtime is conservatively summed across the selected components.",
         ]
     )
