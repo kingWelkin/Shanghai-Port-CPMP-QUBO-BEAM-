@@ -1,5 +1,6 @@
 """QUBO model builders and samplers."""
 
+from .frontier_selection import QuboFrontierConfig, QuboFrontierSelection, QuboFrontierSelector
 from .model import QuboModel
 from .sampler import (
     ExternalCommandQuboSampler,
@@ -13,6 +14,9 @@ from .sampler import (
 )
 
 __all__ = [
+    "QuboFrontierConfig",
+    "QuboFrontierSelection",
+    "QuboFrontierSelector",
     "QuboModel",
     "QuboSamplerConfig",
     "QuboSample",

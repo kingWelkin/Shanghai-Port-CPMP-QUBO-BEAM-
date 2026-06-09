@@ -166,7 +166,10 @@ class QuboPathSelectionBuilder:
                     best_path[edge.to_node] = best_path[node.id] + [edge.move]
         if not best_path:
             return []
-        leaf = min(best_path, key=lambda nid: (best_cost[nid], -len(best_path[nid])))
+        nonempty_paths = [nid for nid, path in best_path.items() if path]
+        if not nonempty_paths:
+            return []
+        leaf = min(nonempty_paths, key=lambda nid: (best_cost[nid], -len(best_path[nid])))
         return best_path[leaf]
 
 

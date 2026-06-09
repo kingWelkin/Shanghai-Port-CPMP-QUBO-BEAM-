@@ -18,6 +18,8 @@ from ..qubo.stack_assignment import StackAssignmentGuidedPremarshallingSolver
 from ..solvers import (
     BeamSearchSolver,
     DiverseBeamSearchSolver,
+    ExactAStarSolver,
+    ExactIDAStarSolver,
     GreedyPremarshallingSolver,
     GreedyRetrievalSolver,
     RandomSolver,
@@ -162,6 +164,10 @@ class ExperimentRunner:
     def _make_solver(name: str) -> Solver:
         solvers = {
             "random": RandomSolver,
+            "astar": ExactAStarSolver,
+            "exact_astar": ExactAStarSolver,
+            "idastar": ExactIDAStarSolver,
+            "exact_idastar": ExactIDAStarSolver,
             "greedy_retrieval": GreedyRetrievalSolver,
             "greedy_cpmp": GreedyPremarshallingSolver,
             "beam": BeamSearchSolver,

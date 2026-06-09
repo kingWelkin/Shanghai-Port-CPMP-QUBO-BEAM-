@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ..core import Instance, Solution, State, validate_solution
+from ..core import Instance, Move, Solution, State, validate_solution
 from ..scoring import ScoreWeights
 
 
@@ -22,6 +22,8 @@ class SolverConfig:
     enable_canonical_hash: bool = False
     random_seed: int = 1
     time_limit_sec: float = 3600.0
+    exact_max_visited_states: Optional[int] = None
+    exact_incumbent_moves: Optional[list[Move]] = None
 
     max_qubo_vars: int = 1000
     qubo_penalty_a: float = 10.0
@@ -34,6 +36,30 @@ class SolverConfig:
     qubo_call_interval: int = 1
     qubo_min_candidates_for_call: int = 0
     qubo_repair_hamming_slack: int = 3
+    qubo_selection_policy: str = "enhanced"
+    qubo_core_width: Optional[int] = None
+    qubo_parent_core_cap: int = 4
+    qubo_supplement_width: int = 24
+    qubo_group_enabled: bool = False
+    qubo_group_max_vars: int = 96
+    qubo_group_select: int = 24
+    qubo_group_take: int = 4
+    qubo_group_same_n_penalty: float = 0.04
+    qubo_dynamic_min_frontier: int = 128
+    qubo_dynamic_core_frontier: int = 0
+    qubo_dynamic_max_frontier: int = 0
+    qubo_dynamic_candidate_pool: int = 4096
+    qubo_dynamic_keep_threshold: float = 0.55
+    qubo_dynamic_adaptive_frontier: bool = True
+    qubo_dynamic_stagnation_window: int = 3
+    qubo_dynamic_stagnation_epsilon: float = 1e-6
+    qubo_dynamic_similarity_window: int = 64
+    qubo_dynamic_similarity_expand_threshold: float = 0.58
+    qubo_dynamic_similarity_contract_threshold: float = 0.35
+    qubo_dynamic_parent_share_expand_threshold: float = 0.55
+    qubo_dynamic_score_gap_expand_ratio: float = 0.03
+    qubo_dynamic_frontier_pressure_step: float = 0.10
+    qubo_dynamic_frontier_pressure_decay: float = 0.07
     entropy_alpha: float = 1.3
     mip_warm_start: bool = True
     mip_warm_start_time_limit_sec: float = 5.0

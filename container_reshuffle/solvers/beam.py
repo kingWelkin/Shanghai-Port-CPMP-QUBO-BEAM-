@@ -19,6 +19,7 @@ class Candidate:
     score: float
     last_move: Optional[Move]
     hash_value: Tuple
+    parent_hash: Optional[Tuple] = None
 
 
 class BeamSearchSolver(Solver):
