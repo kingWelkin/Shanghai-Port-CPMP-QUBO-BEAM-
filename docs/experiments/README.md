@@ -5,6 +5,9 @@
 ## 文件说明
 
 - [results.md](results.md)：解释 `data/results` 中贪心输出字段、轨迹和验收结果。
+- [qubo_astar_speed_alignment.md](qubo_astar_speed_alignment.md)：当前 QUBO Beam 主结果和 A* no-proof 速度对齐结论。
+- [compact_beam_qubo_speed_optimized_v2_full30_repeat.md](compact_beam_qubo_speed_optimized_v2_full30_repeat.md)：稳定版 QUBO Beam speed 的 30 个单贝算例结果。
+- [astar_qubo_baseline_beam_comparison.md](astar_qubo_baseline_beam_comparison.md)：A* no-proof、QUBO Beam、classic Beam 消融的历史对比表。
 - [greedy_vs_mip.md](greedy_vs_mip.md)：小规模人工与真实局部算例的贪心/MIP 对比。
 - [greedy_vs_mip.csv](greedy_vs_mip.csv)：对应明细数据。
 - [greedy_vs_mip_larger_real.md](greedy_vs_mip_larger_real.md)：较大真实局部算例的贪心/MIP 对比。
@@ -17,9 +20,11 @@
 
 ## 当前结论
 
-- 当前完整真实配对案例采用业务改善口径：在 `G = M(Now) + N(Future) <= floor(1.3 * N(0))` 内尽量降低 `N(Future)`。
-- `chen_greedy_algorithm_1p3` 是最快 baseline；完整 15 个配对案例平均最终 `N(Future)=17.13`。
-- 当前推荐的最高质量路线是 `beam_focused_with_qubo_portfolio`，平均最终 `N(Future)=8.53`；推荐的速度/质量折中路线是 `feature_adaptive_beam`，平均最终 `N(Future)=9.93`。
+- 当前主推结果是稳定版非 dynamic QUBO Beam speed：30 个单贝 CPMP 算例全部达到 `N=0`，总步数 509，平均时间 2.274 秒，最大时间 4.752 秒。
+- 相比 A* no-proof，稳定版 QUBO Beam 在同样 30/30 解出下少 5 步，并且平均时间从 2.829 秒降到 2.274 秒。
+- classic Beam 作为严格消融：时间匹配口径为 21/30，budget-best 口径为 28/30。
+- dynamic QUBO 作为质量增强变体：`balanced2200` 为 508 步、4.137 秒；质量档为 507 步、4.902 秒。
+- 早期完整真实配对案例采用业务改善口径：在 `G = M(Now) + N(Future) <= floor(1.3 * N(0))` 内尽量降低 `N(Future)`。这些结果保留为历史业务路线，不再作为当前主结果。
 - `fused_beam`、`beam_post_repair` 等增强试验保留为对照记录，但不进入推荐主口径。
 - 小规模 pre-marshalling 子问题上，当前推荐 4D MIP 作为精确最优基准；3D MIP 已封存为历史对照。
 - 当前 benchmark 中，Greedy 完整良序的 3 个算例 gap 均为 `0`；其余算例 Greedy 未良序，不能计算正式 optimality gap。

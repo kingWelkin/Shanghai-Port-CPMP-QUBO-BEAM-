@@ -1,9 +1,9 @@
 # 上港堆叠装箱
 
-这是一个堆场搬箱路径规划项目。当前主流程把同一箱区的多个贝位
-（默认 `01` 与 `26`）合并为一个堆场，只允许从某堆顶部取箱并放到另一堆顶部，
-通过 `chen_greedy_algorithm` 在约束内降低逆序箱数；同时提供面向小规模实例的
-Python + Gurobi 精确 MIP 求解器。
+这是一个堆场搬箱路径规划项目。核心约束是只能搬移栈顶箱，且不能把箱子移出堆场；
+当前实验主线是用 QUBO 增强 Beam 在单贝 CPMP 算例上达到完全良序 `N=0`。
+仓库同时保留早期 `01+26` 配对业务改善流程、A* 对照、classic Beam 消融和
+小规模 Python + Gurobi 精确 MIP 求解器。
 
 ## 项目结构
 
@@ -63,6 +63,8 @@ python -m greedy --per-file --glob "A1_*_input.txt"
 - [精确 MIP 求解](docs/models/mip/mip.md)
 - [3D/4D MIP LaTeX 模型](docs/models/mip/上港翻箱堆叠问题模型.tex)
 - [试验结论汇总](docs/experiments/README.md)
+- [QUBO Beam 与 A* 速度对齐结论](docs/experiments/qubo_astar_speed_alignment.md)
+- [稳定版 QUBO Beam speed 结果](docs/experiments/compact_beam_qubo_speed_optimized_v2_full30_repeat.md)
 - [完整真实配对算例当前推荐口径](docs/experiments/full_real_business_current_recommendation.md)
 - [贪心 vs MIP benchmark](docs/experiments/greedy_vs_mip.md)
 - [更大真实局部 benchmark](docs/experiments/greedy_vs_mip_larger_real.md)
@@ -71,14 +73,25 @@ python -m greedy --per-file --glob "A1_*_input.txt"
 
 ## 当前状态
 
-现有 15 个配对案例都能生成满足 `G <= floor(1.3 * N(0))` 的轨迹。
-`chen_greedy_algorithm_1p3` 是最快 baseline；在完整真实配对算例上平均最终
-`N(Future)=17.13`。当前质量优先推荐 `beam_focused_with_qubo`，平均最终
-`N(Future)=9.33`；速度/质量折中推荐 `feature_adaptive_beam`，平均最终
-`N(Future)=9.93`。
+当前主推结果是稳定版非 dynamic QUBO Beam speed，用于 30 个单贝 CPMP 算例：
 
-这些完整真实配对结果是业务改善轨迹，不是全场严格良序 CPMP 的终局最优解。
-不应把它们理解为一定能完成全场排序，也不应按 MIP optimality gap 解读。
+- `N=0` 解出率：30/30；
+- 总步数：509；
+- 平均运行时间：2.274 秒；
+- 最大运行时间：4.752 秒；
+- 26 号位：15/15 解出，总步数 414，平均运行时间 4.107 秒。
+
+对照结果为：A* no-proof 同样 30/30，但总步数 514、平均时间 2.829 秒；
+classic Beam 严格消融在时间匹配口径下为 21/30，budget-best 口径为 28/30。
+因此当前推荐写法应以 QUBO Beam 为主算法：在保持完全良序和动作合法性的同时，
+比 A* no-proof 少 5 步且平均更快。
+
+dynamic QUBO 作为质量增强变体保留：`balanced2200` 为 508 步、4.137 秒；
+质量档为 507 步、4.902 秒。它们适合强调步数进一步下降，但不作为速度主线。
+
+早期 15 个 `01+26` 配对结果属于业务改善口径：在
+`G <= floor(1.3 * N(0))` 内尽量降低最终 `N(Future)`，不是全场严格良序
+CPMP 终局最优解。相关结果仍保留在历史试验文档中，不再作为 README 主结果。
 
 精确 MIP 求解器位于 `greedy.premarshalling_mip`，适合小规模 pre-marshalling
 实例验证最优搬箱步数。

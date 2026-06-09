@@ -9,7 +9,9 @@
 - 想求小规模精确最优：看 [精确 MIP 求解](models/mip/mip.md)
 - 想看精确模型：优先看 [4D/legacy 3D MIP 说明](models/mip/mip.md)；3D 已封存为历史对照。
 - 想看试验结论：看 [试验结论汇总](experiments/README.md)
-- 想看当前推荐算法口径：看 [完整真实配对算例当前推荐口径](experiments/full_real_business_current_recommendation.md)
+- 想看当前 QUBO 主结果：看 [QUBO Beam 与 A* 速度对齐结论](experiments/qubo_astar_speed_alignment.md)
+- 想看稳定版结果明细：看 [稳定版 QUBO Beam speed 结果](experiments/compact_beam_qubo_speed_optimized_v2_full30_repeat.md)
+- 想看历史配对业务改善口径：看 [完整真实配对算例当前推荐口径](experiments/full_real_business_current_recommendation.md)
 - 想看输出含义：看 [结果解读](experiments/results.md)
 - 想改代码：看 [开发说明](guides/development.md)
 
@@ -22,16 +24,19 @@
 - `assets/`：文档图片素材。
 - `legacy/`：迁移前旧说明，仅作对照。
 
-## 关键结论
+## 当前主结论
 
-当前项目的稳定快速主流程是 `chen_greedy_algorithm`：
+当前项目的推荐主线是稳定版非 dynamic QUBO Beam speed。它解决的是 30 个单贝
+CPMP 完全良序任务，约束为只能搬移栈顶箱、不能移出堆场，接受条件为 `N=0`。
 
-1. 读取 `data/input` 中同一箱区的 `{ZONE}_01_input.txt` 与 `{ZONE}_26_input.txt`。
-2. 合并为一个 `W=20, H=6` 的堆场。
-3. 反复选择一个合法跨堆/跨贝顶箱搬移动作。
-4. 全程约束 `G = 搬箱步数 + N(Future) <= floor(1.3 * N(0))`。
-5. 输出每步搬箱轨迹、末态堆表和验收报告。
+主要结果：
 
-如果目标是进一步降低完整真实配对案例的 `N(Future)`，当前推荐
-`beam_focused_with_qubo` 作为质量优先路线，`feature_adaptive_beam` 作为速度/质量折中路线。
-QUBO 精炼代码保留在候选选择层使用，不直接声明可行或最优。
+- 稳定版 QUBO Beam speed：30/30 达到 `N=0`，总步数 509，平均时间 2.274 秒。
+- A* no-proof：30/30 达到 `N=0`，总步数 514，平均时间 2.829 秒。
+- classic Beam 时间匹配消融：21/30 达到 `N=0`。
+- dynamic QUBO 质量变体：可降到 508 或 507 步，但运行时间高于稳定速度版。
+
+因此主文档应优先写 QUBO Beam 主算法，再写 A* no-proof 和 classic Beam 作为对照。
+早期 `01+26` 配对业务改善结果仍保留，但它们比较的是
+`G = 搬箱步数 + N(Future) <= floor(1.3 * N(0))` 预算内的改善轨迹，
+不是当前 `N=0` 单贝完全良序主结果。
