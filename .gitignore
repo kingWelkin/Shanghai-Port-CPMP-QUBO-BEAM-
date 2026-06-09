@@ -19,5 +19,28 @@ mip_diagnostics/
 tmp/
 examples/results/
 
+# Experiment scratch outputs. Curated reports can still be force-added intentionally.
+docs/experiments/*.csv
+docs/experiments/*.md
+docs/experiments/*.log
+docs/experiments/*.err.txt
+docs/experiments/*.txt
+docs/experiments/*.pid
+docs/experiments/*.json
+docs/experiments/*_moves/
+docs/experiments/**/*.csv
+docs/experiments/**/*.md
+docs/experiments/**/*.log
+docs/experiments/**/*.err.txt
+docs/experiments/**/*.txt
+docs/experiments/**/*.pid
+docs/experiments/**/*.json
+docs/experiments/**/*_moves/
+tmp_*
+outputs/
+
+# Local reference artifact copied during exploration.
+crp_quantum_hardware_brief.pdf
+
 # Notebook/runtime noise.
 .ipynb_checkpoints/

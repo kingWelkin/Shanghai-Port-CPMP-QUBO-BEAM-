@@ -1,5 +1,7 @@
 # A* / QUBO / Baseline Beam Comparison
 
+> 注：本文保留 A*、QUBO Beam、classic Beam 的历史对比口径。最新主推结果是稳定版 QUBO Beam speed：30/30 达到 `N=0`，总步数 509，平均时间 2.274 秒；详见 `docs/experiments/qubo_astar_speed_alignment.md` 和 `docs/experiments/compact_beam_qubo_speed_optimized_v2_full30_repeat.md`。
+
 Baseline beam is the strict ablation classic no-QUBO beam: compact byte-state and dominated pruning are kept, QUBO/post-polish/diversity supplements are disabled.
 
 Per-case CSV: `docs/experiments/astar_qubo_baseline_beam_comparison.csv`
