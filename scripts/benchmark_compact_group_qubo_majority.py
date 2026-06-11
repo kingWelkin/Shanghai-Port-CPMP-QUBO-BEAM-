@@ -146,10 +146,11 @@ def _select_group_qubo_frontier(
 
 
 def _build_args(args: argparse.Namespace) -> argparse.Namespace:
-    return SimpleNamespace(
+    run_args = SimpleNamespace(
         cases=args.cases,
         bays=args.bays,
         output=args.output,
+        solver_profile="speed_v2",
         priority="n_then_depth",
         g_weight=1.0,
         n_weight=1.0,
@@ -215,6 +216,8 @@ def _build_args(args: argparse.Namespace) -> argparse.Namespace:
         post_polish_qubo_iterations=args.qubo_iterations,
         seed=args.seed,
     )
+    run_args._profile_explicit_keys = set(vars(run_args))
+    return run_args
 
 
 def main() -> int:

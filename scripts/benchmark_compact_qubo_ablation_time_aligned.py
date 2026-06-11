@@ -102,10 +102,11 @@ def _compact_args(
     time_limit: float,
     use_qubo: bool,
 ) -> argparse.Namespace:
-    return argparse.Namespace(
+    args = argparse.Namespace(
         cases=None,
         bays=outer.bays,
         output=outer.output,
+        solver_profile=getattr(outer, "solver_profile", "speed_v2"),
         priority=outer.priority,
         g_weight=outer.g_weight,
         n_weight=outer.n_weight,
@@ -201,6 +202,8 @@ def _compact_args(
         tail_order_steps=outer.tail_order_steps,
         seed=outer.seed,
     )
+    args._profile_explicit_keys = set(vars(args))
+    return args
 
 
 def _run_one(
@@ -444,6 +447,7 @@ def _write_report(comparison_rows: list[dict[str, object]], sweep_rows: list[dic
         "# Compact QUBO Strict Ablation",
         "",
         "Latest compact byte-state beam run in the same script and current codebase. QUBO-off disables frontier and post-polish QUBO, then uses wider beam widths to match QUBO-on wall time.",
+        f"Solver profile: `{getattr(args, 'solver_profile', 'speed_v2')}`.",
         f"QUBO policy: `{args.qubo_policy}`. no-QUBO policy: `{args.no_qubo_policy}`.",
         "",
         f"Comparison CSV: `{_rel(args.output)}`",
@@ -542,6 +546,12 @@ def main() -> int:
     parser.add_argument("--sweep-output", type=Path)
     parser.add_argument("--moves-dir", type=Path)
     parser.add_argument("--report", type=Path)
+    parser.add_argument(
+        "--solver-profile",
+        choices=sorted(compact._SOLVER_PROFILES.keys()),
+        default="speed_v2",
+        help="Compact solver baseline profile used for both QUBO and no-QUBO arms.",
+    )
     parser.add_argument("--qubo-beam-width", type=int, default=1200)
     parser.add_argument("--no-qubo-widths", nargs="+", type=int, default=[1300, 1400, 1600, 2000, 2400, 3200, 4800, 6400])
     parser.add_argument("--qubo-policy", choices=["enhanced", "classic", "dynamic_qubo"], default="enhanced")

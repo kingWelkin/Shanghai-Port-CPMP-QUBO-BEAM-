@@ -46,6 +46,59 @@ from run_exact_astar_real_until_done import _instance_from_single_bay  # noqa: E
 
 SOLVER_NAME = "compact_beam_qubo_n0_v1"
 RESULT_FIELDS = list(TrajectoryResult.__annotations__.keys())
+COMPACT_EXTRA_FIELDS = [
+    "profile",
+    "solver_profile",
+    "qubo_influence_profile",
+    "selection_policy",
+    "priority",
+    "beam_width",
+    "core_width",
+    "parent_core_cap",
+    "peak_frontier",
+    "peak_candidates",
+    "depth_reached",
+    "open_count",
+    "pruned_bound",
+    "pruned_business",
+    "dominated",
+    "use_qubo",
+    "qubo_mode",
+    "qubo_focus_n",
+    "qubo_first",
+    "max_qubo_vars",
+    "qubo_core_width",
+    "qubo_supplement_width",
+    "qubo_cohorts_per_layer",
+    "qubo_selected_total",
+    "qubo_selected_on_search_path",
+    "qubo_selected_on_path",
+    "qubo_ancestor_on_search_path",
+    "qubo_ancestor_on_path",
+    "group_qubo_supplement",
+    "group_qubo_calls",
+    "group_qubo_vars",
+    "group_qubo_time_sec",
+    "group_qubo_selected_total",
+    "qubo_group_max_vars",
+    "qubo_group_select",
+    "qubo_group_take",
+    "post_polish_attempts",
+    "post_polish_improvements",
+    "post_polish_moves_saved",
+    "global_reservoir",
+    "reservoir_size",
+    "peak_reservoir",
+    "reservoir_added_total",
+    "reservoir_pulled_total",
+    "stream_candidate_limit",
+    "stream_candidate_trim_factor",
+    "stream_pruned_candidates",
+    "rank_pool_size",
+    "rank_pool_min_candidates",
+    "rank_pool_truncated_candidates",
+]
+COMPACT_RESULT_FIELDS = RESULT_FIELDS + [field for field in COMPACT_EXTRA_FIELDS if field not in RESULT_FIELDS]
 ACCEPTANCE_FIELDS = [
     "case",
     "selected_solver",
@@ -132,6 +185,127 @@ _DYNAMIC_QUBO_PRESETS: dict[str, dict[str, int | float | bool]] = {
 }
 
 
+_SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
+    "speed_v2": {
+        "priority": "n_then_depth",
+        "g_weight": 1.0,
+        "n_weight": 1.0,
+        "beam_width": 1200,
+        "core_width": 1080,
+        "parent_core_cap": 4,
+        "selection_policy": "enhanced",
+        "use_qubo": True,
+        "qubo_mode": "focused_multi",
+        "qubo_influence_profile": "stable",
+        "max_qubo_calls": 32,
+        "max_qubo_vars": 64,
+        "qubo_core_width": 224,
+        "qubo_supplement_width": 24,
+        "qubo_min_candidates": 64,
+        "qubo_focus_n": 8,
+        "qubo_first": False,
+        "qubo_target_share": 0.50,
+        "qubo_cohorts_per_layer": 2,
+        "qubo_cohort_stride": 64,
+        "group_qubo_supplement": False,
+        "max_group_qubo_calls": 32,
+        "qubo_group_max_vars": 96,
+        "qubo_group_select": 24,
+        "qubo_group_take": 4,
+        "qubo_group_lookahead_weight": 0.0,
+        "qubo_group_branch_weight": 0.0,
+        "group_qubo_risk_gate": False,
+        "dynamic_min_frontier": 128,
+        "dynamic_core_frontier": 0,
+        "dynamic_max_frontier": 0,
+        "dynamic_candidate_pool": 4096,
+        "dynamic_qubo_keep_threshold": 0.55,
+        "dynamic_profile": "legacy",
+        "global_reservoir": False,
+        "stream_candidate_limit": 0,
+        "stream_candidate_trim_factor": 2.0,
+        "rank_pool_size": 0,
+        "rank_pool_min_candidates": 0,
+        "post_polish_qubo": True,
+        "post_polish_passes": 2,
+        "post_polish_focus_n": 8,
+        "post_polish_tail_span": 14,
+        "post_polish_max_window": 8,
+        "post_polish_max_windows": 96,
+        "post_polish_select_windows": 0,
+        "post_polish_max_qubo_vars": 72,
+        "post_polish_max_bridge_depth": 7,
+        "post_polish_bridge_expanded": 20000,
+        "post_polish_suffix_focus_n": 9,
+        "post_polish_suffix_tail_span": 18,
+        "post_polish_suffix_max_candidates": 48,
+        "post_polish_suffix_select": 5,
+        "post_polish_suffix_max_qubo_vars": 48,
+        "post_polish_suffix_max_depth": 18,
+        "post_polish_suffix_expanded": 60000,
+        "post_polish_suffix_near_gap": 2,
+        "post_polish_suffix_near_penalty": 0.30,
+        "post_polish_overlap_penalty": 8.0,
+        "post_polish_near_window_gap": 2,
+        "post_polish_penalty_a": 18.0,
+        "post_polish_qubo_time_limit": 0.001,
+        "post_polish_qubo_reads": 2,
+        "post_polish_qubo_iterations": 20,
+        "tail_order_steps": 6,
+        "seed": 37,
+    },
+}
+
+
+_QUBO_INFLUENCE_PRESETS: dict[str, dict[str, int | float | bool]] = {
+    "stable": {},
+    "light": {
+        "beam_width": 1200,
+        "core_width": 960,
+        "max_qubo_vars": 96,
+        "qubo_supplement_width": 48,
+        "qubo_cohorts_per_layer": 4,
+        "qubo_focus_n": 12,
+        "max_qubo_calls": 64,
+        "qubo_time_limit": 0.002,
+        "qubo_iterations": 30,
+    },
+    "medium": {
+        "beam_width": 1200,
+        "core_width": 840,
+        "max_qubo_vars": 128,
+        "qubo_supplement_width": 64,
+        "qubo_cohorts_per_layer": 4,
+        "qubo_focus_n": 12,
+        "max_qubo_calls": 96,
+        "qubo_time_limit": 0.002,
+        "qubo_iterations": 30,
+    },
+    "strong": {
+        "beam_width": 1200,
+        "core_width": 720,
+        "max_qubo_vars": 128,
+        "qubo_supplement_width": 72,
+        "qubo_cohorts_per_layer": 6,
+        "qubo_focus_n": 16,
+        "max_qubo_calls": 128,
+        "qubo_time_limit": 0.003,
+        "qubo_iterations": 40,
+    },
+    "early": {
+        "beam_width": 1200,
+        "core_width": 840,
+        "max_qubo_vars": 128,
+        "qubo_supplement_width": 64,
+        "qubo_cohorts_per_layer": 4,
+        "qubo_focus_n": -1,
+        "max_qubo_calls": 96,
+        "qubo_time_limit": 0.002,
+        "qubo_iterations": 30,
+    },
+}
+
+
 @dataclass
 class CompactBeamResult:
     case: str
@@ -171,6 +345,7 @@ class CompactBeamResult:
     reservoir_added_total: int = 0
     reservoir_pulled_total: int = 0
     stream_pruned_candidates: int = 0
+    rank_pool_truncated_candidates: int = 0
 
 
 @dataclass(frozen=True)
@@ -226,6 +401,97 @@ def _flag_set(flag: str) -> bool:
     return False
 
 
+def _flag_set_any(flags: str | tuple[str, ...]) -> bool:
+    if isinstance(flags, str):
+        flags = (flags,)
+    return any(_flag_set(flag) for flag in flags)
+
+
+def _profile_key_explicit(args: argparse.Namespace, key: str) -> bool:
+    return key in set(getattr(args, "_profile_explicit_keys", set()))
+
+
+def _apply_solver_profile(args: argparse.Namespace) -> None:
+    profile = getattr(args, "solver_profile", "speed_v2")
+    preset = _SOLVER_PROFILES.get(profile)
+    if preset is None:
+        raise ValueError(f"unknown solver profile: {profile}")
+    explicit_flags: dict[str, str | tuple[str, ...]] = {
+        "priority": "--priority",
+        "g_weight": "--g-weight",
+        "n_weight": "--n-weight",
+        "beam_width": "--beam-width",
+        "core_width": "--core-width",
+        "parent_core_cap": "--parent-core-cap",
+        "selection_policy": "--selection-policy",
+        "use_qubo": ("--use-qubo", "--no-use-qubo"),
+        "qubo_mode": "--qubo-mode",
+        "qubo_influence_profile": "--qubo-influence-profile",
+        "max_qubo_calls": "--max-qubo-calls",
+        "max_qubo_vars": "--max-qubo-vars",
+        "qubo_core_width": "--qubo-core-width",
+        "qubo_supplement_width": "--qubo-supplement-width",
+        "qubo_min_candidates": "--qubo-min-candidates",
+        "qubo_focus_n": "--qubo-focus-n",
+        "qubo_first": ("--qubo-first", "--no-qubo-first"),
+        "qubo_target_share": "--qubo-target-share",
+        "qubo_cohorts_per_layer": "--qubo-cohorts-per-layer",
+        "qubo_cohort_stride": "--qubo-cohort-stride",
+        "group_qubo_supplement": ("--group-qubo-supplement", "--no-group-qubo-supplement"),
+        "max_group_qubo_calls": "--max-group-qubo-calls",
+        "qubo_group_max_vars": "--qubo-group-max-vars",
+        "qubo_group_select": "--qubo-group-select",
+        "qubo_group_take": "--qubo-group-take",
+        "qubo_group_lookahead_weight": "--qubo-group-lookahead-weight",
+        "qubo_group_branch_weight": "--qubo-group-branch-weight",
+        "group_qubo_risk_gate": ("--group-qubo-risk-gate", "--no-group-qubo-risk-gate"),
+        "dynamic_min_frontier": "--dynamic-min-frontier",
+        "dynamic_core_frontier": "--dynamic-core-frontier",
+        "dynamic_max_frontier": "--dynamic-max-frontier",
+        "dynamic_candidate_pool": "--dynamic-candidate-pool",
+        "dynamic_qubo_keep_threshold": "--dynamic-qubo-keep-threshold",
+        "dynamic_profile": "--dynamic-profile",
+        "global_reservoir": ("--global-reservoir", "--no-global-reservoir"),
+        "stream_candidate_limit": "--stream-candidate-limit",
+        "stream_candidate_trim_factor": "--stream-candidate-trim-factor",
+        "rank_pool_size": "--rank-pool-size",
+        "rank_pool_min_candidates": "--rank-pool-min-candidates",
+        "post_polish_qubo": ("--post-polish-qubo", "--no-post-polish-qubo"),
+        "post_polish_passes": "--post-polish-passes",
+        "post_polish_focus_n": "--post-polish-focus-n",
+        "post_polish_tail_span": "--post-polish-tail-span",
+        "post_polish_max_window": "--post-polish-max-window",
+        "post_polish_max_windows": "--post-polish-max-windows",
+        "post_polish_select_windows": "--post-polish-select-windows",
+        "post_polish_max_qubo_vars": "--post-polish-max-qubo-vars",
+        "post_polish_max_bridge_depth": "--post-polish-max-bridge-depth",
+        "post_polish_bridge_expanded": "--post-polish-bridge-expanded",
+        "post_polish_suffix_focus_n": "--post-polish-suffix-focus-n",
+        "post_polish_suffix_tail_span": "--post-polish-suffix-tail-span",
+        "post_polish_suffix_max_candidates": "--post-polish-suffix-max-candidates",
+        "post_polish_suffix_select": "--post-polish-suffix-select",
+        "post_polish_suffix_max_qubo_vars": "--post-polish-suffix-max-qubo-vars",
+        "post_polish_suffix_max_depth": "--post-polish-suffix-max-depth",
+        "post_polish_suffix_expanded": "--post-polish-suffix-expanded",
+        "post_polish_suffix_near_gap": "--post-polish-suffix-near-gap",
+        "post_polish_suffix_near_penalty": "--post-polish-suffix-near-penalty",
+        "post_polish_overlap_penalty": "--post-polish-overlap-penalty",
+        "post_polish_near_window_gap": "--post-polish-near-window-gap",
+        "post_polish_penalty_a": "--post-polish-penalty-a",
+        "post_polish_qubo_time_limit": "--post-polish-qubo-time-limit",
+        "post_polish_qubo_reads": "--post-polish-qubo-reads",
+        "post_polish_qubo_iterations": "--post-polish-qubo-iterations",
+        "tail_order_steps": "--tail-order-steps",
+        "seed": "--seed",
+    }
+    for key, value in preset.items():
+        if _profile_key_explicit(args, key):
+            continue
+        if _flag_set_any(explicit_flags.get(key, f"--{key.replace('_', '-')}")):
+            continue
+        setattr(args, key, value)
+
+
 def _apply_dynamic_profile(args: argparse.Namespace) -> None:
     profile = getattr(args, "dynamic_profile", "none")
     if profile == "none":
@@ -255,6 +521,28 @@ def _apply_dynamic_profile(args: argparse.Namespace) -> None:
         setattr(args, key, value)
 
 
+def _apply_qubo_influence_profile(args: argparse.Namespace) -> None:
+    profile = getattr(args, "qubo_influence_profile", "stable")
+    preset = _QUBO_INFLUENCE_PRESETS.get(profile)
+    if preset is None:
+        raise ValueError(f"unknown QUBO influence profile: {profile}")
+    explicit_flags = {
+        "beam_width": "--beam-width",
+        "core_width": "--core-width",
+        "max_qubo_vars": "--max-qubo-vars",
+        "qubo_supplement_width": "--qubo-supplement-width",
+        "qubo_cohorts_per_layer": "--qubo-cohorts-per-layer",
+        "qubo_focus_n": "--qubo-focus-n",
+        "max_qubo_calls": "--max-qubo-calls",
+        "qubo_time_limit": "--qubo-time-limit",
+        "qubo_iterations": "--qubo-iterations",
+    }
+    for key, value in preset.items():
+        if _flag_set(explicit_flags.get(key, f"--{key.replace('_', '-')}")):
+            continue
+        setattr(args, key, value)
+
+
 def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
     code, (n_value, depth, parent_code) = item
     if args.priority == "astar":
@@ -264,6 +552,35 @@ def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.N
     else:
         primary = float(n_value * 1_000_000 + depth)
     return (primary, n_value, depth, parent_code, code)
+
+
+def _candidate_sort_key(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
+    if args.priority != "n_then_depth":
+        return _candidate_rank(item, args)
+    code, (n_value, depth, parent_code) = item
+    return (n_value, depth, parent_code, code)
+
+
+def _candidate_key_func(args: argparse.Namespace):
+    if args.priority == "n_then_depth":
+        return lambda item: (item[1][0], item[1][1], item[1][2], item[0])
+    return lambda item: _candidate_rank(item, args)
+
+
+def _rank_candidates(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    rank_pool_size = max(0, int(getattr(args, "rank_pool_size", 0) or 0))
+    min_candidates = max(0, int(getattr(args, "rank_pool_min_candidates", 0) or 0))
+    if not hasattr(args, "_rank_pool_truncated_candidates"):
+        args._rank_pool_truncated_candidates = 0
+    key_func = _candidate_key_func(args)
+    if rank_pool_size <= 0 or len(candidates) <= max(rank_pool_size, min_candidates):
+        return sorted(candidates.items(), key=key_func)
+    pool = heapq.nsmallest(rank_pool_size, candidates.items(), key=key_func)
+    args._rank_pool_truncated_candidates += len(candidates) - len(pool)
+    return sorted(pool, key=key_func)
 
 
 def _repair_group_qubo_selection(linear: list[float], selected: set[int], target: int) -> set[int]:
@@ -340,7 +657,7 @@ def _select_group_qubo_supplement(
         groups.setdefault(data[2], []).append((code, data))
     group_rows = sorted(
         groups.items(),
-        key=lambda item: _candidate_rank(item[1][0], args),
+        key=lambda item: _candidate_sort_key(item[1][0], args),
     )[: max(1, args.qubo_group_max_vars)]
     if not group_rows:
         return [], 0, 0.0
@@ -435,7 +752,7 @@ def _select_dynamic_qubo_frontier(
         groups.setdefault(data[2], []).append((code, data))
     group_rows = sorted(
         groups.items(),
-        key=lambda item: _candidate_rank(item[1][0], args),
+        key=lambda item: _candidate_sort_key(item[1][0], args),
     )[: max(1, args.qubo_group_max_vars)]
     if not group_rows:
         return fallback, set(), 0, 0, 0.0
@@ -509,7 +826,10 @@ def _select_next_frontier(
     candidates: dict[bytes, tuple[int, int, bytes]],
     args: argparse.Namespace,
 ) -> tuple[list[bytes], set[bytes], int, int, float]:
-    ranked = sorted(candidates.items(), key=lambda item: _candidate_rank(item, args))
+    if max(0, int(getattr(args, "rank_pool_size", 0) or 0)) <= 0:
+        ranked = sorted(candidates.items(), key=_candidate_key_func(args))
+    else:
+        ranked = _rank_candidates(candidates, args)
     if getattr(args, "selection_policy", "enhanced") == "classic":
         return [code for code, _data in ranked[: args.beam_width]], set(), 0, 0, 0.0
     if getattr(args, "selection_policy", "enhanced") == "dynamic_qubo":
@@ -686,27 +1006,43 @@ def _cached_stack_n(chunk: bytes, max_height: int) -> int:
     return 0
 
 
+@lru_cache(maxsize=262144)
+def _cached_chunk_meta(chunk: bytes, max_height: int) -> tuple[int, int]:
+    return _cached_height(chunk, max_height), _cached_stack_n(chunk, max_height)
+
+
 @lru_cache(maxsize=128)
 def _zero_bytes(length: int) -> bytes:
     return bytes(length)
 
 
+@lru_cache(maxsize=262144)
+def _cached_pop_chunk(chunk: bytes, src_h: int, max_height: int) -> bytes:
+    return chunk[: src_h - 1] + _zero_bytes(max_height - src_h + 1)
+
+
+@lru_cache(maxsize=524288)
+def _cached_push_chunk(chunk: bytes, dst_h: int, src_top: int, max_height: int) -> bytes:
+    return chunk[:dst_h] + bytes((src_top,)) + _zero_bytes(max_height - dst_h - 1)
+
+
 def _successors_with_n_cached(code: bytes, current_n: int, stack_count: int, max_height: int):
     chunks = tuple(code[i * max_height : (i + 1) * max_height] for i in range(stack_count))
-    heights = [_cached_height(chunk, max_height) for chunk in chunks]
-    contrib = [_cached_stack_n(chunk, max_height) for chunk in chunks]
+    chunk_meta = [_cached_chunk_meta(chunk, max_height) for chunk in chunks]
     seen: set[bytes] = set()
-    for i, src_h in enumerate(heights):
+    for i, (src_h, src_contrib) in enumerate(chunk_meta):
         if src_h == 0:
             continue
+        src_chunk = chunks[i]
         src_top = chunks[i][src_h - 1]
-        src_b = chunks[i][: src_h - 1] + _zero_bytes(max_height - src_h + 1)
+        src_b = _cached_pop_chunk(src_chunk, src_h, max_height)
         src_after_n = _cached_stack_n(src_b, max_height)
-        for j, dst_h in enumerate(heights):
+        for j, (dst_h, dst_contrib) in enumerate(chunk_meta):
             if i == j or dst_h >= max_height:
                 continue
-            dst_b = chunks[j][:dst_h] + bytes((src_top,)) + _zero_bytes(max_height - dst_h - 1)
-            nxt_n = current_n - contrib[i] - contrib[j] + src_after_n + _cached_stack_n(dst_b, max_height)
+            dst_chunk = chunks[j]
+            dst_b = _cached_push_chunk(dst_chunk, dst_h, src_top, max_height)
+            nxt_n = current_n - src_contrib - dst_contrib + src_after_n + _cached_stack_n(dst_b, max_height)
             nxt_chunks = list(chunks)
             nxt_chunks[i] = src_b
             nxt_chunks[j] = dst_b
@@ -717,19 +1053,34 @@ def _successors_with_n_cached(code: bytes, current_n: int, stack_count: int, max
             yield nxt, nxt_n
 
 
+class _ReverseRank:
+    __slots__ = ("rank",)
+
+    def __init__(self, rank: tuple) -> None:
+        self.rank = rank
+
+    def __lt__(self, other: "_ReverseRank") -> bool:
+        return self.rank > other.rank
+
+    def __le__(self, other: "_ReverseRank") -> bool:
+        return self.rank >= other.rank
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, _ReverseRank) and self.rank == other.rank
+
+
 def _stream_worst_key(
     code: bytes,
     data: tuple[int, int, bytes],
     args: argparse.Namespace,
     seq: int,
-) -> tuple[float, int, int, int, bytes]:
-    rank = _candidate_rank((code, data), args)
-    return (-float(rank[0]), -int(rank[1]), -int(rank[2]), seq, code)
+) -> _ReverseRank:
+    return _ReverseRank(_candidate_rank((code, data), args))
 
 
 def _trim_stream_candidates(
     candidates: dict[bytes, tuple[int, int, bytes]],
-    worst_heap: list[tuple[tuple[float, int, int, int, bytes], bytes, tuple[int, int, bytes]]],
+    worst_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]],
     limit: int,
     args: argparse.Namespace,
 ) -> int:
@@ -738,33 +1089,52 @@ def _trim_stream_candidates(
     pruned = 0
     while len(candidates) > limit:
         while worst_heap:
-            _key, code, data = heapq.heappop(worst_heap)
+            _key, _seq, code, data = heapq.heappop(worst_heap)
             if candidates.get(code) == data:
                 del candidates[code]
                 pruned += 1
                 break
         else:
-            code, _data = max(candidates.items(), key=lambda item: _candidate_rank(item, args))
+            code, _data = max(candidates.items(), key=_candidate_key_func(args))
             del candidates[code]
             pruned += 1
     return pruned
 
 
+def _peek_stream_worst(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    worst_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]],
+) -> _ReverseRank | None:
+    while worst_heap:
+        key, _seq, code, data = worst_heap[0]
+        if candidates.get(code) == data:
+            return key
+        heapq.heappop(worst_heap)
+    return None
+
+
 def _offer_stream_candidate(
     candidates: dict[bytes, tuple[int, int, bytes]],
-    worst_heap: list[tuple[tuple[float, int, int, int, bytes], bytes, tuple[int, int, bytes]]],
+    worst_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]],
     code: bytes,
     data: tuple[int, int, bytes],
     args: argparse.Namespace,
     seq: int,
 ) -> int:
-    candidates[code] = data
     limit = max(0, getattr(args, "stream_candidate_limit", 0))
+    candidate_key = _stream_worst_key(code, data, args, seq)
     if limit <= 0:
+        candidates[code] = data
         return 0
-    heapq.heappush(worst_heap, (_stream_worst_key(code, data, args, seq), code, data))
     factor = max(1.0, float(getattr(args, "stream_candidate_trim_factor", 2.0)))
-    if len(candidates) <= int(limit * factor):
+    trim_threshold = max(limit, int(limit * factor))
+    if code not in candidates and len(candidates) >= trim_threshold:
+        worst_key = _peek_stream_worst(candidates, worst_heap)
+        if worst_key is not None and candidate_key <= worst_key:
+            return 1
+    candidates[code] = data
+    heapq.heappush(worst_heap, (candidate_key, seq, code, data))
+    if len(candidates) <= trim_threshold:
         return 0
     return _trim_stream_candidates(candidates, worst_heap, limit, args)
 
@@ -776,7 +1146,7 @@ def _reservoir_trim(
     cap = max(0, getattr(args, "reservoir_max_states", 0))
     if cap <= 0 or len(reservoir) <= cap:
         return
-    kept = sorted(reservoir.items(), key=lambda item: _candidate_rank(item, args))[:cap]
+    kept = sorted(reservoir.items(), key=_candidate_key_func(args))[:cap]
     reservoir.clear()
     reservoir.update(kept)
 
@@ -792,7 +1162,7 @@ def _reservoir_pull(
     if take <= 0:
         return 0
     pulled = 0
-    for code, data in sorted(reservoir.items(), key=lambda item: _candidate_rank(item, args)):
+    for code, data in sorted(reservoir.items(), key=_candidate_key_func(args)):
         if code in candidates:
             continue
         candidates[code] = data
@@ -1166,6 +1536,8 @@ def _post_polish_codes_with_qubo(
 
 
 def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -> CompactBeamResult:
+    _apply_solver_profile(args)
+    _apply_qubo_influence_profile(args)
     _apply_dynamic_profile(args)
     start = time.perf_counter()
     deadline = start + args.time_limit if args.time_limit > 0 else math.inf
@@ -1186,6 +1558,7 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
     args._group_qubo_vars = 0
     args._group_qubo_time = 0.0
     args._group_qubo_selected_total = 0
+    args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
     args._best_n_history = []
     args._layout_target_groups = []
@@ -1208,7 +1581,7 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
 
     while target is None and frontier and time.perf_counter() < deadline:
         candidates: dict[bytes, tuple[int, int, bytes]] = {}
-        candidate_worst_heap: list[tuple[tuple[float, int, int, int, bytes], bytes, tuple[int, int, bytes]]] = []
+        candidate_worst_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]] = []
         goals: dict[bytes, tuple[int, int, bytes]] = {}
         for code, current_n, depth in frontier:
             if time.perf_counter() >= deadline:
@@ -1256,7 +1629,7 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
         if target is not None:
             break
         if goals:
-            target, data = min(goals.items(), key=lambda item: _candidate_rank(item, args))
+            target, data = min(goals.items(), key=_candidate_key_func(args))
             parent[target] = data[2]
             best_depth[target] = data[1]
             source_by_code[target] = "goal"
@@ -1271,7 +1644,7 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
             candidate_worst_heap = []
             for code, data in candidates.items():
                 stream_seq += 1
-                heapq.heappush(candidate_worst_heap, (_stream_worst_key(code, data, args, stream_seq), code, data))
+                heapq.heappush(candidate_worst_heap, (_stream_worst_key(code, data, args, stream_seq), stream_seq, code, data))
             stream_pruned_candidates += _trim_stream_candidates(
                 candidates,
                 candidate_worst_heap,
@@ -1302,7 +1675,7 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
         if getattr(args, "global_reservoir", False):
             max_add = max(0, getattr(args, "reservoir_add_per_layer", 0))
             added_this_layer = 0
-            for code, data in sorted(candidates.items(), key=lambda item: _candidate_rank(item, args)):
+            for code, data in sorted(candidates.items(), key=_candidate_key_func(args)):
                 if code in selected_set:
                     continue
                 n_value, depth, parent_code = data
@@ -1421,6 +1794,7 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
         reservoir_added_total=reservoir_added_total,
         reservoir_pulled_total=reservoir_pulled_total,
         stream_pruned_candidates=stream_pruned_candidates,
+        rank_pool_truncated_candidates=args._rank_pool_truncated_candidates,
     )
 
 
@@ -1465,6 +1839,8 @@ def _row_from_result(result: CompactBeamResult, zone: str, bay: str, args: argpa
             f"{result.status}; solver={SOLVER_NAME}; storage=memory; representation=compact_bytes; "
             f"policy=layered_beam; selection_policy={getattr(args, 'selection_policy', 'enhanced')}; "
             f"target_stop=N0; proof=not_optimality_proof; "
+            f"solver_profile={getattr(args, 'solver_profile', 'speed_v2')}; "
+            f"qubo_influence_profile={getattr(args, 'qubo_influence_profile', 'stable')}; "
             f"priority={args.priority}; beam_width={args.beam_width}; core_width={args.core_width}; "
             f"peak_frontier={result.peak_frontier}; peak_candidates={result.peak_candidates}; "
             f"depth_reached={result.depth_reached}; open={result.open_count}; "
@@ -1511,11 +1887,75 @@ def _row_from_result(result: CompactBeamResult, zone: str, bay: str, args: argpa
             f"reservoir_added_total={result.reservoir_added_total}; "
             f"reservoir_pulled_total={result.reservoir_pulled_total}; "
             f"stream_candidate_limit={getattr(args, 'stream_candidate_limit', 0)}; "
+            f"stream_candidate_trim_factor={getattr(args, 'stream_candidate_trim_factor', 2.0)}; "
             f"stream_pruned_candidates={result.stream_pruned_candidates}; "
+            f"rank_pool_size={getattr(args, 'rank_pool_size', 0)}; "
+            f"rank_pool_min_candidates={getattr(args, 'rank_pool_min_candidates', 0)}; "
+            f"rank_pool_truncated_candidates={result.rank_pool_truncated_candidates}; "
             f"pruned_bound={result.pruned_bound}; pruned_business={result.pruned_business}; "
             f"dominated={result.dominated}"
         ),
     )
+
+
+def _row_dict_from_result(result: CompactBeamResult, zone: str, bay: str, args: argparse.Namespace) -> dict[str, object]:
+    base = _row_from_result(result, zone, bay, args)
+    row = base.__dict__.copy()
+    row.update(
+        {
+            "profile": getattr(args, "solver_profile", "speed_v2"),
+            "solver_profile": getattr(args, "solver_profile", "speed_v2"),
+            "qubo_influence_profile": getattr(args, "qubo_influence_profile", "stable"),
+            "selection_policy": getattr(args, "selection_policy", "enhanced"),
+            "priority": args.priority,
+            "beam_width": args.beam_width,
+            "core_width": args.core_width,
+            "parent_core_cap": getattr(args, "parent_core_cap", 0),
+            "peak_frontier": result.peak_frontier,
+            "peak_candidates": result.peak_candidates,
+            "depth_reached": result.depth_reached,
+            "open_count": result.open_count,
+            "pruned_bound": result.pruned_bound,
+            "pruned_business": result.pruned_business,
+            "dominated": result.dominated,
+            "use_qubo": args.use_qubo,
+            "qubo_mode": args.qubo_mode,
+            "qubo_focus_n": args.qubo_focus_n,
+            "qubo_first": args.qubo_first,
+            "max_qubo_vars": args.max_qubo_vars,
+            "qubo_core_width": args.qubo_core_width,
+            "qubo_supplement_width": args.qubo_supplement_width,
+            "qubo_cohorts_per_layer": args.qubo_cohorts_per_layer,
+            "qubo_selected_total": result.qubo_selected_total,
+            "qubo_selected_on_search_path": result.qubo_selected_on_search_path,
+            "qubo_selected_on_path": result.qubo_selected_on_path,
+            "qubo_ancestor_on_search_path": result.qubo_ancestor_on_search_path,
+            "qubo_ancestor_on_path": result.qubo_ancestor_on_path,
+            "group_qubo_supplement": getattr(args, "group_qubo_supplement", False),
+            "group_qubo_calls": result.group_qubo_calls,
+            "group_qubo_vars": result.group_qubo_vars,
+            "group_qubo_time_sec": result.group_qubo_time_sec,
+            "group_qubo_selected_total": result.group_qubo_selected_total,
+            "qubo_group_max_vars": getattr(args, "qubo_group_max_vars", 0),
+            "qubo_group_select": getattr(args, "qubo_group_select", 0),
+            "qubo_group_take": getattr(args, "qubo_group_take", 0),
+            "post_polish_attempts": result.post_polish_attempts,
+            "post_polish_improvements": result.post_polish_improvements,
+            "post_polish_moves_saved": result.post_polish_moves_saved,
+            "global_reservoir": getattr(args, "global_reservoir", False),
+            "reservoir_size": result.reservoir_size,
+            "peak_reservoir": result.peak_reservoir,
+            "reservoir_added_total": result.reservoir_added_total,
+            "reservoir_pulled_total": result.reservoir_pulled_total,
+            "stream_candidate_limit": getattr(args, "stream_candidate_limit", 0),
+            "stream_candidate_trim_factor": getattr(args, "stream_candidate_trim_factor", 2.0),
+            "stream_pruned_candidates": result.stream_pruned_candidates,
+            "rank_pool_size": getattr(args, "rank_pool_size", 0),
+            "rank_pool_min_candidates": getattr(args, "rank_pool_min_candidates", 0),
+            "rank_pool_truncated_candidates": result.rank_pool_truncated_candidates,
+        }
+    )
+    return row
 
 
 def _validate_result(result: CompactBeamResult, zone: str, bay: str) -> tuple[bool, bool, str]:
@@ -1536,13 +1976,82 @@ def _validate_result(result: CompactBeamResult, zone: str, bay: str) -> tuple[bo
     return business_ok, goal_ok, goal_msg
 
 
-def _write_rows(rows: list[TrajectoryResult], path: Path) -> None:
+def _row_mapping(row: TrajectoryResult | dict[str, object]) -> dict[str, object]:
+    if hasattr(row, "__dict__"):
+        return row.__dict__
+    return row
+
+
+def _write_rows(rows: list[TrajectoryResult] | list[dict[str, object]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=RESULT_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=COMPACT_RESULT_FIELDS)
         writer.writeheader()
         for row in rows:
-            writer.writerow(row.__dict__)
+            writer.writerow(_row_mapping(row))
+
+
+def _numeric(row: dict[str, object], field: str, default: float = 0.0) -> float:
+    value = row.get(field)
+    if value in (None, ""):
+        return default
+    return float(value)
+
+
+def _write_summary(rows: list[dict[str, object]], path: Path) -> None:
+    def subset_summary(selected: list[dict[str, object]]) -> dict[str, float | int]:
+        solved_rows = [row for row in selected if int(_numeric(row, "final_n", 10**9)) == 0]
+        runtimes = [_numeric(row, "runtime_sec") for row in selected]
+        return {
+            "cases": len(selected),
+            "solved": len(solved_rows),
+            "moves_total": int(sum(_numeric(row, "moves") for row in solved_rows)),
+            "avg_runtime": sum(runtimes) / len(runtimes) if runtimes else 0.0,
+            "max_runtime": max(runtimes) if runtimes else 0.0,
+            "qubo_calls": int(sum(_numeric(row, "qubo_calls") for row in selected)),
+            "qubo_vars": int(sum(_numeric(row, "qubo_total_vars") for row in selected)),
+            "qubo_time": sum(_numeric(row, "qubo_time_sec") for row in selected),
+            "qubo_selected": int(sum(_numeric(row, "qubo_selected_total") for row in selected)),
+            "qubo_on_path": int(sum(_numeric(row, "qubo_selected_on_path") for row in selected)),
+            "qubo_ancestor": int(sum(_numeric(row, "qubo_ancestor_on_path") for row in selected)),
+            "group_qubo_calls": int(sum(_numeric(row, "group_qubo_calls") for row in selected)),
+            "group_qubo_time": sum(_numeric(row, "group_qubo_time_sec") for row in selected),
+            "post_polish_saved": int(sum(_numeric(row, "post_polish_moves_saved") for row in selected)),
+            "peak_candidates_max": int(max((_numeric(row, "peak_candidates") for row in selected), default=0)),
+            "peak_candidates_avg": (
+                sum(_numeric(row, "peak_candidates") for row in selected) / len(selected) if selected else 0.0
+            ),
+            "stream_pruned": int(sum(_numeric(row, "stream_pruned_candidates") for row in selected)),
+            "rank_pool_truncated": int(sum(_numeric(row, "rank_pool_truncated_candidates") for row in selected)),
+        }
+
+    all_summary = subset_summary(rows)
+    bay26 = [row for row in rows if str(row.get("case", "")).split("_")[1:2] == ["26"]]
+    bay26_summary = subset_summary(bay26)
+    profile = rows[0].get("profile", "") if rows else ""
+    selection_policy = rows[0].get("selection_policy", "") if rows else ""
+    lines = [
+        "# Compact QUBO Beam Summary",
+        "",
+        f"profile: `{profile}`",
+        f"selection_policy: `{selection_policy}`",
+        "",
+        "| scope | cases | solved | moves total | avg runtime sec | max runtime sec | qubo calls | qubo vars | qubo time sec | qubo path | qubo ancestor | group qcalls | group qtime sec | polish saved | peak cand max | peak cand avg | stream pruned | rank-pool truncated |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for label, summary in [("all", all_summary), ("bay26", bay26_summary)]:
+        lines.append(
+            f"| {label} | {summary['cases']} | {summary['solved']} | {summary['moves_total']} | "
+            f"{summary['avg_runtime']:.3f} | {summary['max_runtime']:.3f} | "
+            f"{summary['qubo_calls']} | {summary['qubo_vars']} | {summary['qubo_time']:.3f} | "
+            f"{summary['qubo_on_path']} | {summary['qubo_ancestor']} | "
+            f"{summary['group_qubo_calls']} | {summary['group_qubo_time']:.3f} | "
+            f"{summary['post_polish_saved']} | {summary['peak_candidates_max']} | "
+            f"{summary['peak_candidates_avg']:.1f} | {summary['stream_pruned']} | "
+            f"{summary['rank_pool_truncated']} |"
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _write_acceptance(
@@ -1613,6 +2122,14 @@ def main() -> int:
     parser.add_argument("--cases", nargs="+")
     parser.add_argument("--bays", nargs="+", default=["01", "26"])
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv")
+    parser.add_argument(
+        "--solver-profile",
+        "--profile",
+        dest="solver_profile",
+        choices=sorted(_SOLVER_PROFILES.keys()),
+        default="speed_v2",
+        help="Reusable solver baseline. speed_v2 freezes the historical 30/30, 509-move, ~2.2s QUBO Beam profile.",
+    )
     parser.add_argument("--priority", choices=["n_then_depth", "astar", "weighted_astar"], default="n_then_depth")
     parser.add_argument("--g-weight", type=float, default=1.0)
     parser.add_argument("--n-weight", type=float, default=1.0)
@@ -1622,11 +2139,14 @@ def main() -> int:
     parser.add_argument("--time-limit", type=float, default=0.0, help="Per-case limit in seconds; 0 means no limit.")
     parser.add_argument("--stream-candidate-limit", type=int, default=0, help="0 keeps the full per-layer candidate set.")
     parser.add_argument("--stream-candidate-trim-factor", type=float, default=2.0)
+    parser.add_argument("--rank-pool-size", type=int, default=0, help="0 uses the old full candidate sort.")
+    parser.add_argument("--rank-pool-min-candidates", type=int, default=0)
     parser.add_argument("--beam-width", type=int, default=1200)
     parser.add_argument("--core-width", type=int, default=1080)
     parser.add_argument("--parent-core-cap", type=int, default=4)
     parser.add_argument("--selection-policy", choices=["enhanced", "classic", "dynamic_qubo"], default="enhanced")
     parser.add_argument("--use-qubo", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--qubo-influence-profile", choices=sorted(_QUBO_INFLUENCE_PRESETS.keys()), default="stable")
     parser.add_argument("--qubo-mode", choices=["supplement", "focused_multi", "majority_multi"], default="focused_multi")
     parser.add_argument("--qubo-profile", default="frontier_cohort")
     parser.add_argument("--max-qubo-calls", type=int, default=32)
@@ -1717,10 +2237,12 @@ def main() -> int:
     acceptance = output.with_name(output.stem + "_acceptance.csv")
     moves_dir = output.with_name(output.stem + "_moves")
     report = output.with_suffix(".md")
+    summary = output.with_name(output.stem + "_summary.md")
     moves_dir.mkdir(parents=True, exist_ok=True)
 
     exact_refs = _exact_moves_by_case()
     rows: list[TrajectoryResult] = []
+    row_dicts: list[dict[str, object]] = []
     validation: dict[str, tuple[bool, bool, str]] = {}
     moves_paths: dict[str, Path] = {}
 
@@ -1731,6 +2253,7 @@ def main() -> int:
         result = run_compact_beam(case, zone, bay, args)
         row = _row_from_result(result, zone, bay, args)
         rows.append(row)
+        row_dicts.append(_row_dict_from_result(result, zone, bay, args))
         validation[case] = _validate_result(result, zone, bay)
         if result.moves:
             move_path = moves_dir / f"{case}_moves.csv"
@@ -1744,12 +2267,14 @@ def main() -> int:
             flush=True,
         )
 
-    _write_rows(rows, output)
+    _write_rows(row_dicts, output)
     _write_acceptance(rows, validation, moves_paths, exact_refs, acceptance)
     _write_report(rows, output, acceptance, report, exact_refs)
+    _write_summary(row_dicts, summary)
     print(f"WROTE {_rel(output)}", flush=True)
     print(f"WROTE {_rel(acceptance)}", flush=True)
     print(f"WROTE {_rel(report)}", flush=True)
+    print(f"WROTE {_rel(summary)}", flush=True)
     return 0
 
 

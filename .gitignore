@@ -36,6 +36,23 @@ docs/experiments/**/*.txt
 docs/experiments/**/*.pid
 docs/experiments/**/*.json
 docs/experiments/**/*_moves/
+
+# Curated current N=0 reports kept as repository documentation.
+!docs/experiments/group_qubo_task03_summary.md
+!docs/experiments/frontier_qubo_contribution_task04_summary.md
+!docs/experiments/micro_optimizations_task07_summary.md
+!docs/experiments/n0_efficient_algorithm_matrix_task08_summary.md
+!docs/experiments/time_aligned_ablation_task09_summary.md
+!docs/experiments/v3_task_closure_summary.md
+!docs/experiments/micro_optimized_speed_v2_full30.csv
+!docs/experiments/micro_optimized_speed_v2_full30.md
+!docs/experiments/micro_optimized_speed_v2_full30_summary.md
+!docs/experiments/micro_optimized_strict_noqubo_enhanced_w1200_full30.csv
+!docs/experiments/micro_optimized_strict_noqubo_enhanced_w1200_full30.md
+!docs/experiments/micro_optimized_strict_noqubo_enhanced_w1200_full30_summary.md
+!docs/experiments/micro_optimized_strict_ablation_full30.csv
+!docs/experiments/micro_optimized_strict_ablation_full30.md
+!docs/experiments/micro_optimized_strict_ablation_full30_sweep.csv
 tmp_*
 outputs/
 
