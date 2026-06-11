@@ -263,6 +263,72 @@ def test_compact_cached_chunk_pop_push_match_manual_bytes():
     assert _cached_push_chunk(chunk, 3, 6, 5) == bytes([9, 4, 7, 6, 0])
 
 
+def test_dlts_dat_parser_infers_open_cpmp_capacity(tmp_path):
+    from open_cpmp_benchmarks import load_dlts_dat
+
+    case_dir = tmp_path / "3x2_cv1_test"
+    case_dir.mkdir()
+    path = case_dir / "0.dat"
+    path.write_text(
+        "\n".join(
+            [
+                "3 6",
+                "2 6 1",
+                "2 5 2",
+                "2 4 3",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    instance = load_dlts_dat(path)
+
+    assert instance.instance_id == "3x2_cv1_test_0"
+    assert instance.stack_count == 3
+    assert instance.container_count == 6
+    assert instance.max_height == 4
+    assert instance.stacks == [[6, 1], [5, 2], [4, 3]]
+
+
+def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
+    from benchmark_compact_beam_qubo_n0 import (
+        _row_dict_from_instance_result,
+        _validate_instance_result,
+        make_compact_args,
+        run_compact_beam_instance,
+    )
+
+    instance = Instance(
+        "tiny_open_cpmp",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 3], [], [2]],
+    )
+    args = make_compact_args(
+        alpha=10.0,
+        beam_width=8,
+        core_width=8,
+        max_moves=4,
+        max_qubo_calls=0,
+        post_polish_qubo=False,
+        solver_profile="speed_v2",
+        time_limit=1.0,
+        use_qubo=False,
+    )
+
+    result = run_compact_beam_instance(instance.instance_id, instance, args)
+    row = _row_dict_from_instance_result(result, instance, args)
+    business_ok, goal_ok, msg = _validate_instance_result(result, instance, business_alpha=10.0)
+
+    assert row["final_n"] == 0
+    assert row["moves"] == 1
+    assert business_ok
+    assert goal_ok, msg
+
+
 def _compact_args(**overrides):
     values = {
         "priority": "n_then_depth",

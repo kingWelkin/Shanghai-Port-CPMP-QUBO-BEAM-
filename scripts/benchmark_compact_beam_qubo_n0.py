@@ -29,8 +29,8 @@ from benchmark_explainable_rule_macro_beam import _write_explain_csv  # noqa: E4
 from benchmark_explainable_rule_macro_beam_all_single_bays import discover_single_bay_cases  # noqa: E402
 from benchmark_fast_qubo_integrated_v1 import _exact_moves_by_case, _move_gap, _parse_case, _rel  # noqa: E402
 from benchmark_full_real_business_algorithms import TrajectoryResult  # noqa: E402
-from benchmark_target_astar_memory_n0 import _codes_to_moves, _select_qubo_boosted  # noqa: E402
-from container_reshuffle.core import Move, Solution, apply_move, create_initial_state, validate_solution  # noqa: E402
+from benchmark_target_astar_memory_n0 import _select_qubo_boosted  # noqa: E402
+from container_reshuffle.core import Instance, Move, Solution, apply_move, create_initial_state, validate_solution  # noqa: E402
 from container_reshuffle.features import disorder_box_count, entropy_limit, max_entropy_along_moves  # noqa: E402
 from container_reshuffle.qubo.model import QuboModel  # noqa: E402
 from container_reshuffle.qubo.sampler import QuboSamplerConfig, SimulatedAnnealingQuboSampler  # noqa: E402
@@ -255,6 +255,53 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "seed": 37,
     },
 }
+
+
+def make_compact_args(**overrides: object) -> argparse.Namespace:
+    """Build a programmatic args namespace matching the CLI defaults.
+
+    Programmatic overrides are marked explicit so solver profiles cannot
+    silently reset them when the shared search entrypoint is reused by other
+    benchmark drivers.
+    """
+
+    explicit = set(overrides.pop("_profile_explicit_keys", set()) or set())
+    explicit.update(overrides.keys())
+    defaults: dict[str, object] = {
+        **_SOLVER_PROFILES["speed_v2"],
+        "solver_profile": "speed_v2",
+        "cases": None,
+        "bays": ["01", "26"],
+        "output": ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv",
+        "target_final_n": 0,
+        "alpha": 1.3,
+        "max_moves": None,
+        "time_limit": 0.0,
+        "qubo_profile": "frontier_cohort",
+        "qubo_priority_bonus": 0.0001,
+        "qubo_diversity_weight": 0.10,
+        "qubo_frontier_n_window": 0,
+        "qubo_frontier_depth_window": 1,
+        "qubo_group_same_n_penalty": 0.04,
+        "group_qubo_risk_min_candidates": 50000,
+        "group_qubo_risk_parent_share": 0.12,
+        "group_qubo_risk_plateau_window": 3,
+        "group_qubo_risk_plateau_delta": 0,
+        "reservoir_max_states": 50000,
+        "reservoir_pull": 800,
+        "reservoir_add_per_layer": 4000,
+        "qubo_rank_weight": 1.0,
+        "qubo_n_weight": 2.0,
+        "qubo_depth_weight": 1.0,
+        "qubo_parent_weight": 0.15,
+        "qubo_penalty_a": 30.0,
+        "qubo_time_limit": 0.001,
+        "qubo_reads": 2,
+        "qubo_iterations": 20,
+    }
+    defaults.update(overrides)
+    defaults["_profile_explicit_keys"] = explicit
+    return argparse.Namespace(**defaults)
 
 
 _QUBO_INFLUENCE_PRESETS: dict[str, dict[str, int | float | bool]] = {
@@ -1535,13 +1582,52 @@ def _post_polish_codes_with_qubo(
     return current, stats
 
 
-def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -> CompactBeamResult:
+def _codes_to_moves_instance(instance: Instance, codes: list[bytes]) -> list[Move]:
+    stacks = [list(stack) for stack in instance.stacks]
+    current_code, _ = _encode(stacks, instance.stack_count, instance.max_height)
+    if current_code != codes[0]:
+        raise RuntimeError("initial physical state does not match compact path start")
+
+    moves: list[Move] = []
+    for step, next_code in enumerate(codes[1:], start=1):
+        chosen: Move | None = None
+        for src_idx, src in enumerate(stacks):
+            if not src:
+                continue
+            for dst_idx, dst in enumerate(stacks):
+                if src_idx == dst_idx or len(dst) >= instance.max_height:
+                    continue
+                trial = [list(stack) for stack in stacks]
+                box = trial[src_idx].pop()
+                from_level = len(src)
+                to_level = len(dst) + 1
+                trial[dst_idx].append(box)
+                code, _n_after = _encode(trial, instance.stack_count, instance.max_height)
+                if code == next_code:
+                    chosen = Move(
+                        step=step - 1,
+                        box=box,
+                        from_stack=src_idx,
+                        to_stack=dst_idx,
+                        from_level=from_level,
+                        to_level=to_level,
+                    )
+                    stacks = trial
+                    break
+            if chosen is not None:
+                break
+        if chosen is None:
+            raise RuntimeError(f"could not lift compact transition at step {step}")
+        moves.append(chosen)
+    return moves
+
+
+def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Namespace) -> CompactBeamResult:
     _apply_solver_profile(args)
     _apply_qubo_influence_profile(args)
     _apply_dynamic_profile(args)
     start = time.perf_counter()
     deadline = start + args.time_limit if args.time_limit > 0 else math.inf
-    instance = _instance_from_single_bay(zone, bay)
     initial, n0 = _encode(instance.stacks, instance.stack_count, instance.max_height)
     cap = entropy_limit(instance, args.alpha)
     depth_cap = min(cap, args.max_moves) if args.max_moves is not None else cap
@@ -1729,13 +1815,13 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
         )
         if polish_stats.improvements:
             try:
-                moves = _codes_to_moves(zone, bay, codes)
+                moves = _codes_to_moves_instance(instance, codes)
             except RuntimeError:
                 codes = original_codes
-                moves = _codes_to_moves(zone, bay, codes)
+                moves = _codes_to_moves_instance(instance, codes)
                 status += "; post_polish_lift_failed_reverted"
         else:
-            moves = _codes_to_moves(zone, bay, codes)
+            moves = _codes_to_moves_instance(instance, codes)
         qubo_selected_on_path = sum(1 for code in codes[1:] if source_by_code.get(code) == "qubo")
         qubo_ancestor_on_path = sum(1 for code in codes[1:] if qubo_ancestor_by_code.get(code, False))
         final_n_values = _path_n_values(codes, instance.stack_count, instance.max_height)
@@ -1798,8 +1884,11 @@ def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -
     )
 
 
-def _row_from_result(result: CompactBeamResult, zone: str, bay: str, args: argparse.Namespace) -> TrajectoryResult:
-    instance = _instance_from_single_bay(zone, bay)
+def run_compact_beam(case: str, zone: str, bay: str, args: argparse.Namespace) -> CompactBeamResult:
+    return run_compact_beam_instance(case, _instance_from_single_bay(zone, bay), args)
+
+
+def _row_from_instance_result(result: CompactBeamResult, instance: Instance, args: argparse.Namespace) -> TrajectoryResult:
     initial = create_initial_state(instance)
     n0 = disorder_box_count(instance, initial)
     if result.moves:
@@ -1898,8 +1987,12 @@ def _row_from_result(result: CompactBeamResult, zone: str, bay: str, args: argpa
     )
 
 
-def _row_dict_from_result(result: CompactBeamResult, zone: str, bay: str, args: argparse.Namespace) -> dict[str, object]:
-    base = _row_from_result(result, zone, bay, args)
+def _row_from_result(result: CompactBeamResult, zone: str, bay: str, args: argparse.Namespace) -> TrajectoryResult:
+    return _row_from_instance_result(result, _instance_from_single_bay(zone, bay), args)
+
+
+def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance, args: argparse.Namespace) -> dict[str, object]:
+    base = _row_from_instance_result(result, instance, args)
     row = base.__dict__.copy()
     row.update(
         {
@@ -1958,10 +2051,17 @@ def _row_dict_from_result(result: CompactBeamResult, zone: str, bay: str, args: 
     return row
 
 
-def _validate_result(result: CompactBeamResult, zone: str, bay: str) -> tuple[bool, bool, str]:
+def _row_dict_from_result(result: CompactBeamResult, zone: str, bay: str, args: argparse.Namespace) -> dict[str, object]:
+    return _row_dict_from_instance_result(result, _instance_from_single_bay(zone, bay), args)
+
+
+def _validate_instance_result(
+    result: CompactBeamResult,
+    instance: Instance,
+    business_alpha: float = 1.3,
+) -> tuple[bool, bool, str]:
     if not result.moves:
         return False, False, result.status
-    instance = _instance_from_single_bay(zone, bay)
     solution = Solution(
         solver_name=SOLVER_NAME,
         feasible=True,
@@ -1972,8 +2072,12 @@ def _validate_result(result: CompactBeamResult, zone: str, bay: str) -> tuple[bo
         status=result.status,
     )
     goal_ok, goal_msg, _ = validate_solution(instance, solution)
-    business_ok = max_entropy_along_moves(instance, result.moves) <= entropy_limit(instance, 1.3)
+    business_ok = max_entropy_along_moves(instance, result.moves) <= entropy_limit(instance, business_alpha)
     return business_ok, goal_ok, goal_msg
+
+
+def _validate_result(result: CompactBeamResult, zone: str, bay: str) -> tuple[bool, bool, str]:
+    return _validate_instance_result(result, _instance_from_single_bay(zone, bay))
 
 
 def _row_mapping(row: TrajectoryResult | dict[str, object]) -> dict[str, object]:

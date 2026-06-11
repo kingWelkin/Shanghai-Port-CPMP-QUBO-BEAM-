@@ -107,3 +107,13 @@ python -m pytest -q
 ```
 
 如果 `gurobipy` 不可用，MIP 相关用例会按测试配置跳过或返回不可用状态。当前 QUBO Beam 主线不依赖 Gurobi。
+
+## 开源 CPMP 外部算例
+
+已经新增 DLTS 开源 CPMP 数据集 runner：
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv1_validation --limit-per-family 100 --variant both --time-limit 3 --alpha 10 --output docs\experiments\open_cpmp_dlts_5x5_cv1_200cases_both.csv
+```
+
+初测结果见 [Open CPMP 外部算例初测](docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)。当前只把 cv1 唯一优先级分支作为严格结果；cv2/cv3 的重复优先级需要后续 group-priority 支持。

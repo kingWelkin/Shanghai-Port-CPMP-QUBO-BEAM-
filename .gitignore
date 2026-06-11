@@ -53,8 +53,14 @@ docs/experiments/**/*_moves/
 !docs/experiments/micro_optimized_strict_ablation_full30.csv
 !docs/experiments/micro_optimized_strict_ablation_full30.md
 !docs/experiments/micro_optimized_strict_ablation_full30_sweep.csv
+!docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md
+!docs/experiments/open_cpmp_dlts_5x5_cv1_200cases_both.csv
+!docs/experiments/open_cpmp_dlts_5x5_cv1_200cases_both_summary.md
+!docs/experiments/open_cpmp_dlts_7x5_cv1_40cases_both.csv
+!docs/experiments/open_cpmp_dlts_7x5_cv1_40cases_both_summary.md
 tmp_*
 outputs/
+external/
 
 # Local reference artifact copied during exploration.
 crp_quantum_hardware_brief.pdf

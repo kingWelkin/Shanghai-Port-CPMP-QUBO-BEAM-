@@ -43,3 +43,8 @@
 2. 再写 strict classic no-QUBO 是传统 Beam 消融：同时间预算下 25/30，26 号贝位 10/15。
 3. 单独说明 enhanced no-QUBO 是强工程消融：也能 30/30，但总步数 510；它不是传统 baseline。
 4. 写清 QUBO 的边界：Post-polish 只做路径压缩，不负责把 `N>0` 变成 `N=0`；frontier QUBO 是稀疏前沿纠偏，不是全程主导路径。
+
+## 开源外部算例
+
+- [Open CPMP 外部算例初测](experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)：DLTS cv1 外部数据接入、5x5/7x5 初测和 QUBO/no-QUBO 对照。
+- 新 runner：`scripts/open_cpmp_benchmarks.py`。默认可 clone DLTS，也可以用 `--source` 指向已有本地目录。

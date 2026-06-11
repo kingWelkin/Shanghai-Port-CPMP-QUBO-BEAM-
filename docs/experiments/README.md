@@ -31,6 +31,19 @@
 
 不再把旧版 `30/30 vs 21/30` 作为当前主结论。该结果属于早期代码/参数口径下的历史对照。
 
+## 开源 CPMP 外部算例
+
+当前新增 DLTS 外部 benchmark 初测，作为上港 30 例之外的泛化证据，不替代上面的当前主结论。
+
+| scope | variant | cases | N=0 solved | avg runtime sec | avg ref gap among solved |
+|---|---|---:|---:|---:|---:|
+| 5x5_cv1 | QUBO Beam | 200 | 101 | 1.212 | 2.149 |
+| 5x5_cv1 | classic no-QUBO | 200 | 84 | 0.766 | 3.000 |
+| 7x5_cv1 | QUBO Beam | 40 | 13 | 2.431 | 4.231 |
+| 7x5_cv1 | classic no-QUBO | 40 | 15 | 2.236 | 6.733 |
+
+详细说明见 [open_cpmp_dlts_initial_external_benchmark_summary.md](open_cpmp_dlts_initial_external_benchmark_summary.md)。当前只报告 cv1 唯一优先级分支；DLTS cv2/cv3 含重复优先级，需先补 group-priority 表达。
+
 ## 文件说明
 
 当前主线：
