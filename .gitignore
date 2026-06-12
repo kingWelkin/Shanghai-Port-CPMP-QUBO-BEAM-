@@ -58,6 +58,13 @@ docs/experiments/**/*_moves/
 !docs/experiments/open_cpmp_dlts_5x5_cv1_200cases_both_summary.md
 !docs/experiments/open_cpmp_dlts_7x5_cv1_40cases_both.csv
 !docs/experiments/open_cpmp_dlts_7x5_cv1_40cases_both_summary.md
+!docs/experiments/open_cpmp_dlts_7x5_cv1_40cases_adaptive.csv
+!docs/experiments/open_cpmp_dlts_7x5_cv1_40cases_adaptive_summary.md
+!docs/experiments/adaptive_qubo_speed_v2_full30_summary.md
+!docs/experiments/open_cpmp_adaptive_frontier_experiment_summary.md
+!docs/experiments/open_cpmp_priority_group_benchmark_summary.md
+!docs/experiments/open_cpmp_dlts_5x5_cv23_test20_priority_groups_all_summary.md
+!docs/experiments/open_cpmp_dlts_7x5_cv23_test10_priority_groups_all_summary.md
 tmp_*
 outputs/
 external/

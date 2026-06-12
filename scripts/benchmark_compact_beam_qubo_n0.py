@@ -97,6 +97,13 @@ COMPACT_EXTRA_FIELDS = [
     "rank_pool_size",
     "rank_pool_min_candidates",
     "rank_pool_truncated_candidates",
+    "adaptive_high_n",
+    "adaptive_low_n",
+    "adaptive_high_frontier",
+    "adaptive_mid_frontier",
+    "adaptive_low_frontier",
+    "adaptive_core_ratio",
+    "adaptive_candidate_pool",
 ]
 COMPACT_RESULT_FIELDS = RESULT_FIELDS + [field for field in COMPACT_EXTRA_FIELDS if field not in RESULT_FIELDS]
 ACCEPTANCE_FIELDS = [
@@ -253,6 +260,13 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "post_polish_qubo_iterations": 20,
         "tail_order_steps": 6,
         "seed": 37,
+        "adaptive_high_n": 16,
+        "adaptive_low_n": 8,
+        "adaptive_high_frontier": 800,
+        "adaptive_mid_frontier": 1000,
+        "adaptive_low_frontier": 1200,
+        "adaptive_core_ratio": 0.90,
+        "adaptive_candidate_pool": 0,
     },
 }
 
@@ -298,6 +312,13 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "qubo_time_limit": 0.001,
         "qubo_reads": 2,
         "qubo_iterations": 20,
+        "adaptive_high_n": 16,
+        "adaptive_low_n": 8,
+        "adaptive_high_frontier": 800,
+        "adaptive_mid_frontier": 1000,
+        "adaptive_low_frontier": 1200,
+        "adaptive_core_ratio": 0.90,
+        "adaptive_candidate_pool": 0,
     }
     defaults.update(overrides)
     defaults["_profile_explicit_keys"] = explicit
@@ -869,26 +890,40 @@ def _select_dynamic_qubo_frontier(
     return selected_codes, selected_by_qubo & selected_set, 1, qvars, qtime
 
 
-def _select_next_frontier(
-    candidates: dict[bytes, tuple[int, int, bytes]],
-    args: argparse.Namespace,
-) -> tuple[list[bytes], set[bytes], int, int, float]:
-    if max(0, int(getattr(args, "rank_pool_size", 0) or 0)) <= 0:
-        ranked = sorted(candidates.items(), key=_candidate_key_func(args))
-    else:
-        ranked = _rank_candidates(candidates, args)
-    if getattr(args, "selection_policy", "enhanced") == "classic":
-        return [code for code, _data in ranked[: args.beam_width]], set(), 0, 0, 0.0
-    if getattr(args, "selection_policy", "enhanced") == "dynamic_qubo":
-        return _select_dynamic_qubo_frontier(ranked, args)
+def _adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> int:
+    high_n = int(getattr(args, "adaptive_high_n", 16))
+    low_n = int(getattr(args, "adaptive_low_n", 8))
+    high_frontier = max(1, int(getattr(args, "adaptive_high_frontier", args.beam_width)))
+    mid_frontier = max(1, int(getattr(args, "adaptive_mid_frontier", args.beam_width)))
+    low_frontier = max(1, int(getattr(args, "adaptive_low_frontier", args.beam_width)))
+    if best_n > high_n:
+        return high_frontier
+    if best_n <= low_n:
+        return low_frontier
+    return mid_frontier
 
+
+def _select_enhanced_qubo_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+    beam_width: int | None = None,
+    core_width: int | None = None,
+    qubo_supplement_width: int | None = None,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
     selected: dict[bytes, None] = {}
     selected_by_qubo: set[bytes] = set()
+    effective_beam = max(1, min(beam_width if beam_width is not None else args.beam_width, len(ranked)))
+    effective_core = core_width if core_width is not None else args.core_width
+    effective_core = max(0, min(effective_core, effective_beam))
+    effective_qubo_supplement = (
+        qubo_supplement_width if qubo_supplement_width is not None else args.qubo_supplement_width
+    )
 
-    core_target = max(0, min(args.core_width, args.beam_width))
+    core_target = effective_core
 
     def add_deterministic_until(target_len: int) -> None:
-        target_len = max(0, min(target_len, args.beam_width))
+        target_len = max(0, min(target_len, effective_beam))
         if args.parent_core_cap > 0:
             parent_counts: dict[bytes, int] = {}
             for code, data in ranked:
@@ -914,12 +949,12 @@ def _select_next_frontier(
     best_n = ranked[0][1][0] if ranked else math.inf
     qubo_enabled = (
         args.use_qubo
-        and len(candidates) >= args.qubo_min_candidates
+        and candidate_count >= args.qubo_min_candidates
         and args._qubo_calls_done < args.max_qubo_calls
         and (args.qubo_focus_n < 0 or best_n <= args.qubo_focus_n)
     )
     if qubo_enabled and args.qubo_mode == "supplement":
-        boosted, qvars, qtime = _select_qubo_boosted(candidates, args)
+        boosted, qvars, qtime = _select_qubo_boosted(dict(ranked), args)
         if qvars:
             qcalls = 1
             args._qubo_calls_done += 1
@@ -927,20 +962,20 @@ def _select_next_frontier(
                 if code not in selected:
                     selected_by_qubo.add(code)
                 selected.setdefault(code, None)
-                if len(selected) >= args.beam_width:
+                if len(selected) >= effective_beam:
                     break
     elif qubo_enabled and args.qubo_mode in {"focused_multi", "majority_multi"}:
         ranked_remaining = [(code, data) for code, data in ranked if code not in selected]
         cursor = 0
         cohorts_left = max(1, args.qubo_cohorts_per_layer)
         stride = max(1, args.qubo_cohort_stride or args.max_qubo_vars)
-        target_qubo = args.beam_width
+        target_qubo = effective_beam
         if args.qubo_mode == "majority_multi":
-            target_qubo = max(1, min(args.beam_width - len(selected), int(round(args.beam_width * args.qubo_target_share))))
+            target_qubo = max(1, min(effective_beam - len(selected), int(round(effective_beam * args.qubo_target_share))))
         while (
             cohorts_left > 0
             and cursor < len(ranked_remaining)
-            and len(selected) < args.beam_width
+            and len(selected) < effective_beam
             and (args.qubo_mode != "majority_multi" or len(selected_by_qubo) < target_qubo)
             and args._qubo_calls_done < args.max_qubo_calls
         ):
@@ -948,11 +983,11 @@ def _select_next_frontier(
             cursor += stride
             if len(cohort) < args.qubo_min_candidates:
                 continue
-            remaining = args.beam_width - len(selected)
+            remaining = effective_beam - len(selected)
             q_remaining = max(1, target_qubo - len(selected_by_qubo)) if args.qubo_mode == "majority_multi" else remaining
             qargs = SimpleNamespace(**vars(args))
             qargs.qubo_core_width = 0
-            qargs.qubo_supplement_width = max(1, min(args.qubo_supplement_width, remaining, q_remaining, len(cohort) - 1))
+            qargs.qubo_supplement_width = max(1, min(effective_qubo_supplement, remaining, q_remaining, len(cohort) - 1))
             boosted, add_qvars, add_qtime = _select_qubo_boosted(dict(cohort), qargs)
             if not add_qvars:
                 continue
@@ -965,22 +1000,22 @@ def _select_next_frontier(
                 if code not in selected:
                     selected_by_qubo.add(code)
                 selected.setdefault(code, None)
-                if len(selected) >= args.beam_width:
+                if len(selected) >= effective_beam:
                     break
 
     best_n = ranked[0][1][0] if ranked else math.inf
     group_qubo_enabled = (
         args.use_qubo
         and getattr(args, "group_qubo_supplement", False)
-        and len(candidates) >= args.qubo_min_candidates
+        and candidate_count >= args.qubo_min_candidates
         and args._group_qubo_calls_done < args.max_group_qubo_calls
         and (args.qubo_focus_n < 0 or best_n <= args.qubo_focus_n)
         and _group_qubo_risk_active(args)
-        and len(selected) < args.beam_width
+        and len(selected) < effective_beam
     )
     if group_qubo_enabled:
         ranked_remaining = [(code, data) for code, data in ranked if code not in selected]
-        remaining = args.beam_width - len(selected)
+        remaining = effective_beam - len(selected)
         boosted, add_qvars, add_qtime = _select_group_qubo_supplement(
             ranked_remaining,
             selected,
@@ -998,7 +1033,7 @@ def _select_next_frontier(
                 selected_by_qubo.add(code)
                 args._group_qubo_selected_total += 1
                 selected.setdefault(code, None)
-                if len(selected) >= args.beam_width:
+                if len(selected) >= effective_beam:
                     break
 
     if args.qubo_first:
@@ -1006,11 +1041,62 @@ def _select_next_frontier(
 
     for code, _data in ranked:
         selected.setdefault(code, None)
-        if len(selected) >= args.beam_width:
+        if len(selected) >= effective_beam:
             break
-    selected_codes = list(selected.keys())[: args.beam_width]
+    selected_codes = list(selected.keys())[:effective_beam]
     selected_set = set(selected_codes)
     return selected_codes, selected_by_qubo & selected_set, qcalls, qvars, qtime
+
+
+def _select_adaptive_qubo_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    best_n = ranked[0][1][0] if ranked else math.inf
+    beam_width = _adaptive_frontier_width(args, int(best_n))
+    core_width = int(round(beam_width * float(getattr(args, "adaptive_core_ratio", 0.9))))
+    return _select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count,
+        args,
+        beam_width=beam_width,
+        core_width=core_width,
+        qubo_supplement_width=min(args.qubo_supplement_width, max(1, beam_width - core_width)),
+    )
+
+
+def _rank_next_frontier_candidates(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    adaptive_pool = 0
+    if getattr(args, "selection_policy", "enhanced") == "adaptive_qubo":
+        adaptive_pool = max(0, int(getattr(args, "adaptive_candidate_pool", 0) or 0))
+    if adaptive_pool > 0 and len(candidates) > adaptive_pool:
+        if not hasattr(args, "_rank_pool_truncated_candidates"):
+            args._rank_pool_truncated_candidates = 0
+        pool = heapq.nsmallest(adaptive_pool, candidates.items(), key=_candidate_key_func(args))
+        args._rank_pool_truncated_candidates += len(candidates) - len(pool)
+        return sorted(pool, key=_candidate_key_func(args))
+    if max(0, int(getattr(args, "rank_pool_size", 0) or 0)) <= 0:
+        return sorted(candidates.items(), key=_candidate_key_func(args))
+    return _rank_candidates(candidates, args)
+
+
+def _select_next_frontier(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    ranked = _rank_next_frontier_candidates(candidates, args)
+    policy = getattr(args, "selection_policy", "enhanced")
+    if policy == "classic":
+        return [code for code, _data in ranked[: args.beam_width]], set(), 0, 0, 0.0
+    if policy == "dynamic_qubo":
+        return _select_dynamic_qubo_frontier(ranked, args)
+    if policy == "adaptive_qubo":
+        return _select_adaptive_qubo_frontier(ranked, len(candidates), args)
+    return _select_enhanced_qubo_frontier(ranked, len(candidates), args)
 
 
 def _backtrack(parent: dict[bytes, bytes | None], target: bytes) -> list[bytes]:
@@ -1981,6 +2067,13 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"rank_pool_size={getattr(args, 'rank_pool_size', 0)}; "
             f"rank_pool_min_candidates={getattr(args, 'rank_pool_min_candidates', 0)}; "
             f"rank_pool_truncated_candidates={result.rank_pool_truncated_candidates}; "
+            f"adaptive_high_n={getattr(args, 'adaptive_high_n', 0)}; "
+            f"adaptive_low_n={getattr(args, 'adaptive_low_n', 0)}; "
+            f"adaptive_high_frontier={getattr(args, 'adaptive_high_frontier', 0)}; "
+            f"adaptive_mid_frontier={getattr(args, 'adaptive_mid_frontier', 0)}; "
+            f"adaptive_low_frontier={getattr(args, 'adaptive_low_frontier', 0)}; "
+            f"adaptive_core_ratio={getattr(args, 'adaptive_core_ratio', 0.0)}; "
+            f"adaptive_candidate_pool={getattr(args, 'adaptive_candidate_pool', 0)}; "
             f"pruned_bound={result.pruned_bound}; pruned_business={result.pruned_business}; "
             f"dominated={result.dominated}"
         ),
@@ -2046,6 +2139,13 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "rank_pool_size": getattr(args, "rank_pool_size", 0),
             "rank_pool_min_candidates": getattr(args, "rank_pool_min_candidates", 0),
             "rank_pool_truncated_candidates": result.rank_pool_truncated_candidates,
+            "adaptive_high_n": getattr(args, "adaptive_high_n", 0),
+            "adaptive_low_n": getattr(args, "adaptive_low_n", 0),
+            "adaptive_high_frontier": getattr(args, "adaptive_high_frontier", 0),
+            "adaptive_mid_frontier": getattr(args, "adaptive_mid_frontier", 0),
+            "adaptive_low_frontier": getattr(args, "adaptive_low_frontier", 0),
+            "adaptive_core_ratio": getattr(args, "adaptive_core_ratio", 0.0),
+            "adaptive_candidate_pool": getattr(args, "adaptive_candidate_pool", 0),
         }
     )
     return row
@@ -2248,7 +2348,7 @@ def main() -> int:
     parser.add_argument("--beam-width", type=int, default=1200)
     parser.add_argument("--core-width", type=int, default=1080)
     parser.add_argument("--parent-core-cap", type=int, default=4)
-    parser.add_argument("--selection-policy", choices=["enhanced", "classic", "dynamic_qubo"], default="enhanced")
+    parser.add_argument("--selection-policy", choices=["enhanced", "classic", "dynamic_qubo", "adaptive_qubo"], default="enhanced")
     parser.add_argument("--use-qubo", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--qubo-influence-profile", choices=sorted(_QUBO_INFLUENCE_PRESETS.keys()), default="stable")
     parser.add_argument("--qubo-mode", choices=["supplement", "focused_multi", "majority_multi"], default="focused_multi")
@@ -2285,6 +2385,13 @@ def main() -> int:
     parser.add_argument("--dynamic-max-frontier", type=int, default=0, help="0 uses --beam-width as a safety cap.")
     parser.add_argument("--dynamic-candidate-pool", type=int, default=4096)
     parser.add_argument("--dynamic-qubo-keep-threshold", type=float, default=0.55)
+    parser.add_argument("--adaptive-high-n", type=int, default=16)
+    parser.add_argument("--adaptive-low-n", type=int, default=8)
+    parser.add_argument("--adaptive-high-frontier", type=int, default=800)
+    parser.add_argument("--adaptive-mid-frontier", type=int, default=1000)
+    parser.add_argument("--adaptive-low-frontier", type=int, default=1200)
+    parser.add_argument("--adaptive-core-ratio", type=float, default=0.90)
+    parser.add_argument("--adaptive-candidate-pool", type=int, default=0)
     parser.add_argument(
         "--dynamic-profile",
         choices=sorted(_DYNAMIC_QUBO_PRESETS.keys()),

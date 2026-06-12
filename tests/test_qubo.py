@@ -4,6 +4,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import pytest
+
 from container_reshuffle.core import Instance, Move, ProblemVariant, State
 from container_reshuffle.qubo.beam_selection import QuboBeamSelectionBuilder
 from container_reshuffle.qubo.frontier_selection import QuboFrontierConfig, QuboFrontierSelector
@@ -291,6 +293,34 @@ def test_dlts_dat_parser_infers_open_cpmp_capacity(tmp_path):
     assert instance.stacks == [[6, 1], [5, 2], [4, 3]]
 
 
+def test_dlts_dat_parser_allows_priority_group_instances(tmp_path):
+    from open_cpmp_benchmarks import load_dlts_dat, requires_priority_group_semantics
+
+    case_dir = tmp_path / "3x2_cv2_test"
+    case_dir.mkdir()
+    path = case_dir / "0.dat"
+    path.write_text(
+        "\n".join(
+            [
+                "3 6",
+                "2 2 1",
+                "2 2 3",
+                "2 1 3",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    instance = load_dlts_dat(path)
+
+    assert requires_priority_group_semantics(instance)
+    assert instance.container_count == 6
+    assert instance.stacks == [[2, 1], [2, 3], [1, 3]]
+    with pytest.raises(ValueError):
+        load_dlts_dat(path, allow_priority_groups=False)
+
+
 def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
     from benchmark_compact_beam_qubo_n0 import (
         _row_dict_from_instance_result,
@@ -323,6 +353,58 @@ def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
     row = _row_dict_from_instance_result(result, instance, args)
     business_ok, goal_ok, msg = _validate_instance_result(result, instance, business_alpha=10.0)
 
+    assert row["final_n"] == 0
+    assert row["moves"] == 1
+    assert business_ok
+    assert goal_ok, msg
+
+
+def test_open_runner_solves_tiny_priority_group_cpmp():
+    from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
+    from open_cpmp_benchmarks import (
+        _open_row_dict_from_instance_result,
+        _open_validate_instance_result,
+        _simulate_priority_group_moves,
+        requires_priority_group_semantics,
+    )
+
+    sorted_instance = Instance(
+        "tiny_priority_group_sorted",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[2, 2], [1], []],
+    )
+    ok, msg, _stacks, n_trace, _max_g = _simulate_priority_group_moves(sorted_instance, [])
+    assert ok, msg
+    assert n_trace[-1] == 0
+
+    instance = Instance(
+        "tiny_priority_group",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    args = make_compact_args(
+        alpha=10.0,
+        beam_width=8,
+        core_width=8,
+        max_moves=4,
+        max_qubo_calls=0,
+        post_polish_qubo=False,
+        solver_profile="speed_v2",
+        time_limit=1.0,
+        use_qubo=False,
+    )
+
+    result = run_compact_beam_instance(instance.instance_id, instance, args)
+    row = _open_row_dict_from_instance_result(result, instance, args)
+    business_ok, goal_ok, msg = _open_validate_instance_result(result, instance, business_alpha=10.0)
+
+    assert requires_priority_group_semantics(instance)
     assert row["final_n"] == 0
     assert row["moves"] == 1
     assert business_ok
@@ -379,6 +461,13 @@ def _compact_args(**overrides):
         "rank_pool_min_candidates": 0,
         "_rank_pool_truncated_candidates": 0,
         "post_polish_qubo": True,
+        "adaptive_high_n": 16,
+        "adaptive_low_n": 8,
+        "adaptive_high_frontier": 800,
+        "adaptive_mid_frontier": 1000,
+        "adaptive_low_frontier": 1200,
+        "adaptive_core_ratio": 0.90,
+        "adaptive_candidate_pool": 0,
     }
     values.update(overrides)
     return argparse.Namespace(**values)
@@ -449,6 +538,70 @@ def test_solver_profile_respects_programmatic_explicit_keys(monkeypatch):
     assert args.max_qubo_calls == 0
     assert args.post_polish_qubo is False
     assert args.qubo_mode == "focused_multi"
+
+
+def test_adaptive_qubo_frontier_width_contracts_high_n_and_expands_low_n():
+    from benchmark_compact_beam_qubo_n0 import _adaptive_frontier_width
+
+    args = _compact_args(
+        adaptive_high_n=16,
+        adaptive_low_n=8,
+        adaptive_high_frontier=800,
+        adaptive_mid_frontier=1000,
+        adaptive_low_frontier=1200,
+    )
+
+    assert _adaptive_frontier_width(args, best_n=24) == 800
+    assert _adaptive_frontier_width(args, best_n=12) == 1000
+    assert _adaptive_frontier_width(args, best_n=6) == 1200
+
+
+def test_open_runner_adaptive_variant_uses_adaptive_selection_policy():
+    from open_cpmp_benchmarks import _args_for_variant
+
+    instance = Instance(
+        "open7",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=7,
+        max_height=7,
+        container_count=35,
+        stacks=[[35, 1], [34, 2], [33, 3], [32, 4], [31, 5], [30, 6], [29, 7]],
+    )
+    outer = argparse.Namespace(
+        adaptive_candidate_pool=0,
+        adaptive_high_frontier=800,
+        adaptive_high_n=16,
+        adaptive_low_frontier=1200,
+        adaptive_low_n=8,
+        adaptive_mid_frontier=1000,
+        alpha=10.0,
+        max_moves=None,
+        solver_profile="speed_v2",
+        time_limit=3.0,
+        no_qubo_beam_width=1200,
+    )
+
+    args = _args_for_variant(outer, "qubo_adaptive", instance)
+
+    assert args.selection_policy == "adaptive_qubo"
+    assert args.adaptive_high_frontier == 800
+    assert args.adaptive_low_frontier == 1200
+    assert "selection_policy" in args._profile_explicit_keys
+
+    small_instance = Instance(
+        "open5",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=5,
+        max_height=7,
+        container_count=25,
+        stacks=[[25, 1], [24, 2], [23, 3], [22, 4], [21, 5]],
+    )
+    small_args = _args_for_variant(outer, "qubo_adaptive", small_instance)
+
+    assert small_args.selection_policy == "adaptive_qubo"
+    assert small_args.adaptive_high_frontier == 1200
+    assert small_args.adaptive_mid_frontier == 1200
+    assert small_args.adaptive_low_frontier == 1200
 
 
 def test_ablation_no_qubo_args_are_marked_explicit():

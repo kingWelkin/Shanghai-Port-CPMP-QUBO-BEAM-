@@ -47,4 +47,5 @@
 ## 开源外部算例
 
 - [Open CPMP 外部算例初测](experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)：DLTS cv1 外部数据接入、5x5/7x5 初测和 QUBO/no-QUBO 对照。
+- [Open CPMP 重复优先级扩展基准](experiments/open_cpmp_priority_group_benchmark_summary.md)：DLTS cv2/cv3 priority-group 语义接入和扩展对照。
 - 新 runner：`scripts/open_cpmp_benchmarks.py`。默认可 clone DLTS，也可以用 `--source` 指向已有本地目录。

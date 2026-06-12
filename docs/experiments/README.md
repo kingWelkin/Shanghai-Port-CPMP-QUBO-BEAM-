@@ -42,7 +42,24 @@
 | 7x5_cv1 | QUBO Beam | 40 | 13 | 2.431 | 4.231 |
 | 7x5_cv1 | classic no-QUBO | 40 | 15 | 2.236 | 6.733 |
 
-详细说明见 [open_cpmp_dlts_initial_external_benchmark_summary.md](open_cpmp_dlts_initial_external_benchmark_summary.md)。当前只报告 cv1 唯一优先级分支；DLTS cv2/cv3 含重复优先级，需先补 group-priority 表达。
+cv1 唯一优先级分支的详细说明见 [open_cpmp_dlts_initial_external_benchmark_summary.md](open_cpmp_dlts_initial_external_benchmark_summary.md)。
+
+新增 adaptive frontier 变体见 [open_cpmp_adaptive_frontier_experiment_summary.md](open_cpmp_adaptive_frontier_experiment_summary.md)。该变体主要改善 7x5 外部算例成功率，不替代上港 30 例主线。
+
+当前已补充 DLTS cv2/cv3 的 priority-group 语义支持。同一优先级的箱子不可区分，最终目标是每个栈自底向顶非递增；合法性仍要求只移动栈顶箱、不能移出堆场。扩展结果如下：
+
+| scope | variant | cases | N=0 solved | moves total | avg runtime sec | avg ref gap among solved |
+|---|---|---:|---:|---:|---:|---:|
+| 5x5_cv2_test | QUBO Beam | 20 | 14 | 368 | 1.205 | 2.000 |
+| 5x5_cv2_test | classic no-QUBO | 20 | 13 | 357* | 0.720 | 3.077 |
+| 5x5_cv3_test | QUBO Beam | 20 | 18 | 460 | 1.153 | 2.056 |
+| 5x5_cv3_test | classic no-QUBO | 20 | 20 | 522 | 0.763 | 2.200 |
+| 7x5_cv2_test | QUBO Beam | 10 | 9 | 330 | 3.252 | 6.222 |
+| 7x5_cv2_test | classic no-QUBO | 10 | 9 | 353 | 2.407 | 8.778 |
+| 7x5_cv3_test | QUBO Beam | 10 | 10 | 356 | 3.214 | 5.500 |
+| 7x5_cv3_test | classic no-QUBO | 10 | 10 | 366 | 2.380 | 6.500 |
+
+`*` 只统计成功算例步数。重复优先级分支上，QUBO 的更稳妥结论是改善成功解质量，而不是稳定提高成功率。详细说明见 [open_cpmp_priority_group_benchmark_summary.md](open_cpmp_priority_group_benchmark_summary.md)。
 
 ## 文件说明
 
@@ -66,6 +83,7 @@
 - [astar_qubo_baseline_beam_comparison.md](astar_qubo_baseline_beam_comparison.md)：A* no-proof、dynamic QUBO、早期 Beam 对照。
 - [qubo_astar_speed_alignment.md](qubo_astar_speed_alignment.md)：QUBO Beam 与 A* 速度对齐旧版记录。
 - [compact_beam_qubo_speed_optimized_v2_full30_repeat.md](compact_beam_qubo_speed_optimized_v2_full30_repeat.md)：历史 2.274 秒档结果。
+- [open_cpmp_priority_group_benchmark_summary.md](open_cpmp_priority_group_benchmark_summary.md)：DLTS cv2/cv3 重复优先级扩展基准。
 - [results.md](results.md)：输出字段解释。
 
 历史业务改善、Greedy/MIP 小规模 benchmark 和更早的配对算例报告仍保留在本目录，但不进入当前主结论。

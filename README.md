@@ -116,4 +116,4 @@ python -m pytest -q
 python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv1_validation --limit-per-family 100 --variant both --time-limit 3 --alpha 10 --output docs\experiments\open_cpmp_dlts_5x5_cv1_200cases_both.csv
 ```
 
-初测结果见 [Open CPMP 外部算例初测](docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)。当前只把 cv1 唯一优先级分支作为严格结果；cv2/cv3 的重复优先级需要后续 group-priority 支持。
+cv1 唯一优先级结果见 [Open CPMP 外部算例初测](docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)。当前 runner 也已支持 cv2/cv3 重复优先级分支，按 priority-group 语义验解；扩展结果见 [Open CPMP 重复优先级扩展基准](docs/experiments/open_cpmp_priority_group_benchmark_summary.md)。
