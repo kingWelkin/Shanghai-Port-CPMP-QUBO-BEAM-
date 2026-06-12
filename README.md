@@ -74,6 +74,7 @@ python scripts\benchmark_compact_qubo_ablation_time_aligned.py --solver-profile 
 
 - [文档导航](docs/index.md)
 - [当前 QUBO Beam 主算法完整描述](docs/guides/current-qubo-beam-algorithm.md)
+- [QUBO 影响增强 profile 试验记录](docs/guides/qubo-quality-profile-probes.md)
 - [实验结论汇总](docs/experiments/README.md)
 - [Task 04：QUBO 贡献拆解](docs/experiments/frontier_qubo_contribution_task04_summary.md)
 - [Task 08：`N=0` 高效算法矩阵](docs/experiments/n0_efficient_algorithm_matrix_task08_summary.md)

@@ -382,6 +382,19 @@ def _qubo_linear_scores(
     max_layout = max(layout_costs) if layout_costs else 0.0
     layout_span = max(1.0, max_layout - min_layout)
     layout_weight = float(getattr(args, "layout_qubo_target_weight", 0.0)) if _uses_layout_qubo(args) else 0.0
+    next_n_weight = float(getattr(args, "qubo_next_n_weight", 0.0))
+    if next_n_weight > 0.0:
+        next_best_n = [
+            _one_step_best_n(code, data[0], args)
+            for code, data in usable_items
+        ]
+        min_next_n = min(next_best_n) if next_best_n else best_n
+        max_next_n = max(next_best_n) if next_best_n else best_n
+        next_n_span = max(1.0, float(max_next_n - min_next_n))
+    else:
+        next_best_n = []
+        min_next_n = best_n
+        next_n_span = 1.0
 
     scores: list[float] = []
     for idx, (_code, (n_value, depth, parent_code)) in enumerate(usable_items):
@@ -390,15 +403,39 @@ def _qubo_linear_scores(
         depth_term = max(0.0, (depth - best_depth) / denom_depth)
         parent_term = parent_counts[parent_code] / max_parent_count
         layout_term = (layout_costs[idx] - min_layout) / layout_span
+        next_n_term = 0.0
+        if next_n_weight > 0.0:
+            next_n_term = max(0.0, (next_best_n[idx] - min_next_n) / next_n_span)
         scores.append(
             args.qubo_rank_weight * rank_term
             + args.qubo_n_weight * n_term
             + args.qubo_depth_weight * depth_term
             + args.qubo_parent_weight * parent_term
             + layout_weight * layout_term
+            + next_n_weight * next_n_term
         )
     hi = max(scores) if scores else 0.0
     return [0.0 if hi <= 0.0 else score / hi for score in scores]
+
+
+def _one_step_best_n(code: bytes, current_n: int, args: argparse.Namespace) -> int:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return current_n
+    cache = getattr(args, "_qubo_next_n_cache", None)
+    if cache is None:
+        cache = {}
+        setattr(args, "_qubo_next_n_cache", cache)
+    key = (code, current_n)
+    if key in cache:
+        return cache[key]
+    best = current_n
+    for _next_code, next_n in _successors_with_n(code, current_n, stack_count, max_height):
+        if next_n < best:
+            best = next_n
+    cache[key] = best
+    return best
 
 
 def _qubo_selection_value(

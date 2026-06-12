@@ -3,6 +3,7 @@
 ## 读者入口
 
 - 想了解当前主算法：看 [当前 QUBO Beam 主算法完整描述](guides/current-qubo-beam-algorithm.md)
+- 想了解扩大 QUBO 影响为什么没有进入主线：看 [QUBO 影响增强 profile 试验记录](guides/qubo-quality-profile-probes.md)
 - 想看最新实验结论：看 [实验结论汇总](experiments/README.md)
 - 想理解 QUBO 到底贡献了什么：看 [Task 04：QUBO 贡献拆解](experiments/frontier_qubo_contribution_task04_summary.md)
 - 想看当前 `N=0` 高效算法矩阵：看 [Task 08：实验矩阵](experiments/n0_efficient_algorithm_matrix_task08_summary.md)

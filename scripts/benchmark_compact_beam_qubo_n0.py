@@ -221,6 +221,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "qubo_group_take": 4,
         "qubo_group_lookahead_weight": 0.0,
         "qubo_group_branch_weight": 0.0,
+        "qubo_next_n_weight": 0.0,
         "group_qubo_risk_gate": False,
         "dynamic_min_frontier": 128,
         "dynamic_core_frontier": 0,
@@ -269,6 +270,34 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "adaptive_candidate_pool": 0,
     },
 }
+_SOLVER_PROFILES["post_polish_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "post_polish_passes": 3,
+    "post_polish_tail_span": 18,
+    "post_polish_max_windows": 128,
+    "post_polish_max_qubo_vars": 96,
+    "post_polish_max_bridge_depth": 8,
+    "post_polish_bridge_expanded": 30000,
+    "post_polish_suffix_focus_n": 10,
+    "post_polish_suffix_tail_span": 22,
+    "post_polish_suffix_max_candidates": 72,
+    "post_polish_suffix_select": 7,
+    "post_polish_suffix_max_qubo_vars": 64,
+    "post_polish_suffix_max_depth": 20,
+    "post_polish_suffix_expanded": 90000,
+}
+_SOLVER_PROFILES["frontier_quality_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "max_qubo_calls": 64,
+    "max_qubo_vars": 96,
+    "qubo_supplement_width": 32,
+    "qubo_focus_n": 10,
+    "qubo_cohorts_per_layer": 3,
+    "qubo_time_limit": 0.002,
+    "qubo_iterations": 30,
+    "qubo_parent_weight": 0.30,
+    "qubo_next_n_weight": 0.75,
+}
 
 
 def make_compact_args(**overrides: object) -> argparse.Namespace:
@@ -308,6 +337,7 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "qubo_n_weight": 2.0,
         "qubo_depth_weight": 1.0,
         "qubo_parent_weight": 0.15,
+        "qubo_next_n_weight": 0.0,
         "qubo_penalty_a": 30.0,
         "qubo_time_limit": 0.001,
         "qubo_reads": 2,
@@ -512,6 +542,15 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "qubo_group_take": "--qubo-group-take",
         "qubo_group_lookahead_weight": "--qubo-group-lookahead-weight",
         "qubo_group_branch_weight": "--qubo-group-branch-weight",
+        "qubo_rank_weight": "--qubo-rank-weight",
+        "qubo_n_weight": "--qubo-n-weight",
+        "qubo_depth_weight": "--qubo-depth-weight",
+        "qubo_parent_weight": "--qubo-parent-weight",
+        "qubo_next_n_weight": "--qubo-next-n-weight",
+        "qubo_penalty_a": "--qubo-penalty-a",
+        "qubo_time_limit": "--qubo-time-limit",
+        "qubo_reads": "--qubo-reads",
+        "qubo_iterations": "--qubo-iterations",
         "group_qubo_risk_gate": ("--group-qubo-risk-gate", "--no-group-qubo-risk-gate"),
         "dynamic_min_frontier": "--dynamic-min-frontier",
         "dynamic_core_frontier": "--dynamic-core-frontier",
@@ -2332,7 +2371,10 @@ def main() -> int:
         dest="solver_profile",
         choices=sorted(_SOLVER_PROFILES.keys()),
         default="speed_v2",
-        help="Reusable solver baseline. speed_v2 freezes the historical 30/30, 509-move, ~2.2s QUBO Beam profile.",
+        help=(
+            "Reusable solver baseline. speed_v2 is the main 30/30, 509-move QUBO Beam profile; "
+            "post_polish_v1 and frontier_quality_v1 are experimental QUBO influence probes."
+        ),
     )
     parser.add_argument("--priority", choices=["n_then_depth", "astar", "weighted_astar"], default="n_then_depth")
     parser.add_argument("--g-weight", type=float, default=1.0)
@@ -2411,6 +2453,7 @@ def main() -> int:
     parser.add_argument("--qubo-n-weight", type=float, default=2.0)
     parser.add_argument("--qubo-depth-weight", type=float, default=1.0)
     parser.add_argument("--qubo-parent-weight", type=float, default=0.15)
+    parser.add_argument("--qubo-next-n-weight", type=float, default=0.0)
     parser.add_argument("--qubo-penalty-a", type=float, default=30.0)
     parser.add_argument("--qubo-time-limit", type=float, default=0.001)
     parser.add_argument("--qubo-reads", type=int, default=2)

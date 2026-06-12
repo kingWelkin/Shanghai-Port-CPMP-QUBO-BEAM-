@@ -540,6 +540,103 @@ def test_solver_profile_respects_programmatic_explicit_keys(monkeypatch):
     assert args.qubo_mode == "focused_multi"
 
 
+def test_solver_profile_post_polish_v1_strengthens_suffix_polish_branch(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="post_polish_v1")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.selection_policy == "enhanced"
+    assert args.beam_width == 1200
+    assert args.core_width == 1080
+    assert args.max_qubo_vars == 64
+    assert args.max_qubo_calls == 32
+    assert args.qubo_supplement_width == 24
+    assert args.qubo_next_n_weight == 0.0
+    assert args.post_polish_passes > 2
+    assert args.post_polish_suffix_max_candidates > 48
+    assert args.post_polish_suffix_expanded > 60000
+
+
+def test_solver_profile_frontier_quality_v1_strengthens_qubo_quality_branch(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="frontier_quality_v1")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.selection_policy == "enhanced"
+    assert args.beam_width == 1200
+    assert args.core_width == 1080
+    assert args.max_qubo_vars > 64
+    assert args.max_qubo_calls > 32
+    assert args.qubo_supplement_width > 24
+    assert args.qubo_next_n_weight > 0
+    assert args.qubo_parent_weight > 0.15
+    assert args.post_polish_passes == 2
+    assert args.post_polish_suffix_max_candidates == 48
+
+
+def test_qubo_linear_scores_can_use_one_step_future_n_bias():
+    from benchmark_target_astar_memory_n0 import _qubo_linear_scores
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    better_future, current_n = _encode([[4], [2, 3], [1]], stack_count, max_height)
+    worse_future, worse_n = _encode([[3, 4], [2], [1]], stack_count, max_height)
+    assert worse_n == current_n
+
+    args = _compact_args(
+        qubo_profile="frontier_cohort",
+        qubo_rank_weight=0.0,
+        qubo_n_weight=0.0,
+        qubo_depth_weight=0.0,
+        qubo_parent_weight=0.0,
+        qubo_next_n_weight=1.0,
+        qubo_frontier_n_window=1,
+        qubo_frontier_depth_window=1,
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+    usable = [
+        (better_future, (current_n, 4, b"parent-a")),
+        (worse_future, (current_n, 4, b"parent-b")),
+    ]
+
+    scores = _qubo_linear_scores(usable, usable[0][1], args)
+
+    assert scores[0] < scores[1]
+
+
+def test_open_runner_accepts_experimental_solver_profiles():
+    from benchmark_compact_beam_qubo_n0 import make_compact_args
+    from open_cpmp_benchmarks import _args_for_variant
+
+    outer = argparse.Namespace(
+        adaptive_candidate_pool=0,
+        adaptive_high_frontier=800,
+        adaptive_high_n=16,
+        adaptive_low_frontier=1200,
+        adaptive_low_n=8,
+        adaptive_mid_frontier=1000,
+        alpha=10.0,
+        max_moves=None,
+        solver_profile="post_polish_v1",
+        time_limit=3.0,
+        no_qubo_beam_width=1200,
+    )
+
+    args = _args_for_variant(outer, "qubo")
+
+    assert args.solver_profile == "post_polish_v1"
+    assert make_compact_args(solver_profile="post_polish_v1").solver_profile == "post_polish_v1"
+    assert make_compact_args(solver_profile="frontier_quality_v1").solver_profile == "frontier_quality_v1"
+
+
 def test_adaptive_qubo_frontier_width_contracts_high_n_and_expands_low_n():
     from benchmark_compact_beam_qubo_n0 import _adaptive_frontier_width
 

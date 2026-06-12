@@ -23,6 +23,7 @@ for path in (ROOT, ROOT / "src", ROOT / "scripts"):
 from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
     COMPACT_RESULT_FIELDS,
     SOLVER_NAME,
+    _SOLVER_PROFILES,
     _row_dict_from_instance_result,
     _validate_instance_result,
     make_compact_args,
@@ -547,7 +548,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-total", type=int)
     parser.add_argument("--variant", choices=["qubo", "qubo_adaptive", "classic_noqubo", "both", "all"], default="qubo")
     parser.add_argument("--skip-invalid", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--solver-profile", choices=["speed_v2"], default="speed_v2")
+    parser.add_argument("--solver-profile", choices=sorted(_SOLVER_PROFILES.keys()), default="speed_v2")
     parser.add_argument("--alpha", type=float, default=10.0)
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--time-limit", type=float, default=10.0)
