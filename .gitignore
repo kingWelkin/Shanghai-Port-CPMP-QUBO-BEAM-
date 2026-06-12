@@ -65,6 +65,9 @@ docs/experiments/**/*_moves/
 !docs/experiments/open_cpmp_priority_group_benchmark_summary.md
 !docs/experiments/open_cpmp_dlts_5x5_cv23_test20_priority_groups_all_summary.md
 !docs/experiments/open_cpmp_dlts_7x5_cv23_test10_priority_groups_all_summary.md
+!docs/experiments/open_cpmp_time_matched_ablation_summary.md
+!docs/experiments/open_cpmp_time_matched_5x5_cv123_summary.md
+!docs/experiments/open_cpmp_time_matched_7x5_cv123_summary.md
 tmp_*
 outputs/
 external/

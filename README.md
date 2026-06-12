@@ -116,4 +116,4 @@ python -m pytest -q
 python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv1_validation --limit-per-family 100 --variant both --time-limit 3 --alpha 10 --output docs\experiments\open_cpmp_dlts_5x5_cv1_200cases_both.csv
 ```
 
-cv1 唯一优先级结果见 [Open CPMP 外部算例初测](docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)。当前 runner 也已支持 cv2/cv3 重复优先级分支，按 priority-group 语义验解；扩展结果见 [Open CPMP 重复优先级扩展基准](docs/experiments/open_cpmp_priority_group_benchmark_summary.md)。
+cv1 唯一优先级结果见 [Open CPMP 外部算例初测](docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)。当前 runner 也已支持 cv2/cv3 重复优先级分支，按 priority-group 语义验解；扩展结果见 [Open CPMP 重复优先级扩展基准](docs/experiments/open_cpmp_priority_group_benchmark_summary.md)。严格时间匹配 no-QUBO 消融见 [Open CPMP 时间匹配消融](docs/experiments/open_cpmp_time_matched_ablation_summary.md)。

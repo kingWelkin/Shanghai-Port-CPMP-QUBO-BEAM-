@@ -61,6 +61,8 @@ cv1 唯一优先级分支的详细说明见 [open_cpmp_dlts_initial_external_ben
 
 `*` 只统计成功算例步数。重复优先级分支上，QUBO 的更稳妥结论是改善成功解质量，而不是稳定提高成功率。详细说明见 [open_cpmp_priority_group_benchmark_summary.md](open_cpmp_priority_group_benchmark_summary.md)。
 
+进一步的严格时间匹配消融见 [open_cpmp_time_matched_ablation_summary.md](open_cpmp_time_matched_ablation_summary.md)。该实验用同一 case 的 QUBO 实际 runtime 作为 classic no-QUBO 的预算，并扫 `1200/2400/4800` 三个 classic beam width。结论是：7x5 `cv2/cv3` 上 QUBO 在同成功率下有更清楚的质量优势；5x5 分支则是成功率和质量的混合信号，不能写成 QUBO 单向全胜。
+
 ## 文件说明
 
 当前主线：
@@ -74,6 +76,7 @@ cv1 唯一优先级分支的详细说明见 [open_cpmp_dlts_initial_external_ben
 - [frontier_qubo_contribution_task04_summary.md](frontier_qubo_contribution_task04_summary.md)：Task 04 QUBO 搜索/后处理贡献拆解。
 - [n0_efficient_algorithm_matrix_task08_summary.md](n0_efficient_algorithm_matrix_task08_summary.md)：Task 08 当前 `N=0` 高效算法矩阵。
 - [time_aligned_ablation_task09_summary.md](time_aligned_ablation_task09_summary.md)：Task 09 严格时间匹配消融。
+- [open_cpmp_time_matched_ablation_summary.md](open_cpmp_time_matched_ablation_summary.md)：DLTS 外部算例严格时间匹配 no-QUBO 消融与逐 case 拆解。
 - [v3_task_closure_summary.md](v3_task_closure_summary.md)：v3 任务最终收口记录。
 - [micro_optimized_strict_ablation_full30.md](micro_optimized_strict_ablation_full30.md)：严格消融自动生成报告。
 - [group_qubo_task03_summary.md](group_qubo_task03_summary.md)：Task 03 分组 QUBO 实验记录，结论是不进主线。
