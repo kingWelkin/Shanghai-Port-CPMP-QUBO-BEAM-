@@ -130,9 +130,11 @@ python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test --limit-per-famil
 
 Smoke outcomes:
 
-| command | valid | invalid/unsolved | full penalty | solved moves | avg runtime sec | reference gap | QUBO calls | QUBO time sec |
+| command | valid | invalid/unsolved | full penalty | solved moves | avg runtime sec | solved-case reference gap | QUBO calls | QUBO time sec |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | 2-case, 3s | 0/2 | 2 | 188 | 0 | 3.063 | 0 | 9 | 0.010 |
 | 20-case, 10s | 1/20 | 19 | 1848 | 21 | 9.993 | 2 | 452 | 0.507 |
+
+The 2-case smoke has no solved-case quality signal because it solved zero cases. Overall, this smoke is negative: the profile remains experimental and must not be promoted unless full-case quality improves over the current mainline and Wang-rescue profiles.
 
 Promotion should depend on full-case quality, not on smoke completion alone: valid count, invalid count, full-quality penalty, solved moves, reference gap, runtime, and unified QUBO counters.
