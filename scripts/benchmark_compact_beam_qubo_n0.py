@@ -1885,6 +1885,121 @@ def _select_wang_pair_qubo_supplement(
     return [usable[idx][2] for idx in ordered], len(model.var_index), sample_set.runtime_sec
 
 
+def _select_unified_wang_qubo_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], int, float, dict[str, int]]:
+    empty_metrics = {"fixed_prefix_selected": 0, "fix_pair_selected": 0}
+    target = max(0, int(target))
+    if target <= 0 or not ranked:
+        return [], 0, 0.0, empty_metrics
+
+    def _int_attr(name: str, default: int) -> int:
+        value = getattr(args, name, None)
+        if value is None:
+            value = default
+        return int(value)
+
+    def _float_attr(name: str, default: float) -> float:
+        value = getattr(args, name, None)
+        if value is None:
+            value = default
+        return float(value)
+
+    max_vars = max(1, _int_attr("unified_wang_qubo_max_vars", 64))
+    usable = list(ranked[:max_vars])
+    target = min(target, len(usable))
+    if target <= 0:
+        return [], 0, 0.0, empty_metrics
+
+    energies = [_unified_wang_qubo_linear_energy(code, data, usable, args) for code, data in usable]
+    features = [_unified_wang_qubo_features(code, data, usable, args) for code, data in usable]
+    lo = min(energies)
+    hi = max(energies)
+    span = hi - lo
+    linear = [(energy - lo) / span if span > 1e-12 else 0.0 for energy in energies]
+
+    model = QuboModel()
+    vars_ = [model.add_binary_var(f"uw_{idx}") for idx in range(len(usable))]
+    for idx, value in enumerate(linear):
+        model.add_linear(vars_[idx], value)
+
+    pair_same_parent_penalty = _float_attr("unified_wang_pair_same_parent_penalty", 0.0)
+    signature_penalty = _float_attr("unified_wang_signature_penalty", 0.0)
+    complement_bonus = _float_attr("unified_wang_complement_bonus", 0.0)
+    for i in range(len(usable)):
+        parent_i = usable[i][1][2]
+        signature_i = (features[i].n_value, features[i].target_gap)
+        for j in range(i + 1, len(usable)):
+            if pair_same_parent_penalty > 0.0 and parent_i == usable[j][1][2]:
+                model.add_quadratic(vars_[i], vars_[j], pair_same_parent_penalty)
+            if signature_penalty > 0.0 and signature_i == (features[j].n_value, features[j].target_gap):
+                model.add_quadratic(vars_[i], vars_[j], signature_penalty)
+            if complement_bonus > 0.0 and (
+                (features[i].fix_pair > 0 and features[j].fixed_prefix > 0)
+                or (features[j].fix_pair > 0 and features[i].fixed_prefix > 0)
+            ):
+                model.add_quadratic(vars_[i], vars_[j], -complement_bonus)
+
+    model.add_exactly_k_penalty(vars_, target, _float_attr("qubo_penalty_a", 30.0))
+    sample_set = SimulatedAnnealingQuboSampler().sample(
+        model,
+        QuboSamplerConfig(
+            num_reads=max(1, _int_attr("qubo_reads", 2)),
+            random_seed=_int_attr("seed", 37) + 9001 + _int_attr("_unified_wang_qubo_calls_done", 0),
+            time_limit_sec=max(0.001, _float_attr("qubo_time_limit", 0.001)),
+            sa_iterations=max(1, _int_attr("qubo_iterations", 20)),
+        ),
+    )
+    picked: set[int] = set()
+    if sample_set.samples:
+        picked = {idx for idx in range(len(usable)) if sample_set.samples[0].binary_values.get(idx, 0) == 1}
+
+    def _energy_key(idx: int) -> tuple[float, int, int, bytes]:
+        data = usable[idx][1]
+        return energies[idx], data[0], data[1], usable[idx][0]
+
+    while len(picked) > target:
+        picked.remove(max(picked, key=_energy_key))
+    while len(picked) < target:
+        missing = [idx for idx in range(len(usable)) if idx not in picked]
+        if not missing:
+            break
+        picked.add(min(missing, key=_energy_key))
+
+    def _assignment(indices: set[int]) -> dict[int, int]:
+        return {idx: 1 for idx in indices}
+
+    improved = True
+    while improved and len(picked) == target:
+        improved = False
+        current_energy = model.evaluate(_assignment(picked))
+        best_swap: tuple[int, int, float] | None = None
+        missing = sorted((idx for idx in range(len(usable)) if idx not in picked), key=_energy_key)
+        for out_idx in sorted(picked, key=_energy_key):
+            for in_idx in missing:
+                trial = set(picked)
+                trial.remove(out_idx)
+                trial.add(in_idx)
+                trial_energy = model.evaluate(_assignment(trial))
+                if trial_energy < current_energy - 1e-12 and (
+                    best_swap is None or trial_energy < best_swap[2] - 1e-12
+                ):
+                    best_swap = (out_idx, in_idx, trial_energy)
+        if best_swap is not None:
+            picked.remove(best_swap[0])
+            picked.add(best_swap[1])
+            improved = True
+
+    ordered = sorted(picked, key=_energy_key)
+    metrics = {
+        "fixed_prefix_selected": sum(features[idx].fixed_prefix for idx in ordered),
+        "fix_pair_selected": sum(features[idx].fix_pair for idx in ordered),
+    }
+    return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec, metrics
+
+
 def _append_wang_rollout_frontier(
     selected_codes: list[bytes],
     candidates: dict[bytes, tuple[int, int, bytes]],

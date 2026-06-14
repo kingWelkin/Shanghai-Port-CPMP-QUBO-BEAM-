@@ -1144,6 +1144,89 @@ def test_wang_pair_qubo_supplement_selects_high_fix_pair_candidate():
     assert qvars == 2
 
 
+def test_unified_wang_qubo_supplement_selects_best_energy_candidate():
+    from benchmark_compact_beam_qubo_n0 import _select_unified_wang_qubo_supplement
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    preferred_code, preferred_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    other_code, other_n = _encode([[4, 5], [3, 1, 2], []], stack_count, max_height)
+    rows = [
+        (other_code, (other_n, 8, b"p0")),
+        (preferred_code, (preferred_n, 8, b"p1")),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        unified_wang_qubo_max_vars=8,
+        unified_wang_qubo_select=1,
+        unified_wang_n_weight=1000.0,
+        unified_wang_depth_weight=1.0,
+        unified_wang_fixed_prefix_weight=30.0,
+        unified_wang_fix_pair_weight=10.0,
+        unified_wang_target_gap_weight=1.0,
+        unified_wang_same_parent_penalty=0.25,
+        unified_wang_signature_penalty=0.0,
+        unified_wang_complement_bonus=0.0,
+        qubo_penalty_a=30.0,
+        qubo_reads=2,
+        qubo_iterations=20,
+        qubo_time_limit=0.001,
+        seed=37,
+    )
+
+    selected, qvars, qtime, metrics = _select_unified_wang_qubo_supplement(rows, args, target=1)
+
+    assert selected == [preferred_code]
+    assert qvars == 2
+    assert qtime >= 0.0
+    assert metrics["fixed_prefix_selected"] >= 2
+    assert metrics["fix_pair_selected"] >= 1
+
+
+def test_unified_wang_qubo_pair_same_parent_penalty_discourages_duplicate_parent():
+    from benchmark_compact_beam_qubo_n0 import _select_unified_wang_qubo_supplement
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    same_parent_a, same_parent_a_n = _encode([[5], [4, 3], [2, 1]], stack_count, max_height)
+    same_parent_b, same_parent_b_n = _encode([[5, 4], [3, 2], [1]], stack_count, max_height)
+    other_parent, other_parent_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    rows = [
+        (same_parent_a, (same_parent_a_n, 8, b"same")),
+        (same_parent_b, (same_parent_b_n, 8, b"same")),
+        (other_parent, (other_parent_n, 8, b"other")),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        unified_wang_qubo_max_vars=8,
+        unified_wang_n_weight=1000.0,
+        unified_wang_depth_weight=1.0,
+        unified_wang_fixed_prefix_weight=30.0,
+        unified_wang_fix_pair_weight=10.0,
+        unified_wang_target_gap_weight=1.0,
+        unified_wang_same_parent_penalty=0.0,
+        unified_wang_pair_same_parent_penalty=3.0,
+        unified_wang_signature_penalty=0.0,
+        unified_wang_complement_bonus=0.0,
+        qubo_penalty_a=30.0,
+        qubo_reads=2,
+        qubo_iterations=20,
+        qubo_time_limit=0.001,
+        seed=37,
+    )
+
+    selected, qvars, _qtime, _metrics = _select_unified_wang_qubo_supplement(rows, args, target=2)
+
+    parent_by_code = {code: data[2] for code, data in rows}
+    assert qvars == 3
+    assert other_parent in selected
+    assert {parent_by_code[code] for code in selected} == {b"same", b"other"}
+
+
 def test_unified_wang_qubo_features_capture_prefix_pair_and_diversity():
     from benchmark_compact_beam_qubo_n0 import (
         _compact_wang_fix_pair_score,
