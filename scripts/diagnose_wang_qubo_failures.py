@@ -13,12 +13,17 @@ for path in (ROOT, ROOT / "scripts"):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
-from container_reshuffle.core import Move
+from benchmark_compact_beam_qubo_n0 import (
+    _candidate_wang_probe_score,
+    make_compact_args,
+    run_compact_beam_instance,
+)
+from container_reshuffle.core import Instance, Move, State, apply_move
 from container_reshuffle.features import future_disorder_count_stacks
 from container_reshuffle.solvers.base import SolverConfig
 from container_reshuffle.solvers.classical_cpmp import WangBsBabyMovesSolver
 from open_cpmp_benchmarks import discover_dlts_cases, ensure_dlts_source, load_dlts_dat
+from run_business_exact_target_search_sqlite import _encode
 
 DEFAULT_CASES = ("5x5_cv1_test_4", "5x5_cv1_test_6")
 FIELDS = [
@@ -50,6 +55,26 @@ def _format_first_moves(moves: list[Move], limit: int = 8) -> list[str]:
         f"{move.step}:{move.box}:{move.from_stack}->{move.to_stack}"
         for move in moves[: max(0, limit)]
     ]
+
+
+def _stacks_after_moves(instance: Instance, moves: list[Move]) -> list[list[int]]:
+    state = State(stacks=[list(stack) for stack in instance.stacks])
+    for move in moves:
+        state = apply_move(instance, state, move)
+    return state.stacks
+
+
+def _wang_signal_fields(
+    stacks: list[list[int]],
+    stack_count: int,
+    max_height: int,
+    compact_args: argparse.Namespace,
+) -> tuple[int, int]:
+    compact_args._stack_count = int(getattr(compact_args, "_stack_count", 0) or stack_count)
+    compact_args._max_height = int(getattr(compact_args, "_max_height", 0) or max_height)
+    code, _n = _encode(stacks, stack_count, max_height)
+    _score, fix_pair, fixed_prefix, _target_gap = _candidate_wang_probe_score(code, compact_args)
+    return fixed_prefix, fix_pair
 
 
 def _diagnostic_row(
@@ -118,6 +143,14 @@ def main() -> int:
             max_moves=None,
         )
         compact_result = run_compact_beam_instance(case.case_id, instance, compact_args)
+        compact_stacks = _stacks_after_moves(instance, compact_result.moves)
+        compact_final_n = future_disorder_count_stacks(compact_stacks)
+        fixed_prefix, fix_pair = _wang_signal_fields(
+            compact_stacks,
+            instance.stack_count,
+            instance.max_height,
+            compact_args,
+        )
         wang_solution = WangBsBabyMovesSolver().solve(
             instance,
             SolverConfig(
@@ -132,13 +165,11 @@ def main() -> int:
                 case_id=case.case_id,
                 family=case.family,
                 compact_status=compact_result.status,
-                compact_final_n=(
-                    0 if compact_result.moves else future_disorder_count_stacks(instance.stacks)
-                ),
+                compact_final_n=compact_final_n,
                 compact_moves=(len(compact_result.moves) if compact_result.moves else None),
                 compact_best_n_history=list(getattr(compact_args, "_best_n_history", [])),
-                fixed_prefix=0,
-                fix_pair=0,
+                fixed_prefix=fixed_prefix,
+                fix_pair=fix_pair,
                 parent_top_share=float(getattr(compact_args, "_layer_parent_top_share", 0.0)),
                 wang_moves=(len(wang_solution.moves) if wang_solution.moves else None),
                 wang_first_moves=_format_first_moves(
