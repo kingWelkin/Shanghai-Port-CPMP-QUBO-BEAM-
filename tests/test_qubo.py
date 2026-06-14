@@ -1192,6 +1192,38 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_uses_wang_pair_qubo(monke
     assert args.wang_pair_qubo_supplement_width >= 12
 
 
+def test_solver_profile_scheduler_state_v5_wang_features_enables_generic_features(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_features")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_wang_features"
+    assert args.scheduler_state_controller == "state_v2"
+    assert args.group_qubo_supplement is True
+    assert args.wang_feature_fixed_prefix_weight > 0.0
+    assert args.wang_feature_fix_pair_weight > 0.0
+    assert args.wang_pair_qubo_enabled is False
+
+
+def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_and_window_polish(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.post_polish_accept == "better"
+    assert args.post_polish_window_select >= 1
+
+
 def test_rescue_layer_gate_requires_plateau_near_cap_and_candidate_pressure():
     from benchmark_compact_beam_qubo_n0 import _rescue_layer_active
 
@@ -2427,9 +2459,37 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo",
         "qubo_scheduler_state_v5",
         "qubo_scheduler_state_v5_wang_pair",
+        "qubo_scheduler_state_v5_wang_features",
         "qubo_scheduler_state_v5_wang_rescue",
+        "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_hybrid",
     ]
+
+
+def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names
+
+    outer = argparse.Namespace(
+        adaptive_candidate_pool=0,
+        adaptive_high_frontier=800,
+        adaptive_high_n=16,
+        adaptive_low_frontier=1200,
+        adaptive_low_n=8,
+        adaptive_mid_frontier=1000,
+        alpha=10.0,
+        max_moves=None,
+        solver_profile="speed_v2",
+        time_limit=10.0,
+        no_qubo_beam_width=1200,
+    )
+
+    feature_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_features")
+    polish_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
+
+    assert feature_args.solver_profile == "scheduler_state_v5_wang_features"
+    assert polish_args.solver_profile == "scheduler_state_v5_wang_rescue_polish"
+    assert "qubo_scheduler_state_v5_wang_features" in _variant_names("wang_all")
+    assert "qubo_scheduler_state_v5_wang_rescue_polish" in _variant_names("wang_all")
 
 
 def test_open_runner_bucket_variant_passes_bucket_selection_args():
