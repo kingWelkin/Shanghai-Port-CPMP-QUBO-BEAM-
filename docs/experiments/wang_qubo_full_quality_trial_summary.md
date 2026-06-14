@@ -108,3 +108,31 @@ The next Wang/QUBO probes are intentionally separated:
 - `scripts/diagnose_wang_qubo_failures.py` focuses on `5x5_cv1_test_4` and `5x5_cv1_test_6`, comparing compact plateau signals with Wang BS-B early moves.
 
 These probes should be judged by full-case quality first: valid count, invalid count, full-quality penalty, solved moves, and runtime.
+
+## Unified Wang-QUBO Beam Probe
+
+Profile/variant names:
+
+- Compact profile: `scheduler_state_v7_wang_qubo_unified`.
+- Open benchmark variant: `qubo_scheduler_state_v7_wang_qubo_unified`.
+
+This is a single-loop compact profile: Wang fixed-prefix and fix-pair terms are scored inside the compact QUBO frontier selector. It is not Wang fallback, rescue, or post-polish chaining.
+
+Smoke commands:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test --limit-per-family 2 --variant qubo_scheduler_state_v7_wang_qubo_unified --time-limit 3 --output docs\experiments\scratch_unified_wang_qubo_smoke.csv
+```
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test --limit-per-family 20 --variant qubo_scheduler_state_v7_wang_qubo_unified --time-limit 10 --output docs\experiments\scratch_unified_wang_qubo_5x5_cv1_20.csv
+```
+
+Smoke outcomes:
+
+| command | valid | invalid/unsolved | full penalty | solved moves | avg runtime sec | reference gap | QUBO calls | QUBO time sec |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2-case, 3s | 0/2 | 2 | 188 | 0 | 3.063 | 0 | 9 | 0.010 |
+| 20-case, 10s | 1/20 | 19 | 1848 | 21 | 9.993 | 2 | 452 | 0.507 |
+
+Promotion should depend on full-case quality, not on smoke completion alone: valid count, invalid count, full-quality penalty, solved moves, reference gap, runtime, and unified QUBO counters.
