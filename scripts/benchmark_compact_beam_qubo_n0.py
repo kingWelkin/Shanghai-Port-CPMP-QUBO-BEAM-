@@ -4498,6 +4498,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if getattr(args, "priority", "n_then_depth") == "target_guided"
         or float(getattr(args, "target_guided_weight", 0.0) or 0.0) > 0.0
         or float(getattr(args, "wang_probe_target_weight", 0.0) or 0.0) > 0.0
+        or float(getattr(args, "unified_wang_target_gap_weight", 0.0) or 0.0) > 0.0
         else ()
     )
     args._case_id = case

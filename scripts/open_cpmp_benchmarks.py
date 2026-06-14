@@ -186,6 +186,32 @@ def _simulate_priority_group_moves(
     return True, "ok", stacks, n_trace, max_g
 
 
+def _unified_wang_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "unified_wang_qubo_enabled": getattr(args, "unified_wang_qubo_enabled", False),
+        "unified_wang_qubo_supplement_width": getattr(args, "unified_wang_qubo_supplement_width", 0),
+        "unified_wang_qubo_focus_n": getattr(args, "unified_wang_qubo_focus_n", 8),
+        "unified_wang_qubo_n_window": getattr(args, "unified_wang_qubo_n_window", 1),
+        "unified_wang_qubo_max_vars": getattr(args, "unified_wang_qubo_max_vars", 64),
+        "unified_wang_qubo_select": getattr(args, "unified_wang_qubo_select", 12),
+        "unified_wang_n_weight": getattr(args, "unified_wang_n_weight", 1000.0),
+        "unified_wang_depth_weight": getattr(args, "unified_wang_depth_weight", 1.0),
+        "unified_wang_fixed_prefix_weight": getattr(args, "unified_wang_fixed_prefix_weight", 0.0),
+        "unified_wang_fix_pair_weight": getattr(args, "unified_wang_fix_pair_weight", 0.0),
+        "unified_wang_target_gap_weight": getattr(args, "unified_wang_target_gap_weight", 0.0),
+        "unified_wang_same_parent_penalty": getattr(args, "unified_wang_same_parent_penalty", 0.0),
+        "unified_wang_pair_same_parent_penalty": getattr(args, "unified_wang_pair_same_parent_penalty", 0.0),
+        "unified_wang_signature_penalty": getattr(args, "unified_wang_signature_penalty", 0.0),
+        "unified_wang_complement_bonus": getattr(args, "unified_wang_complement_bonus", 0.0),
+        "unified_wang_qubo_calls": result.unified_wang_qubo_calls,
+        "unified_wang_qubo_vars": result.unified_wang_qubo_vars,
+        "unified_wang_qubo_time_sec": result.unified_wang_qubo_time_sec,
+        "unified_wang_fixed_prefix_selected": result.unified_wang_fixed_prefix_selected,
+        "unified_wang_fix_pair_selected": result.unified_wang_fix_pair_selected,
+        "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
+    }
+
+
 def _priority_group_row_dict_from_instance_result(
     result,
     instance: Instance,
@@ -375,6 +401,7 @@ def _priority_group_row_dict_from_instance_result(
         "bucket_min_candidates": getattr(args, "bucket_min_candidates", 0),
         "rescue_layers_used": result.rescue_layers_used,
     }
+    row.update(_unified_wang_row_fields(result, args))
     return row
 
 

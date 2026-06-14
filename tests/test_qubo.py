@@ -420,6 +420,35 @@ def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
     assert goal_ok, msg
 
 
+def test_unified_wang_profile_initializes_target_layouts():
+    from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
+
+    instance = Instance(
+        "tiny_unified_target_layouts",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=4,
+        stacks=[[1, 4], [2], [3]],
+    )
+    args = make_compact_args(
+        alpha=10.0,
+        beam_width=4,
+        core_width=4,
+        max_moves=0,
+        max_qubo_calls=0,
+        post_polish_qubo=False,
+        solver_profile="scheduler_state_v7_wang_qubo_unified",
+        time_limit=0.01,
+        use_qubo=False,
+    )
+
+    run_compact_beam_instance(instance.instance_id, instance, args)
+
+    assert args.unified_wang_target_gap_weight > 0.0
+    assert len(args._layout_target_groups) > 0
+
+
 def test_compact_row_serializes_unified_wang_qubo_config_fields():
     from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
 
@@ -648,6 +677,88 @@ def test_open_runner_solves_tiny_priority_group_cpmp():
     assert row["rescue_layers_used"] == 0
     assert business_ok
     assert goal_ok, msg
+
+
+def test_open_priority_group_row_serializes_unified_wang_qubo_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_unified_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        unified_wang_qubo_calls=3,
+        unified_wang_qubo_vars=21,
+        unified_wang_qubo_time_sec=0.125,
+        unified_wang_fixed_prefix_selected=8,
+        unified_wang_fix_pair_selected=5,
+    )
+    args = _compact_args(
+        unified_wang_qubo_enabled=True,
+        unified_wang_qubo_supplement_width=12,
+        unified_wang_qubo_focus_n=-1,
+        unified_wang_qubo_n_window=1,
+        unified_wang_qubo_max_vars=64,
+        unified_wang_qubo_select=12,
+        unified_wang_n_weight=1000.0,
+        unified_wang_depth_weight=1.0,
+        unified_wang_fixed_prefix_weight=20.0,
+        unified_wang_fix_pair_weight=8.0,
+        unified_wang_target_gap_weight=1.0,
+        unified_wang_same_parent_penalty=0.10,
+        unified_wang_pair_same_parent_penalty=0.25,
+        unified_wang_signature_penalty=0.10,
+        unified_wang_complement_bonus=0.05,
+    )
+    args._layout_target_groups = (("target",),)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert requires_priority_group_semantics(instance)
+    expected = {
+        "unified_wang_qubo_enabled": True,
+        "unified_wang_qubo_supplement_width": 12,
+        "unified_wang_qubo_focus_n": -1,
+        "unified_wang_qubo_n_window": 1,
+        "unified_wang_qubo_max_vars": 64,
+        "unified_wang_qubo_select": 12,
+        "unified_wang_n_weight": 1000.0,
+        "unified_wang_depth_weight": 1.0,
+        "unified_wang_fixed_prefix_weight": 20.0,
+        "unified_wang_fix_pair_weight": 8.0,
+        "unified_wang_target_gap_weight": 1.0,
+        "unified_wang_same_parent_penalty": 0.10,
+        "unified_wang_pair_same_parent_penalty": 0.25,
+        "unified_wang_signature_penalty": 0.10,
+        "unified_wang_complement_bonus": 0.05,
+        "unified_wang_qubo_calls": 3,
+        "unified_wang_qubo_vars": 21,
+        "unified_wang_qubo_time_sec": 0.125,
+        "unified_wang_fixed_prefix_selected": 8,
+        "unified_wang_fix_pair_selected": 5,
+        "target_layout_count": 1,
+    }
+    for field, value in expected.items():
+        assert row[field] == value
 
 
 def test_open_runner_full_quality_summary_penalizes_invalid_rows():
