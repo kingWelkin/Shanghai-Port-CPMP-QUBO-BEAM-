@@ -77,6 +77,10 @@ COMPACT_EXTRA_FIELDS = [
     "wang_pair_qubo_calls",
     "wang_pair_qubo_vars",
     "wang_pair_qubo_time_sec",
+    "wang_feature_fixed_prefix_weight",
+    "wang_feature_fix_pair_weight",
+    "wang_feature_risk_weight",
+    "wang_feature_same_parent_weight",
     "target_layout_count",
     "beam_width",
     "core_width",
@@ -345,6 +349,10 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "wang_pair_qubo_max_vars": 32,
         "wang_pair_qubo_select": 8,
         "wang_pair_qubo_same_parent_penalty": 0.25,
+        "wang_feature_fixed_prefix_weight": 0.0,
+        "wang_feature_fix_pair_weight": 0.0,
+        "wang_feature_risk_weight": 0.0,
+        "wang_feature_same_parent_weight": 0.0,
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
@@ -1084,6 +1092,14 @@ class PostPolishWindow:
 
 
 @dataclass(frozen=True)
+class WangQuboFeatures:
+    fixed_prefix: int
+    fix_pair: int
+    risk: float
+    same_parent: float
+
+
+@dataclass(frozen=True)
 class PostPolishSuffix:
     start: int
     old_remaining: int
@@ -1553,6 +1569,48 @@ def _candidate_wang_probe_score(code: bytes, args: argparse.Namespace) -> tuple[
     return score, fix_pairs, fixed_prefix, target_gap
 
 
+def _wang_qubo_feature_values(
+    rows: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+) -> WangQuboFeatures:
+    if not rows:
+        return WangQuboFeatures(0, 0, 0.0, 0.0)
+    best_code, _best_data = rows[0]
+    _score, fix_pairs, fixed_prefix, target_gap = _candidate_wang_probe_score(best_code, args)
+    parent_counts: dict[bytes, int] = {}
+    for _code, data in rows:
+        parent_counts[data[2]] = parent_counts.get(data[2], 0) + 1
+    same_parent = float(max(parent_counts.values(), default=1) - 1)
+    risk = float(target_gap)
+    return WangQuboFeatures(
+        fixed_prefix=int(fixed_prefix),
+        fix_pair=int(fix_pairs),
+        risk=risk,
+        same_parent=same_parent,
+    )
+
+
+def _wang_feature_adjusted_group_score(
+    base_score: float,
+    rows: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+) -> float:
+    fixed_weight = float(getattr(args, "wang_feature_fixed_prefix_weight", 0.0) or 0.0)
+    pair_weight = float(getattr(args, "wang_feature_fix_pair_weight", 0.0) or 0.0)
+    risk_weight = float(getattr(args, "wang_feature_risk_weight", 0.0) or 0.0)
+    parent_weight = float(getattr(args, "wang_feature_same_parent_weight", 0.0) or 0.0)
+    if fixed_weight == 0.0 and pair_weight == 0.0 and risk_weight == 0.0 and parent_weight == 0.0:
+        return base_score
+    features = _wang_qubo_feature_values(rows, args)
+    return (
+        base_score
+        - fixed_weight * float(features.fixed_prefix)
+        - pair_weight * float(features.fix_pair)
+        + risk_weight * float(features.risk)
+        + parent_weight * float(features.same_parent)
+    )
+
+
 def _wang_probe_layer_active(args: argparse.Namespace) -> bool:
     window = max(0, int(getattr(args, "wang_probe_plateau_window", 0) or 0))
     if window <= 1:
@@ -1988,7 +2046,7 @@ def _group_qubo_linear_score(rows: list[tuple[bytes, tuple[int, int, bytes]]], a
     branch_weight = getattr(args, "qubo_group_branch_weight", 0.0)
     if branch_weight > 0 and len(rows) > 1:
         score -= branch_weight * math.log1p(len(rows))
-    return score
+    return _wang_feature_adjusted_group_score(score, rows, args)
 
 
 def _group_qubo_risk_active(args: argparse.Namespace) -> bool:
@@ -4592,6 +4650,10 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "wang_pair_qubo_calls": result.wang_pair_qubo_calls,
             "wang_pair_qubo_vars": result.wang_pair_qubo_vars,
             "wang_pair_qubo_time_sec": result.wang_pair_qubo_time_sec,
+            "wang_feature_fixed_prefix_weight": getattr(args, "wang_feature_fixed_prefix_weight", 0.0),
+            "wang_feature_fix_pair_weight": getattr(args, "wang_feature_fix_pair_weight", 0.0),
+            "wang_feature_risk_weight": getattr(args, "wang_feature_risk_weight", 0.0),
+            "wang_feature_same_parent_weight": getattr(args, "wang_feature_same_parent_weight", 0.0),
             "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
             "beam_width": args.beam_width,
             "core_width": args.core_width,
@@ -4967,6 +5029,10 @@ def main() -> int:
     parser.add_argument("--wang-pair-qubo-max-vars", type=int, default=32)
     parser.add_argument("--wang-pair-qubo-select", type=int, default=8)
     parser.add_argument("--wang-pair-qubo-same-parent-penalty", type=float, default=0.25)
+    parser.add_argument("--wang-feature-fixed-prefix-weight", type=float, default=0.0)
+    parser.add_argument("--wang-feature-fix-pair-weight", type=float, default=0.0)
+    parser.add_argument("--wang-feature-risk-weight", type=float, default=0.0)
+    parser.add_argument("--wang-feature-same-parent-weight", type=float, default=0.0)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)

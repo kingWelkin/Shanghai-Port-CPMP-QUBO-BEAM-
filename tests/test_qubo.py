@@ -477,6 +477,57 @@ def test_wang_search_depth_cap_targets_strict_improvement():
     assert _wang_search_depth_cap(base_depth_cap=10, incumbent_moves=5, args=args) == 10
 
 
+def test_wang_feature_adjustment_preserves_group_score_with_zero_weights():
+    from benchmark_compact_beam_qubo_n0 import _group_qubo_linear_score
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    code, n_value = _encode([[4], [3, 2], [1]], stack_count, max_height)
+    rows = [(code, (n_value, 7, b"parent"))]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        qubo_group_lookahead_weight=0.0,
+        qubo_group_branch_weight=0.0,
+        wang_feature_fixed_prefix_weight=0.0,
+        wang_feature_fix_pair_weight=0.0,
+        wang_feature_risk_weight=0.0,
+        wang_feature_same_parent_weight=0.0,
+    )
+
+    assert _group_qubo_linear_score(rows, args) == float(n_value * 1000 + 7)
+
+
+def test_wang_feature_fixed_prefix_weight_lowers_better_prefix_score():
+    from benchmark_compact_beam_qubo_n0 import _group_qubo_linear_score
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    better_prefix, n_value = _encode([[5, 4], [3], [2, 1]], stack_count, max_height)
+    worse_prefix, worse_n = _encode([[4, 5], [3], [2, 1]], stack_count, max_height)
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        qubo_group_lookahead_weight=0.0,
+        qubo_group_branch_weight=0.0,
+        wang_feature_fixed_prefix_weight=25.0,
+        wang_feature_fix_pair_weight=0.0,
+        wang_feature_risk_weight=0.0,
+        wang_feature_same_parent_weight=0.0,
+    )
+
+    better_depth = 1004
+    worse_depth = 4
+    assert n_value * 1000 + better_depth == worse_n * 1000 + worse_depth
+
+    better_score = _group_qubo_linear_score([(better_prefix, (n_value, better_depth, b"p1"))], args)
+    worse_score = _group_qubo_linear_score([(worse_prefix, (worse_n, worse_depth, b"p2"))], args)
+
+    assert better_score < worse_score
+
+
 def test_open_runner_solves_tiny_priority_group_cpmp():
     from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
     from open_cpmp_benchmarks import (
