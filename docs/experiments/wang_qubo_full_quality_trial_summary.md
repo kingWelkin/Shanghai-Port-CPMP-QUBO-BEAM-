@@ -98,3 +98,13 @@ Use a two-stage policy:
 3. Last fallback: run Wang BS-B only when QUBO variants fail, then accept it for feasibility but keep QUBO result when both are valid and QUBO is shorter.
 
 Do not make Wang rescue unconditional on internal cases. Its solve-rate gain appears on open hard cases, while internal cases mostly pay runtime for a one-move global gain.
+
+## Follow-Up Probes
+
+The next Wang/QUBO probes are intentionally separated:
+
+- `scheduler_state_v5_wang_features` moves fixed-prefix and fix-pair signals into the generic group-QUBO linear score.
+- `scheduler_state_v5_wang_rescue_polish` keeps Wang rescue as a feasibility mechanism, then uses suffix/window polish to reduce long rescue paths.
+- `scripts/diagnose_wang_qubo_failures.py` focuses on `5x5_cv1_test_4` and `5x5_cv1_test_6`, comparing compact plateau signals with Wang BS-B early moves.
+
+These probes should be judged by full-case quality first: valid count, invalid count, full-quality penalty, solved moves, and runtime.
