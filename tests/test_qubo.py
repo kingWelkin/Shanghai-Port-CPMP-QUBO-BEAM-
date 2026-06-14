@@ -1196,6 +1196,55 @@ def test_unified_wang_selector_is_used_inside_enhanced_frontier(monkeypatch):
     assert args._unified_wang_fix_pair_selected == 2
 
 
+def test_unified_wang_selector_accepts_none_focus_default(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    chosen_code, chosen_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    other_code, other_n = _encode([[4, 5], [3, 1, 2], []], stack_count, max_height)
+    ranked = [(other_code, (other_n, 8, b"p0")), (chosen_code, (chosen_n, 8, b"p1"))]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        use_qubo=True,
+        qubo_min_candidates=1,
+        max_qubo_calls=0,
+        unified_wang_qubo_enabled=True,
+        unified_wang_qubo_supplement_width=1,
+        unified_wang_qubo_focus_n=None,
+        unified_wang_qubo_n_window=1,
+        unified_wang_qubo_select=1,
+    )
+
+    calls = []
+
+    def fake_selector(rows, selector_args, target):
+        calls.append((rows, selector_args, target))
+        return [chosen_code], 2, 0.001, {"fixed_prefix_selected": 1, "fix_pair_selected": 1}
+
+    monkeypatch.setattr(bench, "_select_unified_wang_qubo_supplement", fake_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=2,
+        core_width=1,
+        qubo_supplement_width=0,
+    )
+
+    assert calls
+    assert calls[0][1] is args
+    assert calls[0][2] == 1
+    assert chosen_code in selected
+    assert chosen_code in selected_by_qubo
+    assert qcalls == 1
+    assert qvars == 2
+    assert qtime == 0.001
+
+
 def test_unified_wang_qubo_supplement_selects_best_energy_candidate():
     from benchmark_compact_beam_qubo_n0 import _select_unified_wang_qubo_supplement
     from run_business_exact_target_search_sqlite import _encode

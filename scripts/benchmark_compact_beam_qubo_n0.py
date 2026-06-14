@@ -2650,7 +2650,10 @@ def _select_enhanced_qubo_frontier(
                 if len(selected) >= effective_beam:
                     break
     unified_width = max(0, int(getattr(args, "unified_wang_qubo_supplement_width", 0) or 0))
-    unified_focus_n = int(getattr(args, "unified_wang_qubo_focus_n", 8))
+    unified_focus_n_value = getattr(args, "unified_wang_qubo_focus_n", None)
+    if unified_focus_n_value is None:
+        unified_focus_n_value = 8
+    unified_focus_n = int(unified_focus_n_value)
     if (
         getattr(args, "unified_wang_qubo_enabled", False)
         and args.use_qubo
