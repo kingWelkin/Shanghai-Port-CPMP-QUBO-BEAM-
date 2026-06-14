@@ -154,6 +154,7 @@ QUBO 在这里选择值得尝试的 suffix/window。它不直接改写路径；�
 - `micro_optimized_speed_v2_full30.csv` 中总共节省 1 步。
 - 明确案例是 `A2_26` 从 29 步压到 28 步。
 - Post-polish 不负责把 `N>0` 失败路径变成 `N=0`。
+- `window_polish_v2` 已实现为只接受严格更短 bridge 的安全后处理；内部 30 复跑中窗口尝试 30 次、成功 0 次、总步数仍为 509，因此保留为实验 profile，不进入主线。
 
 ## 7. QUBO 的实际贡献边界
 
@@ -163,6 +164,7 @@ QUBO 在这里选择值得尝试的 suffix/window。它不直接改写路径；�
 - 相对 enhanced no-QUBO，frontier QUBO 对 30/30 不是唯一必要条件，因为 enhanced no-QUBO 也能 30/30。
 - Post-polish QUBO 的可见贡献是总步数 510 到 509 的 1 步压缩。
 - 最终路径上 QUBO direct hit 很少，说明它不是逐步主导路径，而是稀疏影响 frontier 结构。
+- 简单扩大 QUBO 影响并不自动带来收益：`frontier_quality_v1` 更慢且不优，`window_polish_v2` 安全但没有接受替换。
 
 因此推荐写成：
 
@@ -181,7 +183,97 @@ dynamic QUBO 使用 `selection_policy=dynamic_qubo`，不固定每层 frontier �
 
 dynamic QUBO 可以减少总步数，但慢于当前非 dynamic `speed_v2`，因此不作为速度主线。
 
-## 9. 复现命令
+## 9. Trigger Rescue QUBO 变体
+
+`rescue_qubo_v1` 使用 `selection_policy=rescue_qubo`，不是默认主线。它只在风险层临时增强 QUBO：
+
+```text
+best_n plateau window = 2
+cap slack <= 26
+min candidates = 5000
+max rescue layers = 16
+local beam/core = 1350/1215
+after 2 rescue layers escalate to 1600/1440
+temporary qubo_focus_n = -1
+```
+
+它解决的是普通 `speed_v2` 中 QUBO gate 触发太晚的问题。例如 `7x5_cv2_test_9` 的失败路径长期停在 `N=16`，高于 `speed_v2` 的 `qubo_focus_n=8`，因此 frontier QUBO 原本没有机会介入。
+
+当前开放 7x5 前 10 例结果：
+
+| family | 解出 | 成功算例总步数 | 平均时间 |
+|---|---:|---:|---:|
+| `7x5_cv1_test` | 7/10 | 268 | 4.749 秒 |
+| `7x5_cv2_test` | 10/10 | 380 | 4.622 秒 |
+| `7x5_cv3_test` | 10/10 | 350 | 3.952 秒 |
+
+这个 profile 的定位是 hard-case rescue：它提高部分开放 7x5 的解出率，但会增加时间和参考 gap，不应替代 `speed_v2` 作为上港 30 算例主线。
+
+## 10. Adaptive QUBO 变体
+
+`selection_policy=adaptive_qubo` 是开放 7x5 cv1 的速度/解出率 profile。它在高 `N` 阶段收窄 frontier，让搜索更快下潜；在低 `N` 末段恢复到 1200，保留 QUBO 和后处理质量。
+
+当前 7x5 cv1 40 例、`time_limit=3` 的结果：
+
+| 变体 | 解出 | 成功算例总步数 | 平均时间 | 成功算例平均 gap | 定位 |
+|---|---:|---:|---:|---:|---|
+| `qubo_adaptive` | 22/40 | 836 | 2.014 秒 | 6.955 | 当前 cv1 解出率/速度基线 |
+| `qubo_adaptive_polish` | 22/40 | 834 | 2.029 秒 | 6.864 | 质量小增强，当前推荐 cv1 变体 |
+| `qubo_adaptive_rescue` early | 20/40 | 746 | 2.185 秒 | 6.100 | 早救援误伤已解 case，不推荐 |
+| `qubo_adaptive_rescue` late | 22/40 | 835 | 2.021 秒 | 6.909 | 轻微质量收益，没有新增解出 |
+
+因此，`adaptive_polish_v1` 是目前 `qubo_adaptive` 的保守增强：不提高解出率，但在同样 22/40 上少 2 步。`adaptive_rescue_v1` 保留为调参入口；当前证据说明“把 rescue 接到 adaptive”必须很晚、很轻，否则会打坏已解路径。
+
+新增 `adaptive_controller_v1` 是结构感知 adaptive 试验，不再只按 `best_n` 分段，而是同时看候选压力、plateau、depth slack 和实例栈数。本轮本地复测中，它在 7x5 cv1 test+validation 从 old `qubo_adaptive` 的 19/40 提到 21/40，7x5 cv2+cv3 test 保持 18/20 且平均时间从 2.241 秒降到 1.939 秒；5x5 cv1 保持 19/40。内部 30 则只与 old `adaptive_qubo` 持平 27/30，并从 1.768 秒升到 1.857 秒。因此它是开放 7x5 候选 profile，不是内部主线替代品。
+
+## 11. 实例感知 scheduler 变体
+
+`scheduler_v1` 使用 `selection_policy=scheduler_qubo`。它不是一个新的搜索引擎，而是对已有 profile 的调度：
+
+- 默认沿用 `speed_v2` 的 enhanced selection；
+- 当 `best_n` 平台、候选数压力和 cap slack 同时满足时，触发 `light_rescue_qubo_v1`；
+- adaptive 起步不读取算例名，而是检查重复优先级比例、`best_n / initial_n`、候选压力、父节点集中度和 plateau/slack；
+- 重复优先级实例默认不启用 adaptive 起步，避免在 priority-group 硬例族上误伤；唯一优先级且高 `N` 的 7-stack 层仍可使用 adaptive frontier。
+
+当前 `7x5` 前 10 个、`time_limit=5` 的 signal-aware 小矩阵显示：
+
+| family | 变体 | 解出 | 成功算例总步数 | 平均时间 | 说明 |
+|---|---|---:|---:|---:|---|
+| `7x5_cv1_test` | `scheduler_v1` signal-aware | 6/10 | 222 | 2.958 秒 | unique-priority hard case 仍会失败 |
+| `7x5_cv2_test` | `scheduler_v1` signal-aware | 10/10 | 381 | 2.925 秒 | 保住 hard priority-group case |
+| `7x5_cv3_test` | `scheduler_v1` signal-aware | 10/10 | 354 | 2.486 秒 | 无明显副作用 |
+
+其中 `7x5_cv2_test` 前 10 的同口径对照为：
+
+| 变体 | 解出 | 成功算例总步数 | 平均时间 | 说明 |
+|---|---:|---:|---:|---|
+| `speed_v2` | 9/10 | 330 | 3.642 秒 | `7x5_cv2_test_9` 未归零 |
+| `light_rescue_qubo_v1` | 10/10 | 379 | 3.853 秒 | 救出 hard case，但步数 gap 增大 |
+| `scheduler_v1` signal-aware | 10/10 | 381 | 2.925 秒 | 当前最值得继续扩大矩阵的开放算例候选 |
+| `scheduler_topk_v1` signal-aware | 10/10 | 381 | 3.280 秒 | `rank_truncated=0`，top-k 未触发真实裁剪 |
+
+因此，`scheduler_v1` 的定位是开放算例解出率路线，不替代内部 30 默认主线 `speed_v2`。它已经从按 `cv1/cv2/cv3` 名称调参改为按实例结构和层级信号调度，但 `7x5_cv1` 失败例说明还不能写成通用 profile。
+
+## 12. Bucket QUBO 与 no-regret portfolio
+
+`selection_policy=qubo_bucket` 是候选保留策略，不是默认主线。它把已排序候选按 `N/depth`、`depth+N` 或 `N` band 分桶；每个桶内先保留 deterministic core，再让 QUBO 选择少量补充候选。
+
+它的作用边界是：
+
+- 不跨桶推翻主启发式排序；
+- 只在近似等价候选内部增加 QUBO 选择权；
+- 可减少 QUBO 调用次数和部分 case runtime；
+- 外部 7x5 hard case 上不能替代 `rescue_qubo_v1`。
+
+新增 no-regret portfolio 脚本：
+
+```text
+scripts/benchmark_qubo_no_regret_portfolio_n0.py
+```
+
+它先跑 `stable`，再跑指定 QUBO 挑战者，只选择验证通过且更短的路径。内部 30 的 `stable+qubo_bucket` 结果为 30/30、508 步，比 `speed_v2` baseline 少 1 步；但总组合时间为 115.057 秒，必须按 portfolio 总时间报告。
+
+## 13. 复现命令
 
 主线：
 
@@ -199,6 +291,33 @@ strict classic no-QUBO 时间匹配：
 
 ```powershell
 python scripts\benchmark_compact_qubo_ablation_time_aligned.py --solver-profile speed_v2 --sweep-all-no-qubo --output docs\experiments\micro_optimized_strict_ablation_full30.csv --no-qubo-widths 1300 1400 1600 2000 2400 3200 4800 6400
+```
+
+外部 7x5 hard-case rescue：
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 7x5_cv2_test --limit-per-family 10 --variant qubo --solver-profile rescue_qubo_v1 --time-limit 10 --output docs\experiments\open_cpmp_rescue_qubo_v1_7x5_cv2_10cases_probe.csv
+```
+
+scheduler / light rescue：
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 7x5_cv2_test --limit-per-family 10 --variant qubo_light_rescue --time-limit 5 --output docs\experiments\scratch_7x5_cv2_10_light_rescue.csv
+python scripts\open_cpmp_benchmarks.py --families 7x5_cv2_test --limit-per-family 10 --variant qubo_scheduler --time-limit 5 --output docs\experiments\scratch_signal_7x5_cv2_scheduler.csv
+```
+
+adaptive QUBO：
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 7x5_cv1_test 7x5_cv1_validation --limit-per-family 20 --variant qubo_adaptive --time-limit 3 --alpha 10 --output docs\experiments\open_cpmp_dlts_7x5_cv1_40cases_adaptive.csv
+python scripts\open_cpmp_benchmarks.py --families 7x5_cv1_test 7x5_cv1_validation --limit-per-family 20 --variant qubo_adaptive_polish --time-limit 3 --alpha 10 --output docs\experiments\open_cpmp_dlts_7x5_cv1_40cases_adaptive_polish.csv
+```
+
+bucket QUBO 与 no-regret portfolio：
+
+```powershell
+python scripts\benchmark_compact_beam_qubo_n0.py --cases A2_26 --selection-policy qubo_bucket --qubo-influence-profile light --output docs\experiments\qubo_bucket_a2_26_smoke.csv
+python scripts\benchmark_qubo_no_regret_portfolio_n0.py --portfolio-profiles stable,qubo_bucket --output docs\experiments\no_regret_stable_bucket_full30.csv
 ```
 
 测试：

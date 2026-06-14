@@ -41,6 +41,7 @@ OPEN_EXTRA_FIELDS = [
     "reference_file",
     "reference_moves",
     "move_gap",
+    "full_quality_penalty",
     "reference_tiers",
     "business_alpha",
     "business_ok",
@@ -248,6 +249,7 @@ def _priority_group_row_dict_from_instance_result(
         "qubo_core_width": args.qubo_core_width,
         "qubo_supplement_width": args.qubo_supplement_width,
         "qubo_cohorts_per_layer": args.qubo_cohorts_per_layer,
+        "qubo_pair_policy": getattr(args, "qubo_pair_policy", "baseline"),
         "qubo_selected_total": result.qubo_selected_total,
         "qubo_selected_on_search_path": result.qubo_selected_on_search_path,
         "qubo_selected_on_path": result.qubo_selected_on_path,
@@ -261,9 +263,26 @@ def _priority_group_row_dict_from_instance_result(
         "qubo_group_max_vars": getattr(args, "qubo_group_max_vars", 0),
         "qubo_group_select": getattr(args, "qubo_group_select", 0),
         "qubo_group_take": getattr(args, "qubo_group_take", 0),
+        "post_polish_mode": getattr(args, "post_polish_mode", "legacy"),
+        "post_polish_accept": getattr(args, "post_polish_accept", "better"),
+        "post_polish_window_min_stacks": getattr(args, "post_polish_window_min_stacks", 0),
         "post_polish_attempts": result.post_polish_attempts,
         "post_polish_improvements": result.post_polish_improvements,
         "post_polish_moves_saved": result.post_polish_moves_saved,
+        "post_polish_window_min_size": getattr(args, "post_polish_window_min_size", 0),
+        "post_polish_window_max_size": getattr(args, "post_polish_window_max_size", 0),
+        "post_polish_window_stride": getattr(args, "post_polish_window_stride", 0),
+        "post_polish_window_budget": getattr(args, "post_polish_window_budget", 0),
+        "post_polish_window_qubo_vars": getattr(args, "post_polish_window_qubo_vars", 0),
+        "post_polish_window_select": getattr(args, "post_polish_window_select", 0),
+        "post_polish_window_repair_expanded": getattr(args, "post_polish_window_repair_expanded", 0),
+        "post_polish_window_repair_depth_extra": getattr(args, "post_polish_window_repair_depth_extra", 0),
+        "post_polish_window_candidates": result.post_polish_window_candidates,
+        "post_polish_window_qubo_selected": result.post_polish_window_qubo_selected,
+        "post_polish_window_attempts": result.post_polish_window_attempts,
+        "post_polish_window_successes": result.post_polish_window_successes,
+        "post_polish_window_moves_saved": result.post_polish_window_moves_saved,
+        "post_polish_window_time_sec": result.post_polish_window_time_sec,
         "global_reservoir": getattr(args, "global_reservoir", False),
         "reservoir_size": result.reservoir_size,
         "peak_reservoir": result.peak_reservoir,
@@ -271,10 +290,55 @@ def _priority_group_row_dict_from_instance_result(
         "reservoir_pulled_total": result.reservoir_pulled_total,
         "stream_candidate_limit": getattr(args, "stream_candidate_limit", 0),
         "stream_candidate_trim_factor": getattr(args, "stream_candidate_trim_factor", 2.0),
+        "stream_bucket_topk": getattr(args, "stream_bucket_topk", 0),
         "stream_pruned_candidates": result.stream_pruned_candidates,
         "rank_pool_size": getattr(args, "rank_pool_size", 0),
         "rank_pool_min_candidates": getattr(args, "rank_pool_min_candidates", 0),
+        "rank_bucket_topk": getattr(args, "rank_bucket_topk", 0),
+        "rank_bucket_key": getattr(args, "rank_bucket_key", "n_depth_parent"),
+        "rank_bucket_n_band_size": getattr(args, "rank_bucket_n_band_size", 0),
+        "rank_bucket_topk_high_n": getattr(args, "rank_bucket_topk_high_n", 0),
+        "rank_bucket_topk_min_candidates": getattr(args, "rank_bucket_topk_min_candidates", 0),
         "rank_pool_truncated_candidates": result.rank_pool_truncated_candidates,
+        "scheduler_adaptive_min_stacks": getattr(args, "scheduler_adaptive_min_stacks", 0),
+        "scheduler_adaptive_high_n": getattr(args, "scheduler_adaptive_high_n", 0),
+        "scheduler_adaptive_cv1_only": getattr(args, "scheduler_adaptive_cv1_only", False),
+        "scheduler_adaptive_max_duplication_ratio": getattr(args, "scheduler_adaptive_max_duplication_ratio", 1.0),
+        "scheduler_adaptive_min_best_n_ratio": getattr(args, "scheduler_adaptive_min_best_n_ratio", 0.0),
+        "scheduler_adaptive_max_candidate_pressure": getattr(args, "scheduler_adaptive_max_candidate_pressure", 0.0),
+        "scheduler_adaptive_max_parent_top_share": getattr(args, "scheduler_adaptive_max_parent_top_share", 0.0),
+        "scheduler_adaptive_plateau_window": getattr(args, "scheduler_adaptive_plateau_window", 0),
+        "scheduler_adaptive_cap_slack": getattr(args, "scheduler_adaptive_cap_slack", 0),
+        "scheduler_state_controller": getattr(args, "scheduler_state_controller", "off"),
+        "scheduler_state_contract_pressure": getattr(args, "scheduler_state_contract_pressure", 0.0),
+        "scheduler_state_max_contract_pressure": getattr(args, "scheduler_state_max_contract_pressure", 0.0),
+        "scheduler_state_min_best_n_ratio": getattr(args, "scheduler_state_min_best_n_ratio", 0.0),
+        "scheduler_state_progress_window": getattr(args, "scheduler_state_progress_window", 0),
+        "scheduler_state_progress_delta": getattr(args, "scheduler_state_progress_delta", 0),
+        "scheduler_state_failed_contract_cooldown": getattr(args, "scheduler_state_failed_contract_cooldown", 0),
+        "scheduler_state_post_rescue_plateau_window": getattr(args, "scheduler_state_post_rescue_plateau_window", 0),
+        "scheduler_state_post_rescue_plateau_delta": getattr(args, "scheduler_state_post_rescue_plateau_delta", 0),
+        "scheduler_state_post_rescue_min_ratio": getattr(args, "scheduler_state_post_rescue_min_ratio", 0.0),
+        "scheduler_state_post_rescue_action": getattr(args, "scheduler_state_post_rescue_action", ""),
+        "scheduler_state_initial_plateau_window": getattr(args, "scheduler_state_initial_plateau_window", 0),
+        "scheduler_state_initial_plateau_min_ratio": getattr(args, "scheduler_state_initial_plateau_min_ratio", 0.0),
+        "scheduler_state_initial_plateau_action": getattr(args, "scheduler_state_initial_plateau_action", ""),
+        "scheduler_state_initial_plateau_lock": getattr(args, "scheduler_state_initial_plateau_lock", False),
+        "scheduler_state_initial_plateau_min_duplication": getattr(args, "scheduler_state_initial_plateau_min_duplication", 0.0),
+        "scheduler_state_initial_plateau_unique_min_n": getattr(args, "scheduler_state_initial_plateau_unique_min_n", 0),
+        "scheduler_state_protect_parent_top_share": getattr(args, "scheduler_state_protect_parent_top_share", 0.0),
+        "scheduler_state_protect_n_band": getattr(args, "scheduler_state_protect_n_band", 0),
+        "scheduler_state_top_window": getattr(args, "scheduler_state_top_window", 0),
+        "scheduler_state_rescue_plateau_window": getattr(args, "scheduler_state_rescue_plateau_window", 0),
+        "scheduler_state_rescue_plateau_delta": getattr(args, "scheduler_state_rescue_plateau_delta", 0),
+        "scheduler_state_rescue_cap_slack": getattr(args, "scheduler_state_rescue_cap_slack", 0),
+        "scheduler_state_last_action": getattr(args, "_scheduler_state_last_action", ""),
+        "scheduler_state_last_effective_action": getattr(args, "_scheduler_state_last_effective_action", ""),
+        "scheduler_state_locked_action": getattr(args, "_scheduler_state_locked_action", ""),
+        "scheduler_state_contract_layers": getattr(args, "_scheduler_state_contract_layers", 0),
+        "scheduler_state_blend_layers": getattr(args, "_scheduler_state_blend_layers", 0),
+        "scheduler_state_protect_layers": getattr(args, "_scheduler_state_protect_layers", 0),
+        "scheduler_state_rescue_layers": getattr(args, "_scheduler_state_rescue_layers", 0),
         "adaptive_high_n": getattr(args, "adaptive_high_n", 0),
         "adaptive_low_n": getattr(args, "adaptive_low_n", 0),
         "adaptive_high_frontier": getattr(args, "adaptive_high_frontier", 0),
@@ -282,6 +346,34 @@ def _priority_group_row_dict_from_instance_result(
         "adaptive_low_frontier": getattr(args, "adaptive_low_frontier", 0),
         "adaptive_core_ratio": getattr(args, "adaptive_core_ratio", 0.0),
         "adaptive_candidate_pool": getattr(args, "adaptive_candidate_pool", 0),
+        "adaptive_controller": getattr(args, "adaptive_controller", "tiered"),
+        "adaptive_expand_frontier": getattr(args, "adaptive_expand_frontier", 0),
+        "adaptive_contract_pressure": getattr(args, "adaptive_contract_pressure", 0.0),
+        "adaptive_mid_pressure": getattr(args, "adaptive_mid_pressure", 0.0),
+        "adaptive_min_best_n_ratio": getattr(args, "adaptive_min_best_n_ratio", 0.0),
+        "adaptive_max_duplication_ratio": getattr(args, "adaptive_max_duplication_ratio", 1.0),
+        "adaptive_parent_top_share": getattr(args, "adaptive_parent_top_share", 0.0),
+        "adaptive_plateau_window": getattr(args, "adaptive_plateau_window", 0),
+        "adaptive_plateau_delta": getattr(args, "adaptive_plateau_delta", 0),
+        "adaptive_cap_slack": getattr(args, "adaptive_cap_slack", 0),
+        "adaptive_large_stack_min_stacks": getattr(args, "adaptive_large_stack_min_stacks", 0),
+        "adaptive_large_stack_expand_frontier": getattr(args, "adaptive_large_stack_expand_frontier", 0),
+        "adaptive_large_stack_plateau_window": getattr(args, "adaptive_large_stack_plateau_window", 0),
+        "adaptive_large_stack_cap_slack": getattr(args, "adaptive_large_stack_cap_slack", 0),
+        "adaptive_contract_layers": getattr(args, "_adaptive_contract_layers", 0),
+        "adaptive_mid_layers": getattr(args, "_adaptive_mid_layers", 0),
+        "adaptive_wide_layers": getattr(args, "_adaptive_wide_layers", 0),
+        "adaptive_expand_layers": getattr(args, "_adaptive_expand_layers", 0),
+        "adaptive_last_width": getattr(args, "_adaptive_last_width", 0),
+        "adaptive_last_reason": getattr(args, "_adaptive_last_reason", ""),
+        "bucket_key": getattr(args, "bucket_key", "n_depth"),
+        "bucket_n_band_size": getattr(args, "bucket_n_band_size", 0),
+        "bucket_core_ratio": getattr(args, "bucket_core_ratio", 0.0),
+        "bucket_qubo_share": getattr(args, "bucket_qubo_share", 0.0),
+        "bucket_max_qubo_vars": getattr(args, "bucket_max_qubo_vars", 0),
+        "bucket_qubo_select": getattr(args, "bucket_qubo_select", 0),
+        "bucket_min_candidates": getattr(args, "bucket_min_candidates", 0),
+        "rescue_layers_used": result.rescue_layers_used,
     }
     return row
 
@@ -378,6 +470,66 @@ def _numeric(row: dict[str, object], field: str, default: float = 0.0) -> float:
     return float(value)
 
 
+def _is_true(value: object) -> bool:
+    return value in (True, "True", "true", "1", 1)
+
+
+def _optional_int(value: object) -> int | None:
+    if value in (None, ""):
+        return None
+    return int(value)
+
+
+def _open_row_valid(row: dict[str, object]) -> bool:
+    return (
+        _is_true(row.get("business_ok"))
+        and _is_true(row.get("goal_validation_ok"))
+        and _optional_int(row.get("final_n")) == 0
+        and _optional_int(row.get("moves")) is not None
+    )
+
+
+def _open_full_quality_penalty(row: dict[str, object], penalty_factor: int = 4) -> int:
+    moves = _optional_int(row.get("moves"))
+    if _open_row_valid(row) and moves is not None:
+        return moves
+    n0 = int(_numeric(row, "n0", 0))
+    reference = _optional_int(row.get("reference_moves"))
+    base = reference if reference is not None else int(_numeric(row, "cap_13", n0))
+    return max(base, n0) + int(penalty_factor) * max(1, n0)
+
+
+def _open_full_quality_summary(
+    rows: list[dict[str, object]],
+    penalty_factor: int = 4,
+) -> dict[tuple[str, str], dict[str, float | int]]:
+    groups: dict[tuple[str, str], dict[str, float | int]] = {}
+    for row in rows:
+        key = (str(row["variant"]), str(row["family"]))
+        item = groups.setdefault(
+            key,
+            {
+                "cases": 0,
+                "valid": 0,
+                "invalid_or_unsolved": 0,
+                "moves_total": 0,
+                "full_quality_penalty_total": 0,
+                "runtime_total": 0.0,
+            },
+        )
+        valid = _open_row_valid(row)
+        item["cases"] = int(item["cases"]) + 1
+        item["valid"] = int(item["valid"]) + (1 if valid else 0)
+        item["invalid_or_unsolved"] = int(item["invalid_or_unsolved"]) + (0 if valid else 1)
+        item["moves_total"] = int(item["moves_total"]) + (int(_numeric(row, "moves", 0)) if valid else 0)
+        item["full_quality_penalty_total"] = int(item["full_quality_penalty_total"]) + _open_full_quality_penalty(
+            row,
+            penalty_factor=penalty_factor,
+        )
+        item["runtime_total"] = float(item["runtime_total"]) + _numeric(row, "runtime_sec", 0.0)
+    return groups
+
+
 def _write_open_csv(rows: list[dict[str, object]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
@@ -407,23 +559,29 @@ def _write_summary(rows: list[dict[str, object]], output: Path, summary: Path, s
         f"source: `{_display_path(source)}`",
         f"result_csv: `{_display_path(output)}`",
         "",
-        "| variant | family | cases | N=0 solved | moves total | avg runtime sec | avg ref gap | qcalls | qtime sec |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| variant | family | cases | valid | invalid/unsolved | moves total | full quality penalty | avg full penalty | avg runtime sec | avg ref gap | qcalls | qtime sec |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     groups: dict[tuple[str, str], list[dict[str, object]]] = {}
     for row in rows:
         groups.setdefault((str(row["variant"]), str(row["family"])), []).append(row)
+    quality = _open_full_quality_summary(rows)
     for (variant, family), selected in sorted(groups.items(), key=lambda item: (item[0][0], _family_size_sort_key(item[0][1]))):
-        solved = [row for row in selected if int(_numeric(row, "final_n", 10**9)) == 0]
+        solved = [row for row in selected if _open_row_valid(row)]
         gaps = [
             _numeric(row, "move_gap")
             for row in solved
             if row.get("move_gap") not in (None, "")
         ]
+        qitem = quality[(variant, family)]
+        cases = int(qitem["cases"])
+        penalty_total = int(qitem["full_quality_penalty_total"])
         lines.append(
-            f"| {variant} | {family} | {len(selected)} | {len(solved)} | "
-            f"{int(sum(_numeric(row, 'moves') for row in solved))} | "
-            f"{sum(_numeric(row, 'runtime_sec') for row in selected) / len(selected):.3f} | "
+            f"| {variant} | {family} | {len(selected)} | {int(qitem['valid'])} | "
+            f"{int(qitem['invalid_or_unsolved'])} | "
+            f"{int(qitem['moves_total'])} | {penalty_total} | "
+            f"{penalty_total / cases if cases else 0.0:.3f} | "
+            f"{float(qitem['runtime_total']) / cases if cases else 0.0:.3f} | "
             f"{sum(gaps) / len(gaps) if gaps else 0.0:.3f} | "
             f"{int(sum(_numeric(row, 'qubo_calls') for row in selected))} | "
             f"{sum(_numeric(row, 'qubo_time_sec') for row in selected):.3f} |"
@@ -437,6 +595,14 @@ def _variant_names(name: str) -> list[str]:
         return ["qubo", "classic_noqubo"]
     if name == "all":
         return ["qubo", "qubo_adaptive", "classic_noqubo"]
+    if name == "wang_all":
+        return [
+            "qubo",
+            "qubo_scheduler_state_v5",
+            "qubo_scheduler_state_v5_wang_pair",
+            "qubo_scheduler_state_v5_wang_rescue",
+            "qubo_scheduler_state_v5_wang_hybrid",
+        ]
     return [name]
 
 
@@ -448,7 +614,114 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "target_final_n": 0,
         "time_limit": args.time_limit,
     }
-    if variant == "qubo_adaptive":
+    stream_candidate_limit = int(getattr(args, "stream_candidate_limit", 0) or 0)
+    if stream_candidate_limit > 0:
+        overrides.update(
+            {
+                "stream_candidate_limit": stream_candidate_limit,
+                "stream_candidate_trim_factor": float(getattr(args, "stream_candidate_trim_factor", 2.0)),
+            }
+        )
+    rank_bucket_topk = int(getattr(args, "rank_bucket_topk", 0) or 0)
+    stream_bucket_topk = int(getattr(args, "stream_bucket_topk", 0) or 0)
+    if stream_bucket_topk > 0:
+        overrides.update(
+            {
+                "stream_bucket_topk": stream_bucket_topk,
+                "rank_bucket_key": getattr(args, "rank_bucket_key", "n_depth_parent"),
+                "rank_bucket_n_band_size": getattr(args, "rank_bucket_n_band_size", 2),
+            }
+        )
+    if rank_bucket_topk > 0:
+        overrides.update(
+            {
+                "rank_bucket_topk": rank_bucket_topk,
+                "rank_bucket_key": getattr(args, "rank_bucket_key", "n_depth_parent"),
+                "rank_bucket_n_band_size": getattr(args, "rank_bucket_n_band_size", 2),
+                "rank_bucket_topk_high_n": getattr(args, "rank_bucket_topk_high_n", 0),
+                "rank_bucket_topk_min_candidates": getattr(args, "rank_bucket_topk_min_candidates", 0),
+            }
+        )
+    if getattr(args, "scheduler_adaptive_cv1_only", False):
+        overrides["scheduler_adaptive_cv1_only"] = True
+    for field in (
+        "scheduler_adaptive_max_duplication_ratio",
+        "scheduler_adaptive_min_best_n_ratio",
+        "scheduler_adaptive_max_candidate_pressure",
+        "scheduler_adaptive_max_parent_top_share",
+        "scheduler_adaptive_plateau_window",
+        "scheduler_adaptive_cap_slack",
+        "scheduler_state_contract_pressure",
+        "scheduler_state_max_contract_pressure",
+        "scheduler_state_min_best_n_ratio",
+        "scheduler_state_progress_window",
+        "scheduler_state_progress_delta",
+        "scheduler_state_failed_contract_cooldown",
+        "scheduler_state_post_rescue_plateau_window",
+        "scheduler_state_post_rescue_plateau_delta",
+        "scheduler_state_post_rescue_min_ratio",
+        "scheduler_state_post_rescue_action",
+        "scheduler_state_initial_plateau_window",
+        "scheduler_state_initial_plateau_min_ratio",
+        "scheduler_state_initial_plateau_action",
+        "scheduler_state_initial_plateau_lock",
+        "scheduler_state_initial_plateau_min_duplication",
+        "scheduler_state_initial_plateau_unique_min_n",
+        "scheduler_state_protect_parent_top_share",
+        "scheduler_state_protect_n_band",
+        "scheduler_state_top_window",
+        "scheduler_state_rescue_plateau_window",
+        "scheduler_state_rescue_plateau_delta",
+        "scheduler_state_rescue_cap_slack",
+    ):
+        value = getattr(args, field, None)
+        if value is not None:
+            overrides[field] = value
+    for field in (
+        "adaptive_controller",
+        "adaptive_expand_frontier",
+        "adaptive_contract_pressure",
+        "adaptive_mid_pressure",
+        "adaptive_min_best_n_ratio",
+        "adaptive_max_duplication_ratio",
+        "adaptive_parent_top_share",
+        "adaptive_plateau_window",
+        "adaptive_plateau_delta",
+        "adaptive_cap_slack",
+        "adaptive_large_stack_min_stacks",
+        "adaptive_large_stack_expand_frontier",
+        "adaptive_large_stack_plateau_window",
+        "adaptive_large_stack_cap_slack",
+    ):
+        value = getattr(args, field, None)
+        if value is not None:
+            overrides[field] = value
+    for field in (
+        "wang_incumbent_enabled",
+        "wang_incumbent_beam_width",
+        "wang_incumbent_candidate_limit",
+        "wang_incumbent_max_depth",
+        "wang_incumbent_time_limit",
+        "wang_cap_enabled",
+        "wang_rollout_enabled",
+        "wang_rollout_width",
+        "wang_rollout_focus_n",
+        "wang_rollout_plateau_window",
+        "wang_rollout_plateau_delta",
+        "wang_rollout_max_steps",
+        "wang_pair_qubo_enabled",
+        "wang_pair_qubo_supplement_width",
+        "wang_pair_qubo_focus_n",
+        "wang_pair_qubo_n_window",
+        "wang_pair_qubo_max_vars",
+        "wang_pair_qubo_select",
+        "wang_pair_qubo_same_parent_penalty",
+        "wang_probe_supplement_width",
+    ):
+        value = getattr(args, field, None)
+        if value is not None:
+            overrides[field] = value
+    if variant in {"qubo_adaptive", "qubo_adaptive_rescue", "qubo_adaptive_polish", "qubo_adaptive_controller"}:
         adaptive_high_frontier = args.adaptive_high_frontier
         adaptive_mid_frontier = args.adaptive_mid_frontier
         adaptive_low_frontier = args.adaptive_low_frontier
@@ -467,6 +740,61 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
                 "adaptive_low_n": args.adaptive_low_n,
                 "adaptive_mid_frontier": adaptive_mid_frontier,
                 "selection_policy": "adaptive_qubo",
+            }
+        )
+    if variant == "qubo_adaptive_controller":
+        overrides.update({"solver_profile": "adaptive_controller_v1"})
+    if variant == "qubo_adaptive_rescue":
+        overrides.update({"solver_profile": "adaptive_rescue_v1"})
+    if variant == "qubo_adaptive_polish":
+        overrides.update({"solver_profile": "adaptive_polish_v1"})
+    if variant == "qubo_light_rescue":
+        overrides.update({"solver_profile": "light_rescue_qubo_v1"})
+    if variant == "qubo_scheduler":
+        overrides.update(
+            {
+                "solver_profile": "scheduler_v1",
+                "scheduler_adaptive_min_stacks": getattr(args, "scheduler_adaptive_min_stacks", 7),
+                "scheduler_adaptive_high_n": getattr(args, "scheduler_adaptive_high_n", 16),
+            }
+        )
+    if variant == "qubo_scheduler_topk":
+        overrides.update(
+            {
+                "solver_profile": "scheduler_topk_v1",
+                "scheduler_adaptive_min_stacks": getattr(args, "scheduler_adaptive_min_stacks", 7),
+                "scheduler_adaptive_high_n": getattr(args, "scheduler_adaptive_high_n", 16),
+            }
+        )
+    if variant == "qubo_scheduler_state":
+        overrides.update({"solver_profile": "scheduler_state_v2"})
+    if variant == "qubo_scheduler_state_v3":
+        overrides.update({"solver_profile": "scheduler_state_v3"})
+    if variant == "qubo_scheduler_state_v4":
+        overrides.update({"solver_profile": "scheduler_state_v4"})
+    if variant == "qubo_scheduler_state_v5":
+        overrides.update({"solver_profile": "scheduler_state_v5"})
+    if variant == "qubo_scheduler_state_v5_wang_pair":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_pair_qubo"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue"})
+    if variant == "qubo_scheduler_state_v5_wang_hybrid":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_hybrid"})
+    if variant == "qubo_scheduler_state_v5_window":
+        overrides.update({"solver_profile": "scheduler_state_v5_window_polish"})
+    if variant == "qubo_scheduler_state_v6":
+        overrides.update({"solver_profile": "scheduler_state_v6"})
+    if variant == "qubo_bucket":
+        overrides.update(
+            {
+                "selection_policy": "qubo_bucket",
+                "bucket_key": args.bucket_key,
+                "bucket_n_band_size": args.bucket_n_band_size,
+                "bucket_core_ratio": args.bucket_core_ratio,
+                "bucket_qubo_share": args.bucket_qubo_share,
+                "bucket_max_qubo_vars": args.bucket_max_qubo_vars,
+                "bucket_qubo_select": args.bucket_qubo_select,
+                "bucket_min_candidates": args.bucket_min_candidates,
             }
         )
     if variant == "classic_noqubo":
@@ -528,6 +856,7 @@ def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
                     "validation_msg": msg,
                 }
             )
+            row["full_quality_penalty"] = _open_full_quality_penalty(row)
             rows.append(row)
             print(
                 f"CASE_DONE {variant} {case.case_id} final_n={row['final_n']} moves={row['moves']} "
@@ -546,7 +875,34 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--families", nargs="+", default=["5x5_cv1_test"])
     parser.add_argument("--limit-per-family", type=int, default=20)
     parser.add_argument("--max-total", type=int)
-    parser.add_argument("--variant", choices=["qubo", "qubo_adaptive", "classic_noqubo", "both", "all"], default="qubo")
+    parser.add_argument(
+        "--variant",
+        choices=[
+            "qubo",
+            "qubo_adaptive",
+            "qubo_adaptive_controller",
+            "qubo_adaptive_rescue",
+            "qubo_adaptive_polish",
+            "qubo_light_rescue",
+            "qubo_scheduler",
+            "qubo_scheduler_topk",
+            "qubo_scheduler_state",
+            "qubo_scheduler_state_v3",
+            "qubo_scheduler_state_v4",
+            "qubo_scheduler_state_v5",
+            "qubo_scheduler_state_v5_wang_pair",
+            "qubo_scheduler_state_v5_wang_rescue",
+            "qubo_scheduler_state_v5_wang_hybrid",
+            "qubo_scheduler_state_v5_window",
+            "qubo_scheduler_state_v6",
+            "qubo_bucket",
+            "classic_noqubo",
+            "both",
+            "all",
+            "wang_all",
+        ],
+        default="qubo",
+    )
     parser.add_argument("--skip-invalid", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--solver-profile", choices=sorted(_SOLVER_PROFILES.keys()), default="speed_v2")
     parser.add_argument("--alpha", type=float, default=10.0)
@@ -559,6 +915,90 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--adaptive-mid-frontier", type=int, default=1000)
     parser.add_argument("--adaptive-low-frontier", type=int, default=1200)
     parser.add_argument("--adaptive-candidate-pool", type=int, default=0)
+    parser.add_argument("--adaptive-controller", choices=["tiered", "signal_v1"])
+    parser.add_argument("--adaptive-expand-frontier", type=int)
+    parser.add_argument("--adaptive-contract-pressure", type=float)
+    parser.add_argument("--adaptive-mid-pressure", type=float)
+    parser.add_argument("--adaptive-min-best-n-ratio", type=float)
+    parser.add_argument("--adaptive-max-duplication-ratio", type=float)
+    parser.add_argument("--adaptive-parent-top-share", type=float)
+    parser.add_argument("--adaptive-plateau-window", type=int)
+    parser.add_argument("--adaptive-plateau-delta", type=int)
+    parser.add_argument("--adaptive-cap-slack", type=int)
+    parser.add_argument("--adaptive-large-stack-min-stacks", type=int)
+    parser.add_argument("--adaptive-large-stack-expand-frontier", type=int)
+    parser.add_argument("--adaptive-large-stack-plateau-window", type=int)
+    parser.add_argument("--adaptive-large-stack-cap-slack", type=int)
+    parser.add_argument("--scheduler-adaptive-min-stacks", type=int, default=7)
+    parser.add_argument("--scheduler-adaptive-high-n", type=int, default=16)
+    parser.add_argument("--scheduler-adaptive-cv1-only", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--scheduler-adaptive-max-duplication-ratio", type=float)
+    parser.add_argument("--scheduler-adaptive-min-best-n-ratio", type=float)
+    parser.add_argument("--scheduler-adaptive-max-candidate-pressure", type=float)
+    parser.add_argument("--scheduler-adaptive-max-parent-top-share", type=float)
+    parser.add_argument("--scheduler-adaptive-plateau-window", type=int)
+    parser.add_argument("--scheduler-adaptive-cap-slack", type=int)
+    parser.add_argument("--scheduler-state-contract-pressure", type=float)
+    parser.add_argument("--scheduler-state-max-contract-pressure", type=float)
+    parser.add_argument("--scheduler-state-min-best-n-ratio", type=float)
+    parser.add_argument("--scheduler-state-progress-window", type=int)
+    parser.add_argument("--scheduler-state-progress-delta", type=int)
+    parser.add_argument("--scheduler-state-failed-contract-cooldown", type=int)
+    parser.add_argument("--scheduler-state-post-rescue-plateau-window", type=int)
+    parser.add_argument("--scheduler-state-post-rescue-plateau-delta", type=int)
+    parser.add_argument("--scheduler-state-post-rescue-min-ratio", type=float)
+    parser.add_argument("--scheduler-state-post-rescue-action", choices=["protect", "blend", "rescue"])
+    parser.add_argument("--scheduler-state-initial-plateau-window", type=int)
+    parser.add_argument("--scheduler-state-initial-plateau-min-ratio", type=float)
+    parser.add_argument("--scheduler-state-initial-plateau-action", choices=["protect", "blend", "rescue"])
+    parser.add_argument("--scheduler-state-initial-plateau-lock", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--scheduler-state-initial-plateau-min-duplication", type=float)
+    parser.add_argument("--scheduler-state-initial-plateau-unique-min-n", type=int)
+    parser.add_argument("--scheduler-state-protect-parent-top-share", type=float)
+    parser.add_argument("--scheduler-state-protect-n-band", type=int)
+    parser.add_argument("--scheduler-state-top-window", type=int)
+    parser.add_argument("--scheduler-state-rescue-plateau-window", type=int)
+    parser.add_argument("--scheduler-state-rescue-plateau-delta", type=int)
+    parser.add_argument("--scheduler-state-rescue-cap-slack", type=int)
+    parser.add_argument("--rank-bucket-topk", type=int, default=0)
+    parser.add_argument(
+        "--rank-bucket-key",
+        choices=["n", "n_depth_parent", "n_depth", "n_band_parent", "n_band", "parent"],
+        default="n_depth_parent",
+    )
+    parser.add_argument("--rank-bucket-n-band-size", type=int, default=2)
+    parser.add_argument("--rank-bucket-topk-high-n", type=int, default=0)
+    parser.add_argument("--rank-bucket-topk-min-candidates", type=int, default=0)
+    parser.add_argument("--stream-candidate-limit", type=int, default=0)
+    parser.add_argument("--stream-candidate-trim-factor", type=float, default=2.0)
+    parser.add_argument("--stream-bucket-topk", type=int, default=0)
+    parser.add_argument("--bucket-key", choices=["n_depth", "f_n", "n_band"], default="n_depth")
+    parser.add_argument("--bucket-n-band-size", type=int, default=2)
+    parser.add_argument("--bucket-core-ratio", type=float, default=0.50)
+    parser.add_argument("--bucket-qubo-share", type=float, default=0.35)
+    parser.add_argument("--bucket-max-qubo-vars", type=int, default=96)
+    parser.add_argument("--bucket-qubo-select", type=int, default=24)
+    parser.add_argument("--bucket-min-candidates", type=int, default=64)
+    parser.add_argument("--wang-incumbent-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang-incumbent-beam-width", type=int)
+    parser.add_argument("--wang-incumbent-candidate-limit", type=int)
+    parser.add_argument("--wang-incumbent-max-depth", type=int)
+    parser.add_argument("--wang-incumbent-time-limit", type=float)
+    parser.add_argument("--wang-cap-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang-rollout-width", type=int)
+    parser.add_argument("--wang-rollout-focus-n", type=int)
+    parser.add_argument("--wang-rollout-plateau-window", type=int)
+    parser.add_argument("--wang-rollout-plateau-delta", type=int)
+    parser.add_argument("--wang-rollout-max-steps", type=int)
+    parser.add_argument("--wang-pair-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang-pair-qubo-supplement-width", type=int)
+    parser.add_argument("--wang-pair-qubo-focus-n", type=int)
+    parser.add_argument("--wang-pair-qubo-n-window", type=int)
+    parser.add_argument("--wang-pair-qubo-max-vars", type=int)
+    parser.add_argument("--wang-pair-qubo-select", type=int)
+    parser.add_argument("--wang-pair-qubo-same-parent-penalty", type=float)
+    parser.add_argument("--wang-probe-supplement-width", type=int)
     parser.add_argument(
         "--output",
         type=Path,

@@ -30,10 +30,12 @@ from benchmark_explainable_rule_macro_beam_all_single_bays import discover_singl
 from benchmark_fast_qubo_integrated_v1 import _exact_moves_by_case, _move_gap, _parse_case, _rel  # noqa: E402
 from benchmark_full_real_business_algorithms import TrajectoryResult  # noqa: E402
 from benchmark_target_astar_memory_n0 import _select_qubo_boosted  # noqa: E402
-from container_reshuffle.core import Instance, Move, Solution, apply_move, create_initial_state, validate_solution  # noqa: E402
+from container_reshuffle.core import Instance, Move, Solution, State, apply_move, create_initial_state, validate_solution  # noqa: E402
 from container_reshuffle.features import disorder_box_count, entropy_limit, max_entropy_along_moves  # noqa: E402
 from container_reshuffle.qubo.model import QuboModel  # noqa: E402
 from container_reshuffle.qubo.sampler import QuboSamplerConfig, SimulatedAnnealingQuboSampler  # noqa: E402
+from container_reshuffle.solvers.base import SolverConfig  # noqa: E402
+from container_reshuffle.solvers.classical_cpmp import WangBsBabyMovesSolver  # noqa: E402
 from run_business_exact_target_search_sqlite import (  # noqa: E402
     _encode,
     _remaining_lower_bound,
@@ -52,6 +54,30 @@ COMPACT_EXTRA_FIELDS = [
     "qubo_influence_profile",
     "selection_policy",
     "priority",
+    "target_guided_weight",
+    "target_guided_focus_n",
+    "target_guided_supplement_width",
+    "target_guided_n_window",
+    "wang_probe_supplement_width",
+    "wang_probe_focus_n",
+    "wang_probe_n_window",
+    "wang_probe_fixed_weight",
+    "wang_probe_pair_weight",
+    "wang_probe_target_weight",
+    "wang_probe_plateau_window",
+    "wang_probe_plateau_delta",
+    "wang_incumbent_enabled",
+    "wang_incumbent_moves",
+    "wang_incumbent_runtime_sec",
+    "wang_incumbent_used",
+    "wang_cap_enabled",
+    "wang_rollout_enabled",
+    "wang_rollout_added_total",
+    "wang_pair_qubo_enabled",
+    "wang_pair_qubo_calls",
+    "wang_pair_qubo_vars",
+    "wang_pair_qubo_time_sec",
+    "target_layout_count",
     "beam_width",
     "core_width",
     "parent_core_cap",
@@ -70,6 +96,7 @@ COMPACT_EXTRA_FIELDS = [
     "qubo_core_width",
     "qubo_supplement_width",
     "qubo_cohorts_per_layer",
+    "qubo_pair_policy",
     "qubo_selected_total",
     "qubo_selected_on_search_path",
     "qubo_selected_on_path",
@@ -83,9 +110,26 @@ COMPACT_EXTRA_FIELDS = [
     "qubo_group_max_vars",
     "qubo_group_select",
     "qubo_group_take",
+    "post_polish_mode",
+    "post_polish_accept",
+    "post_polish_window_min_stacks",
     "post_polish_attempts",
     "post_polish_improvements",
     "post_polish_moves_saved",
+    "post_polish_window_min_size",
+    "post_polish_window_max_size",
+    "post_polish_window_stride",
+    "post_polish_window_budget",
+    "post_polish_window_qubo_vars",
+    "post_polish_window_select",
+    "post_polish_window_repair_expanded",
+    "post_polish_window_repair_depth_extra",
+    "post_polish_window_candidates",
+    "post_polish_window_qubo_selected",
+    "post_polish_window_attempts",
+    "post_polish_window_successes",
+    "post_polish_window_moves_saved",
+    "post_polish_window_time_sec",
     "global_reservoir",
     "reservoir_size",
     "peak_reservoir",
@@ -93,10 +137,55 @@ COMPACT_EXTRA_FIELDS = [
     "reservoir_pulled_total",
     "stream_candidate_limit",
     "stream_candidate_trim_factor",
+    "stream_bucket_topk",
     "stream_pruned_candidates",
     "rank_pool_size",
     "rank_pool_min_candidates",
+    "rank_bucket_topk",
+    "rank_bucket_key",
+    "rank_bucket_n_band_size",
+    "rank_bucket_topk_high_n",
+    "rank_bucket_topk_min_candidates",
     "rank_pool_truncated_candidates",
+    "scheduler_adaptive_min_stacks",
+    "scheduler_adaptive_high_n",
+    "scheduler_adaptive_cv1_only",
+    "scheduler_adaptive_max_duplication_ratio",
+    "scheduler_adaptive_min_best_n_ratio",
+    "scheduler_adaptive_max_candidate_pressure",
+    "scheduler_adaptive_max_parent_top_share",
+    "scheduler_adaptive_plateau_window",
+    "scheduler_adaptive_cap_slack",
+    "scheduler_state_controller",
+    "scheduler_state_contract_pressure",
+    "scheduler_state_max_contract_pressure",
+    "scheduler_state_min_best_n_ratio",
+    "scheduler_state_progress_window",
+    "scheduler_state_progress_delta",
+    "scheduler_state_failed_contract_cooldown",
+    "scheduler_state_post_rescue_plateau_window",
+    "scheduler_state_post_rescue_plateau_delta",
+    "scheduler_state_post_rescue_min_ratio",
+    "scheduler_state_post_rescue_action",
+    "scheduler_state_initial_plateau_window",
+    "scheduler_state_initial_plateau_min_ratio",
+    "scheduler_state_initial_plateau_action",
+    "scheduler_state_initial_plateau_lock",
+    "scheduler_state_initial_plateau_min_duplication",
+    "scheduler_state_initial_plateau_unique_min_n",
+    "scheduler_state_protect_parent_top_share",
+    "scheduler_state_protect_n_band",
+    "scheduler_state_top_window",
+    "scheduler_state_rescue_plateau_window",
+    "scheduler_state_rescue_plateau_delta",
+    "scheduler_state_rescue_cap_slack",
+    "scheduler_state_last_action",
+    "scheduler_state_last_effective_action",
+    "scheduler_state_locked_action",
+    "scheduler_state_contract_layers",
+    "scheduler_state_blend_layers",
+    "scheduler_state_protect_layers",
+    "scheduler_state_rescue_layers",
     "adaptive_high_n",
     "adaptive_low_n",
     "adaptive_high_frontier",
@@ -104,6 +193,34 @@ COMPACT_EXTRA_FIELDS = [
     "adaptive_low_frontier",
     "adaptive_core_ratio",
     "adaptive_candidate_pool",
+    "adaptive_controller",
+    "adaptive_expand_frontier",
+    "adaptive_contract_pressure",
+    "adaptive_mid_pressure",
+    "adaptive_min_best_n_ratio",
+    "adaptive_max_duplication_ratio",
+    "adaptive_parent_top_share",
+    "adaptive_plateau_window",
+    "adaptive_plateau_delta",
+    "adaptive_cap_slack",
+    "adaptive_large_stack_min_stacks",
+    "adaptive_large_stack_expand_frontier",
+    "adaptive_large_stack_plateau_window",
+    "adaptive_large_stack_cap_slack",
+    "adaptive_contract_layers",
+    "adaptive_mid_layers",
+    "adaptive_wide_layers",
+    "adaptive_expand_layers",
+    "adaptive_last_width",
+    "adaptive_last_reason",
+    "bucket_key",
+    "bucket_n_band_size",
+    "bucket_core_ratio",
+    "bucket_qubo_share",
+    "bucket_max_qubo_vars",
+    "bucket_qubo_select",
+    "bucket_min_candidates",
+    "rescue_layers_used",
 ]
 COMPACT_RESULT_FIELDS = RESULT_FIELDS + [field for field in COMPACT_EXTRA_FIELDS if field not in RESULT_FIELDS]
 ACCEPTANCE_FIELDS = [
@@ -197,6 +314,37 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "priority": "n_then_depth",
         "g_weight": 1.0,
         "n_weight": 1.0,
+        "target_guided_weight": 0.0,
+        "target_guided_focus_n": 8,
+        "target_guided_supplement_width": 0,
+        "target_guided_n_window": 0,
+        "wang_probe_supplement_width": 0,
+        "wang_probe_focus_n": 8,
+        "wang_probe_n_window": 0,
+        "wang_probe_fixed_weight": 1.0,
+        "wang_probe_pair_weight": 0.0,
+        "wang_probe_target_weight": 0.0,
+        "wang_probe_plateau_window": 0,
+        "wang_probe_plateau_delta": 0,
+        "wang_incumbent_enabled": False,
+        "wang_incumbent_beam_width": 100,
+        "wang_incumbent_candidate_limit": 64,
+        "wang_incumbent_max_depth": 0,
+        "wang_incumbent_time_limit": 0.0,
+        "wang_cap_enabled": False,
+        "wang_rollout_enabled": False,
+        "wang_rollout_width": 0,
+        "wang_rollout_focus_n": 8,
+        "wang_rollout_plateau_window": 3,
+        "wang_rollout_plateau_delta": 0,
+        "wang_rollout_max_steps": 1,
+        "wang_pair_qubo_enabled": False,
+        "wang_pair_qubo_supplement_width": 0,
+        "wang_pair_qubo_focus_n": 8,
+        "wang_pair_qubo_n_window": 1,
+        "wang_pair_qubo_max_vars": 32,
+        "wang_pair_qubo_select": 8,
+        "wang_pair_qubo_same_parent_penalty": 0.25,
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
@@ -214,6 +362,12 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "qubo_target_share": 0.50,
         "qubo_cohorts_per_layer": 2,
         "qubo_cohort_stride": 64,
+        "qubo_pair_policy": "baseline",
+        "qubo_parent_sim_weight": 0.65,
+        "qubo_layout_sim_weight": 1.0,
+        "qubo_action_sim_weight": 0.0,
+        "qubo_stack_sim_weight": 0.35,
+        "qubo_sim_threshold": 0.80,
         "group_qubo_supplement": False,
         "max_group_qubo_calls": 32,
         "qubo_group_max_vars": 96,
@@ -232,9 +386,50 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "global_reservoir": False,
         "stream_candidate_limit": 0,
         "stream_candidate_trim_factor": 2.0,
+        "stream_bucket_topk": 0,
         "rank_pool_size": 0,
         "rank_pool_min_candidates": 0,
+        "rank_bucket_topk": 0,
+        "rank_bucket_key": "n_depth_parent",
+        "rank_bucket_n_band_size": 2,
+        "rank_bucket_topk_high_n": 0,
+        "rank_bucket_topk_min_candidates": 0,
+        "scheduler_adaptive_min_stacks": 7,
+        "scheduler_adaptive_high_n": 16,
+        "scheduler_adaptive_cv1_only": False,
+        "scheduler_adaptive_max_duplication_ratio": 1.0,
+        "scheduler_adaptive_min_best_n_ratio": 0.0,
+        "scheduler_adaptive_max_candidate_pressure": 0.0,
+        "scheduler_adaptive_max_parent_top_share": 0.0,
+        "scheduler_adaptive_plateau_window": 0,
+        "scheduler_adaptive_cap_slack": 0,
+        "scheduler_state_controller": "off",
+        "scheduler_state_contract_pressure": 8.0,
+        "scheduler_state_max_contract_pressure": 40.0,
+        "scheduler_state_min_best_n_ratio": 0.0,
+        "scheduler_state_progress_window": 3,
+        "scheduler_state_progress_delta": 2,
+        "scheduler_state_failed_contract_cooldown": 0,
+        "scheduler_state_post_rescue_plateau_window": 0,
+        "scheduler_state_post_rescue_plateau_delta": 0,
+        "scheduler_state_post_rescue_min_ratio": 0.90,
+        "scheduler_state_post_rescue_action": "protect",
+        "scheduler_state_initial_plateau_window": 0,
+        "scheduler_state_initial_plateau_min_ratio": 0.98,
+        "scheduler_state_initial_plateau_action": "protect",
+        "scheduler_state_initial_plateau_lock": False,
+        "scheduler_state_initial_plateau_min_duplication": 0.0,
+        "scheduler_state_initial_plateau_unique_min_n": 0,
+        "scheduler_state_protect_parent_top_share": 0.65,
+        "scheduler_state_protect_n_band": 2,
+        "scheduler_state_top_window": 64,
+        "scheduler_state_rescue_plateau_window": 3,
+        "scheduler_state_rescue_plateau_delta": 0,
+        "scheduler_state_rescue_cap_slack": 8,
         "post_polish_qubo": True,
+        "post_polish_mode": "legacy",
+        "post_polish_accept": "better",
+        "post_polish_window_min_stacks": 0,
         "post_polish_passes": 2,
         "post_polish_focus_n": 8,
         "post_polish_tail_span": 14,
@@ -259,6 +454,15 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "post_polish_qubo_time_limit": 0.001,
         "post_polish_qubo_reads": 2,
         "post_polish_qubo_iterations": 20,
+        "post_polish_window_min_size": 3,
+        "post_polish_window_max_size": 10,
+        "post_polish_window_stride": 1,
+        "post_polish_window_budget": 96,
+        "post_polish_window_qubo_vars": 72,
+        "post_polish_window_select": 8,
+        "post_polish_window_time_limit": 0.001,
+        "post_polish_window_repair_expanded": 20000,
+        "post_polish_window_repair_depth_extra": 0,
         "tail_order_steps": 6,
         "seed": 37,
         "adaptive_high_n": 16,
@@ -268,7 +472,64 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "adaptive_low_frontier": 1200,
         "adaptive_core_ratio": 0.90,
         "adaptive_candidate_pool": 0,
+        "adaptive_controller": "tiered",
+        "adaptive_expand_frontier": 1200,
+        "adaptive_contract_pressure": 0.0,
+        "adaptive_mid_pressure": 0.0,
+        "adaptive_min_best_n_ratio": 0.0,
+        "adaptive_max_duplication_ratio": 1.0,
+        "adaptive_parent_top_share": 0.0,
+        "adaptive_plateau_window": 0,
+        "adaptive_plateau_delta": 0,
+        "adaptive_cap_slack": 0,
+        "adaptive_large_stack_min_stacks": 0,
+        "adaptive_large_stack_expand_frontier": 0,
+        "adaptive_large_stack_plateau_window": 0,
+        "adaptive_large_stack_cap_slack": 0,
+        "bucket_key": "n_depth",
+        "bucket_n_band_size": 2,
+        "bucket_core_ratio": 0.50,
+        "bucket_qubo_share": 0.35,
+        "bucket_max_qubo_vars": 96,
+        "bucket_qubo_select": 24,
+        "bucket_min_candidates": 64,
+        "rescue_enabled": False,
+        "rescue_plateau_window": 2,
+        "rescue_plateau_delta": 0,
+        "rescue_cap_slack": 26,
+        "rescue_min_n": 12,
+        "rescue_min_candidates": 5000,
+        "rescue_max_layers": 16,
+        "rescue_beam_width": 1350,
+        "rescue_core_width": 1215,
+        "rescue_escalate_after": 2,
+        "rescue_escalate_beam_width": 1600,
+        "rescue_escalate_core_width": 1440,
+        "rescue_max_qubo_vars": 96,
+        "rescue_qubo_supplement_width": 48,
+        "rescue_qubo_cohorts_per_layer": 4,
+        "rescue_qubo_time_limit": 0.002,
+        "rescue_qubo_iterations": 30,
+        "rescue_next_n_weight": 0.75,
     },
+}
+_SOLVER_PROFILES["target_guided_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "target_guided_weight": 0.35,
+    "target_guided_focus_n": 8,
+    "target_guided_supplement_width": 24,
+    "target_guided_n_window": 0,
+}
+_SOLVER_PROFILES["wang_probe_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "wang_probe_supplement_width": 12,
+    "wang_probe_focus_n": 8,
+    "wang_probe_n_window": 1,
+    "wang_probe_fixed_weight": 0.0,
+    "wang_probe_pair_weight": 1.0,
+    "wang_probe_target_weight": 0.0,
+    "wang_probe_plateau_window": 3,
+    "wang_probe_plateau_delta": 0,
 }
 _SOLVER_PROFILES["post_polish_v1"] = {
     **_SOLVER_PROFILES["speed_v2"],
@@ -286,6 +547,23 @@ _SOLVER_PROFILES["post_polish_v1"] = {
     "post_polish_suffix_max_depth": 20,
     "post_polish_suffix_expanded": 90000,
 }
+_SOLVER_PROFILES["window_polish_v2"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "post_polish_mode": "qubo_windows_v2",
+    "post_polish_accept": "better",
+    "post_polish_passes": 2,
+    "post_polish_focus_n": 8,
+    "post_polish_tail_span": 16,
+    "post_polish_window_min_size": 3,
+    "post_polish_window_max_size": 8,
+    "post_polish_window_stride": 1,
+    "post_polish_window_budget": 96,
+    "post_polish_window_qubo_vars": 72,
+    "post_polish_window_select": 1,
+    "post_polish_window_time_limit": 0.001,
+    "post_polish_window_repair_expanded": 3000,
+    "post_polish_window_repair_depth_extra": 0,
+}
 _SOLVER_PROFILES["frontier_quality_v1"] = {
     **_SOLVER_PROFILES["speed_v2"],
     "max_qubo_calls": 64,
@@ -298,8 +576,283 @@ _SOLVER_PROFILES["frontier_quality_v1"] = {
     "qubo_parent_weight": 0.30,
     "qubo_next_n_weight": 0.75,
 }
+_SOLVER_PROFILES["rescue_qubo_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "selection_policy": "rescue_qubo",
+    "rescue_enabled": True,
+    "rescue_plateau_window": 2,
+    "rescue_plateau_delta": 0,
+    "rescue_cap_slack": 26,
+    "rescue_min_n": 12,
+    "rescue_min_candidates": 5000,
+    "rescue_max_layers": 16,
+    "rescue_beam_width": 1350,
+    "rescue_core_width": 1215,
+    "rescue_escalate_after": 2,
+    "rescue_escalate_beam_width": 1600,
+    "rescue_escalate_core_width": 1440,
+    "rescue_max_qubo_vars": 96,
+    "rescue_qubo_supplement_width": 48,
+    "rescue_qubo_cohorts_per_layer": 4,
+    "rescue_qubo_time_limit": 0.002,
+    "rescue_qubo_iterations": 30,
+    "rescue_next_n_weight": 0.75,
+}
+_SOLVER_PROFILES["light_rescue_qubo_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "selection_policy": "rescue_qubo",
+    "rescue_enabled": True,
+    "rescue_plateau_window": 2,
+    "rescue_plateau_delta": 0,
+    "rescue_cap_slack": 24,
+    "rescue_min_n": 12,
+    "rescue_min_candidates": 7000,
+    "rescue_max_layers": 8,
+    "rescue_beam_width": 1250,
+    "rescue_core_width": 1125,
+    "rescue_escalate_after": 4,
+    "rescue_escalate_beam_width": 1450,
+    "rescue_escalate_core_width": 1305,
+    "rescue_max_qubo_vars": 80,
+    "rescue_qubo_supplement_width": 32,
+    "rescue_qubo_cohorts_per_layer": 3,
+    "rescue_qubo_time_limit": 0.0015,
+    "rescue_qubo_iterations": 24,
+    "rescue_next_n_weight": 0.65,
+}
+_SOLVER_PROFILES["adaptive_rescue_v1"] = {
+    **_SOLVER_PROFILES["light_rescue_qubo_v1"],
+    "selection_policy": "adaptive_qubo",
+    "rescue_plateau_window": 3,
+    "rescue_cap_slack": 12,
+    "rescue_min_candidates": 20000,
+    "rescue_max_layers": 3,
+    "rescue_beam_width": 1200,
+    "rescue_core_width": 1080,
+    "rescue_escalate_after": 0,
+    "rescue_escalate_beam_width": 1200,
+    "rescue_escalate_core_width": 1080,
+    "adaptive_high_n": 16,
+    "adaptive_low_n": 8,
+    "adaptive_high_frontier": 800,
+    "adaptive_mid_frontier": 1000,
+    "adaptive_low_frontier": 1200,
+    "adaptive_core_ratio": 0.90,
+    "adaptive_candidate_pool": 0,
+}
+_SOLVER_PROFILES["adaptive_polish_v1"] = {
+    **_SOLVER_PROFILES["post_polish_v1"],
+    "selection_policy": "adaptive_qubo",
+    "adaptive_high_n": 16,
+    "adaptive_low_n": 8,
+    "adaptive_high_frontier": 800,
+    "adaptive_mid_frontier": 1000,
+    "adaptive_low_frontier": 1200,
+    "adaptive_core_ratio": 0.90,
+    "adaptive_candidate_pool": 0,
+}
+_SOLVER_PROFILES["adaptive_controller_v1"] = {
+    **_SOLVER_PROFILES["speed_v2"],
+    "selection_policy": "adaptive_qubo",
+    "adaptive_controller": "signal_v1",
+    "adaptive_high_n": 16,
+    "adaptive_low_n": 8,
+    "adaptive_high_frontier": 800,
+    "adaptive_mid_frontier": 1000,
+    "adaptive_low_frontier": 1200,
+    "adaptive_expand_frontier": 1200,
+    "adaptive_core_ratio": 0.90,
+    "adaptive_candidate_pool": 0,
+    "adaptive_contract_pressure": 0.5,
+    "adaptive_mid_pressure": 0.25,
+    "adaptive_min_best_n_ratio": 0.45,
+    "adaptive_max_duplication_ratio": 1.0,
+    "adaptive_parent_top_share": 0.0,
+    "adaptive_plateau_window": 4,
+    "adaptive_plateau_delta": 0,
+    "adaptive_cap_slack": 4,
+    "adaptive_large_stack_min_stacks": 8,
+    "adaptive_large_stack_expand_frontier": 1400,
+    "adaptive_large_stack_plateau_window": 3,
+    "adaptive_large_stack_cap_slack": 12,
+}
+_SOLVER_PROFILES["scheduler_v1"] = {
+    **_SOLVER_PROFILES["light_rescue_qubo_v1"],
+    "selection_policy": "scheduler_qubo",
+    "scheduler_adaptive_min_stacks": 7,
+    "scheduler_adaptive_high_n": 16,
+    "scheduler_adaptive_cv1_only": False,
+    "scheduler_adaptive_max_duplication_ratio": 0.0,
+    "scheduler_adaptive_min_best_n_ratio": 0.45,
+    "scheduler_adaptive_max_candidate_pressure": 0.0,
+    "scheduler_adaptive_max_parent_top_share": 0.0,
+    "scheduler_adaptive_plateau_window": 3,
+    "scheduler_adaptive_cap_slack": 12,
+    "adaptive_high_frontier": 800,
+    "adaptive_mid_frontier": 1000,
+    "adaptive_low_frontier": 1200,
+    "adaptive_core_ratio": 0.90,
+    "adaptive_candidate_pool": 0,
+}
+_SOLVER_PROFILES["scheduler_topk_v1"] = {
+    **_SOLVER_PROFILES["scheduler_v1"],
+    "rank_bucket_topk": 64,
+    "rank_bucket_key": "n_depth_parent",
+    "rank_bucket_n_band_size": 2,
+    "rank_bucket_topk_high_n": 18,
+    "rank_bucket_topk_min_candidates": 10000,
+}
+_SOLVER_PROFILES["scheduler_state_v2"] = {
+    **_SOLVER_PROFILES["light_rescue_qubo_v1"],
+    "selection_policy": "scheduler_state_qubo",
+    "scheduler_state_controller": "state_v2",
+    "scheduler_state_contract_pressure": 8.0,
+    "scheduler_state_max_contract_pressure": 40.0,
+    "scheduler_state_min_best_n_ratio": 0.0,
+    "scheduler_state_progress_window": 3,
+    "scheduler_state_progress_delta": 0,
+    "scheduler_state_failed_contract_cooldown": 0,
+    "scheduler_state_post_rescue_plateau_window": 0,
+    "scheduler_state_post_rescue_plateau_delta": 0,
+    "scheduler_state_post_rescue_min_ratio": 0.90,
+    "scheduler_state_post_rescue_action": "protect",
+    "scheduler_state_initial_plateau_window": 0,
+    "scheduler_state_initial_plateau_min_ratio": 0.98,
+    "scheduler_state_initial_plateau_action": "protect",
+    "scheduler_state_initial_plateau_lock": False,
+    "scheduler_state_initial_plateau_min_duplication": 0.0,
+    "scheduler_state_initial_plateau_unique_min_n": 0,
+    "scheduler_state_protect_parent_top_share": 0.65,
+    "scheduler_state_protect_n_band": 2,
+    "scheduler_state_top_window": 64,
+    "scheduler_state_rescue_plateau_window": 3,
+    "scheduler_state_rescue_plateau_delta": 0,
+    "scheduler_state_rescue_cap_slack": 8,
+    "adaptive_controller": "signal_v1",
+    "adaptive_contract_pressure": 0.5,
+    "adaptive_mid_pressure": 0.25,
+    "adaptive_min_best_n_ratio": 0.45,
+    "adaptive_high_frontier": 800,
+    "adaptive_mid_frontier": 1000,
+    "adaptive_low_frontier": 1200,
+}
 
+_SOLVER_PROFILES["scheduler_state_v3"] = {
+    **_SOLVER_PROFILES["scheduler_state_v2"],
+    "scheduler_state_failed_contract_cooldown": 0,
+    "scheduler_state_post_rescue_plateau_window": 0,
+    "scheduler_state_post_rescue_plateau_delta": 0,
+    "scheduler_state_post_rescue_min_ratio": 0.90,
+    "scheduler_state_post_rescue_action": "protect",
+    "scheduler_state_initial_plateau_window": 5,
+    "scheduler_state_initial_plateau_min_ratio": 0.98,
+    "scheduler_state_initial_plateau_action": "rescue",
+    "scheduler_state_initial_plateau_lock": True,
+    "scheduler_state_initial_plateau_min_duplication": 0.10,
+}
 
+_SOLVER_PROFILES["scheduler_state_v4"] = {
+    **_SOLVER_PROFILES["scheduler_state_v3"],
+    "scheduler_state_initial_plateau_min_duplication": 0.0,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5"] = {
+    **_SOLVER_PROFILES["scheduler_state_v4"],
+    "scheduler_state_initial_plateau_unique_min_n": 24,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_probe"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5"],
+    "wang_probe_supplement_width": 12,
+    "wang_probe_focus_n": 8,
+    "wang_probe_n_window": 1,
+    "wang_probe_fixed_weight": 0.0,
+    "wang_probe_pair_weight": 1.0,
+    "wang_probe_target_weight": 0.0,
+    "wang_probe_plateau_window": 3,
+    "wang_probe_plateau_delta": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_hybrid"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_probe"],
+    "wang_incumbent_enabled": True,
+    "wang_incumbent_beam_width": 100,
+    "wang_incumbent_candidate_limit": 64,
+    "wang_incumbent_max_depth": 0,
+    "wang_incumbent_time_limit": 0.25,
+    "wang_cap_enabled": True,
+    "wang_rollout_enabled": True,
+    "wang_rollout_width": 12,
+    "wang_rollout_focus_n": 8,
+    "wang_rollout_plateau_window": 3,
+    "wang_rollout_plateau_delta": 0,
+    "wang_rollout_max_steps": 1,
+    "wang_pair_qubo_enabled": True,
+    "wang_pair_qubo_supplement_width": 8,
+    "wang_pair_qubo_focus_n": 8,
+    "wang_pair_qubo_n_window": 1,
+    "wang_pair_qubo_max_vars": 32,
+    "wang_pair_qubo_select": 8,
+    "wang_pair_qubo_same_parent_penalty": 0.25,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_pair_qubo"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_probe"],
+    "wang_pair_qubo_enabled": True,
+    "wang_pair_qubo_supplement_width": 8,
+    "wang_pair_qubo_focus_n": 8,
+    "wang_pair_qubo_n_window": 1,
+    "wang_pair_qubo_max_vars": 32,
+    "wang_pair_qubo_select": 8,
+    "wang_pair_qubo_same_parent_penalty": 0.25,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5"],
+    "wang_pair_qubo_enabled": True,
+    "wang_pair_qubo_supplement_width": 12,
+    "wang_pair_qubo_focus_n": -1,
+    "wang_pair_qubo_n_window": 1,
+    "wang_pair_qubo_max_vars": 48,
+    "wang_pair_qubo_select": 12,
+    "wang_pair_qubo_same_parent_penalty": 0.35,
+    "rescue_qubo_supplement_width": 56,
+    "rescue_max_qubo_vars": 112,
+    "rescue_next_n_weight": 0.75,
+}
+_SOLVER_PROFILES["scheduler_state_v5_window_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5"],
+    "post_polish_mode": "qubo_windows_v2",
+    "post_polish_accept": "better",
+    "post_polish_passes": 2,
+    "post_polish_focus_n": 8,
+    "post_polish_tail_span": 16,
+    "post_polish_window_min_size": 3,
+    "post_polish_window_max_size": 8,
+    "post_polish_window_stride": 1,
+    "post_polish_window_budget": 96,
+    "post_polish_window_qubo_vars": 72,
+    "post_polish_window_select": 1,
+    "post_polish_window_time_limit": 0.001,
+    "post_polish_window_repair_expanded": 3000,
+    "post_polish_window_repair_depth_extra": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v6"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_window_polish"],
+    "post_polish_window_min_stacks": 7,
+}
+_SOLVER_PROFILES["scheduler_state_v7"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5"],
+    "post_polish_passes": 3,
+    "post_polish_tail_span": 18,
+    "post_polish_max_windows": 128,
+    "post_polish_max_qubo_vars": 96,
+    "post_polish_max_bridge_depth": 8,
+    "post_polish_bridge_expanded": 30000,
+    "post_polish_suffix_focus_n": 10,
+    "post_polish_suffix_tail_span": 22,
+    "post_polish_suffix_max_candidates": 72,
+    "post_polish_suffix_select": 7,
+    "post_polish_suffix_max_qubo_vars": 64,
+    "post_polish_suffix_max_depth": 20,
+    "post_polish_suffix_expanded": 90000,
+}
 def make_compact_args(**overrides: object) -> argparse.Namespace:
     """Build a programmatic args namespace matching the CLI defaults.
 
@@ -342,6 +895,29 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "qubo_time_limit": 0.001,
         "qubo_reads": 2,
         "qubo_iterations": 20,
+        "scheduler_state_controller": "off",
+        "scheduler_state_contract_pressure": 8.0,
+        "scheduler_state_max_contract_pressure": 40.0,
+        "scheduler_state_min_best_n_ratio": 0.0,
+        "scheduler_state_progress_window": 3,
+        "scheduler_state_progress_delta": 2,
+        "scheduler_state_failed_contract_cooldown": 0,
+        "scheduler_state_post_rescue_plateau_window": 0,
+        "scheduler_state_post_rescue_plateau_delta": 0,
+        "scheduler_state_post_rescue_min_ratio": 0.90,
+        "scheduler_state_post_rescue_action": "protect",
+        "scheduler_state_initial_plateau_window": 0,
+        "scheduler_state_initial_plateau_min_ratio": 0.98,
+        "scheduler_state_initial_plateau_action": "protect",
+        "scheduler_state_initial_plateau_lock": False,
+        "scheduler_state_initial_plateau_min_duplication": 0.0,
+        "scheduler_state_initial_plateau_unique_min_n": 0,
+        "scheduler_state_protect_parent_top_share": 0.65,
+        "scheduler_state_protect_n_band": 2,
+        "scheduler_state_top_window": 64,
+        "scheduler_state_rescue_plateau_window": 3,
+        "scheduler_state_rescue_plateau_delta": 0,
+        "scheduler_state_rescue_cap_slack": 8,
         "adaptive_high_n": 16,
         "adaptive_low_n": 8,
         "adaptive_high_frontier": 800,
@@ -349,6 +925,39 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "adaptive_low_frontier": 1200,
         "adaptive_core_ratio": 0.90,
         "adaptive_candidate_pool": 0,
+        "adaptive_controller": "tiered",
+        "adaptive_expand_frontier": 1200,
+        "adaptive_contract_pressure": 0.0,
+        "adaptive_mid_pressure": 0.0,
+        "adaptive_min_best_n_ratio": 0.0,
+        "adaptive_max_duplication_ratio": 1.0,
+        "adaptive_parent_top_share": 0.0,
+        "adaptive_plateau_window": 0,
+        "adaptive_plateau_delta": 0,
+        "adaptive_cap_slack": 0,
+        "adaptive_large_stack_min_stacks": 0,
+        "adaptive_large_stack_expand_frontier": 0,
+        "adaptive_large_stack_plateau_window": 0,
+        "adaptive_large_stack_cap_slack": 0,
+        "bucket_key": "n_depth",
+        "bucket_n_band_size": 2,
+        "bucket_core_ratio": 0.50,
+        "bucket_qubo_share": 0.35,
+        "bucket_max_qubo_vars": 96,
+        "bucket_qubo_select": 24,
+        "bucket_min_candidates": 64,
+        "post_polish_mode": "legacy",
+        "post_polish_accept": "better",
+        "post_polish_window_min_stacks": 0,
+        "post_polish_window_min_size": 3,
+        "post_polish_window_max_size": 10,
+        "post_polish_window_stride": 1,
+        "post_polish_window_budget": 96,
+        "post_polish_window_qubo_vars": 72,
+        "post_polish_window_select": 8,
+        "post_polish_window_time_limit": 0.001,
+        "post_polish_window_repair_expanded": 20000,
+        "post_polish_window_repair_depth_extra": 0,
     }
     defaults.update(overrides)
     defaults["_profile_explicit_keys"] = explicit
@@ -435,6 +1044,12 @@ class CompactBeamResult:
     post_polish_attempts: int = 0
     post_polish_improvements: int = 0
     post_polish_moves_saved: int = 0
+    post_polish_window_candidates: int = 0
+    post_polish_window_qubo_selected: int = 0
+    post_polish_window_attempts: int = 0
+    post_polish_window_successes: int = 0
+    post_polish_window_moves_saved: int = 0
+    post_polish_window_time_sec: float = 0.0
     tail_n_trace: str = ""
     tail_ordered_trace: str = ""
     tail_ordered_gain: int = 0
@@ -444,6 +1059,14 @@ class CompactBeamResult:
     reservoir_pulled_total: int = 0
     stream_pruned_candidates: int = 0
     rank_pool_truncated_candidates: int = 0
+    rescue_layers_used: int = 0
+    wang_incumbent_moves: int = 0
+    wang_incumbent_runtime_sec: float = 0.0
+    wang_incumbent_used: bool = False
+    wang_rollout_added_total: int = 0
+    wang_pair_qubo_calls: int = 0
+    wang_pair_qubo_vars: int = 0
+    wang_pair_qubo_time_sec: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -454,6 +1077,10 @@ class PostPolishWindow:
     min_n: int
     max_n: int
     score: float
+    plateau_count: int = 0
+    increase_count: int = 0
+    tail_dirty: int = 0
+    oscillation_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -476,12 +1103,25 @@ class PostPolishStats:
     suffix_attempts: int = 0
     suffix_improvements: int = 0
     suffix_expanded: int = 0
+    window_candidates: int = 0
+    window_qubo_selected: int = 0
+    window_attempts: int = 0
+    window_successes: int = 0
+    window_moves_saved: int = 0
+    window_time_sec: float = 0.0
 
 
 def _case_filter(args: argparse.Namespace) -> list[str]:
     if args.cases:
         return [case if case.endswith("_single") else f"{case}_single" for case in args.cases]
     return [f"{zone}_{bay}_single" for zone, bay in discover_single_bay_cases(ROOT / "data" / "input", set(args.bays))]
+
+
+def _priority_duplication_ratio_for_instance(instance: Instance) -> float:
+    values = [box for stack in instance.stacks for box in stack]
+    if not values:
+        return 0.0
+    return 1.0 - (len(set(values)) / len(values))
 
 
 def _flag_set(flag: str) -> bool:
@@ -518,6 +1158,37 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "priority": "--priority",
         "g_weight": "--g-weight",
         "n_weight": "--n-weight",
+        "target_guided_weight": "--target-guided-weight",
+        "target_guided_focus_n": "--target-guided-focus-n",
+        "target_guided_supplement_width": "--target-guided-supplement-width",
+        "target_guided_n_window": "--target-guided-n-window",
+        "wang_probe_supplement_width": "--wang-probe-supplement-width",
+        "wang_probe_focus_n": "--wang-probe-focus-n",
+        "wang_probe_n_window": "--wang-probe-n-window",
+        "wang_probe_fixed_weight": "--wang-probe-fixed-weight",
+        "wang_probe_pair_weight": "--wang-probe-pair-weight",
+        "wang_probe_target_weight": "--wang-probe-target-weight",
+        "wang_probe_plateau_window": "--wang-probe-plateau-window",
+        "wang_probe_plateau_delta": "--wang-probe-plateau-delta",
+        "wang_incumbent_enabled": ("--wang-incumbent-enabled", "--no-wang-incumbent-enabled"),
+        "wang_incumbent_beam_width": "--wang-incumbent-beam-width",
+        "wang_incumbent_candidate_limit": "--wang-incumbent-candidate-limit",
+        "wang_incumbent_max_depth": "--wang-incumbent-max-depth",
+        "wang_incumbent_time_limit": "--wang-incumbent-time-limit",
+        "wang_cap_enabled": ("--wang-cap-enabled", "--no-wang-cap-enabled"),
+        "wang_rollout_enabled": ("--wang-rollout-enabled", "--no-wang-rollout-enabled"),
+        "wang_rollout_width": "--wang-rollout-width",
+        "wang_rollout_focus_n": "--wang-rollout-focus-n",
+        "wang_rollout_plateau_window": "--wang-rollout-plateau-window",
+        "wang_rollout_plateau_delta": "--wang-rollout-plateau-delta",
+        "wang_rollout_max_steps": "--wang-rollout-max-steps",
+        "wang_pair_qubo_enabled": ("--wang-pair-qubo-enabled", "--no-wang-pair-qubo-enabled"),
+        "wang_pair_qubo_supplement_width": "--wang-pair-qubo-supplement-width",
+        "wang_pair_qubo_focus_n": "--wang-pair-qubo-focus-n",
+        "wang_pair_qubo_n_window": "--wang-pair-qubo-n-window",
+        "wang_pair_qubo_max_vars": "--wang-pair-qubo-max-vars",
+        "wang_pair_qubo_select": "--wang-pair-qubo-select",
+        "wang_pair_qubo_same_parent_penalty": "--wang-pair-qubo-same-parent-penalty",
         "beam_width": "--beam-width",
         "core_width": "--core-width",
         "parent_core_cap": "--parent-core-cap",
@@ -535,6 +1206,12 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "qubo_target_share": "--qubo-target-share",
         "qubo_cohorts_per_layer": "--qubo-cohorts-per-layer",
         "qubo_cohort_stride": "--qubo-cohort-stride",
+        "qubo_pair_policy": "--qubo-pair-policy",
+        "qubo_parent_sim_weight": "--qubo-parent-sim-weight",
+        "qubo_layout_sim_weight": "--qubo-layout-sim-weight",
+        "qubo_action_sim_weight": "--qubo-action-sim-weight",
+        "qubo_stack_sim_weight": "--qubo-stack-sim-weight",
+        "qubo_sim_threshold": "--qubo-sim-threshold",
         "group_qubo_supplement": ("--group-qubo-supplement", "--no-group-qubo-supplement"),
         "max_group_qubo_calls": "--max-group-qubo-calls",
         "qubo_group_max_vars": "--qubo-group-max-vars",
@@ -561,9 +1238,50 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "global_reservoir": ("--global-reservoir", "--no-global-reservoir"),
         "stream_candidate_limit": "--stream-candidate-limit",
         "stream_candidate_trim_factor": "--stream-candidate-trim-factor",
+        "stream_bucket_topk": "--stream-bucket-topk",
         "rank_pool_size": "--rank-pool-size",
         "rank_pool_min_candidates": "--rank-pool-min-candidates",
+        "rank_bucket_topk": "--rank-bucket-topk",
+        "rank_bucket_key": "--rank-bucket-key",
+        "rank_bucket_n_band_size": "--rank-bucket-n-band-size",
+        "rank_bucket_topk_high_n": "--rank-bucket-topk-high-n",
+        "rank_bucket_topk_min_candidates": "--rank-bucket-topk-min-candidates",
+        "scheduler_adaptive_min_stacks": "--scheduler-adaptive-min-stacks",
+        "scheduler_adaptive_high_n": "--scheduler-adaptive-high-n",
+        "scheduler_adaptive_cv1_only": ("--scheduler-adaptive-cv1-only", "--no-scheduler-adaptive-cv1-only"),
+        "scheduler_adaptive_max_duplication_ratio": "--scheduler-adaptive-max-duplication-ratio",
+        "scheduler_adaptive_min_best_n_ratio": "--scheduler-adaptive-min-best-n-ratio",
+        "scheduler_adaptive_max_candidate_pressure": "--scheduler-adaptive-max-candidate-pressure",
+        "scheduler_adaptive_max_parent_top_share": "--scheduler-adaptive-max-parent-top-share",
+        "scheduler_adaptive_plateau_window": "--scheduler-adaptive-plateau-window",
+        "scheduler_adaptive_cap_slack": "--scheduler-adaptive-cap-slack",
+        "scheduler_state_controller": "--scheduler-state-controller",
+        "scheduler_state_contract_pressure": "--scheduler-state-contract-pressure",
+        "scheduler_state_max_contract_pressure": "--scheduler-state-max-contract-pressure",
+        "scheduler_state_min_best_n_ratio": "--scheduler-state-min-best-n-ratio",
+        "scheduler_state_progress_window": "--scheduler-state-progress-window",
+        "scheduler_state_progress_delta": "--scheduler-state-progress-delta",
+        "scheduler_state_failed_contract_cooldown": "--scheduler-state-failed-contract-cooldown",
+        "scheduler_state_post_rescue_plateau_window": "--scheduler-state-post-rescue-plateau-window",
+        "scheduler_state_post_rescue_plateau_delta": "--scheduler-state-post-rescue-plateau-delta",
+        "scheduler_state_post_rescue_min_ratio": "--scheduler-state-post-rescue-min-ratio",
+        "scheduler_state_post_rescue_action": "--scheduler-state-post-rescue-action",
+        "scheduler_state_initial_plateau_window": "--scheduler-state-initial-plateau-window",
+        "scheduler_state_initial_plateau_min_ratio": "--scheduler-state-initial-plateau-min-ratio",
+        "scheduler_state_initial_plateau_action": "--scheduler-state-initial-plateau-action",
+        "scheduler_state_initial_plateau_lock": ("--scheduler-state-initial-plateau-lock", "--no-scheduler-state-initial-plateau-lock"),
+        "scheduler_state_initial_plateau_min_duplication": "--scheduler-state-initial-plateau-min-duplication",
+        "scheduler_state_initial_plateau_unique_min_n": "--scheduler-state-initial-plateau-unique-min-n",
+        "scheduler_state_protect_parent_top_share": "--scheduler-state-protect-parent-top-share",
+        "scheduler_state_protect_n_band": "--scheduler-state-protect-n-band",
+        "scheduler_state_top_window": "--scheduler-state-top-window",
+        "scheduler_state_rescue_plateau_window": "--scheduler-state-rescue-plateau-window",
+        "scheduler_state_rescue_plateau_delta": "--scheduler-state-rescue-plateau-delta",
+        "scheduler_state_rescue_cap_slack": "--scheduler-state-rescue-cap-slack",
         "post_polish_qubo": ("--post-polish-qubo", "--no-post-polish-qubo"),
+        "post_polish_mode": "--post-polish-mode",
+        "post_polish_accept": "--post-polish-accept",
+        "post_polish_window_min_stacks": "--post-polish-window-min-stacks",
         "post_polish_passes": "--post-polish-passes",
         "post_polish_focus_n": "--post-polish-focus-n",
         "post_polish_tail_span": "--post-polish-tail-span",
@@ -588,6 +1306,54 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "post_polish_qubo_time_limit": "--post-polish-qubo-time-limit",
         "post_polish_qubo_reads": "--post-polish-qubo-reads",
         "post_polish_qubo_iterations": "--post-polish-qubo-iterations",
+        "post_polish_window_min_size": "--post-polish-window-min-size",
+        "post_polish_window_max_size": "--post-polish-window-max-size",
+        "post_polish_window_stride": "--post-polish-window-stride",
+        "post_polish_window_budget": "--post-polish-window-budget",
+        "post_polish_window_qubo_vars": "--post-polish-window-qubo-vars",
+        "post_polish_window_select": "--post-polish-window-select",
+        "post_polish_window_time_limit": "--post-polish-window-time-limit",
+        "post_polish_window_repair_expanded": "--post-polish-window-repair-expanded",
+        "post_polish_window_repair_depth_extra": "--post-polish-window-repair-depth-extra",
+        "adaptive_controller": "--adaptive-controller",
+        "adaptive_expand_frontier": "--adaptive-expand-frontier",
+        "adaptive_contract_pressure": "--adaptive-contract-pressure",
+        "adaptive_mid_pressure": "--adaptive-mid-pressure",
+        "adaptive_min_best_n_ratio": "--adaptive-min-best-n-ratio",
+        "adaptive_max_duplication_ratio": "--adaptive-max-duplication-ratio",
+        "adaptive_parent_top_share": "--adaptive-parent-top-share",
+        "adaptive_plateau_window": "--adaptive-plateau-window",
+        "adaptive_plateau_delta": "--adaptive-plateau-delta",
+        "adaptive_cap_slack": "--adaptive-cap-slack",
+        "adaptive_large_stack_min_stacks": "--adaptive-large-stack-min-stacks",
+        "adaptive_large_stack_expand_frontier": "--adaptive-large-stack-expand-frontier",
+        "adaptive_large_stack_plateau_window": "--adaptive-large-stack-plateau-window",
+        "adaptive_large_stack_cap_slack": "--adaptive-large-stack-cap-slack",
+        "bucket_key": "--bucket-key",
+        "bucket_n_band_size": "--bucket-n-band-size",
+        "bucket_core_ratio": "--bucket-core-ratio",
+        "bucket_qubo_share": "--bucket-qubo-share",
+        "bucket_max_qubo_vars": "--bucket-max-qubo-vars",
+        "bucket_qubo_select": "--bucket-qubo-select",
+        "bucket_min_candidates": "--bucket-min-candidates",
+        "rescue_enabled": ("--rescue-enabled", "--no-rescue-enabled"),
+        "rescue_plateau_window": "--rescue-plateau-window",
+        "rescue_plateau_delta": "--rescue-plateau-delta",
+        "rescue_cap_slack": "--rescue-cap-slack",
+        "rescue_min_n": "--rescue-min-n",
+        "rescue_min_candidates": "--rescue-min-candidates",
+        "rescue_max_layers": "--rescue-max-layers",
+        "rescue_beam_width": "--rescue-beam-width",
+        "rescue_core_width": "--rescue-core-width",
+        "rescue_escalate_after": "--rescue-escalate-after",
+        "rescue_escalate_beam_width": "--rescue-escalate-beam-width",
+        "rescue_escalate_core_width": "--rescue-escalate-core-width",
+        "rescue_max_qubo_vars": "--rescue-max-qubo-vars",
+        "rescue_qubo_supplement_width": "--rescue-qubo-supplement-width",
+        "rescue_qubo_cohorts_per_layer": "--rescue-qubo-cohorts-per-layer",
+        "rescue_qubo_time_limit": "--rescue-qubo-time-limit",
+        "rescue_qubo_iterations": "--rescue-qubo-iterations",
+        "rescue_next_n_weight": "--rescue-next-n-weight",
         "tail_order_steps": "--tail-order-steps",
         "seed": "--seed",
     }
@@ -621,6 +1387,7 @@ def _apply_dynamic_profile(args: argparse.Namespace) -> None:
         "qubo_group_take": "--qubo-group-take",
         "stream_candidate_limit": "--stream-candidate-limit",
         "stream_candidate_trim_factor": "--stream-candidate-trim-factor",
+        "stream_bucket_topk": "--stream-bucket-topk",
     }
     for key, value in preset.items():
         if _flag_set(explicit_flags.get(key, f"--{key.replace('_', '-')}")):
@@ -650,18 +1417,388 @@ def _apply_qubo_influence_profile(args: argparse.Namespace) -> None:
         setattr(args, key, value)
 
 
+def _compact_target_layouts(instance: Instance) -> tuple[tuple[bytes, ...], ...]:
+    boxes = sorted((box for stack in instance.stacks for box in stack), reverse=True)
+    height_patterns: list[list[int]] = []
+
+    current = sorted((len(stack) for stack in instance.stacks), reverse=True)
+    height_patterns.append(current)
+
+    compact: list[int] = []
+    remaining = instance.container_count
+    for _ in range(instance.stack_count):
+        take = min(instance.max_height, remaining)
+        compact.append(take)
+        remaining -= take
+    height_patterns.append(compact)
+
+    balanced = [instance.container_count // instance.stack_count] * instance.stack_count
+    for idx in range(instance.container_count % instance.stack_count):
+        balanced[idx] += 1
+    height_patterns.append(sorted(balanced, reverse=True))
+
+    layouts: list[tuple[bytes, ...]] = []
+    seen: set[tuple[int, ...]] = set()
+    for heights in height_patterns:
+        normalized = tuple(sorted((height for height in heights if height > 0), reverse=True))
+        padded = normalized + (0,) * (instance.stack_count - len(normalized))
+        if padded in seen:
+            continue
+        seen.add(padded)
+        cursor = 0
+        chunks: list[bytes] = []
+        for height in padded:
+            stack_values = boxes[cursor : cursor + height]
+            cursor += height
+            chunks.append(bytes(stack_values + [0] * (instance.max_height - height)))
+        layouts.append(tuple(chunks))
+    return tuple(layouts)
+
+
+def _chunk_height_raw(chunk: bytes) -> int:
+    zero = chunk.find(0)
+    return len(chunk) if zero < 0 else zero
+
+
+def _target_prefix_len(chunk: bytes, target_chunk: bytes) -> int:
+    limit = min(_chunk_height_raw(chunk), _chunk_height_raw(target_chunk))
+    prefix = 0
+    while prefix < limit and chunk[prefix] == target_chunk[prefix]:
+        prefix += 1
+    return prefix
+
+
+@lru_cache(maxsize=262144)
+def _compact_target_gap(code: bytes, target: tuple[bytes, ...], stack_count: int, max_height: int) -> int:
+    chunks = _split(code, stack_count, max_height)
+    stack_scores: list[tuple[int, int, int]] = []
+    for src_idx, chunk in enumerate(chunks):
+        for tgt_idx, target_chunk in enumerate(target):
+            stack_scores.append((-_target_prefix_len(chunk, target_chunk), src_idx, tgt_idx))
+
+    used_src: set[int] = set()
+    used_tgt: set[int] = set()
+    matched = 0
+    for neg_prefix, src_idx, tgt_idx in sorted(stack_scores):
+        if src_idx in used_src or tgt_idx in used_tgt:
+            continue
+        used_src.add(src_idx)
+        used_tgt.add(tgt_idx)
+        matched += -neg_prefix
+    return len([value for value in code if value]) - matched
+
+
+def _candidate_target_gap(code: bytes, args: argparse.Namespace) -> int:
+    targets = tuple(getattr(args, "_layout_target_groups", ()) or ())
+    if not targets:
+        return 0
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return 0
+    return min(_compact_target_gap(code, target, stack_count, max_height) for target in targets)
+
+
+def _wang_fixed_prefix_len(chunk: bytes) -> int:
+    height = _chunk_height_raw(chunk)
+    if height <= 0:
+        return 0
+    prefix = 1
+    while prefix < height and chunk[prefix] <= chunk[prefix - 1]:
+        prefix += 1
+    return prefix
+
+
+@lru_cache(maxsize=262144)
+def _compact_wang_fixed_prefix_score(code: bytes, stack_count: int, max_height: int) -> int:
+    if stack_count <= 0 or max_height <= 0:
+        return 0
+    return sum(_wang_fixed_prefix_len(chunk) for chunk in _split(code, stack_count, max_height))
+
+
+@lru_cache(maxsize=262144)
+def _compact_wang_fix_pair_score(code: bytes, stack_count: int, max_height: int) -> int:
+    if stack_count <= 0 or max_height <= 0:
+        return 0
+    chunks = _split(code, stack_count, max_height)
+    acceptors: list[tuple[int, int]] = []
+    dirty: list[tuple[int, int]] = []
+    for stack_idx, chunk in enumerate(chunks):
+        height = _chunk_height_raw(chunk)
+        dirty_count = _stack_n(chunk, max_height)
+        if dirty_count == 0 and height < max_height:
+            top = chunk[height - 1] if height > 0 else 255
+            acceptors.append((stack_idx, top))
+        if dirty_count > 0:
+            start = height - dirty_count
+            dirty.extend((stack_idx, int(box)) for box in chunk[start:height])
+
+    score = 0
+    for origin, box in dirty:
+        score += sum(1 for stack_idx, top in acceptors if stack_idx != origin and box <= top)
+    return score
+
+
+def _candidate_wang_probe_score(code: bytes, args: argparse.Namespace) -> tuple[float, int, int, int]:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    fixed_prefix = _compact_wang_fixed_prefix_score(code, stack_count, max_height)
+    fix_pairs = _compact_wang_fix_pair_score(code, stack_count, max_height)
+    target_gap = _candidate_target_gap(code, args)
+    score = (
+        float(getattr(args, "wang_probe_fixed_weight", 1.0) or 0.0) * fixed_prefix
+        + float(getattr(args, "wang_probe_pair_weight", 0.0) or 0.0) * fix_pairs
+        - float(getattr(args, "wang_probe_target_weight", 0.0) or 0.0) * target_gap
+    )
+    return score, fix_pairs, fixed_prefix, target_gap
+
+
+def _wang_probe_layer_active(args: argparse.Namespace) -> bool:
+    window = max(0, int(getattr(args, "wang_probe_plateau_window", 0) or 0))
+    if window <= 1:
+        return True
+    history = list(getattr(args, "_best_n_history", []) or [])
+    if len(history) < window:
+        return False
+    recent = history[-window:]
+    delta = max(0, int(getattr(args, "wang_probe_plateau_delta", 0) or 0))
+    return max(recent) - min(recent) <= delta
+
+
+def _wang_search_depth_cap(base_depth_cap: int, incumbent_moves: int | None, args: argparse.Namespace) -> int:
+    if not getattr(args, "wang_cap_enabled", False):
+        return base_depth_cap
+    if incumbent_moves is None or incumbent_moves <= 0:
+        return base_depth_cap
+    return min(base_depth_cap, max(0, incumbent_moves - 1))
+
+
+def _code_to_stacks(code: bytes, stack_count: int, max_height: int) -> list[list[int]]:
+    return [[int(box) for box in chunk if box] for chunk in _split(code, stack_count, max_height)]
+
+
+def _moves_reach_n0_with_cap(instance: Instance, moves: list[Move], cap: int) -> bool:
+    state = State(stacks=[list(stack) for stack in instance.stacks])
+    _initial_code, initial_n = _encode(state.stacks, instance.stack_count, instance.max_height)
+    max_g = initial_n
+    try:
+        for move in moves:
+            state = apply_move(instance, state, move)
+            _code, n_value = _encode(state.stacks, instance.stack_count, instance.max_height)
+            max_g = max(max_g, state.move_count + n_value)
+    except Exception:
+        return False
+    _final_code, final_n = _encode(state.stacks, instance.stack_count, instance.max_height)
+    return final_n == 0 and max_g <= cap
+
+
+def _validated_wang_incumbent(instance: Instance, args: argparse.Namespace, cap: int, deadline: float) -> Solution | None:
+    if not getattr(args, "wang_incumbent_enabled", False):
+        return None
+    remaining = deadline - time.perf_counter()
+    if remaining <= 0:
+        return None
+    configured_limit = float(getattr(args, "wang_incumbent_time_limit", 0.0) or 0.0)
+    time_limit = min(remaining, configured_limit if configured_limit > 0 else remaining)
+    max_depth = int(getattr(args, "wang_incumbent_max_depth", 0) or 0)
+    if max_depth <= 0:
+        max_depth = max(1, cap)
+    config = SolverConfig(
+        max_depth=max_depth,
+        beam_width=max(1, int(getattr(args, "wang_incumbent_beam_width", 100) or 100)),
+        max_candidates_per_layer=max(1, int(getattr(args, "wang_incumbent_candidate_limit", 64) or 64)),
+        candidate_limit_per_state=max(1, int(getattr(args, "wang_incumbent_candidate_limit", 64) or 64)),
+        time_limit_sec=max(0.001, time_limit),
+    )
+    solution = WangBsBabyMovesSolver().solve(instance, config)
+    if not solution.feasible or not solution.moves:
+        return None
+    if not _moves_reach_n0_with_cap(instance, solution.moves, cap):
+        return None
+    return solution
+
+
+def _wang_rollout_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "wang_rollout_enabled", False):
+        return False
+    focus_n = int(getattr(args, "wang_rollout_focus_n", 8))
+    if focus_n >= 0 and best_n > focus_n:
+        return False
+    window = max(0, int(getattr(args, "wang_rollout_plateau_window", 0) or 0))
+    if window <= 1:
+        return True
+    history = list(getattr(args, "_best_n_history", []) or [])
+    if len(history) < window:
+        return False
+    recent = history[-window:]
+    delta = max(0, int(getattr(args, "wang_rollout_plateau_delta", 0) or 0))
+    return max(recent) - min(recent) <= delta
+
+
+def _wang_rollout_successor(
+    code: bytes,
+    n_value: int,
+    depth: int,
+    args: argparse.Namespace,
+) -> tuple[bytes, tuple[int, int, bytes]] | None:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return None
+    successors = list(_successors_with_n_cached(code, n_value, stack_count, max_height))
+    if not successors:
+        return None
+    child_code, child_n = min(
+        successors,
+        key=lambda item: (
+            item[1],
+            -_compact_wang_fix_pair_score(item[0], stack_count, max_height),
+            -_compact_wang_fixed_prefix_score(item[0], stack_count, max_height),
+            item[0],
+        ),
+    )
+    return child_code, (child_n, depth + 1, code)
+
+
+def _select_wang_pair_qubo_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], int, float]:
+    target = max(0, int(target))
+    if target <= 0 or not ranked:
+        return [], 0, 0.0
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return [], 0, 0.0
+    max_vars = max(1, int(getattr(args, "wang_pair_qubo_max_vars", 32) or 32))
+    scored = [
+        (
+            _compact_wang_fix_pair_score(code, stack_count, max_height),
+            _compact_wang_fixed_prefix_score(code, stack_count, max_height),
+            code,
+            data,
+        )
+        for code, data in ranked
+    ]
+    scored = [item for item in scored if item[0] > 0 or item[1] > 0]
+    if not scored:
+        return [], 0, 0.0
+    scored.sort(key=lambda item: (-item[0], -item[1], item[3][0], item[3][1], item[3][2], item[2]))
+    usable = scored[:max_vars]
+    target = min(target, len(usable))
+    hi = max((pair_score for pair_score, _fixed, _code, _data in usable), default=0)
+    if hi <= 0:
+        hi = max((fixed for _pair_score, fixed, _code, _data in usable), default=1)
+
+    model = QuboModel()
+    vars_ = [model.add_binary_var(f"wp_{idx}") for idx in range(len(usable))]
+    linear: list[float] = []
+    for idx, (pair_score, fixed, _code, _data) in enumerate(usable):
+        score = pair_score if pair_score > 0 else fixed
+        value = -float(score) / max(1.0, float(hi))
+        linear.append(value)
+        model.add_linear(vars_[idx], value)
+    same_parent_penalty = float(getattr(args, "wang_pair_qubo_same_parent_penalty", 0.25) or 0.0)
+    if same_parent_penalty > 0:
+        for i in range(len(usable)):
+            parent_i = usable[i][3][2]
+            for j in range(i + 1, len(usable)):
+                if parent_i == usable[j][3][2]:
+                    model.add_quadratic(vars_[i], vars_[j], same_parent_penalty)
+    model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0)))
+    sample_set = SimulatedAnnealingQuboSampler().sample(
+        model,
+        QuboSamplerConfig(
+            num_reads=max(1, int(getattr(args, "qubo_reads", 2) or 2)),
+            random_seed=int(getattr(args, "seed", 37)) + 7001 + int(getattr(args, "_wang_pair_qubo_calls_done", 0)),
+            time_limit_sec=max(0.001, float(getattr(args, "qubo_time_limit", 0.001) or 0.001)),
+            sa_iterations=max(1, int(getattr(args, "qubo_iterations", 20) or 20)),
+        ),
+    )
+    picked: set[int] = set()
+    if sample_set.samples:
+        picked = {idx for idx in range(len(usable)) if sample_set.samples[0].binary_values.get(idx, 0) == 1}
+    while len(picked) > target:
+        picked.remove(max(picked, key=lambda idx: (linear[idx], idx)))
+    while len(picked) < target:
+        missing = [idx for idx in range(len(usable)) if idx not in picked]
+        if not missing:
+            break
+        picked.add(min(missing, key=lambda idx: (linear[idx], idx)))
+    ordered = sorted(picked, key=lambda idx: (linear[idx], usable[idx][3][0], usable[idx][3][1], usable[idx][2]))
+    return [usable[idx][2] for idx in ordered], len(model.var_index), sample_set.runtime_sec
+
+
+def _append_wang_rollout_frontier(
+    selected_codes: list[bytes],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+) -> set[bytes]:
+    if not selected_codes:
+        return set()
+    best_n = min(candidates[code][0] for code in selected_codes if code in candidates)
+    if not _wang_rollout_layer_active(args, best_n):
+        return set()
+    width = max(0, int(getattr(args, "wang_rollout_width", 0) or 0))
+    if width <= 0:
+        return set()
+    added: set[bytes] = set()
+    selected_set = set(selected_codes)
+    origins = sorted(
+        [code for code in selected_codes if code in candidates],
+        key=lambda code: _candidate_sort_key((code, candidates[code]), args),
+    )
+    for code in origins:
+        if len(added) >= width:
+            break
+        n_value, depth, _parent = candidates[code]
+        child = _wang_rollout_successor(code, n_value, depth, args)
+        if child is None:
+            continue
+        child_code, child_data = child
+        child_n, child_depth, _child_parent = child_data
+        if child_code in selected_set or child_code in added:
+            continue
+        if child_depth + child_n > depth_cap:
+            continue
+        old_best_depth = best_depth.get(child_code) if best_depth is not None else None
+        if old_best_depth is not None and child_depth >= old_best_depth:
+            continue
+        old = candidates.get(child_code)
+        if old is not None and old[1] <= child_depth:
+            continue
+        candidates[child_code] = child_data
+        selected_codes.append(child_code)
+        added.add(child_code)
+    return added
+
+
 def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
     code, (n_value, depth, parent_code) = item
     if args.priority == "astar":
         primary = float(depth + n_value)
     elif args.priority == "weighted_astar":
         primary = float(args.g_weight * depth + args.n_weight * n_value)
+    elif args.priority == "target_guided":
+        focus_n = int(getattr(args, "target_guided_focus_n", 8))
+        layer_best_n = int(getattr(args, "_layer_best_n", n_value))
+        if focus_n >= 0 and layer_best_n > focus_n:
+            return (n_value, depth, parent_code, code)
+        target_gap = _candidate_target_gap(code, args)
+        weighted_gap = float(getattr(args, "target_guided_weight", 0.0)) * target_gap
+        return (n_value, depth, weighted_gap, target_gap, parent_code, code)
     else:
         primary = float(n_value * 1_000_000 + depth)
     return (primary, n_value, depth, parent_code, code)
 
 
 def _candidate_sort_key(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
+    if args.priority == "target_guided":
+        return _candidate_rank(item, args)
     if args.priority != "n_then_depth":
         return _candidate_rank(item, args)
     code, (n_value, depth, parent_code) = item
@@ -669,6 +1806,8 @@ def _candidate_sort_key(item: tuple[bytes, tuple[int, int, bytes]], args: argpar
 
 
 def _candidate_key_func(args: argparse.Namespace):
+    if args.priority == "target_guided":
+        return lambda item: _candidate_rank(item, args)
     if args.priority == "n_then_depth":
         return lambda item: (item[1][0], item[1][1], item[1][2], item[0])
     return lambda item: _candidate_rank(item, args)
@@ -688,6 +1827,123 @@ def _rank_candidates(
     pool = heapq.nsmallest(rank_pool_size, candidates.items(), key=key_func)
     args._rank_pool_truncated_candidates += len(candidates) - len(pool)
     return sorted(pool, key=key_func)
+
+
+def _rank_bucket_key_for_candidate(data: tuple[int, int, bytes], args: argparse.Namespace) -> tuple:
+    n_value, depth, parent_code = data
+    key = getattr(args, "rank_bucket_key", "n_depth_parent")
+    if key == "n":
+        return (n_value,)
+    if key == "n_depth_parent":
+        return (n_value, depth, parent_code)
+    if key == "n_depth":
+        return (n_value, depth)
+    if key == "n_band_parent":
+        band_size = max(1, int(getattr(args, "rank_bucket_n_band_size", 2)))
+        return (n_value // band_size, parent_code)
+    if key == "n_band":
+        band_size = max(1, int(getattr(args, "rank_bucket_n_band_size", 2)))
+        return (n_value // band_size, depth)
+    if key == "parent":
+        return (parent_code,)
+    raise ValueError(f"unknown rank bucket key: {key}")
+
+
+def _rank_bucket_topk_candidates(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    topk = max(0, int(getattr(args, "rank_bucket_topk", 0) or 0))
+    if topk <= 0:
+        return sorted(candidates.items(), key=_candidate_key_func(args))
+    if not hasattr(args, "_rank_pool_truncated_candidates"):
+        args._rank_pool_truncated_candidates = 0
+
+    buckets: dict[tuple, list[tuple[bytes, tuple[int, int, bytes]]]] = {}
+    for item in candidates.items():
+        buckets.setdefault(_rank_bucket_key_for_candidate(item[1], args), []).append(item)
+
+    kept: list[tuple[bytes, tuple[int, int, bytes]]] = []
+    key_func = _candidate_key_func(args)
+    for bucket_items in buckets.values():
+        if len(bucket_items) > topk:
+            kept.extend(heapq.nsmallest(topk, bucket_items, key=key_func))
+            args._rank_pool_truncated_candidates += len(bucket_items) - topk
+        else:
+            kept.extend(bucket_items)
+    return sorted(kept, key=key_func)
+
+
+def _add_target_guided_supplement(
+    selected: dict[bytes, None],
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    effective_beam: int,
+    best_n: int,
+) -> None:
+    width = max(0, int(getattr(args, "target_guided_supplement_width", 0) or 0))
+    if width <= 0 or len(selected) >= effective_beam:
+        return
+    focus_n = int(getattr(args, "target_guided_focus_n", 8))
+    if focus_n >= 0 and best_n > focus_n:
+        return
+    if not getattr(args, "_layout_target_groups", ()):
+        return
+    n_window = max(0, int(getattr(args, "target_guided_n_window", 0) or 0))
+    remaining = [
+        (code, data)
+        for code, data in ranked
+        if code not in selected and data[0] <= best_n + n_window
+    ]
+    if not remaining:
+        return
+    target = min(effective_beam, len(selected) + width)
+    for code, _data in sorted(
+        remaining,
+        key=lambda item: (_candidate_target_gap(item[0], args), item[1][0], item[1][1], item[1][2], item[0]),
+    ):
+        selected.setdefault(code, None)
+        if len(selected) >= target:
+            break
+
+
+def _add_wang_probe_supplement(
+    selected: dict[bytes, None],
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    effective_beam: int,
+    best_n: int,
+) -> None:
+    width = max(0, int(getattr(args, "wang_probe_supplement_width", 0) or 0))
+    if width <= 0 or len(selected) >= effective_beam:
+        return
+    focus_n = int(getattr(args, "wang_probe_focus_n", 8))
+    if focus_n >= 0 and best_n > focus_n:
+        return
+    if not _wang_probe_layer_active(args):
+        return
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return
+    n_window = max(0, int(getattr(args, "wang_probe_n_window", 0) or 0))
+    remaining = [
+        (code, data)
+        for code, data in ranked
+        if code not in selected and data[0] <= best_n + n_window
+    ]
+    if not remaining:
+        return
+    target = min(effective_beam, len(selected) + width)
+    def sort_key(item: tuple[bytes, tuple[int, int, bytes]]) -> tuple:
+        score, fix_pairs, fixed_prefix, target_gap = _candidate_wang_probe_score(item[0], args)
+        return (-score, -fix_pairs, -fixed_prefix, target_gap, item[1][0], item[1][1], item[1][2], item[0])
+
+    take = max(1, target - len(selected))
+    for code, _data in heapq.nsmallest(take, remaining, key=sort_key):
+        selected.setdefault(code, None)
+        if len(selected) >= target:
+            break
 
 
 def _repair_group_qubo_selection(linear: list[float], selected: set[int], target: int) -> set[int]:
@@ -929,17 +2185,105 @@ def _select_dynamic_qubo_frontier(
     return selected_codes, selected_by_qubo & selected_set, 1, qvars, qtime
 
 
-def _adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> int:
+def _record_adaptive_width(args: argparse.Namespace, width: int, reason: str) -> int:
+    width = max(1, int(width))
+    setattr(args, "_adaptive_last_width", width)
+    setattr(args, "_adaptive_last_reason", reason)
+    if reason.startswith("contract"):
+        args._adaptive_contract_layers = int(getattr(args, "_adaptive_contract_layers", 0)) + 1
+    elif reason.startswith("mid"):
+        args._adaptive_mid_layers = int(getattr(args, "_adaptive_mid_layers", 0)) + 1
+    elif reason.startswith("expand"):
+        args._adaptive_expand_layers = int(getattr(args, "_adaptive_expand_layers", 0)) + 1
+    else:
+        args._adaptive_wide_layers = int(getattr(args, "_adaptive_wide_layers", 0)) + 1
+    return width
+
+
+def _tiered_adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> tuple[int, str]:
     high_n = int(getattr(args, "adaptive_high_n", 16))
     low_n = int(getattr(args, "adaptive_low_n", 8))
     high_frontier = max(1, int(getattr(args, "adaptive_high_frontier", args.beam_width)))
     mid_frontier = max(1, int(getattr(args, "adaptive_mid_frontier", args.beam_width)))
     low_frontier = max(1, int(getattr(args, "adaptive_low_frontier", args.beam_width)))
     if best_n > high_n:
-        return high_frontier
+        return high_frontier, "contract_high_n"
     if best_n <= low_n:
-        return low_frontier
-    return mid_frontier
+        return low_frontier, "wide_low_n"
+    return mid_frontier, "mid_n"
+
+
+def _plateau_active(history: list[int], window: int, delta: int) -> bool:
+    if window <= 1 or len(history) < window:
+        return False
+    recent = history[-window:]
+    return max(recent) - min(recent) <= delta
+
+
+def _signal_adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> tuple[int, str]:
+    high_n = int(getattr(args, "adaptive_high_n", 16))
+    low_n = int(getattr(args, "adaptive_low_n", 8))
+    high_frontier = max(1, int(getattr(args, "adaptive_high_frontier", args.beam_width)))
+    mid_frontier = max(1, int(getattr(args, "adaptive_mid_frontier", args.beam_width)))
+    low_frontier = max(1, int(getattr(args, "adaptive_low_frontier", args.beam_width)))
+    expand_frontier = max(low_frontier, int(getattr(args, "adaptive_expand_frontier", low_frontier)))
+    base_width = max(1, int(getattr(args, "beam_width", low_frontier)))
+    candidate_count = max(0, int(getattr(args, "_layer_candidate_count", 0)))
+    candidate_pressure = candidate_count / base_width
+    contract_pressure = float(getattr(args, "adaptive_contract_pressure", 0.0) or 0.0)
+    mid_pressure = float(getattr(args, "adaptive_mid_pressure", 0.0) or 0.0)
+
+    history = list(getattr(args, "_best_n_history", []) or [])
+    plateau_window = max(0, int(getattr(args, "adaptive_plateau_window", 0) or 0))
+    plateau_delta = max(0, int(getattr(args, "adaptive_plateau_delta", 0) or 0))
+    cap_slack = int(getattr(args, "adaptive_cap_slack", 0) or 0)
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    large_stack_min = int(getattr(args, "adaptive_large_stack_min_stacks", 0) or 0)
+    if large_stack_min > 0 and stack_count >= large_stack_min:
+        large_expand = int(getattr(args, "adaptive_large_stack_expand_frontier", 0) or 0)
+        if large_expand > 0:
+            expand_frontier = max(expand_frontier, large_expand)
+        large_window = int(getattr(args, "adaptive_large_stack_plateau_window", 0) or 0)
+        if large_window > 0:
+            plateau_window = large_window if plateau_window <= 1 else min(plateau_window, large_window)
+        large_slack = int(getattr(args, "adaptive_large_stack_cap_slack", 0) or 0)
+        if large_slack > 0:
+            cap_slack = max(cap_slack, large_slack)
+    depth_slack = int(getattr(args, "_layer_depth_slack", 10**9))
+    if cap_slack > 0 and depth_slack <= cap_slack and _plateau_active(history, plateau_window, plateau_delta):
+        return expand_frontier, "expand_plateau_tight_slack"
+
+    parent_limit = float(getattr(args, "adaptive_parent_top_share", 0.0) or 0.0)
+    if parent_limit > 0.0 and float(getattr(args, "_layer_parent_top_share", 0.0)) >= parent_limit:
+        return expand_frontier, "expand_parent_collapse"
+
+    max_duplication = float(getattr(args, "adaptive_max_duplication_ratio", 1.0))
+    if max_duplication >= 0.0:
+        duplication = float(getattr(args, "_priority_duplication_ratio", 0.0))
+        if duplication > max_duplication + 1e-12:
+            return low_frontier, "wide_priority_duplication"
+
+    if best_n <= low_n:
+        return low_frontier, "wide_low_n"
+
+    initial_n = max(1, int(getattr(args, "_initial_n", best_n if best_n > 0 else 1)))
+    min_ratio = float(getattr(args, "adaptive_min_best_n_ratio", 0.0) or 0.0)
+    if min_ratio > 0.0 and (best_n / initial_n) < min_ratio:
+        return low_frontier, "wide_late_search"
+
+    if best_n > high_n and contract_pressure > 0.0 and candidate_pressure >= contract_pressure:
+        return high_frontier, "contract_high_pressure"
+    if best_n > low_n and mid_pressure > 0.0 and candidate_pressure >= mid_pressure:
+        return mid_frontier, "mid_candidate_pressure"
+    return low_frontier, "wide_low_pressure"
+
+
+def _adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> int:
+    if getattr(args, "adaptive_controller", "tiered") == "signal_v1":
+        width, reason = _signal_adaptive_frontier_width(args, best_n)
+    else:
+        width, reason = _tiered_adaptive_frontier_width(args, best_n)
+    return _record_adaptive_width(args, width, reason)
 
 
 def _select_enhanced_qubo_frontier(
@@ -986,6 +2330,44 @@ def _select_enhanced_qubo_frontier(
     qcalls = qvars = 0
     qtime = 0.0
     best_n = ranked[0][1][0] if ranked else math.inf
+    _add_target_guided_supplement(selected, ranked, args, effective_beam, int(best_n))
+    _add_wang_probe_supplement(selected, ranked, args, effective_beam, int(best_n))
+    pair_width = max(0, int(getattr(args, "wang_pair_qubo_supplement_width", 0) or 0))
+    pair_focus_n = int(getattr(args, "wang_pair_qubo_focus_n", 8))
+    if (
+        getattr(args, "wang_pair_qubo_enabled", False)
+        and args.use_qubo
+        and pair_width > 0
+        and len(selected) < effective_beam
+        and (pair_focus_n < 0 or int(best_n) <= pair_focus_n)
+    ):
+        n_window = max(0, int(getattr(args, "wang_pair_qubo_n_window", 1) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(pair_width, effective_beam - len(selected), int(getattr(args, "wang_pair_qubo_select", pair_width) or pair_width))
+        boosted, add_qvars, add_qtime = _select_wang_pair_qubo_supplement(remaining, args, target)
+        if add_qvars:
+            if not hasattr(args, "_wang_pair_qubo_calls_done"):
+                args._wang_pair_qubo_calls_done = 0
+            if not hasattr(args, "_wang_pair_qubo_vars"):
+                args._wang_pair_qubo_vars = 0
+            if not hasattr(args, "_wang_pair_qubo_time"):
+                args._wang_pair_qubo_time = 0.0
+            qcalls += 1
+            qvars += add_qvars
+            qtime += add_qtime
+            args._wang_pair_qubo_calls_done += 1
+            args._wang_pair_qubo_vars += add_qvars
+            args._wang_pair_qubo_time += add_qtime
+            for code in boosted:
+                if code not in selected:
+                    selected_by_qubo.add(code)
+                selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
     qubo_enabled = (
         args.use_qubo
         and candidate_count >= args.qubo_min_candidates
@@ -1087,12 +2469,115 @@ def _select_enhanced_qubo_frontier(
     return selected_codes, selected_by_qubo & selected_set, qcalls, qvars, qtime
 
 
+def _rescue_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "rescue_enabled", False):
+        return False
+    if best_n < int(getattr(args, "rescue_min_n", 0)):
+        return False
+    if int(getattr(args, "_rescue_layers_used", 0)) >= int(getattr(args, "rescue_max_layers", 0)):
+        return False
+    if int(getattr(args, "_layer_candidate_count", 0)) < int(getattr(args, "rescue_min_candidates", 0)):
+        return False
+    if int(getattr(args, "_layer_depth_slack", 10**9)) > int(getattr(args, "rescue_cap_slack", 0)):
+        return False
+
+    window = max(2, int(getattr(args, "rescue_plateau_window", 4)))
+    history = getattr(args, "_best_n_history", [])
+    if len(history) < window:
+        return False
+    recent = history[-window:]
+    return max(recent) - min(recent) <= int(getattr(args, "rescue_plateau_delta", 0))
+
+
+def _with_temporary_args(
+    args: argparse.Namespace,
+    overrides: dict[str, object],
+    fn,
+):
+    missing = object()
+    saved = {key: getattr(args, key, missing) for key in overrides}
+    for key, value in overrides.items():
+        setattr(args, key, value)
+    try:
+        return fn()
+    finally:
+        for key, value in saved.items():
+            if value is missing:
+                delattr(args, key)
+            else:
+                setattr(args, key, value)
+
+
+def _rescue_frontier_widths(args: argparse.Namespace) -> tuple[int, int]:
+    beam_width = max(args.beam_width, int(getattr(args, "rescue_beam_width", args.beam_width)))
+    core_width = max(args.core_width, int(getattr(args, "rescue_core_width", args.core_width)))
+    escalate_after = int(getattr(args, "rescue_escalate_after", 0))
+    if escalate_after > 0 and int(getattr(args, "_rescue_layers_used", 0)) >= escalate_after:
+        escalate_beam = int(getattr(args, "rescue_escalate_beam_width", 0) or beam_width)
+        escalate_core = int(getattr(args, "rescue_escalate_core_width", 0) or core_width)
+        beam_width = max(beam_width, escalate_beam)
+        core_width = max(core_width, escalate_core)
+    core_width = min(core_width, beam_width)
+    return beam_width, core_width
+
+
+def _select_rescue_qubo_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    best_n = int(ranked[0][1][0]) if ranked else math.inf
+    if not _rescue_layer_active(args, best_n):
+        return _select_enhanced_qubo_frontier(ranked, candidate_count, args)
+
+    beam_width, core_width = _rescue_frontier_widths(args)
+    supplement_width = max(
+        args.qubo_supplement_width,
+        int(getattr(args, "rescue_qubo_supplement_width", args.qubo_supplement_width)),
+    )
+    cohorts_per_layer = max(1, int(getattr(args, "rescue_qubo_cohorts_per_layer", args.qubo_cohorts_per_layer)))
+    overrides: dict[str, object] = {
+        "max_qubo_calls": max(args.max_qubo_calls, args._qubo_calls_done + cohorts_per_layer),
+        "max_qubo_vars": max(args.max_qubo_vars, int(getattr(args, "rescue_max_qubo_vars", args.max_qubo_vars))),
+        "qubo_supplement_width": supplement_width,
+        "qubo_focus_n": -1,
+        "qubo_cohorts_per_layer": cohorts_per_layer,
+        "qubo_time_limit": max(args.qubo_time_limit, float(getattr(args, "rescue_qubo_time_limit", args.qubo_time_limit))),
+        "qubo_iterations": max(args.qubo_iterations, int(getattr(args, "rescue_qubo_iterations", args.qubo_iterations))),
+        "qubo_next_n_weight": max(
+            float(getattr(args, "qubo_next_n_weight", 0.0)),
+            float(getattr(args, "rescue_next_n_weight", getattr(args, "qubo_next_n_weight", 0.0))),
+        ),
+    }
+
+    before_calls = args._qubo_calls_done
+
+    def select():
+        return _select_enhanced_qubo_frontier(
+            ranked,
+            candidate_count,
+            args,
+            beam_width=beam_width,
+            core_width=core_width,
+            qubo_supplement_width=supplement_width,
+        )
+
+    selected = _with_temporary_args(args, overrides, select)
+    args._rescue_layers_used += 1
+    args._rescue_qubo_calls += args._qubo_calls_done - before_calls
+    args._rescue_qubo_vars += selected[3]
+    args._rescue_qubo_time += selected[4]
+    return selected
+
+
 def _select_adaptive_qubo_frontier(
     ranked: list[tuple[bytes, tuple[int, int, bytes]]],
     candidate_count: int,
     args: argparse.Namespace,
 ) -> tuple[list[bytes], set[bytes], int, int, float]:
-    best_n = ranked[0][1][0] if ranked else math.inf
+    best_n = int(ranked[0][1][0]) if ranked else math.inf
+    if _rescue_layer_active(args, best_n):
+        return _select_rescue_qubo_frontier(ranked, candidate_count, args)
     beam_width = _adaptive_frontier_width(args, int(best_n))
     core_width = int(round(beam_width * float(getattr(args, "adaptive_core_ratio", 0.9))))
     return _select_enhanced_qubo_frontier(
@@ -1105,10 +2590,343 @@ def _select_adaptive_qubo_frontier(
     )
 
 
+def _scheduler_uses_adaptive(args: argparse.Namespace, best_n: int) -> bool:
+    min_stacks = max(1, int(getattr(args, "scheduler_adaptive_min_stacks", 7)))
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    if stack_count < min_stacks:
+        return False
+    case_id = str(getattr(args, "_case_id", "")).lower()
+    if getattr(args, "scheduler_adaptive_cv1_only", False) and "cv" in case_id and "cv1" not in case_id:
+        return False
+    max_duplication = float(getattr(args, "scheduler_adaptive_max_duplication_ratio", 1.0))
+    if max_duplication >= 0.0:
+        duplication = float(getattr(args, "_priority_duplication_ratio", 0.0))
+        if duplication > max_duplication + 1e-12:
+            return False
+    initial_n = max(1, int(getattr(args, "_initial_n", best_n if best_n > 0 else 1)))
+    min_best_n_ratio = float(getattr(args, "scheduler_adaptive_min_best_n_ratio", 0.0) or 0.0)
+    if min_best_n_ratio > 0.0 and (best_n / initial_n) < min_best_n_ratio:
+        return False
+    max_candidate_pressure = float(getattr(args, "scheduler_adaptive_max_candidate_pressure", 0.0) or 0.0)
+    if max_candidate_pressure > 0.0:
+        pressure = int(getattr(args, "_layer_candidate_count", 0)) / max(1, int(getattr(args, "beam_width", 1)))
+        if pressure > max_candidate_pressure:
+            return False
+    max_parent_top_share = float(getattr(args, "scheduler_adaptive_max_parent_top_share", 0.0) or 0.0)
+    if max_parent_top_share > 0.0 and float(getattr(args, "_layer_parent_top_share", 0.0)) > max_parent_top_share:
+        return False
+    plateau_window = max(0, int(getattr(args, "scheduler_adaptive_plateau_window", 0) or 0))
+    cap_slack = int(getattr(args, "scheduler_adaptive_cap_slack", 0) or 0)
+    history = getattr(args, "_best_n_history", [])
+    if plateau_window > 1 and cap_slack > 0 and len(history) >= plateau_window:
+        recent = history[-plateau_window:]
+        if max(recent) == min(recent) and int(getattr(args, "_layer_depth_slack", 10**9)) <= cap_slack:
+            return False
+    return best_n > int(getattr(args, "scheduler_adaptive_high_n", getattr(args, "adaptive_high_n", 16)))
+
+
+def _select_scheduler_qubo_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    if not ranked:
+        return [], set(), 0, 0, 0.0
+    best_n = int(ranked[0][1][0])
+    if _rescue_layer_active(args, best_n):
+        return _select_rescue_qubo_frontier(ranked, candidate_count, args)
+    if _scheduler_uses_adaptive(args, best_n):
+        return _select_adaptive_qubo_frontier(ranked, candidate_count, args)
+    return _select_enhanced_qubo_frontier(ranked, candidate_count, args)
+
+
+def _top_n_band_for_ranked(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    window: int,
+) -> int:
+    if not ranked:
+        return 0
+    take = max(1, min(window, len(ranked)))
+    n_values = [data[0] for _code, data in ranked[:take]]
+    return max(n_values) - min(n_values)
+
+
+def _scheduler_state_guard_action(args: argparse.Namespace, name: str) -> str:
+    action = str(getattr(args, name, "protect") or "protect")
+    return action if action in {"protect", "blend", "rescue"} else "protect"
+
+
+def _scheduler_state_action(args: argparse.Namespace, best_n: int) -> str:
+    if getattr(args, "scheduler_state_controller", "off") != "state_v2":
+        return "protect"
+
+    locked_action = str(getattr(args, "_scheduler_state_locked_action", "") or "")
+    if locked_action in {"protect", "blend", "rescue"}:
+        return locked_action
+
+    history = list(getattr(args, "_best_n_history", []) or [])
+    depth_slack = int(getattr(args, "_layer_depth_slack", 10**9))
+    rescue_window = max(2, int(getattr(args, "scheduler_state_rescue_plateau_window", 3)))
+    rescue_delta = max(0, int(getattr(args, "scheduler_state_rescue_plateau_delta", 0)))
+    rescue_slack = int(getattr(args, "scheduler_state_rescue_cap_slack", 0))
+    if rescue_slack > 0 and depth_slack <= rescue_slack and _plateau_active(history, rescue_window, rescue_delta):
+        return "rescue"
+
+    initial_plateau_window = max(0, int(getattr(args, "scheduler_state_initial_plateau_window", 0) or 0))
+    if initial_plateau_window > 1 and len(history) >= initial_plateau_window:
+        initial_n = max(1, int(getattr(args, "_initial_n", best_n if best_n > 0 else 1)))
+        min_initial_ratio = float(getattr(args, "scheduler_state_initial_plateau_min_ratio", 0.0) or 0.0)
+        min_duplication = float(getattr(args, "scheduler_state_initial_plateau_min_duplication", 0.0) or 0.0)
+        unique_min_n = max(0, int(getattr(args, "scheduler_state_initial_plateau_unique_min_n", 0) or 0))
+        duplication = float(getattr(args, "_priority_duplication_ratio", 0.0) or 0.0)
+        recent_initial = history[-initial_plateau_window:]
+        unique_low_n_blocked = duplication <= 0.0 and initial_n < unique_min_n
+        if (
+            not unique_low_n_blocked
+            and duplication >= min_duplication
+            and max(recent_initial) == min(recent_initial)
+            and (best_n / initial_n) >= min_initial_ratio
+        ):
+            action = _scheduler_state_guard_action(args, "scheduler_state_initial_plateau_action")
+            if getattr(args, "scheduler_state_initial_plateau_lock", False):
+                args._scheduler_state_locked_action = action
+            return action
+
+    parent_limit = float(getattr(args, "scheduler_state_protect_parent_top_share", 0.0) or 0.0)
+    if parent_limit > 0.0 and float(getattr(args, "_layer_parent_top_share", 0.0)) >= parent_limit:
+        return "protect"
+
+    n_band_limit = int(getattr(args, "scheduler_state_protect_n_band", 0) or 0)
+    if n_band_limit > 0 and int(getattr(args, "_layer_top_n_band", 0)) > n_band_limit:
+        return "protect"
+
+    min_ratio = float(getattr(args, "scheduler_state_min_best_n_ratio", 0.0) or 0.0)
+    if min_ratio > 0.0:
+        initial_n = max(1, int(getattr(args, "_initial_n", best_n if best_n > 0 else 1)))
+        if best_n / initial_n < min_ratio:
+            return "protect"
+
+    contract_pressure = float(getattr(args, "scheduler_state_contract_pressure", 0.0) or 0.0)
+    candidate_count = max(0, int(getattr(args, "_layer_candidate_count", 0)))
+    pressure = candidate_count / max(1, int(getattr(args, "beam_width", 1)))
+    if contract_pressure > 0.0 and pressure < contract_pressure:
+        return "protect"
+    max_contract_pressure = float(getattr(args, "scheduler_state_max_contract_pressure", 0.0) or 0.0)
+    if max_contract_pressure > 0.0 and pressure > max_contract_pressure:
+        return "protect"
+
+    progress_window = max(2, int(getattr(args, "scheduler_state_progress_window", 3)))
+    progress_delta = max(0, int(getattr(args, "scheduler_state_progress_delta", 1)))
+    if len(history) < progress_window:
+        return "protect"
+    recent = history[-progress_window:]
+    if recent[0] - recent[-1] < progress_delta:
+        return "protect"
+
+    cooldown = max(0, int(getattr(args, "scheduler_state_failed_contract_cooldown", 0) or 0))
+    if cooldown > 0 and getattr(args, "_scheduler_state_last_action", "") == "contract" and len(history) >= 2:
+        if history[-2] <= history[-1]:
+            return "protect"
+
+    post_rescue_window = max(0, int(getattr(args, "scheduler_state_post_rescue_plateau_window", 0) or 0))
+    if (
+        post_rescue_window > 1
+        and getattr(args, "_scheduler_state_last_effective_action", "") == "rescue"
+        and _plateau_active(
+            history,
+            post_rescue_window,
+            max(0, int(getattr(args, "scheduler_state_post_rescue_plateau_delta", 0) or 0)),
+        )
+    ):
+        initial_n = max(1, int(getattr(args, "_initial_n", best_n if best_n > 0 else 1)))
+        min_rescue_ratio = float(getattr(args, "scheduler_state_post_rescue_min_ratio", 0.0) or 0.0)
+        if min_rescue_ratio <= 0.0 or (best_n / initial_n) >= min_rescue_ratio:
+            return _scheduler_state_guard_action(args, "scheduler_state_post_rescue_action")
+
+    high_n = int(getattr(args, "scheduler_adaptive_high_n", getattr(args, "adaptive_high_n", 16)))
+    if best_n <= high_n:
+        return "protect"
+    return "contract"
+
+
+def _select_scheduler_state_blend_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    selected_codes, selected_by_qubo, qcalls, qvars, qtime = _select_adaptive_qubo_frontier(ranked, candidate_count, args)
+    target = max(1, min(int(getattr(args, "beam_width", len(ranked))), len(ranked)))
+    if len(selected_codes) >= target:
+        return selected_codes, selected_by_qubo, qcalls, qvars, qtime
+    selected = dict.fromkeys(selected_codes)
+    for code, _data in ranked:
+        selected.setdefault(code, None)
+        if len(selected) >= target:
+            break
+    selected_set = set(selected)
+    blended_codes = [code for code, _data in ranked if code in selected_set][:target]
+    return blended_codes, selected_by_qubo & set(blended_codes), qcalls, qvars, qtime
+
+
+def _select_scheduler_state_qubo_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    if not ranked:
+        return [], set(), 0, 0, 0.0
+    top_window = max(1, int(getattr(args, "scheduler_state_top_window", 64) or 64))
+    args._layer_top_n_band = _top_n_band_for_ranked(ranked, top_window)
+    best_n = int(ranked[0][1][0])
+    action = _scheduler_state_action(args, best_n)
+    args._scheduler_state_last_action = action
+    before_rescue_layers = int(getattr(args, "_rescue_layers_used", 0))
+    if action == "rescue":
+        args._scheduler_state_rescue_layers = int(getattr(args, "_scheduler_state_rescue_layers", 0)) + 1
+        selected = _select_rescue_qubo_frontier(ranked, candidate_count, args)
+        after_rescue_layers = int(getattr(args, "_rescue_layers_used", 0))
+        args._scheduler_state_last_effective_action = "rescue" if after_rescue_layers > before_rescue_layers else "protect"
+        return selected
+    if action == "contract":
+        args._scheduler_state_contract_layers = int(getattr(args, "_scheduler_state_contract_layers", 0)) + 1
+        selected = _select_adaptive_qubo_frontier(ranked, candidate_count, args)
+        after_rescue_layers = int(getattr(args, "_rescue_layers_used", 0))
+        args._scheduler_state_last_effective_action = "rescue" if after_rescue_layers > before_rescue_layers else "contract"
+        return selected
+    if action == "blend":
+        args._scheduler_state_blend_layers = int(getattr(args, "_scheduler_state_blend_layers", 0)) + 1
+        selected = _select_scheduler_state_blend_frontier(ranked, candidate_count, args)
+        after_rescue_layers = int(getattr(args, "_rescue_layers_used", 0))
+        args._scheduler_state_last_effective_action = "rescue" if after_rescue_layers > before_rescue_layers else "blend"
+        return selected
+    args._scheduler_state_protect_layers = int(getattr(args, "_scheduler_state_protect_layers", 0)) + 1
+    selected = _select_enhanced_qubo_frontier(ranked, candidate_count, args)
+    args._scheduler_state_last_effective_action = "protect"
+    return selected
+
+
+def _bucket_key_for_candidate(data: tuple[int, int, bytes], args: argparse.Namespace) -> tuple[int, int]:
+    n_value, depth, _parent = data
+    key = getattr(args, "bucket_key", "n_depth")
+    if key == "n_depth":
+        return (n_value, depth)
+    if key == "f_n":
+        return (n_value + depth, n_value)
+    if key == "n_band":
+        band_size = max(1, int(getattr(args, "bucket_n_band_size", 2)))
+        return (n_value // band_size, depth)
+    raise ValueError(f"unknown bucket key: {key}")
+
+
+def _select_qubo_bucket_frontier(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    candidate_count: int,
+    args: argparse.Namespace,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    del candidate_count
+    if not ranked:
+        return [], set(), 0, 0, 0.0
+
+    effective_beam = max(1, min(args.beam_width, len(ranked)))
+    selected: dict[bytes, None] = {}
+    selected_by_qubo: set[bytes] = set()
+    qcalls = qvars = 0
+    qtime = 0.0
+
+    bucket_order: list[tuple[int, int]] = []
+    buckets: dict[tuple[int, int], list[tuple[bytes, tuple[int, int, bytes]]]] = {}
+    for item in ranked:
+        key = _bucket_key_for_candidate(item[1], args)
+        if key not in buckets:
+            buckets[key] = []
+            bucket_order.append(key)
+        buckets[key].append(item)
+
+    core_ratio = max(0.0, min(1.0, float(getattr(args, "bucket_core_ratio", 0.5))))
+    qubo_share = max(0.0, min(1.0, float(getattr(args, "bucket_qubo_share", 0.35))))
+    bucket_min = max(1, int(getattr(args, "bucket_min_candidates", args.qubo_min_candidates)))
+
+    for key in bucket_order:
+        bucket_items = buckets[key]
+        remaining = effective_beam - len(selected)
+        if remaining <= 0:
+            break
+
+        core_count = int(round(len(bucket_items) * core_ratio))
+        if core_ratio > 0.0 and core_count == 0:
+            core_count = 1
+        core_count = max(0, min(core_count, remaining, len(bucket_items)))
+        for code, _data in bucket_items[:core_count]:
+            selected.setdefault(code, None)
+            if len(selected) >= effective_beam:
+                break
+
+        remaining = effective_beam - len(selected)
+        if remaining <= 0:
+            break
+
+        qubo_candidates = [(code, data) for code, data in bucket_items if code not in selected]
+        target_by_share = int(round(len(bucket_items) * qubo_share))
+        if qubo_share > 0.0 and target_by_share == 0:
+            target_by_share = 1
+        qtarget = min(
+            max(0, int(getattr(args, "bucket_qubo_select", args.qubo_supplement_width))),
+            max(0, target_by_share),
+            remaining,
+            len(qubo_candidates),
+        )
+        qubo_enabled = (
+            getattr(args, "use_qubo", False)
+            and qtarget > 0
+            and len(bucket_items) >= bucket_min
+            and args._qubo_calls_done < args.max_qubo_calls
+        )
+        if qubo_enabled:
+            qargs = SimpleNamespace(**vars(args))
+            qargs.qubo_core_width = 0
+            qargs.qubo_supplement_width = qtarget
+            qargs.max_qubo_vars = max(1, int(getattr(args, "bucket_max_qubo_vars", args.max_qubo_vars)))
+            qargs.qubo_min_candidates = max(1, min(bucket_min, len(qubo_candidates)))
+            boosted, add_qvars, add_qtime = _select_qubo_boosted(dict(qubo_candidates), qargs)
+            if add_qvars:
+                qcalls += 1
+                qvars += add_qvars
+                qtime += add_qtime
+                args._qubo_calls_done += 1
+                for code in boosted:
+                    if code not in selected:
+                        selected_by_qubo.add(code)
+                    selected.setdefault(code, None)
+                    if len(selected) >= effective_beam:
+                        break
+
+        for code, _data in bucket_items:
+            selected.setdefault(code, None)
+            if len(selected) >= effective_beam:
+                break
+
+    for code, _data in ranked:
+        selected.setdefault(code, None)
+        if len(selected) >= effective_beam:
+            break
+
+    selected_codes = list(selected.keys())[:effective_beam]
+    selected_set = set(selected_codes)
+    return selected_codes, selected_by_qubo & selected_set, qcalls, qvars, qtime
+
+
 def _rank_next_frontier_candidates(
     candidates: dict[bytes, tuple[int, int, bytes]],
     args: argparse.Namespace,
 ) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    bucket_topk = max(0, int(getattr(args, "rank_bucket_topk", 0) or 0))
+    if bucket_topk > 0:
+        best_n = min(data[0] for data in candidates.values()) if candidates else math.inf
+        high_n_gate = max(0, int(getattr(args, "rank_bucket_topk_high_n", 0) or 0))
+        min_candidates = max(0, int(getattr(args, "rank_bucket_topk_min_candidates", 0) or 0))
+        topk_allowed = len(candidates) >= min_candidates and (high_n_gate <= 0 or best_n >= high_n_gate)
+        if topk_allowed:
+            return _rank_bucket_topk_candidates(candidates, args)
     adaptive_pool = 0
     if getattr(args, "selection_policy", "enhanced") == "adaptive_qubo":
         adaptive_pool = max(0, int(getattr(args, "adaptive_candidate_pool", 0) or 0))
@@ -1135,6 +2953,14 @@ def _select_next_frontier(
         return _select_dynamic_qubo_frontier(ranked, args)
     if policy == "adaptive_qubo":
         return _select_adaptive_qubo_frontier(ranked, len(candidates), args)
+    if policy == "rescue_qubo":
+        return _select_rescue_qubo_frontier(ranked, len(candidates), args)
+    if policy == "scheduler_qubo":
+        return _select_scheduler_qubo_frontier(ranked, len(candidates), args)
+    if policy == "scheduler_state_qubo":
+        return _select_scheduler_state_qubo_frontier(ranked, len(candidates), args)
+    if policy == "qubo_bucket":
+        return _select_qubo_bucket_frontier(ranked, len(candidates), args)
     return _select_enhanced_qubo_frontier(ranked, len(candidates), args)
 
 
@@ -1273,6 +3099,20 @@ def _trim_stream_candidates(
     return pruned
 
 
+def _trim_stream_candidates_batch(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    limit: int,
+    args: argparse.Namespace,
+) -> int:
+    if limit <= 0 or len(candidates) <= limit:
+        return 0
+    kept = heapq.nsmallest(limit, candidates.items(), key=_candidate_key_func(args))
+    pruned = len(candidates) - len(kept)
+    candidates.clear()
+    candidates.update(kept)
+    return pruned
+
+
 def _peek_stream_worst(
     candidates: dict[bytes, tuple[int, int, bytes]],
     worst_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]],
@@ -1309,6 +3149,131 @@ def _offer_stream_candidate(
     if len(candidates) <= trim_threshold:
         return 0
     return _trim_stream_candidates(candidates, worst_heap, limit, args)
+
+
+def _live_bucket_entry(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    bucket_members: dict[tuple, set[bytes]],
+    bucket: tuple,
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> bool:
+    return (
+        candidates.get(code) == data
+        and code in bucket_members.get(bucket, set())
+        and _rank_bucket_key_for_candidate(data, args) == bucket
+    )
+
+
+def _peek_stream_bucket_worst(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    bucket_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]],
+    bucket_members: dict[tuple, set[bytes]],
+    bucket: tuple,
+    args: argparse.Namespace,
+) -> _ReverseRank | None:
+    while bucket_heap:
+        key, _seq, code, data = bucket_heap[0]
+        if _live_bucket_entry(candidates, bucket_members, bucket, code, data, args):
+            return key
+        heapq.heappop(bucket_heap)
+    return None
+
+
+def _trim_stream_bucket_candidates(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    bucket_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]],
+    bucket_members: dict[tuple, set[bytes]],
+    bucket: tuple,
+    topk: int,
+    args: argparse.Namespace,
+) -> int:
+    if topk <= 0:
+        return 0
+    members = bucket_members.get(bucket)
+    if not members:
+        return 0
+    pruned = 0
+    while len(members) > topk:
+        while bucket_heap:
+            _key, _seq, code, data = heapq.heappop(bucket_heap)
+            if _live_bucket_entry(candidates, bucket_members, bucket, code, data, args):
+                del candidates[code]
+                members.discard(code)
+                pruned += 1
+                break
+        else:
+            active = [(code, candidates[code]) for code in members if code in candidates]
+            if not active:
+                members.clear()
+                break
+            code, _data = max(active, key=_candidate_key_func(args))
+            del candidates[code]
+            members.discard(code)
+            pruned += 1
+    if not members:
+        bucket_members.pop(bucket, None)
+    return pruned
+
+
+def _rebuild_stream_bucket_state(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> tuple[
+    dict[tuple, list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]]],
+    dict[tuple, set[bytes]],
+    int,
+]:
+    bucket_heaps: dict[tuple, list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]]] = {}
+    bucket_members: dict[tuple, set[bytes]] = {}
+    seq = 0
+    for code, data in candidates.items():
+        bucket = _rank_bucket_key_for_candidate(data, args)
+        bucket_members.setdefault(bucket, set()).add(code)
+        seq += 1
+        heapq.heappush(bucket_heaps.setdefault(bucket, []), (_stream_worst_key(code, data, args, seq), seq, code, data))
+    return bucket_heaps, bucket_members, seq
+
+
+def _offer_stream_bucket_candidate(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    bucket_heaps: dict[tuple, list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]]],
+    bucket_members: dict[tuple, set[bytes]],
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+    seq: int,
+) -> int:
+    topk = max(0, int(getattr(args, "stream_bucket_topk", 0) or 0))
+    bucket = _rank_bucket_key_for_candidate(data, args)
+    if topk <= 0:
+        candidates[code] = data
+        bucket_members.setdefault(bucket, set()).add(code)
+        heapq.heappush(bucket_heaps.setdefault(bucket, []), (_stream_worst_key(code, data, args, seq), seq, code, data))
+        return 0
+
+    old_data = candidates.get(code)
+    if old_data is not None:
+        old_bucket = _rank_bucket_key_for_candidate(old_data, args)
+        old_members = bucket_members.get(old_bucket)
+        if old_members is not None:
+            old_members.discard(code)
+            if not old_members:
+                bucket_members.pop(old_bucket, None)
+
+    members = bucket_members.setdefault(bucket, set())
+    candidate_key = _stream_worst_key(code, data, args, seq)
+    if old_data is None and len(members) >= topk:
+        worst_key = _peek_stream_bucket_worst(candidates, bucket_heaps.setdefault(bucket, []), bucket_members, bucket, args)
+        if worst_key is not None and candidate_key <= worst_key:
+            return 1
+
+    candidates[code] = data
+    members.add(code)
+    bucket_heap = bucket_heaps.setdefault(bucket, [])
+    heapq.heappush(bucket_heap, (candidate_key, seq, code, data))
+    return _trim_stream_bucket_candidates(candidates, bucket_heap, bucket_members, bucket, topk, args)
 
 
 def _reservoir_trim(
@@ -1353,20 +3318,23 @@ def _post_polish_suffixes(
     if len(codes) <= 3:
         return []
     last_move = len(codes) - 1
-    tail_begin = max(0, last_move - max(1, args.post_polish_suffix_tail_span))
+    tail_span = int(getattr(args, "post_polish_suffix_tail_span", 18))
+    focus_n = int(getattr(args, "post_polish_suffix_focus_n", 9))
+    max_candidates = int(getattr(args, "post_polish_suffix_max_candidates", 48))
+    tail_begin = max(0, last_move - max(1, tail_span))
     suffixes: list[PostPolishSuffix] = []
     for start in range(tail_begin, last_move):
         old_remaining = last_move - start
         n_value = n_values[start]
-        if old_remaining < 2 or n_value > args.post_polish_suffix_focus_n:
+        if old_remaining < 2 or n_value > focus_n:
             continue
         if n_value > old_remaining - 1:
             continue
-        low_n_bonus = max(0, args.post_polish_suffix_focus_n - n_value)
+        low_n_bonus = max(0, focus_n - n_value)
         score = float(old_remaining + 0.75 * low_n_bonus + 0.02 * start)
         suffixes.append(PostPolishSuffix(start, old_remaining, n_value, score))
     suffixes.sort(key=lambda s: (-s.score, s.start))
-    return suffixes[: max(1, args.post_polish_suffix_max_candidates)]
+    return suffixes[: max(1, max_candidates)]
 
 
 def _select_post_polish_suffixes_qubo(
@@ -1375,8 +3343,8 @@ def _select_post_polish_suffixes_qubo(
 ) -> tuple[list[PostPolishSuffix], int, float]:
     if not suffixes:
         return [], 0, 0.0
-    target = max(1, min(args.post_polish_suffix_select, len(suffixes)))
-    usable = suffixes[: max(1, min(args.post_polish_suffix_max_qubo_vars, len(suffixes)))]
+    target = max(1, min(int(getattr(args, "post_polish_suffix_select", 5)), len(suffixes)))
+    usable = suffixes[: max(1, min(int(getattr(args, "post_polish_suffix_max_qubo_vars", 48)), len(suffixes)))]
     if len(usable) <= target:
         return usable, 0, 0.0
 
@@ -1388,16 +3356,16 @@ def _select_post_polish_suffixes_qubo(
     for i in range(len(usable)):
         for j in range(i + 1, len(usable)):
             distance = abs(usable[i].start - usable[j].start)
-            if distance <= args.post_polish_suffix_near_gap:
-                model.add_quadratic(vars_[i], vars_[j], args.post_polish_suffix_near_penalty)
-    model.add_exactly_k_penalty(vars_, target, args.post_polish_penalty_a)
+            if distance <= int(getattr(args, "post_polish_suffix_near_gap", 2)):
+                model.add_quadratic(vars_[i], vars_[j], float(getattr(args, "post_polish_suffix_near_penalty", 0.30)))
+    model.add_exactly_k_penalty(vars_, target, float(getattr(args, "post_polish_penalty_a", 18.0)))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
         QuboSamplerConfig(
-            num_reads=args.post_polish_qubo_reads,
-            random_seed=args.seed + 2003,
-            time_limit_sec=max(0.001, args.post_polish_qubo_time_limit),
-            sa_iterations=max(1, args.post_polish_qubo_iterations),
+            num_reads=int(getattr(args, "post_polish_qubo_reads", 2)),
+            random_seed=int(getattr(args, "seed", 37)) + 2003,
+            time_limit_sec=max(0.001, float(getattr(args, "post_polish_qubo_time_limit", 0.001))),
+            sa_iterations=max(1, int(getattr(args, "post_polish_qubo_iterations", 20))),
         ),
     )
     selected: set[int] = set()
@@ -1406,7 +3374,7 @@ def _select_post_polish_suffixes_qubo(
 
     repaired: list[int] = []
     for idx in sorted(selected, key=lambda i: -usable[i].score):
-        if all(abs(usable[idx].start - usable[old].start) > args.post_polish_suffix_near_gap for old in repaired):
+        if all(abs(usable[idx].start - usable[old].start) > int(getattr(args, "post_polish_suffix_near_gap", 2)) for old in repaired):
             repaired.append(idx)
         if len(repaired) >= target:
             break
@@ -1415,7 +3383,7 @@ def _select_post_polish_suffixes_qubo(
             break
         if idx in repaired:
             continue
-        if all(abs(usable[idx].start - usable[old].start) > args.post_polish_suffix_near_gap for old in repaired):
+        if all(abs(usable[idx].start - usable[old].start) > int(getattr(args, "post_polish_suffix_near_gap", 2)) for old in repaired):
             repaired.append(idx)
     repaired.sort(key=lambda idx: usable[idx].start)
     return [usable[idx] for idx in repaired], len(model.var_index), sample_set.runtime_sec
@@ -1440,7 +3408,8 @@ def _suffix_shorter_path_to_n0(
     n_by_code: dict[bytes, int] = {start: start_n}
     expanded = 0
 
-    while heap and time.perf_counter() < deadline and expanded < args.post_polish_suffix_expanded:
+    max_expanded = int(getattr(args, "post_polish_suffix_expanded", 60000))
+    while heap and time.perf_counter() < deadline and expanded < max_expanded:
         _priority, current_n, depth, code = heapq.heappop(heap)
         if depth != depth_by_code.get(code):
             continue
@@ -1466,6 +3435,58 @@ def _suffix_shorter_path_to_n0(
             score = next_depth + 1_000_000 * nxt_n
             heapq.heappush(heap, (float(score), nxt_n, next_depth, nxt))
     return None, expanded
+
+
+def _try_post_polish_suffix_pass(
+    current: list[bytes],
+    stack_count: int,
+    max_height: int,
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+    stats: PostPolishStats,
+) -> tuple[list[bytes], bool]:
+    n_values = _path_n_values(current, stack_count, max_height)
+    suffixes = _post_polish_suffixes(current, n_values, args)
+    selected_suffixes, suffix_qvars, suffix_qtime = _select_post_polish_suffixes_qubo(suffixes, args)
+    if suffix_qvars:
+        stats.qcalls += 1
+        stats.qvars += suffix_qvars
+        stats.qtime += suffix_qtime
+    for suffix in selected_suffixes:
+        if time.perf_counter() >= deadline:
+            break
+        if suffix.start >= len(current) - 1:
+            continue
+        old_remaining = len(current) - 1 - suffix.start
+        max_depth = min(old_remaining - 1, int(getattr(args, "post_polish_suffix_max_depth", 18)))
+        stats.attempts += 1
+        stats.suffix_attempts += 1
+        bridge, expanded = _suffix_shorter_path_to_n0(
+            current[suffix.start],
+            _code_n(current[suffix.start], stack_count, max_height),
+            suffix.start,
+            cap,
+            stack_count,
+            max_height,
+            max_depth,
+            deadline,
+            args,
+        )
+        stats.suffix_expanded += expanded
+        if bridge is None:
+            continue
+        saved = old_remaining - (len(bridge) - 1)
+        if saved <= 0:
+            continue
+        candidate = current[: suffix.start] + bridge
+        if not _path_business_ok(candidate, stack_count, max_height, cap):
+            continue
+        stats.improvements += 1
+        stats.suffix_improvements += 1
+        stats.moves_saved += saved
+        return candidate, True
+    return current, False
 
 
 def _post_polish_windows(
@@ -1555,6 +3576,129 @@ def _select_post_polish_windows_qubo(
     return [usable[idx] for idx in repaired], len(model.var_index), sample_set.runtime_sec
 
 
+def _post_polish_windows_v2(
+    codes: list[bytes],
+    n_values: list[int],
+    args: argparse.Namespace,
+) -> list[PostPolishWindow]:
+    if len(codes) <= 3:
+        return []
+    last_move = len(codes) - 1
+    min_len = max(2, int(getattr(args, "post_polish_window_min_size", 3)))
+    max_len_default = int(getattr(args, "post_polish_max_window", 8))
+    max_len = max(min_len, int(getattr(args, "post_polish_window_max_size", max_len_default)))
+    max_len = min(max_len, last_move)
+    stride = max(1, int(getattr(args, "post_polish_window_stride", 1)))
+    budget_default = int(getattr(args, "post_polish_max_windows", 96))
+    budget = max(1, int(getattr(args, "post_polish_window_budget", budget_default)))
+    tail_begin = max(0, last_move - max(0, int(getattr(args, "post_polish_tail_span", 0))))
+    focus_n = int(getattr(args, "post_polish_focus_n", 0))
+    windows: list[PostPolishWindow] = []
+
+    for old_len in range(min_len, max_len + 1):
+        for start in range(0, last_move - old_len + 1, stride):
+            end = start + old_len
+            segment_n = n_values[start : end + 1]
+            deltas = [segment_n[idx + 1] - segment_n[idx] for idx in range(len(segment_n) - 1)]
+            plateau_count = sum(1 for delta in deltas if delta == 0)
+            increase_count = sum(1 for delta in deltas if delta > 0)
+            min_n = min(segment_n)
+            max_n = max(segment_n)
+            span = max_n - min_n
+            tail_dirty = 1 if end >= tail_begin and max(segment_n) > 0 else 0
+            repeated_states = len(segment_n) - len(set(codes[start : end + 1]))
+            oscillation_count = repeated_states
+            for idx in range(len(segment_n) - 2):
+                if segment_n[idx] == segment_n[idx + 2] and segment_n[idx] != segment_n[idx + 1]:
+                    oscillation_count += 1
+            low_n_bonus = max(0, focus_n - min_n)
+            score = (
+                float(old_len)
+                + 3.0 * plateau_count
+                + 5.0 * increase_count
+                + 0.25 * span
+                + 0.10 * tail_dirty
+                + 1.25 * oscillation_count
+                + 0.35 * low_n_bonus
+                - 0.20 * start
+            )
+            windows.append(
+                PostPolishWindow(
+                    start=start,
+                    end=end,
+                    old_len=old_len,
+                    min_n=min_n,
+                    max_n=max_n,
+                    score=score,
+                    plateau_count=plateau_count,
+                    increase_count=increase_count,
+                    tail_dirty=tail_dirty,
+                    oscillation_count=oscillation_count,
+                )
+            )
+    windows.sort(key=lambda w: (-w.score, w.start, w.end))
+    return windows[:budget]
+
+
+def _select_post_polish_windows_v2_qubo(
+    windows: list[PostPolishWindow],
+    args: argparse.Namespace,
+) -> tuple[list[PostPolishWindow], int, float]:
+    if not windows:
+        return [], 0, 0.0
+    target = max(1, min(int(getattr(args, "post_polish_window_select", 8)), len(windows)))
+    usable = windows[: max(1, min(int(getattr(args, "post_polish_window_qubo_vars", 72)), len(windows)))]
+    if len(usable) <= target:
+        return usable, 0, 0.0
+
+    max_score = max(window.score for window in usable) or 1.0
+    model = QuboModel()
+    vars_ = [model.add_binary_var(f"wv2_{idx}") for idx in range(len(usable))]
+    for idx, window in enumerate(usable):
+        model.add_linear(vars_[idx], -window.score / max_score)
+    for i in range(len(usable)):
+        for j in range(i + 1, len(usable)):
+            if _windows_overlap(usable[i], usable[j]):
+                model.add_quadratic(vars_[i], vars_[j], float(getattr(args, "post_polish_overlap_penalty", 8.0)))
+                continue
+            distance = min(abs(usable[i].start - usable[j].start), abs(usable[i].end - usable[j].end))
+            if distance <= int(getattr(args, "post_polish_near_window_gap", 2)):
+                model.add_quadratic(vars_[i], vars_[j], 0.20)
+            if usable[i].plateau_count and usable[j].plateau_count and usable[i].min_n == usable[j].min_n:
+                model.add_quadratic(vars_[i], vars_[j], 0.10)
+    model.add_exactly_k_penalty(vars_, target, float(getattr(args, "post_polish_penalty_a", 18.0)))
+    time_limit = float(getattr(args, "post_polish_window_time_limit", getattr(args, "post_polish_qubo_time_limit", 0.001)))
+    sample_set = SimulatedAnnealingQuboSampler().sample(
+        model,
+        QuboSamplerConfig(
+            num_reads=int(getattr(args, "post_polish_qubo_reads", 2)),
+            random_seed=int(getattr(args, "seed", 37)) + 3011,
+            time_limit_sec=max(0.001, time_limit),
+            sa_iterations=max(1, int(getattr(args, "post_polish_qubo_iterations", 20))),
+        ),
+    )
+
+    selected: set[int] = set()
+    if sample_set.samples:
+        selected = {idx for idx in range(len(usable)) if sample_set.samples[0].binary_values.get(idx, 0) == 1}
+
+    repaired: list[int] = []
+    for idx in sorted(selected, key=lambda i: -usable[i].score):
+        if all(not _windows_overlap(usable[idx], usable[old]) for old in repaired):
+            repaired.append(idx)
+        if len(repaired) >= target:
+            break
+    for idx in sorted(range(len(usable)), key=lambda i: -usable[i].score):
+        if len(repaired) >= target:
+            break
+        if idx in repaired:
+            continue
+        if all(not _windows_overlap(usable[idx], usable[old]) for old in repaired):
+            repaired.append(idx)
+    repaired.sort(key=lambda idx: usable[idx].start, reverse=True)
+    return [usable[idx] for idx in repaired], len(model.var_index), sample_set.runtime_sec
+
+
 def _bridge_shorter_path(
     start: bytes,
     goal: bytes,
@@ -1599,6 +3743,122 @@ def _bridge_shorter_path(
     return None, expanded
 
 
+def _post_polish_codes_with_qubo_windows_v2(
+    codes: list[bytes],
+    stack_count: int,
+    max_height: int,
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+) -> tuple[list[bytes], PostPolishStats]:
+    stats = PostPolishStats()
+    current = list(codes)
+    polish_start = time.perf_counter()
+    accept_mode = getattr(args, "post_polish_accept", "better")
+
+    try:
+        for _pass_idx in range(max(1, args.post_polish_passes)):
+            if time.perf_counter() >= deadline:
+                break
+            current, suffix_improved = _try_post_polish_suffix_pass(
+                current,
+                stack_count,
+                max_height,
+                cap,
+                args,
+                deadline,
+                stats,
+            )
+            if suffix_improved:
+                continue
+
+            n_values = _path_n_values(current, stack_count, max_height)
+            windows = _post_polish_windows_v2(current, n_values, args)
+            stats.window_candidates += len(windows)
+            selected, qvars, qtime = _select_post_polish_windows_v2_qubo(windows, args)
+            stats.window_qubo_selected += len(selected)
+            if qvars:
+                stats.qcalls += 1
+                stats.qvars += qvars
+                stats.qtime += qtime
+            if not selected:
+                break
+
+            improved_this_pass = False
+            for window in selected:
+                if time.perf_counter() >= deadline:
+                    break
+                if window.start < 0 or window.end >= len(current) or window.end <= window.start:
+                    continue
+                old_len = window.end - window.start
+                if old_len <= 0:
+                    continue
+                if accept_mode == "equal_or_better":
+                    max_depth = old_len + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
+                else:
+                    max_depth = old_len - 1 + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
+                max_depth = min(max(0, max_depth), int(getattr(args, "post_polish_max_bridge_depth", max_depth)))
+                if max_depth <= 0:
+                    continue
+
+                stats.attempts += 1
+                stats.window_attempts += 1
+
+                def bridge_call() -> tuple[list[bytes] | None, int]:
+                    return _bridge_shorter_path(
+                        current[window.start],
+                        current[window.end],
+                        window.start,
+                        cap,
+                        stack_count,
+                        max_height,
+                        max_depth,
+                        deadline,
+                        args,
+                    )
+
+                bridge, expanded = _with_temporary_args(
+                    args,
+                        {
+                            "post_polish_bridge_expanded": int(
+                                getattr(
+                                    args,
+                                    "post_polish_window_repair_expanded",
+                                    getattr(args, "post_polish_bridge_expanded", 20000),
+                                )
+                            )
+                        },
+                        bridge_call,
+                    )
+                stats.bridge_expanded += expanded
+                if bridge is None:
+                    continue
+
+                saved = old_len - (len(bridge) - 1)
+                if accept_mode == "better":
+                    if saved <= 0:
+                        continue
+                elif saved < 0:
+                    continue
+
+                candidate = current[: window.start] + bridge + current[window.end + 1 :]
+                if not _path_business_ok(candidate, stack_count, max_height, cap):
+                    continue
+
+                current = candidate
+                stats.improvements += 1
+                stats.moves_saved += max(0, saved)
+                stats.window_successes += 1
+                stats.window_moves_saved += max(0, saved)
+                improved_this_pass = saved > 0
+                break
+            if not improved_this_pass:
+                break
+    finally:
+        stats.window_time_sec += time.perf_counter() - polish_start
+    return current, stats
+
+
 def _post_polish_codes_with_qubo(
     codes: list[bytes],
     stack_count: int,
@@ -1610,6 +3870,11 @@ def _post_polish_codes_with_qubo(
     stats = PostPolishStats()
     if not args.post_polish_qubo or len(codes) <= 3:
         return codes, stats
+
+    post_polish_mode = getattr(args, "post_polish_mode", "legacy")
+    window_min_stacks = int(getattr(args, "post_polish_window_min_stacks", 0) or 0)
+    if post_polish_mode == "qubo_windows_v2" and stack_count >= window_min_stacks:
+        return _post_polish_codes_with_qubo_windows_v2(codes, stack_count, max_height, cap, args, deadline)
 
     current = list(codes)
     for _pass_idx in range(max(1, args.post_polish_passes)):
@@ -1756,6 +4021,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     initial, n0 = _encode(instance.stacks, instance.stack_count, instance.max_height)
     cap = entropy_limit(instance, args.alpha)
     depth_cap = min(cap, args.max_moves) if args.max_moves is not None else cap
+    wang_incumbent = _validated_wang_incumbent(instance, args, cap, deadline)
+    wang_incumbent_moves = len(wang_incumbent.moves) if wang_incumbent is not None else None
+    depth_cap = _wang_search_depth_cap(depth_cap, wang_incumbent_moves, args)
 
     parent: dict[bytes, bytes | None] = {initial: None}
     best_depth: dict[bytes, int] = {initial: 0}
@@ -1769,14 +4037,49 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._group_qubo_vars = 0
     args._group_qubo_time = 0.0
     args._group_qubo_selected_total = 0
+    args._wang_pair_qubo_calls_done = 0
+    args._wang_pair_qubo_vars = 0
+    args._wang_pair_qubo_time = 0.0
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
     args._best_n_history = []
-    args._layout_target_groups = []
+    args._rescue_layers_used = 0
+    args._rescue_qubo_calls = 0
+    args._rescue_qubo_vars = 0
+    args._rescue_qubo_time = 0.0
+    args._adaptive_contract_layers = 0
+    args._adaptive_mid_layers = 0
+    args._adaptive_wide_layers = 0
+    args._adaptive_expand_layers = 0
+    args._adaptive_last_width = 0
+    args._adaptive_last_reason = ""
+    args._scheduler_state_last_action = ""
+    args._scheduler_state_last_effective_action = ""
+    args._scheduler_state_locked_action = ""
+    args._scheduler_state_contract_layers = 0
+    args._scheduler_state_blend_layers = 0
+    args._scheduler_state_protect_layers = 0
+    args._scheduler_state_rescue_layers = 0
+    args._layout_target_groups = (
+        _compact_target_layouts(instance)
+        if getattr(args, "priority", "n_then_depth") == "target_guided"
+        or float(getattr(args, "target_guided_weight", 0.0) or 0.0) > 0.0
+        or float(getattr(args, "wang_probe_target_weight", 0.0) or 0.0) > 0.0
+        else ()
+    )
+    args._case_id = case
+    args._initial_n = n0
+    args._layer_best_n = n0
+    args._priority_duplication_ratio = _priority_duplication_ratio_for_instance(instance)
+    args._fill_ratio = instance.container_count / max(1, instance.stack_count * instance.max_height)
     args._stack_count = instance.stack_count
     args._max_height = instance.max_height
     stream_candidate_limit = max(0, getattr(args, "stream_candidate_limit", 0))
+    stream_bucket_topk = max(0, int(getattr(args, "stream_bucket_topk", 0) or 0))
     stream_trim_enabled = stream_candidate_limit > 0
+    stream_bucket_enabled = stream_bucket_topk > 0
+    stream_trim_factor = max(1.0, float(getattr(args, "stream_candidate_trim_factor", 2.0)))
+    stream_trim_threshold = max(stream_candidate_limit, int(stream_candidate_limit * stream_trim_factor))
 
     expanded = generated = pruned_bound = pruned_business = dominated = 0
     qcalls = qvars = 0
@@ -1787,12 +4090,15 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     reservoir_added_total = 0
     reservoir_pulled_total = 0
     stream_pruned_candidates = 0
+    wang_rollout_added_total = 0
     stream_seq = 0
     depth_reached = 0
 
     while target is None and frontier and time.perf_counter() < deadline:
         candidates: dict[bytes, tuple[int, int, bytes]] = {}
         candidate_worst_heap: list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]] = []
+        candidate_bucket_heaps: dict[tuple, list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]]] = {}
+        candidate_bucket_members: dict[tuple, set[bytes]] = {}
         goals: dict[bytes, tuple[int, int, bytes]] = {}
         for code, current_n, depth in frontier:
             if time.perf_counter() >= deadline:
@@ -1825,16 +4131,25 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 data = (nxt_n, next_depth, code)
                 if nxt_n <= args.target_final_n:
                     goals[nxt] = data
-                if stream_trim_enabled:
+                if stream_bucket_enabled:
                     stream_seq += 1
-                    stream_pruned_candidates += _offer_stream_candidate(
+                    stream_pruned_candidates += _offer_stream_bucket_candidate(
                         candidates,
-                        candidate_worst_heap,
+                        candidate_bucket_heaps,
+                        candidate_bucket_members,
                         nxt,
                         data,
                         args,
                         stream_seq,
                     )
+                elif stream_trim_enabled:
+                    candidates[nxt] = data
+                    if len(candidates) > stream_trim_threshold:
+                        stream_pruned_candidates += _trim_stream_candidates_batch(
+                            candidates,
+                            stream_candidate_limit,
+                            args,
+                        )
                 else:
                     candidates[nxt] = data
         if target is not None:
@@ -1851,37 +4166,40 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             break
         pulled = _reservoir_pull(reservoir, candidates, args)
         reservoir_pulled_total += pulled
+        if pulled and stream_bucket_enabled:
+            candidate_bucket_heaps, candidate_bucket_members, rebuilt_seq = _rebuild_stream_bucket_state(candidates, args)
+            stream_seq += rebuilt_seq
+            for bucket, bucket_heap in list(candidate_bucket_heaps.items()):
+                stream_pruned_candidates += _trim_stream_bucket_candidates(
+                    candidates,
+                    bucket_heap,
+                    candidate_bucket_members,
+                    bucket,
+                    stream_bucket_topk,
+                    args,
+                )
         if pulled and stream_trim_enabled:
-            candidate_worst_heap = []
-            for code, data in candidates.items():
-                stream_seq += 1
-                heapq.heappush(candidate_worst_heap, (_stream_worst_key(code, data, args, stream_seq), stream_seq, code, data))
-            stream_pruned_candidates += _trim_stream_candidates(
-                candidates,
-                candidate_worst_heap,
-                stream_candidate_limit,
-                args,
-            )
+            stream_pruned_candidates += _trim_stream_candidates_batch(candidates, stream_candidate_limit, args)
         if stream_trim_enabled:
-            stream_pruned_candidates += _trim_stream_candidates(
-                candidates,
-                candidate_worst_heap,
-                stream_candidate_limit,
-                args,
-            )
+            stream_pruned_candidates += _trim_stream_candidates_batch(candidates, stream_candidate_limit, args)
         peak_candidates = max(peak_candidates, len(candidates))
         layer_best_n = min(data[0] for data in candidates.values())
+        args._layer_best_n = layer_best_n
+        best_n_depth = min(data[1] for data in candidates.values() if data[0] == layer_best_n)
         parent_counts: dict[bytes, int] = {}
         for _code, data in candidates.items():
             parent_counts[data[2]] = parent_counts.get(data[2], 0) + 1
         args._layer_candidate_count = len(candidates)
         args._layer_parent_count = len(parent_counts)
         args._layer_parent_top_share = (max(parent_counts.values()) / len(candidates)) if candidates else 0.0
+        args._layer_depth_slack = cap - best_n_depth - layer_best_n
         args._best_n_history.append(layer_best_n)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         qcalls += add_qcalls
         qvars += add_qvars
         qtime += add_qtime
+        rollout_codes = _append_wang_rollout_frontier(selected_codes, candidates, args, depth_cap, best_depth)
+        wang_rollout_added_total += len(rollout_codes)
         selected_set = set(selected_codes)
         if getattr(args, "global_reservoir", False):
             max_add = max(0, getattr(args, "reservoir_add_per_layer", 0))
@@ -1909,7 +4227,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             n_value, depth, parent_code = candidates[code]
             parent[code] = parent_code
             best_depth[code] = depth
-            source_by_code[code] = "qubo" if code in selected_by_qubo else "deterministic"
+            source_by_code[code] = "wang_rollout" if code in rollout_codes else ("qubo" if code in selected_by_qubo else "deterministic")
             qubo_ancestor_by_code[code] = code in selected_by_qubo or qubo_ancestor_by_code.get(parent_code, False)
             next_frontier.append((code, n_value, depth))
         frontier = next_frontier
@@ -1925,6 +4243,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     tail_n_trace = ""
     tail_ordered_trace = ""
     tail_ordered_gain = 0
+    wang_incumbent_used = False
     if target is not None:
         codes = _backtrack(parent, target)
         original_codes = list(codes)
@@ -1965,8 +4284,20 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 f"post_polish_suffix_attempts={polish_stats.suffix_attempts}; "
                 f"post_polish_suffix_improvements={polish_stats.suffix_improvements}; "
                 f"post_polish_suffix_expanded={polish_stats.suffix_expanded}; "
+                f"post_polish_window_candidates={polish_stats.window_candidates}; "
+                f"post_polish_window_qubo_selected={polish_stats.window_qubo_selected}; "
+                f"post_polish_window_attempts={polish_stats.window_attempts}; "
+                f"post_polish_window_successes={polish_stats.window_successes}; "
+                f"post_polish_window_moves_saved={polish_stats.window_moves_saved}; "
                 f"post_polish_bridge_expanded={polish_stats.bridge_expanded}"
             )
+    if wang_incumbent is not None and (not moves or len(wang_incumbent.moves) < len(moves)):
+        moves = wang_incumbent.moves
+        wang_incumbent_used = True
+        status += (
+            f"; wang_incumbent_used=True; wang_incumbent_moves={len(wang_incumbent.moves)}; "
+            f"wang_incumbent_runtime_sec={wang_incumbent.runtime_sec:.6f}"
+        )
     return CompactBeamResult(
         case=case,
         status=status,
@@ -1997,6 +4328,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         post_polish_attempts=polish_stats.attempts,
         post_polish_improvements=polish_stats.improvements,
         post_polish_moves_saved=polish_stats.moves_saved,
+        post_polish_window_candidates=polish_stats.window_candidates,
+        post_polish_window_qubo_selected=polish_stats.window_qubo_selected,
+        post_polish_window_attempts=polish_stats.window_attempts,
+        post_polish_window_successes=polish_stats.window_successes,
+        post_polish_window_moves_saved=polish_stats.window_moves_saved,
+        post_polish_window_time_sec=polish_stats.window_time_sec,
         tail_n_trace=tail_n_trace,
         tail_ordered_trace=tail_ordered_trace,
         tail_ordered_gain=tail_ordered_gain,
@@ -2006,6 +4343,14 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         reservoir_pulled_total=reservoir_pulled_total,
         stream_pruned_candidates=stream_pruned_candidates,
         rank_pool_truncated_candidates=args._rank_pool_truncated_candidates,
+        rescue_layers_used=args._rescue_layers_used,
+        wang_incumbent_moves=len(wang_incumbent.moves) if wang_incumbent is not None else 0,
+        wang_incumbent_runtime_sec=wang_incumbent.runtime_sec if wang_incumbent is not None else 0.0,
+        wang_incumbent_used=wang_incumbent_used,
+        wang_rollout_added_total=wang_rollout_added_total,
+        wang_pair_qubo_calls=args._wang_pair_qubo_calls_done,
+        wang_pair_qubo_vars=args._wang_pair_qubo_vars,
+        wang_pair_qubo_time_sec=args._wang_pair_qubo_time,
     )
 
 
@@ -2055,6 +4400,14 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"target_stop=N0; proof=not_optimality_proof; "
             f"solver_profile={getattr(args, 'solver_profile', 'speed_v2')}; "
             f"qubo_influence_profile={getattr(args, 'qubo_influence_profile', 'stable')}; "
+            f"wang_incumbent_enabled={getattr(args, 'wang_incumbent_enabled', False)}; "
+            f"wang_incumbent_used={result.wang_incumbent_used}; "
+            f"wang_incumbent_moves={result.wang_incumbent_moves}; "
+            f"wang_cap_enabled={getattr(args, 'wang_cap_enabled', False)}; "
+            f"wang_rollout_enabled={getattr(args, 'wang_rollout_enabled', False)}; "
+            f"wang_rollout_added_total={result.wang_rollout_added_total}; "
+            f"wang_pair_qubo_enabled={getattr(args, 'wang_pair_qubo_enabled', False)}; "
+            f"wang_pair_qubo_calls={result.wang_pair_qubo_calls}; "
             f"priority={args.priority}; beam_width={args.beam_width}; core_width={args.core_width}; "
             f"peak_frontier={result.peak_frontier}; peak_candidates={result.peak_candidates}; "
             f"depth_reached={result.depth_reached}; open={result.open_count}; "
@@ -2067,6 +4420,7 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"qubo_time_sec={result.qubo_time_sec:.6f}; qubo_core_width={args.qubo_core_width}; "
             f"qubo_supplement_width={args.qubo_supplement_width}; "
             f"qubo_target_share={args.qubo_target_share}; "
+            f"qubo_pair_policy={getattr(args, 'qubo_pair_policy', 'baseline')}; "
             f"qubo_group_max_vars={getattr(args, 'qubo_group_max_vars', 0)}; "
             f"qubo_group_select={getattr(args, 'qubo_group_select', 0)}; "
             f"qubo_group_take={getattr(args, 'qubo_group_take', 0)}; "
@@ -2089,9 +4443,18 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"qubo_ancestor_on_search_path={result.qubo_ancestor_on_search_path}; "
             f"qubo_ancestor_on_path={result.qubo_ancestor_on_path}; "
             f"post_polish_qubo={args.post_polish_qubo}; "
+            f"post_polish_mode={getattr(args, 'post_polish_mode', 'legacy')}; "
+            f"post_polish_accept={getattr(args, 'post_polish_accept', 'better')}; "
+            f"post_polish_window_min_stacks={getattr(args, 'post_polish_window_min_stacks', 0)}; "
             f"post_polish_attempts={result.post_polish_attempts}; "
             f"post_polish_improvements={result.post_polish_improvements}; "
             f"post_polish_moves_saved={result.post_polish_moves_saved}; "
+            f"post_polish_window_candidates={result.post_polish_window_candidates}; "
+            f"post_polish_window_qubo_selected={result.post_polish_window_qubo_selected}; "
+            f"post_polish_window_attempts={result.post_polish_window_attempts}; "
+            f"post_polish_window_successes={result.post_polish_window_successes}; "
+            f"post_polish_window_moves_saved={result.post_polish_window_moves_saved}; "
+            f"post_polish_window_time_sec={result.post_polish_window_time_sec:.6f}; "
             f"tail_n_trace={result.tail_n_trace}; "
             f"tail_ordered_trace={result.tail_ordered_trace}; "
             f"tail_ordered_gain={result.tail_ordered_gain}; "
@@ -2102,10 +4465,55 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"reservoir_pulled_total={result.reservoir_pulled_total}; "
             f"stream_candidate_limit={getattr(args, 'stream_candidate_limit', 0)}; "
             f"stream_candidate_trim_factor={getattr(args, 'stream_candidate_trim_factor', 2.0)}; "
+            f"stream_bucket_topk={getattr(args, 'stream_bucket_topk', 0)}; "
             f"stream_pruned_candidates={result.stream_pruned_candidates}; "
             f"rank_pool_size={getattr(args, 'rank_pool_size', 0)}; "
             f"rank_pool_min_candidates={getattr(args, 'rank_pool_min_candidates', 0)}; "
+            f"rank_bucket_topk={getattr(args, 'rank_bucket_topk', 0)}; "
+            f"rank_bucket_key={getattr(args, 'rank_bucket_key', 'n_depth_parent')}; "
+            f"rank_bucket_n_band_size={getattr(args, 'rank_bucket_n_band_size', 0)}; "
+            f"rank_bucket_topk_high_n={getattr(args, 'rank_bucket_topk_high_n', 0)}; "
+            f"rank_bucket_topk_min_candidates={getattr(args, 'rank_bucket_topk_min_candidates', 0)}; "
             f"rank_pool_truncated_candidates={result.rank_pool_truncated_candidates}; "
+            f"scheduler_adaptive_min_stacks={getattr(args, 'scheduler_adaptive_min_stacks', 0)}; "
+            f"scheduler_adaptive_high_n={getattr(args, 'scheduler_adaptive_high_n', 0)}; "
+            f"scheduler_adaptive_cv1_only={getattr(args, 'scheduler_adaptive_cv1_only', False)}; "
+            f"scheduler_adaptive_max_duplication_ratio={getattr(args, 'scheduler_adaptive_max_duplication_ratio', 1.0)}; "
+            f"scheduler_adaptive_min_best_n_ratio={getattr(args, 'scheduler_adaptive_min_best_n_ratio', 0.0)}; "
+            f"scheduler_adaptive_max_candidate_pressure={getattr(args, 'scheduler_adaptive_max_candidate_pressure', 0.0)}; "
+            f"scheduler_adaptive_max_parent_top_share={getattr(args, 'scheduler_adaptive_max_parent_top_share', 0.0)}; "
+            f"scheduler_adaptive_plateau_window={getattr(args, 'scheduler_adaptive_plateau_window', 0)}; "
+            f"scheduler_adaptive_cap_slack={getattr(args, 'scheduler_adaptive_cap_slack', 0)}; "
+            f"scheduler_state_controller={getattr(args, 'scheduler_state_controller', 'off')}; "
+            f"scheduler_state_contract_pressure={getattr(args, 'scheduler_state_contract_pressure', 0.0)}; "
+            f"scheduler_state_max_contract_pressure={getattr(args, 'scheduler_state_max_contract_pressure', 0.0)}; "
+            f"scheduler_state_min_best_n_ratio={getattr(args, 'scheduler_state_min_best_n_ratio', 0.0)}; "
+            f"scheduler_state_progress_window={getattr(args, 'scheduler_state_progress_window', 0)}; "
+            f"scheduler_state_progress_delta={getattr(args, 'scheduler_state_progress_delta', 0)}; "
+            f"scheduler_state_failed_contract_cooldown={getattr(args, 'scheduler_state_failed_contract_cooldown', 0)}; "
+            f"scheduler_state_post_rescue_plateau_window={getattr(args, 'scheduler_state_post_rescue_plateau_window', 0)}; "
+            f"scheduler_state_post_rescue_plateau_delta={getattr(args, 'scheduler_state_post_rescue_plateau_delta', 0)}; "
+            f"scheduler_state_post_rescue_min_ratio={getattr(args, 'scheduler_state_post_rescue_min_ratio', 0.0)}; "
+            f"scheduler_state_post_rescue_action={getattr(args, 'scheduler_state_post_rescue_action', '')}; "
+            f"scheduler_state_initial_plateau_window={getattr(args, 'scheduler_state_initial_plateau_window', 0)}; "
+            f"scheduler_state_initial_plateau_min_ratio={getattr(args, 'scheduler_state_initial_plateau_min_ratio', 0.0)}; "
+            f"scheduler_state_initial_plateau_action={getattr(args, 'scheduler_state_initial_plateau_action', '')}; "
+            f"scheduler_state_initial_plateau_lock={getattr(args, 'scheduler_state_initial_plateau_lock', False)}; "
+            f"scheduler_state_initial_plateau_min_duplication={getattr(args, 'scheduler_state_initial_plateau_min_duplication', 0.0)}; "
+            f"scheduler_state_initial_plateau_unique_min_n={getattr(args, 'scheduler_state_initial_plateau_unique_min_n', 0)}; "
+            f"scheduler_state_protect_parent_top_share={getattr(args, 'scheduler_state_protect_parent_top_share', 0.0)}; "
+            f"scheduler_state_protect_n_band={getattr(args, 'scheduler_state_protect_n_band', 0)}; "
+            f"scheduler_state_top_window={getattr(args, 'scheduler_state_top_window', 0)}; "
+            f"scheduler_state_rescue_plateau_window={getattr(args, 'scheduler_state_rescue_plateau_window', 0)}; "
+            f"scheduler_state_rescue_plateau_delta={getattr(args, 'scheduler_state_rescue_plateau_delta', 0)}; "
+            f"scheduler_state_rescue_cap_slack={getattr(args, 'scheduler_state_rescue_cap_slack', 0)}; "
+            f"scheduler_state_last_action={getattr(args, '_scheduler_state_last_action', '')}; "
+            f"scheduler_state_last_effective_action={getattr(args, '_scheduler_state_last_effective_action', '')}; "
+            f"scheduler_state_locked_action={getattr(args, '_scheduler_state_locked_action', '')}; "
+            f"scheduler_state_contract_layers={getattr(args, '_scheduler_state_contract_layers', 0)}; "
+            f"scheduler_state_blend_layers={getattr(args, '_scheduler_state_blend_layers', 0)}; "
+            f"scheduler_state_protect_layers={getattr(args, '_scheduler_state_protect_layers', 0)}; "
+            f"scheduler_state_rescue_layers={getattr(args, '_scheduler_state_rescue_layers', 0)}; "
             f"adaptive_high_n={getattr(args, 'adaptive_high_n', 0)}; "
             f"adaptive_low_n={getattr(args, 'adaptive_low_n', 0)}; "
             f"adaptive_high_frontier={getattr(args, 'adaptive_high_frontier', 0)}; "
@@ -2113,6 +4521,34 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"adaptive_low_frontier={getattr(args, 'adaptive_low_frontier', 0)}; "
             f"adaptive_core_ratio={getattr(args, 'adaptive_core_ratio', 0.0)}; "
             f"adaptive_candidate_pool={getattr(args, 'adaptive_candidate_pool', 0)}; "
+            f"adaptive_controller={getattr(args, 'adaptive_controller', 'tiered')}; "
+            f"adaptive_expand_frontier={getattr(args, 'adaptive_expand_frontier', 0)}; "
+            f"adaptive_contract_pressure={getattr(args, 'adaptive_contract_pressure', 0.0)}; "
+            f"adaptive_mid_pressure={getattr(args, 'adaptive_mid_pressure', 0.0)}; "
+            f"adaptive_min_best_n_ratio={getattr(args, 'adaptive_min_best_n_ratio', 0.0)}; "
+            f"adaptive_max_duplication_ratio={getattr(args, 'adaptive_max_duplication_ratio', 1.0)}; "
+            f"adaptive_parent_top_share={getattr(args, 'adaptive_parent_top_share', 0.0)}; "
+            f"adaptive_plateau_window={getattr(args, 'adaptive_plateau_window', 0)}; "
+            f"adaptive_plateau_delta={getattr(args, 'adaptive_plateau_delta', 0)}; "
+            f"adaptive_cap_slack={getattr(args, 'adaptive_cap_slack', 0)}; "
+            f"adaptive_large_stack_min_stacks={getattr(args, 'adaptive_large_stack_min_stacks', 0)}; "
+            f"adaptive_large_stack_expand_frontier={getattr(args, 'adaptive_large_stack_expand_frontier', 0)}; "
+            f"adaptive_large_stack_plateau_window={getattr(args, 'adaptive_large_stack_plateau_window', 0)}; "
+            f"adaptive_large_stack_cap_slack={getattr(args, 'adaptive_large_stack_cap_slack', 0)}; "
+            f"adaptive_contract_layers={getattr(args, '_adaptive_contract_layers', 0)}; "
+            f"adaptive_mid_layers={getattr(args, '_adaptive_mid_layers', 0)}; "
+            f"adaptive_wide_layers={getattr(args, '_adaptive_wide_layers', 0)}; "
+            f"adaptive_expand_layers={getattr(args, '_adaptive_expand_layers', 0)}; "
+            f"adaptive_last_width={getattr(args, '_adaptive_last_width', 0)}; "
+            f"adaptive_last_reason={getattr(args, '_adaptive_last_reason', '')}; "
+            f"bucket_key={getattr(args, 'bucket_key', 'n_depth')}; "
+            f"bucket_n_band_size={getattr(args, 'bucket_n_band_size', 0)}; "
+            f"bucket_core_ratio={getattr(args, 'bucket_core_ratio', 0.0)}; "
+            f"bucket_qubo_share={getattr(args, 'bucket_qubo_share', 0.0)}; "
+            f"bucket_max_qubo_vars={getattr(args, 'bucket_max_qubo_vars', 0)}; "
+            f"bucket_qubo_select={getattr(args, 'bucket_qubo_select', 0)}; "
+            f"bucket_min_candidates={getattr(args, 'bucket_min_candidates', 0)}; "
+            f"rescue_layers_used={getattr(args, '_rescue_layers_used', 0)}; "
             f"pruned_bound={result.pruned_bound}; pruned_business={result.pruned_business}; "
             f"dominated={result.dominated}"
         ),
@@ -2133,6 +4569,30 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "qubo_influence_profile": getattr(args, "qubo_influence_profile", "stable"),
             "selection_policy": getattr(args, "selection_policy", "enhanced"),
             "priority": args.priority,
+            "target_guided_weight": getattr(args, "target_guided_weight", 0.0),
+            "target_guided_focus_n": getattr(args, "target_guided_focus_n", 8),
+            "target_guided_supplement_width": getattr(args, "target_guided_supplement_width", 0),
+            "target_guided_n_window": getattr(args, "target_guided_n_window", 0),
+            "wang_probe_supplement_width": getattr(args, "wang_probe_supplement_width", 0),
+            "wang_probe_focus_n": getattr(args, "wang_probe_focus_n", 8),
+            "wang_probe_n_window": getattr(args, "wang_probe_n_window", 0),
+            "wang_probe_fixed_weight": getattr(args, "wang_probe_fixed_weight", 1.0),
+            "wang_probe_pair_weight": getattr(args, "wang_probe_pair_weight", 0.0),
+            "wang_probe_target_weight": getattr(args, "wang_probe_target_weight", 0.0),
+            "wang_probe_plateau_window": getattr(args, "wang_probe_plateau_window", 0),
+            "wang_probe_plateau_delta": getattr(args, "wang_probe_plateau_delta", 0),
+            "wang_incumbent_enabled": getattr(args, "wang_incumbent_enabled", False),
+            "wang_incumbent_moves": result.wang_incumbent_moves,
+            "wang_incumbent_runtime_sec": result.wang_incumbent_runtime_sec,
+            "wang_incumbent_used": result.wang_incumbent_used,
+            "wang_cap_enabled": getattr(args, "wang_cap_enabled", False),
+            "wang_rollout_enabled": getattr(args, "wang_rollout_enabled", False),
+            "wang_rollout_added_total": result.wang_rollout_added_total,
+            "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
+            "wang_pair_qubo_calls": result.wang_pair_qubo_calls,
+            "wang_pair_qubo_vars": result.wang_pair_qubo_vars,
+            "wang_pair_qubo_time_sec": result.wang_pair_qubo_time_sec,
+            "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
             "beam_width": args.beam_width,
             "core_width": args.core_width,
             "parent_core_cap": getattr(args, "parent_core_cap", 0),
@@ -2151,6 +4611,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "qubo_core_width": args.qubo_core_width,
             "qubo_supplement_width": args.qubo_supplement_width,
             "qubo_cohorts_per_layer": args.qubo_cohorts_per_layer,
+            "qubo_pair_policy": getattr(args, "qubo_pair_policy", "baseline"),
             "qubo_selected_total": result.qubo_selected_total,
             "qubo_selected_on_search_path": result.qubo_selected_on_search_path,
             "qubo_selected_on_path": result.qubo_selected_on_path,
@@ -2164,9 +4625,26 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "qubo_group_max_vars": getattr(args, "qubo_group_max_vars", 0),
             "qubo_group_select": getattr(args, "qubo_group_select", 0),
             "qubo_group_take": getattr(args, "qubo_group_take", 0),
+            "post_polish_mode": getattr(args, "post_polish_mode", "legacy"),
+            "post_polish_accept": getattr(args, "post_polish_accept", "better"),
+            "post_polish_window_min_stacks": getattr(args, "post_polish_window_min_stacks", 0),
             "post_polish_attempts": result.post_polish_attempts,
             "post_polish_improvements": result.post_polish_improvements,
             "post_polish_moves_saved": result.post_polish_moves_saved,
+            "post_polish_window_min_size": getattr(args, "post_polish_window_min_size", 0),
+            "post_polish_window_max_size": getattr(args, "post_polish_window_max_size", 0),
+            "post_polish_window_stride": getattr(args, "post_polish_window_stride", 0),
+            "post_polish_window_budget": getattr(args, "post_polish_window_budget", 0),
+            "post_polish_window_qubo_vars": getattr(args, "post_polish_window_qubo_vars", 0),
+            "post_polish_window_select": getattr(args, "post_polish_window_select", 0),
+            "post_polish_window_repair_expanded": getattr(args, "post_polish_window_repair_expanded", 0),
+            "post_polish_window_repair_depth_extra": getattr(args, "post_polish_window_repair_depth_extra", 0),
+            "post_polish_window_candidates": result.post_polish_window_candidates,
+            "post_polish_window_qubo_selected": result.post_polish_window_qubo_selected,
+            "post_polish_window_attempts": result.post_polish_window_attempts,
+            "post_polish_window_successes": result.post_polish_window_successes,
+            "post_polish_window_moves_saved": result.post_polish_window_moves_saved,
+            "post_polish_window_time_sec": result.post_polish_window_time_sec,
             "global_reservoir": getattr(args, "global_reservoir", False),
             "reservoir_size": result.reservoir_size,
             "peak_reservoir": result.peak_reservoir,
@@ -2174,10 +4652,55 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "reservoir_pulled_total": result.reservoir_pulled_total,
             "stream_candidate_limit": getattr(args, "stream_candidate_limit", 0),
             "stream_candidate_trim_factor": getattr(args, "stream_candidate_trim_factor", 2.0),
+            "stream_bucket_topk": getattr(args, "stream_bucket_topk", 0),
             "stream_pruned_candidates": result.stream_pruned_candidates,
             "rank_pool_size": getattr(args, "rank_pool_size", 0),
             "rank_pool_min_candidates": getattr(args, "rank_pool_min_candidates", 0),
+            "rank_bucket_topk": getattr(args, "rank_bucket_topk", 0),
+            "rank_bucket_key": getattr(args, "rank_bucket_key", "n_depth_parent"),
+            "rank_bucket_n_band_size": getattr(args, "rank_bucket_n_band_size", 0),
+            "rank_bucket_topk_high_n": getattr(args, "rank_bucket_topk_high_n", 0),
+            "rank_bucket_topk_min_candidates": getattr(args, "rank_bucket_topk_min_candidates", 0),
             "rank_pool_truncated_candidates": result.rank_pool_truncated_candidates,
+            "scheduler_adaptive_min_stacks": getattr(args, "scheduler_adaptive_min_stacks", 0),
+            "scheduler_adaptive_high_n": getattr(args, "scheduler_adaptive_high_n", 0),
+            "scheduler_adaptive_cv1_only": getattr(args, "scheduler_adaptive_cv1_only", False),
+            "scheduler_adaptive_max_duplication_ratio": getattr(args, "scheduler_adaptive_max_duplication_ratio", 1.0),
+            "scheduler_adaptive_min_best_n_ratio": getattr(args, "scheduler_adaptive_min_best_n_ratio", 0.0),
+            "scheduler_adaptive_max_candidate_pressure": getattr(args, "scheduler_adaptive_max_candidate_pressure", 0.0),
+            "scheduler_adaptive_max_parent_top_share": getattr(args, "scheduler_adaptive_max_parent_top_share", 0.0),
+            "scheduler_adaptive_plateau_window": getattr(args, "scheduler_adaptive_plateau_window", 0),
+            "scheduler_adaptive_cap_slack": getattr(args, "scheduler_adaptive_cap_slack", 0),
+            "scheduler_state_controller": getattr(args, "scheduler_state_controller", "off"),
+            "scheduler_state_contract_pressure": getattr(args, "scheduler_state_contract_pressure", 0.0),
+            "scheduler_state_max_contract_pressure": getattr(args, "scheduler_state_max_contract_pressure", 0.0),
+            "scheduler_state_min_best_n_ratio": getattr(args, "scheduler_state_min_best_n_ratio", 0.0),
+            "scheduler_state_progress_window": getattr(args, "scheduler_state_progress_window", 0),
+            "scheduler_state_progress_delta": getattr(args, "scheduler_state_progress_delta", 0),
+            "scheduler_state_failed_contract_cooldown": getattr(args, "scheduler_state_failed_contract_cooldown", 0),
+            "scheduler_state_post_rescue_plateau_window": getattr(args, "scheduler_state_post_rescue_plateau_window", 0),
+            "scheduler_state_post_rescue_plateau_delta": getattr(args, "scheduler_state_post_rescue_plateau_delta", 0),
+            "scheduler_state_post_rescue_min_ratio": getattr(args, "scheduler_state_post_rescue_min_ratio", 0.0),
+            "scheduler_state_post_rescue_action": getattr(args, "scheduler_state_post_rescue_action", ""),
+            "scheduler_state_initial_plateau_window": getattr(args, "scheduler_state_initial_plateau_window", 0),
+            "scheduler_state_initial_plateau_min_ratio": getattr(args, "scheduler_state_initial_plateau_min_ratio", 0.0),
+            "scheduler_state_initial_plateau_action": getattr(args, "scheduler_state_initial_plateau_action", ""),
+            "scheduler_state_initial_plateau_lock": getattr(args, "scheduler_state_initial_plateau_lock", False),
+            "scheduler_state_initial_plateau_min_duplication": getattr(args, "scheduler_state_initial_plateau_min_duplication", 0.0),
+            "scheduler_state_initial_plateau_unique_min_n": getattr(args, "scheduler_state_initial_plateau_unique_min_n", 0),
+            "scheduler_state_protect_parent_top_share": getattr(args, "scheduler_state_protect_parent_top_share", 0.0),
+            "scheduler_state_protect_n_band": getattr(args, "scheduler_state_protect_n_band", 0),
+            "scheduler_state_top_window": getattr(args, "scheduler_state_top_window", 0),
+            "scheduler_state_rescue_plateau_window": getattr(args, "scheduler_state_rescue_plateau_window", 0),
+            "scheduler_state_rescue_plateau_delta": getattr(args, "scheduler_state_rescue_plateau_delta", 0),
+            "scheduler_state_rescue_cap_slack": getattr(args, "scheduler_state_rescue_cap_slack", 0),
+            "scheduler_state_last_action": getattr(args, "_scheduler_state_last_action", ""),
+            "scheduler_state_last_effective_action": getattr(args, "_scheduler_state_last_effective_action", ""),
+            "scheduler_state_locked_action": getattr(args, "_scheduler_state_locked_action", ""),
+            "scheduler_state_contract_layers": getattr(args, "_scheduler_state_contract_layers", 0),
+            "scheduler_state_blend_layers": getattr(args, "_scheduler_state_blend_layers", 0),
+            "scheduler_state_protect_layers": getattr(args, "_scheduler_state_protect_layers", 0),
+            "scheduler_state_rescue_layers": getattr(args, "_scheduler_state_rescue_layers", 0),
             "adaptive_high_n": getattr(args, "adaptive_high_n", 0),
             "adaptive_low_n": getattr(args, "adaptive_low_n", 0),
             "adaptive_high_frontier": getattr(args, "adaptive_high_frontier", 0),
@@ -2185,6 +4708,34 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "adaptive_low_frontier": getattr(args, "adaptive_low_frontier", 0),
             "adaptive_core_ratio": getattr(args, "adaptive_core_ratio", 0.0),
             "adaptive_candidate_pool": getattr(args, "adaptive_candidate_pool", 0),
+            "adaptive_controller": getattr(args, "adaptive_controller", "tiered"),
+            "adaptive_expand_frontier": getattr(args, "adaptive_expand_frontier", 0),
+            "adaptive_contract_pressure": getattr(args, "adaptive_contract_pressure", 0.0),
+            "adaptive_mid_pressure": getattr(args, "adaptive_mid_pressure", 0.0),
+            "adaptive_min_best_n_ratio": getattr(args, "adaptive_min_best_n_ratio", 0.0),
+            "adaptive_max_duplication_ratio": getattr(args, "adaptive_max_duplication_ratio", 1.0),
+            "adaptive_parent_top_share": getattr(args, "adaptive_parent_top_share", 0.0),
+            "adaptive_plateau_window": getattr(args, "adaptive_plateau_window", 0),
+            "adaptive_plateau_delta": getattr(args, "adaptive_plateau_delta", 0),
+            "adaptive_cap_slack": getattr(args, "adaptive_cap_slack", 0),
+            "adaptive_large_stack_min_stacks": getattr(args, "adaptive_large_stack_min_stacks", 0),
+            "adaptive_large_stack_expand_frontier": getattr(args, "adaptive_large_stack_expand_frontier", 0),
+            "adaptive_large_stack_plateau_window": getattr(args, "adaptive_large_stack_plateau_window", 0),
+            "adaptive_large_stack_cap_slack": getattr(args, "adaptive_large_stack_cap_slack", 0),
+            "adaptive_contract_layers": getattr(args, "_adaptive_contract_layers", 0),
+            "adaptive_mid_layers": getattr(args, "_adaptive_mid_layers", 0),
+            "adaptive_wide_layers": getattr(args, "_adaptive_wide_layers", 0),
+            "adaptive_expand_layers": getattr(args, "_adaptive_expand_layers", 0),
+            "adaptive_last_width": getattr(args, "_adaptive_last_width", 0),
+            "adaptive_last_reason": getattr(args, "_adaptive_last_reason", ""),
+            "bucket_key": getattr(args, "bucket_key", "n_depth"),
+            "bucket_n_band_size": getattr(args, "bucket_n_band_size", 0),
+            "bucket_core_ratio": getattr(args, "bucket_core_ratio", 0.0),
+            "bucket_qubo_share": getattr(args, "bucket_qubo_share", 0.0),
+            "bucket_max_qubo_vars": getattr(args, "bucket_max_qubo_vars", 0),
+            "bucket_qubo_select": getattr(args, "bucket_qubo_select", 0),
+            "bucket_min_candidates": getattr(args, "bucket_min_candidates", 0),
+            "rescue_layers_used": result.rescue_layers_used,
         }
     )
     return row
@@ -2260,12 +4811,16 @@ def _write_summary(rows: list[dict[str, object]], path: Path) -> None:
             "group_qubo_calls": int(sum(_numeric(row, "group_qubo_calls") for row in selected)),
             "group_qubo_time": sum(_numeric(row, "group_qubo_time_sec") for row in selected),
             "post_polish_saved": int(sum(_numeric(row, "post_polish_moves_saved") for row in selected)),
+            "window_polish_saved": int(sum(_numeric(row, "post_polish_window_moves_saved") for row in selected)),
+            "window_polish_attempts": int(sum(_numeric(row, "post_polish_window_attempts") for row in selected)),
+            "window_polish_successes": int(sum(_numeric(row, "post_polish_window_successes") for row in selected)),
             "peak_candidates_max": int(max((_numeric(row, "peak_candidates") for row in selected), default=0)),
             "peak_candidates_avg": (
                 sum(_numeric(row, "peak_candidates") for row in selected) / len(selected) if selected else 0.0
             ),
             "stream_pruned": int(sum(_numeric(row, "stream_pruned_candidates") for row in selected)),
             "rank_pool_truncated": int(sum(_numeric(row, "rank_pool_truncated_candidates") for row in selected)),
+            "rescue_layers": int(sum(_numeric(row, "rescue_layers_used") for row in selected)),
         }
 
     all_summary = subset_summary(rows)
@@ -2279,8 +4834,8 @@ def _write_summary(rows: list[dict[str, object]], path: Path) -> None:
         f"profile: `{profile}`",
         f"selection_policy: `{selection_policy}`",
         "",
-        "| scope | cases | solved | moves total | avg runtime sec | max runtime sec | qubo calls | qubo vars | qubo time sec | qubo path | qubo ancestor | group qcalls | group qtime sec | polish saved | peak cand max | peak cand avg | stream pruned | rank-pool truncated |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| scope | cases | solved | moves total | avg runtime sec | max runtime sec | qubo calls | qubo vars | qubo time sec | qubo path | qubo ancestor | group qcalls | group qtime sec | polish saved | window saved | window attempts | window successes | peak cand max | peak cand avg | stream pruned | rank-pool truncated | rescue layers |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for label, summary in [("all", all_summary), ("bay26", bay26_summary)]:
         lines.append(
@@ -2289,9 +4844,11 @@ def _write_summary(rows: list[dict[str, object]], path: Path) -> None:
             f"{summary['qubo_calls']} | {summary['qubo_vars']} | {summary['qubo_time']:.3f} | "
             f"{summary['qubo_on_path']} | {summary['qubo_ancestor']} | "
             f"{summary['group_qubo_calls']} | {summary['group_qubo_time']:.3f} | "
-            f"{summary['post_polish_saved']} | {summary['peak_candidates_max']} | "
+            f"{summary['post_polish_saved']} | {summary['window_polish_saved']} | "
+            f"{summary['window_polish_attempts']} | {summary['window_polish_successes']} | "
+            f"{summary['peak_candidates_max']} | "
             f"{summary['peak_candidates_avg']:.1f} | {summary['stream_pruned']} | "
-            f"{summary['rank_pool_truncated']} |"
+            f"{summary['rank_pool_truncated']} | {summary['rescue_layers']} |"
         )
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -2373,24 +4930,78 @@ def main() -> int:
         default="speed_v2",
         help=(
             "Reusable solver baseline. speed_v2 is the main 30/30, 509-move QUBO Beam profile; "
-            "post_polish_v1 and frontier_quality_v1 are experimental QUBO influence probes."
+            "post_polish_v1, frontier_quality_v1, and rescue_qubo_v1 are experimental QUBO influence probes."
         ),
     )
-    parser.add_argument("--priority", choices=["n_then_depth", "astar", "weighted_astar"], default="n_then_depth")
+    parser.add_argument("--priority", choices=["n_then_depth", "astar", "weighted_astar", "target_guided"], default="n_then_depth")
     parser.add_argument("--g-weight", type=float, default=1.0)
     parser.add_argument("--n-weight", type=float, default=1.0)
+    parser.add_argument("--target-guided-weight", type=float, default=0.0)
+    parser.add_argument("--target-guided-focus-n", type=int, default=8, help="-1 applies target guidance at all N levels.")
+    parser.add_argument("--target-guided-supplement-width", type=int, default=0)
+    parser.add_argument("--target-guided-n-window", type=int, default=0)
+    parser.add_argument("--wang-probe-supplement-width", type=int, default=0)
+    parser.add_argument("--wang-probe-focus-n", type=int, default=8, help="-1 applies Wang-style fixed-prefix probing at all N levels.")
+    parser.add_argument("--wang-probe-n-window", type=int, default=0)
+    parser.add_argument("--wang-probe-fixed-weight", type=float, default=1.0)
+    parser.add_argument("--wang-probe-pair-weight", type=float, default=0.0)
+    parser.add_argument("--wang-probe-target-weight", type=float, default=0.0)
+    parser.add_argument("--wang-probe-plateau-window", type=int, default=0)
+    parser.add_argument("--wang-probe-plateau-delta", type=int, default=0)
+    parser.add_argument("--wang-incumbent-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--wang-incumbent-beam-width", type=int, default=100)
+    parser.add_argument("--wang-incumbent-candidate-limit", type=int, default=64)
+    parser.add_argument("--wang-incumbent-max-depth", type=int, default=0)
+    parser.add_argument("--wang-incumbent-time-limit", type=float, default=0.0)
+    parser.add_argument("--wang-cap-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--wang-rollout-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--wang-rollout-width", type=int, default=0)
+    parser.add_argument("--wang-rollout-focus-n", type=int, default=8)
+    parser.add_argument("--wang-rollout-plateau-window", type=int, default=3)
+    parser.add_argument("--wang-rollout-plateau-delta", type=int, default=0)
+    parser.add_argument("--wang-rollout-max-steps", type=int, default=1)
+    parser.add_argument("--wang-pair-qubo-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--wang-pair-qubo-supplement-width", type=int, default=0)
+    parser.add_argument("--wang-pair-qubo-focus-n", type=int, default=8)
+    parser.add_argument("--wang-pair-qubo-n-window", type=int, default=1)
+    parser.add_argument("--wang-pair-qubo-max-vars", type=int, default=32)
+    parser.add_argument("--wang-pair-qubo-select", type=int, default=8)
+    parser.add_argument("--wang-pair-qubo-same-parent-penalty", type=float, default=0.25)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--time-limit", type=float, default=0.0, help="Per-case limit in seconds; 0 means no limit.")
     parser.add_argument("--stream-candidate-limit", type=int, default=0, help="0 keeps the full per-layer candidate set.")
     parser.add_argument("--stream-candidate-trim-factor", type=float, default=2.0)
+    parser.add_argument("--stream-bucket-topk", type=int, default=0, help="0 disables generation-time grouped top-k pruning.")
     parser.add_argument("--rank-pool-size", type=int, default=0, help="0 uses the old full candidate sort.")
     parser.add_argument("--rank-pool-min-candidates", type=int, default=0)
+    parser.add_argument("--rank-bucket-topk", type=int, default=0, help="0 disables grouped bounded top-k candidate ranking.")
+    parser.add_argument(
+        "--rank-bucket-key",
+        choices=["n", "n_depth_parent", "n_depth", "n_band_parent", "n_band", "parent"],
+        default="n_depth_parent",
+    )
+    parser.add_argument("--rank-bucket-n-band-size", type=int, default=2)
+    parser.add_argument("--rank-bucket-topk-high-n", type=int, default=0, help="0 applies grouped top-k at any best-N level.")
+    parser.add_argument("--rank-bucket-topk-min-candidates", type=int, default=0)
     parser.add_argument("--beam-width", type=int, default=1200)
     parser.add_argument("--core-width", type=int, default=1080)
     parser.add_argument("--parent-core-cap", type=int, default=4)
-    parser.add_argument("--selection-policy", choices=["enhanced", "classic", "dynamic_qubo", "adaptive_qubo"], default="enhanced")
+    parser.add_argument(
+        "--selection-policy",
+        choices=[
+            "enhanced",
+            "classic",
+            "dynamic_qubo",
+            "adaptive_qubo",
+            "rescue_qubo",
+            "scheduler_qubo",
+            "scheduler_state_qubo",
+            "qubo_bucket",
+        ],
+        default="enhanced",
+    )
     parser.add_argument("--use-qubo", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--qubo-influence-profile", choices=sorted(_QUBO_INFLUENCE_PRESETS.keys()), default="stable")
     parser.add_argument("--qubo-mode", choices=["supplement", "focused_multi", "majority_multi"], default="focused_multi")
@@ -2409,6 +5020,16 @@ def main() -> int:
     parser.add_argument("--qubo-target-share", type=float, default=0.50, help="Target frontier share selected by QUBO in majority_multi mode.")
     parser.add_argument("--qubo-cohorts-per-layer", type=int, default=2)
     parser.add_argument("--qubo-cohort-stride", type=int, default=64, help="Candidate stride between QUBO cohorts; 0 uses max_qubo_vars.")
+    parser.add_argument(
+        "--qubo-pair-policy",
+        choices=["baseline", "none", "parent_only", "byte_similarity", "stack_signature", "hybrid"],
+        default="baseline",
+    )
+    parser.add_argument("--qubo-parent-sim-weight", type=float, default=0.65)
+    parser.add_argument("--qubo-layout-sim-weight", type=float, default=1.0)
+    parser.add_argument("--qubo-action-sim-weight", type=float, default=0.0)
+    parser.add_argument("--qubo-stack-sim-weight", type=float, default=0.35)
+    parser.add_argument("--qubo-sim-threshold", type=float, default=0.80)
     parser.add_argument("--group-qubo-supplement", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-group-qubo-calls", type=int, default=32)
     parser.add_argument("--qubo-group-max-vars", type=int, default=96)
@@ -2434,6 +5055,77 @@ def main() -> int:
     parser.add_argument("--adaptive-low-frontier", type=int, default=1200)
     parser.add_argument("--adaptive-core-ratio", type=float, default=0.90)
     parser.add_argument("--adaptive-candidate-pool", type=int, default=0)
+    parser.add_argument("--adaptive-controller", choices=["tiered", "signal_v1"], default="tiered")
+    parser.add_argument("--adaptive-expand-frontier", type=int, default=1200)
+    parser.add_argument("--adaptive-contract-pressure", type=float, default=0.0)
+    parser.add_argument("--adaptive-mid-pressure", type=float, default=0.0)
+    parser.add_argument("--adaptive-min-best-n-ratio", type=float, default=0.0)
+    parser.add_argument("--adaptive-max-duplication-ratio", type=float, default=1.0)
+    parser.add_argument("--adaptive-parent-top-share", type=float, default=0.0)
+    parser.add_argument("--adaptive-plateau-window", type=int, default=0)
+    parser.add_argument("--adaptive-plateau-delta", type=int, default=0)
+    parser.add_argument("--adaptive-cap-slack", type=int, default=0)
+    parser.add_argument("--adaptive-large-stack-min-stacks", type=int, default=0)
+    parser.add_argument("--adaptive-large-stack-expand-frontier", type=int, default=0)
+    parser.add_argument("--adaptive-large-stack-plateau-window", type=int, default=0)
+    parser.add_argument("--adaptive-large-stack-cap-slack", type=int, default=0)
+    parser.add_argument("--scheduler-adaptive-min-stacks", type=int, default=7)
+    parser.add_argument("--scheduler-adaptive-high-n", type=int, default=16)
+    parser.add_argument("--scheduler-adaptive-cv1-only", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--scheduler-adaptive-max-duplication-ratio", type=float, default=1.0)
+    parser.add_argument("--scheduler-adaptive-min-best-n-ratio", type=float, default=0.0)
+    parser.add_argument("--scheduler-adaptive-max-candidate-pressure", type=float, default=0.0)
+    parser.add_argument("--scheduler-adaptive-max-parent-top-share", type=float, default=0.0)
+    parser.add_argument("--scheduler-adaptive-plateau-window", type=int, default=0)
+    parser.add_argument("--scheduler-adaptive-cap-slack", type=int, default=0)
+    parser.add_argument("--scheduler-state-controller", choices=["off", "state_v2"], default="off")
+    parser.add_argument("--scheduler-state-contract-pressure", type=float, default=8.0)
+    parser.add_argument("--scheduler-state-max-contract-pressure", type=float, default=40.0)
+    parser.add_argument("--scheduler-state-min-best-n-ratio", type=float, default=0.0)
+    parser.add_argument("--scheduler-state-progress-window", type=int, default=3)
+    parser.add_argument("--scheduler-state-progress-delta", type=int, default=2)
+    parser.add_argument("--scheduler-state-failed-contract-cooldown", type=int, default=0)
+    parser.add_argument("--scheduler-state-post-rescue-plateau-window", type=int, default=0)
+    parser.add_argument("--scheduler-state-post-rescue-plateau-delta", type=int, default=0)
+    parser.add_argument("--scheduler-state-post-rescue-min-ratio", type=float, default=0.90)
+    parser.add_argument("--scheduler-state-post-rescue-action", choices=["protect", "blend", "rescue"], default="protect")
+    parser.add_argument("--scheduler-state-initial-plateau-window", type=int, default=0)
+    parser.add_argument("--scheduler-state-initial-plateau-min-ratio", type=float, default=0.98)
+    parser.add_argument("--scheduler-state-initial-plateau-action", choices=["protect", "blend", "rescue"], default="protect")
+    parser.add_argument("--scheduler-state-initial-plateau-lock", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--scheduler-state-initial-plateau-min-duplication", type=float, default=0.0)
+    parser.add_argument("--scheduler-state-initial-plateau-unique-min-n", type=int, default=0)
+    parser.add_argument("--scheduler-state-protect-parent-top-share", type=float, default=0.65)
+    parser.add_argument("--scheduler-state-protect-n-band", type=int, default=2)
+    parser.add_argument("--scheduler-state-top-window", type=int, default=64)
+    parser.add_argument("--scheduler-state-rescue-plateau-window", type=int, default=3)
+    parser.add_argument("--scheduler-state-rescue-plateau-delta", type=int, default=0)
+    parser.add_argument("--scheduler-state-rescue-cap-slack", type=int, default=8)
+    parser.add_argument("--bucket-key", choices=["n_depth", "f_n", "n_band"], default="n_depth")
+    parser.add_argument("--bucket-n-band-size", type=int, default=2)
+    parser.add_argument("--bucket-core-ratio", type=float, default=0.50)
+    parser.add_argument("--bucket-qubo-share", type=float, default=0.35)
+    parser.add_argument("--bucket-max-qubo-vars", type=int, default=96)
+    parser.add_argument("--bucket-qubo-select", type=int, default=24)
+    parser.add_argument("--bucket-min-candidates", type=int, default=64)
+    parser.add_argument("--rescue-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--rescue-plateau-window", type=int, default=2)
+    parser.add_argument("--rescue-plateau-delta", type=int, default=0)
+    parser.add_argument("--rescue-cap-slack", type=int, default=26)
+    parser.add_argument("--rescue-min-n", type=int, default=12)
+    parser.add_argument("--rescue-min-candidates", type=int, default=5000)
+    parser.add_argument("--rescue-max-layers", type=int, default=16)
+    parser.add_argument("--rescue-beam-width", type=int, default=1350)
+    parser.add_argument("--rescue-core-width", type=int, default=1215)
+    parser.add_argument("--rescue-escalate-after", type=int, default=2)
+    parser.add_argument("--rescue-escalate-beam-width", type=int, default=1600)
+    parser.add_argument("--rescue-escalate-core-width", type=int, default=1440)
+    parser.add_argument("--rescue-max-qubo-vars", type=int, default=96)
+    parser.add_argument("--rescue-qubo-supplement-width", type=int, default=48)
+    parser.add_argument("--rescue-qubo-cohorts-per-layer", type=int, default=4)
+    parser.add_argument("--rescue-qubo-time-limit", type=float, default=0.002)
+    parser.add_argument("--rescue-qubo-iterations", type=int, default=30)
+    parser.add_argument("--rescue-next-n-weight", type=float, default=0.75)
     parser.add_argument(
         "--dynamic-profile",
         choices=sorted(_DYNAMIC_QUBO_PRESETS.keys()),
@@ -2459,6 +5151,9 @@ def main() -> int:
     parser.add_argument("--qubo-reads", type=int, default=2)
     parser.add_argument("--qubo-iterations", type=int, default=20)
     parser.add_argument("--post-polish-qubo", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--post-polish-mode", choices=["legacy", "qubo_windows_v2"], default="legacy")
+    parser.add_argument("--post-polish-accept", choices=["better", "equal_or_better"], default="better")
+    parser.add_argument("--post-polish-window-min-stacks", type=int, default=0)
     parser.add_argument("--post-polish-passes", type=int, default=2)
     parser.add_argument("--post-polish-focus-n", type=int, default=8)
     parser.add_argument("--post-polish-tail-span", type=int, default=14)
@@ -2483,6 +5178,15 @@ def main() -> int:
     parser.add_argument("--post-polish-qubo-time-limit", type=float, default=0.001)
     parser.add_argument("--post-polish-qubo-reads", type=int, default=2)
     parser.add_argument("--post-polish-qubo-iterations", type=int, default=20)
+    parser.add_argument("--post-polish-window-min-size", type=int, default=3)
+    parser.add_argument("--post-polish-window-max-size", type=int, default=10)
+    parser.add_argument("--post-polish-window-stride", type=int, default=1)
+    parser.add_argument("--post-polish-window-budget", type=int, default=96)
+    parser.add_argument("--post-polish-window-qubo-vars", type=int, default=72)
+    parser.add_argument("--post-polish-window-select", type=int, default=8)
+    parser.add_argument("--post-polish-window-time-limit", type=float, default=0.001)
+    parser.add_argument("--post-polish-window-repair-expanded", type=int, default=20000)
+    parser.add_argument("--post-polish-window-repair-depth-extra", type=int, default=0)
     parser.add_argument("--tail-order-steps", type=int, default=6)
     parser.add_argument("--seed", type=int, default=37)
     args = parser.parse_args()

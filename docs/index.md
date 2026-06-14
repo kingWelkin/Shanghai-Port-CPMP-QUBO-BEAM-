@@ -3,7 +3,12 @@
 ## 读者入口
 
 - 想了解当前主算法：看 [当前 QUBO Beam 主算法完整描述](guides/current-qubo-beam-algorithm.md)
+- 想看 QUBO 机制归因和正负结果边界：看 [QUBO 机制归因记录](guides/qubo-mechanism-attribution.md)
 - 想了解扩大 QUBO 影响为什么没有进入主线：看 [QUBO 影响增强 profile 试验记录](guides/qubo-quality-profile-probes.md)
+- 想了解实例感知 scheduler、轻 rescue 和 top-k 候选裁剪：看 [实例感知调度器试验记录](guides/instance-aware-scheduler-probes.md)
+- 想了解 `qubo_bucket` 和 no-regret portfolio：看 [QUBO 影响增强 profile 试验记录](guides/qubo-quality-profile-probes.md#5-qubo_bucket)
+- 想了解外部 7x5 硬例 rescue：看 [当前 QUBO Beam 主算法完整描述](guides/current-qubo-beam-algorithm.md#9-trigger-rescue-qubo-变体)
+- 想区分 Wang-Jin-Lim 2015、target-guided 信号和 bounded-beam probe：看 [Wang-Jin-Lim target-guided paper audit](guides/wang-target-guided-paper-audit.md)
 - 想看最新实验结论：看 [实验结论汇总](experiments/README.md)
 - 想理解 QUBO 到底贡献了什么：看 [Task 04：QUBO 贡献拆解](experiments/frontier_qubo_contribution_task04_summary.md)
 - 想看当前 `N=0` 高效算法矩阵：看 [Task 08：实验矩阵](experiments/n0_efficient_algorithm_matrix_task08_summary.md)
@@ -27,6 +32,8 @@
 
 `*` classic no-QUBO 只统计成功算例步数。
 
+补充路线：`stable+qubo_bucket` no-regret portfolio 内部 30/30、508 步，但需要顺序运行两套算法，总组合时间 115.057 秒；它适合作为 QUBO 算法簇择优结果，不应写成单 profile 加速。
+
 ## 文档分层
 
 - `guides/`：运行、数据格式、开发、当前算法说明。
@@ -44,6 +51,7 @@
 2. 再写 strict classic no-QUBO 是传统 Beam 消融：同时间预算下 25/30，26 号贝位 10/15。
 3. 单独说明 enhanced no-QUBO 是强工程消融：也能 30/30，但总步数 510；它不是传统 baseline。
 4. 写清 QUBO 的边界：Post-polish 只做路径压缩，不负责把 `N>0` 变成 `N=0`；frontier QUBO 是稀疏前沿纠偏，不是全程主导路径。
+5. 如果讨论“扩大 QUBO 影响”，必须同时写正负结果：`window_polish_v2` 安全但 30 次窗口尝试 0 次接受，`frontier_quality_v1` 更慢且不优，`scheduler_v1` / `light_rescue_qubo_v1` 只作为外部硬例解出率路线。
 
 ## 开源外部算例
 

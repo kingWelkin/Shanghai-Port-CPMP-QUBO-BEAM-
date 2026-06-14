@@ -268,7 +268,11 @@ def _init_layout_qubo_target(instance, args: argparse.Namespace) -> None:
     args._layout_target_cost = target.target_cost
 
 
-def _qubo_pair_penalty(a: tuple[int, int, bytes, bytes], b: tuple[int, int, bytes, bytes], diversity_weight: float) -> float:
+def _legacy_qubo_pair_penalty(
+    a: tuple[int, int, bytes, bytes],
+    b: tuple[int, int, bytes, bytes],
+    diversity_weight: float,
+) -> float:
     a_n, a_depth, a_parent, a_code = a
     b_n, b_depth, b_parent, b_code = b
     penalty = 0.0
@@ -281,6 +285,73 @@ def _qubo_pair_penalty(a: tuple[int, int, bytes, bytes], b: tuple[int, int, byte
     similarity = _candidate_similarity(a_code, b_code)
     if similarity > 0.80:
         penalty += similarity - 0.80
+    return diversity_weight * penalty
+
+
+def _stack_signature_similarity(a_code: bytes, b_code: bytes, args: argparse.Namespace | None) -> float:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return _candidate_similarity(a_code, b_code)
+    chunks_a = _split(a_code, stack_count, max_height)
+    chunks_b = _split(b_code, stack_count, max_height)
+    if not chunks_a or not chunks_b:
+        return 0.0
+    total = 0.0
+    for chunk_a, chunk_b in zip(chunks_a, chunks_b):
+        height_a = _height(chunk_a, max_height)
+        height_b = _height(chunk_b, max_height)
+        top_a = chunk_a[height_a - 1] if height_a else 0
+        top_b = chunk_b[height_b - 1] if height_b else 0
+        score = 0.0
+        if height_a == height_b:
+            score += 0.25
+        if top_a == top_b:
+            score += 0.30
+        if _stack_n(chunk_a, max_height) == _stack_n(chunk_b, max_height):
+            score += 0.25
+        if max_height - height_a == max_height - height_b:
+            score += 0.20
+        total += score
+    structural = total / min(len(chunks_a), len(chunks_b))
+    return max(structural, _candidate_similarity(a_code, b_code))
+
+
+def _qubo_pair_penalty(
+    a: tuple[int, int, bytes, bytes],
+    b: tuple[int, int, bytes, bytes],
+    diversity_weight: float,
+    args: argparse.Namespace | None = None,
+) -> float:
+    policy = getattr(args, "qubo_pair_policy", "baseline") if args is not None else "baseline"
+    if policy == "baseline":
+        return _legacy_qubo_pair_penalty(a, b, diversity_weight)
+    if policy == "none":
+        return 0.0
+
+    a_n, a_depth, a_parent, a_code = a
+    b_n, b_depth, b_parent, b_code = b
+    parent_weight = float(getattr(args, "qubo_parent_sim_weight", 0.65)) if args is not None else 0.65
+    layout_weight = float(getattr(args, "qubo_layout_sim_weight", 1.0)) if args is not None else 1.0
+    stack_weight = float(getattr(args, "qubo_stack_sim_weight", 0.35)) if args is not None else 0.35
+    threshold = float(getattr(args, "qubo_sim_threshold", 0.80)) if args is not None else 0.80
+
+    penalty = 0.0
+    if policy in {"parent_only", "hybrid"} and a_parent == b_parent:
+        penalty += parent_weight
+    if policy in {"byte_similarity", "hybrid"}:
+        similarity = _candidate_similarity(a_code, b_code)
+        if similarity > threshold:
+            penalty += layout_weight * (similarity - threshold)
+    if policy in {"stack_signature", "hybrid"}:
+        similarity = _stack_signature_similarity(a_code, b_code, args)
+        if similarity > threshold:
+            penalty += stack_weight * (similarity - threshold)
+    if policy == "hybrid":
+        if a_n == b_n:
+            penalty += 0.10
+        if a_depth == b_depth:
+            penalty += 0.05
     return diversity_weight * penalty
 
 
@@ -327,7 +398,7 @@ def _select_qubo_boosted(
     vars_ = [model.add_binary_var(f"m_{idx}") for idx in range(len(usable_items))]
     for idx, var in enumerate(vars_):
         model.add_linear(var, score_norm[idx])
-    pair_penalties = _pair_penalty_matrix(payload, args.qubo_diversity_weight)
+    pair_penalties = _pair_penalty_matrix(payload, args.qubo_diversity_weight, args)
     for i in range(len(usable_items)):
         for j in range(i + 1, len(usable_items)):
             coeff = pair_penalties[i][j]
@@ -443,23 +514,25 @@ def _qubo_selection_value(
     score_norm: list[float],
     payload: list[tuple[int, int, bytes, bytes]],
     diversity_weight: float,
+    args: argparse.Namespace | None = None,
 ) -> float:
     value = sum(score_norm[idx] for idx in selected)
     rows = sorted(selected)
     for pos, i in enumerate(rows):
         for j in rows[pos + 1 :]:
-            value += _qubo_pair_penalty(payload[i], payload[j], diversity_weight)
+            value += _qubo_pair_penalty(payload[i], payload[j], diversity_weight, args)
     return value
 
 
 def _pair_penalty_matrix(
     payload: list[tuple[int, int, bytes, bytes]],
     diversity_weight: float,
+    args: argparse.Namespace | None = None,
 ) -> list[list[float]]:
     pair_penalties = [[0.0 for _ in payload] for _ in payload]
     for i in range(len(payload)):
         for j in range(i + 1, len(payload)):
-            coeff = _qubo_pair_penalty(payload[i], payload[j], diversity_weight)
+            coeff = _qubo_pair_penalty(payload[i], payload[j], diversity_weight, args)
             pair_penalties[i][j] = coeff
             pair_penalties[j][i] = coeff
     return pair_penalties
@@ -1418,6 +1491,16 @@ def main() -> int:
     parser.add_argument("--qubo-min-candidates", type=int, default=128)
     parser.add_argument("--qubo-priority-bonus", type=float, default=0.0001)
     parser.add_argument("--qubo-diversity-weight", type=float, default=0.08)
+    parser.add_argument(
+        "--qubo-pair-policy",
+        choices=["baseline", "none", "parent_only", "byte_similarity", "stack_signature", "hybrid"],
+        default="baseline",
+    )
+    parser.add_argument("--qubo-parent-sim-weight", type=float, default=0.65)
+    parser.add_argument("--qubo-layout-sim-weight", type=float, default=1.0)
+    parser.add_argument("--qubo-action-sim-weight", type=float, default=0.0)
+    parser.add_argument("--qubo-stack-sim-weight", type=float, default=0.35)
+    parser.add_argument("--qubo-sim-threshold", type=float, default=0.80)
     parser.add_argument("--qubo-frontier-n-window", type=int, default=1)
     parser.add_argument("--qubo-frontier-depth-window", type=int, default=2)
     parser.add_argument("--qubo-rank-weight", type=float, default=1.0)
