@@ -1144,6 +1144,184 @@ def test_wang_pair_qubo_supplement_selects_high_fix_pair_candidate():
     assert qvars == 2
 
 
+def test_unified_wang_qubo_features_capture_prefix_pair_and_diversity():
+    from benchmark_compact_beam_qubo_n0 import (
+        _compact_wang_fix_pair_score,
+        _compact_wang_fixed_prefix_score,
+        _unified_wang_qubo_features,
+    )
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    good_code, good_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    peer_code, peer_n = _encode([[5], [4, 3], [2, 1]], stack_count, max_height)
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+
+    features = _unified_wang_qubo_features(
+        good_code,
+        (good_n, 6, b"p0"),
+        [
+            (good_code, (good_n, 6, b"p0")),
+            (good_code, (good_n, 8, b"p0")),
+            (peer_code, (peer_n, 7, b"p0")),
+        ],
+        args,
+    )
+
+    expected_prefix = _compact_wang_fixed_prefix_score(good_code, stack_count, max_height)
+    expected_pair = _compact_wang_fix_pair_score(good_code, stack_count, max_height)
+    assert expected_prefix == 4
+    assert expected_pair == 2
+    assert features.fixed_prefix == expected_prefix
+    assert features.fix_pair == expected_pair
+    assert features.target_gap >= 0
+    assert features.same_parent_count == 1
+    assert features.depth == 6
+    assert features.n_value == good_n
+
+
+def test_unified_wang_qubo_energy_defaults_order_by_n_then_depth():
+    from benchmark_compact_beam_qubo_n0 import _unified_wang_qubo_linear_energy
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    higher_n_code, higher_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    lower_n_code, lower_n = _encode([[5], [4, 3], [2, 1]], stack_count, max_height)
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+    entries = [(higher_n_code, (higher_n, 6, b"pa")), (lower_n_code, (lower_n, 7, b"pb"))]
+
+    higher_n_energy = _unified_wang_qubo_linear_energy(
+        higher_n_code,
+        (higher_n, 6, b"pa"),
+        entries,
+        args,
+    )
+    lower_n_energy = _unified_wang_qubo_linear_energy(
+        lower_n_code,
+        (lower_n, 7, b"pb"),
+        entries,
+        args,
+    )
+
+    assert higher_n_energy == higher_n * 1000.0 + 6.0
+    assert lower_n_energy == lower_n * 1000.0 + 7.0
+    assert lower_n_energy < higher_n_energy
+
+
+def test_unified_wang_qubo_energy_treats_none_weights_as_defaults():
+    from benchmark_compact_beam_qubo_n0 import _unified_wang_qubo_linear_energy
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    code, n_value = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        unified_wang_n_weight=None,
+        unified_wang_depth_weight=None,
+        unified_wang_fixed_prefix_weight=None,
+        unified_wang_fix_pair_weight=None,
+        unified_wang_target_gap_weight=None,
+        unified_wang_same_parent_penalty=None,
+    )
+
+    energy = _unified_wang_qubo_linear_energy(
+        code,
+        (n_value, 6, b"pa"),
+        [(code, (n_value, 6, b"pa"))],
+        args,
+    )
+
+    assert energy == n_value * 1000.0 + 6.0
+
+
+def test_unified_wang_qubo_energy_applies_fixed_prefix_weight_independently():
+    from benchmark_compact_beam_qubo_n0 import _unified_wang_qubo_linear_energy
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    lower_prefix_code, lower_prefix_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    higher_prefix_code, higher_prefix_n = _encode([[5], [4, 3], [2, 1]], stack_count, max_height)
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        unified_wang_n_weight=0.0,
+        unified_wang_depth_weight=0.0,
+        unified_wang_fixed_prefix_weight=2.0,
+        unified_wang_fix_pair_weight=0.0,
+        unified_wang_target_gap_weight=0.0,
+        unified_wang_same_parent_penalty=0.0,
+    )
+    entries = [
+        (lower_prefix_code, (lower_prefix_n, 6, b"pa")),
+        (higher_prefix_code, (higher_prefix_n, 7, b"pb")),
+    ]
+
+    lower_prefix_energy = _unified_wang_qubo_linear_energy(
+        lower_prefix_code,
+        (lower_prefix_n, 6, b"pa"),
+        entries,
+        args,
+    )
+    higher_prefix_energy = _unified_wang_qubo_linear_energy(
+        higher_prefix_code,
+        (higher_prefix_n, 7, b"pb"),
+        entries,
+        args,
+    )
+
+    assert higher_prefix_energy < lower_prefix_energy
+
+
+def test_unified_wang_qubo_energy_applies_fix_pair_weight_independently():
+    from benchmark_compact_beam_qubo_n0 import _unified_wang_qubo_linear_energy
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    higher_pair_code, higher_pair_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    lower_pair_code, lower_pair_n = _encode([[5], [4, 3], [2, 1]], stack_count, max_height)
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        unified_wang_n_weight=0.0,
+        unified_wang_depth_weight=0.0,
+        unified_wang_fixed_prefix_weight=0.0,
+        unified_wang_fix_pair_weight=3.0,
+        unified_wang_target_gap_weight=0.0,
+        unified_wang_same_parent_penalty=0.0,
+    )
+    entries = [
+        (higher_pair_code, (higher_pair_n, 6, b"pa")),
+        (lower_pair_code, (lower_pair_n, 7, b"pb")),
+    ]
+
+    higher_pair_energy = _unified_wang_qubo_linear_energy(
+        higher_pair_code,
+        (higher_pair_n, 6, b"pa"),
+        entries,
+        args,
+    )
+    lower_pair_energy = _unified_wang_qubo_linear_energy(
+        lower_pair_code,
+        (lower_pair_n, 7, b"pb"),
+        entries,
+        args,
+    )
+
+    assert higher_pair_energy < lower_pair_energy
+
+
 def test_solver_profile_scheduler_state_v5_wang_probe_inherits_state_controller(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
 

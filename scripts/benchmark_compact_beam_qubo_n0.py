@@ -1136,6 +1136,16 @@ class WangQuboFeatures:
 
 
 @dataclass(frozen=True)
+class UnifiedWangQuboFeatures:
+    fixed_prefix: int
+    fix_pair: int
+    target_gap: int
+    same_parent_count: int
+    depth: int
+    n_value: int
+
+
+@dataclass(frozen=True)
 class PostPolishSuffix:
     start: int
     old_remaining: int
@@ -1623,6 +1633,56 @@ def _wang_qubo_feature_values(
         fix_pair=int(fix_pairs),
         risk=risk,
         same_parent=same_parent,
+    )
+
+
+def _unified_wang_qubo_features(
+    code: bytes,
+    rec: tuple[int, int, bytes],
+    entries: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+) -> UnifiedWangQuboFeatures:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    n_value, depth, parent = rec
+    fix_pair = _compact_wang_fix_pair_score(code, stack_count, max_height)
+    fixed_prefix = _compact_wang_fixed_prefix_score(code, stack_count, max_height)
+    target_gap = _candidate_target_gap(code, args)
+    same_parent_count = sum(1 for other_code, data in entries if other_code != code and data[2] == parent)
+    return UnifiedWangQuboFeatures(
+        fixed_prefix=int(fixed_prefix),
+        fix_pair=int(fix_pair),
+        target_gap=int(target_gap),
+        same_parent_count=int(same_parent_count),
+        depth=int(depth),
+        n_value=int(n_value),
+    )
+
+
+def _unified_wang_qubo_linear_energy(
+    code: bytes,
+    rec: tuple[int, int, bytes],
+    entries: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+) -> float:
+    features = _unified_wang_qubo_features(code, rec, entries, args)
+    def _weight(name: str, default: float) -> float:
+        value = getattr(args, name, None)
+        return float(default if value is None else value)
+
+    n_weight = _weight("unified_wang_n_weight", 1000.0)
+    depth_weight = _weight("unified_wang_depth_weight", 1.0)
+    fixed_prefix_weight = _weight("unified_wang_fixed_prefix_weight", 0.0)
+    fix_pair_weight = _weight("unified_wang_fix_pair_weight", 0.0)
+    target_gap_weight = _weight("unified_wang_target_gap_weight", 0.0)
+    same_parent_penalty = _weight("unified_wang_same_parent_penalty", 0.0)
+    return (
+        n_weight * float(features.n_value)
+        + depth_weight * float(features.depth)
+        - fixed_prefix_weight * float(features.fixed_prefix)
+        - fix_pair_weight * float(features.fix_pair)
+        + target_gap_weight * float(features.target_gap)
+        + same_parent_penalty * float(features.same_parent_count)
     )
 
 
