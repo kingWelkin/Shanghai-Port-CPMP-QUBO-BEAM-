@@ -38,3 +38,15 @@ def test_diagnostic_row_degrades_when_wang_data_is_missing():
     assert row["compact_plateau_tail"] == "10,10,9"
     assert row["wang_moves"] == ""
     assert row["wang_first_moves"] == ""
+
+
+def test_format_first_moves_keeps_stack_and_box_fields():
+    from container_reshuffle.core import Move
+    from diagnose_wang_qubo_failures import _format_first_moves
+
+    moves = [
+        Move(step=1, box=7, from_stack=0, to_stack=2, from_level=3, to_level=1),
+        Move(step=2, box=5, from_stack=1, to_stack=0, from_level=2, to_level=4),
+    ]
+
+    assert _format_first_moves(moves, limit=2) == ["1:7:0->2", "2:5:1->0"]

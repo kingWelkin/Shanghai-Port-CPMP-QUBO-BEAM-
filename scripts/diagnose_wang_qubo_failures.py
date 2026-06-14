@@ -4,8 +4,21 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 from pathlib import Path
 from typing import Iterable
+
+ROOT = Path(__file__).resolve().parents[1]
+for path in (ROOT, ROOT / "scripts"):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
+from container_reshuffle.core import Move
+from container_reshuffle.features import future_disorder_count_stacks
+from container_reshuffle.solvers.base import SolverConfig
+from container_reshuffle.solvers.classical_cpmp import WangBsBabyMovesSolver
+from open_cpmp_benchmarks import discover_dlts_cases, ensure_dlts_source, load_dlts_dat
 
 DEFAULT_CASES = ("5x5_cv1_test_4", "5x5_cv1_test_6")
 FIELDS = [
@@ -30,6 +43,13 @@ def _case_selected(case_id: str, exact_cases: set[str]) -> bool:
 def _plateau_tail(history: Iterable[int], width: int = 3) -> str:
     values = list(history)[-max(1, width):]
     return ",".join(str(value) for value in values)
+
+
+def _format_first_moves(moves: list[Move], limit: int = 8) -> list[str]:
+    return [
+        f"{move.step}:{move.box}:{move.from_stack}->{move.to_stack}"
+        for move in moves[: max(0, limit)]
+    ]
 
 
 def _diagnostic_row(
@@ -71,31 +91,62 @@ def _write_rows(rows: list[dict[str, object]], output: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--source", type=Path, default=ROOT / "external" / "DLTS")
+    parser.add_argument("--families", nargs="+", default=["5x5_cv1_test"])
     parser.add_argument("--cases", nargs="+", default=list(DEFAULT_CASES))
+    parser.add_argument("--time-limit", type=float, default=10.0)
+    parser.add_argument("--wang-move-limit", type=int, default=8)
     parser.add_argument(
         "--output",
         type=Path,
         default=Path("docs/experiments/wang_qubo_failure_autopsy.csv"),
     )
     args = parser.parse_args()
+
+    source = ensure_dlts_source(args.source, auto_clone=False, refresh=False)
+    cases = discover_dlts_cases(source, families=args.families, limit_per_family=None, max_total=None)
     exact = set(args.cases)
-    rows = [
-        _diagnostic_row(
-            case_id=case_id,
-            family=case_id.rsplit("_", 1)[0],
-            compact_status="diagnostic_not_run",
-            compact_final_n=None,
-            compact_moves=None,
-            compact_best_n_history=[],
-            fixed_prefix=0,
-            fix_pair=0,
-            parent_top_share=0.0,
-            wang_moves=None,
-            wang_first_moves=[],
+    rows: list[dict[str, object]] = []
+    for case in cases:
+        if not _case_selected(case.case_id, exact):
+            continue
+        instance = load_dlts_dat(case.instance_path, max_height=case.reference.max_height)
+        compact_args = make_compact_args(
+            solver_profile="scheduler_state_v5_wang_rescue",
+            alpha=10.0,
+            time_limit=args.time_limit,
+            max_moves=None,
         )
-        for case_id in DEFAULT_CASES
-        if _case_selected(case_id, exact)
-    ]
+        compact_result = run_compact_beam_instance(case.case_id, instance, compact_args)
+        wang_solution = WangBsBabyMovesSolver().solve(
+            instance,
+            SolverConfig(
+                max_depth=200,
+                beam_width=100,
+                max_candidates_per_layer=64,
+                time_limit_sec=args.time_limit,
+            ),
+        )
+        rows.append(
+            _diagnostic_row(
+                case_id=case.case_id,
+                family=case.family,
+                compact_status=compact_result.status,
+                compact_final_n=(
+                    0 if compact_result.moves else future_disorder_count_stacks(instance.stacks)
+                ),
+                compact_moves=(len(compact_result.moves) if compact_result.moves else None),
+                compact_best_n_history=list(getattr(compact_args, "_best_n_history", [])),
+                fixed_prefix=0,
+                fix_pair=0,
+                parent_top_share=float(getattr(compact_args, "_layer_parent_top_share", 0.0)),
+                wang_moves=(len(wang_solution.moves) if wang_solution.moves else None),
+                wang_first_moves=_format_first_moves(
+                    wang_solution.moves,
+                    limit=args.wang_move_limit,
+                ),
+            )
+        )
     _write_rows(rows, args.output)
     return 0
 
