@@ -1654,7 +1654,7 @@ def test_solver_profile_scheduler_state_v5_wang_features_enables_generic_feature
 
 
 def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_selector(monkeypatch):
-    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, _scheduler_state_action
 
     args = _compact_args(solver_profile="scheduler_state_v7_wang_qubo_unified")
     monkeypatch.setattr(sys, "argv", ["bench"])
@@ -1676,6 +1676,18 @@ def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_sel
     assert args.wang_rollout_enabled is False
     assert args.wang_pair_qubo_enabled is False
     assert args.post_polish_qubo is False
+    assert args.rescue_enabled is False
+    assert args.rescue_qubo_supplement_width == 0
+    assert args.rescue_max_layers == 0
+    assert args.scheduler_state_rescue_cap_slack == 0
+    assert args.scheduler_state_initial_plateau_action != "rescue"
+
+    args._best_n_history = [30, 30, 30, 30, 30]
+    args._initial_n = 30
+    args._priority_duplication_ratio = 0.50
+    args._layer_depth_slack = 0
+    args._layer_candidate_count = 12000
+    assert _scheduler_state_action(args, best_n=30) != "rescue"
 
 
 def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_and_window_polish(monkeypatch):

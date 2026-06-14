@@ -910,6 +910,14 @@ _SOLVER_PROFILES["scheduler_state_v7_wang_qubo_unified"] = {
     "wang_cap_enabled": False,
     "wang_rollout_enabled": False,
     "wang_pair_qubo_enabled": False,
+    "rescue_enabled": False,
+    "rescue_max_layers": 0,
+    "rescue_cap_slack": 0,
+    "rescue_qubo_supplement_width": 0,
+    "scheduler_state_rescue_cap_slack": 0,
+    "scheduler_state_initial_plateau_window": 0,
+    "scheduler_state_initial_plateau_action": "protect",
+    "scheduler_state_initial_plateau_lock": False,
     "post_polish_qubo": False,
 }
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
