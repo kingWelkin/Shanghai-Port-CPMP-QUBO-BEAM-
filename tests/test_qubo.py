@@ -635,6 +635,7 @@ def _compact_args(**overrides):
         "qubo_mode": "focused_multi",
         "qubo_influence_profile": "stable",
         "max_qubo_calls": 32,
+        "_qubo_calls_done": 0,
         "max_qubo_vars": 64,
         "qubo_core_width": 224,
         "qubo_supplement_width": 24,
@@ -1142,6 +1143,57 @@ def test_wang_pair_qubo_supplement_selects_high_fix_pair_candidate():
 
     assert selected == [probe_code]
     assert qvars == 2
+
+
+def test_unified_wang_selector_is_used_inside_enhanced_frontier(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    chosen_code, chosen_n = _encode([[5, 4], [3, 1, 2], []], stack_count, max_height)
+    other_code, other_n = _encode([[4, 5], [3, 1, 2], []], stack_count, max_height)
+    ranked = [(other_code, (other_n, 8, b"p0")), (chosen_code, (chosen_n, 8, b"p1"))]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        use_qubo=True,
+        qubo_min_candidates=1,
+        max_qubo_calls=0,
+        unified_wang_qubo_enabled=True,
+        unified_wang_qubo_supplement_width=1,
+        unified_wang_qubo_focus_n=-1,
+        unified_wang_qubo_n_window=1,
+        unified_wang_qubo_select=1,
+    )
+
+    def fake_selector(rows, selector_args, target):
+        assert rows
+        assert selector_args is args
+        assert target == 1
+        return [chosen_code], 3, 0.002, {"fixed_prefix_selected": 4, "fix_pair_selected": 2}
+
+    monkeypatch.setattr(bench, "_select_unified_wang_qubo_supplement", fake_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=2,
+        core_width=1,
+        qubo_supplement_width=0,
+    )
+
+    assert chosen_code in selected
+    assert chosen_code in selected_by_qubo
+    assert qcalls == 1
+    assert qvars == 3
+    assert qtime == 0.002
+    assert args._unified_wang_qubo_calls_done == 1
+    assert args._unified_wang_qubo_vars == 3
+    assert args._unified_wang_qubo_time == 0.002
+    assert args._unified_wang_fixed_prefix_selected == 4
+    assert args._unified_wang_fix_pair_selected == 2
 
 
 def test_unified_wang_qubo_supplement_selects_best_energy_candidate():

@@ -81,6 +81,13 @@ COMPACT_EXTRA_FIELDS = [
     "wang_feature_fix_pair_weight",
     "wang_feature_risk_weight",
     "wang_feature_same_parent_weight",
+    "unified_wang_qubo_enabled",
+    "unified_wang_qubo_calls",
+    "unified_wang_qubo_vars",
+    "unified_wang_qubo_time_sec",
+    "unified_wang_fixed_prefix_selected",
+    "unified_wang_fix_pair_selected",
+    "unified_wang_pair_same_parent_penalty",
     "target_layout_count",
     "beam_width",
     "core_width",
@@ -1111,6 +1118,11 @@ class CompactBeamResult:
     wang_pair_qubo_calls: int = 0
     wang_pair_qubo_vars: int = 0
     wang_pair_qubo_time_sec: float = 0.0
+    unified_wang_qubo_calls: int = 0
+    unified_wang_qubo_vars: int = 0
+    unified_wang_qubo_time_sec: float = 0.0
+    unified_wang_fixed_prefix_selected: int = 0
+    unified_wang_fix_pair_selected: int = 0
 
 
 @dataclass(frozen=True)
@@ -2637,16 +2649,66 @@ def _select_enhanced_qubo_frontier(
                 selected.setdefault(code, None)
                 if len(selected) >= effective_beam:
                     break
+    unified_width = max(0, int(getattr(args, "unified_wang_qubo_supplement_width", 0) or 0))
+    unified_focus_n = int(getattr(args, "unified_wang_qubo_focus_n", 8))
+    if (
+        getattr(args, "unified_wang_qubo_enabled", False)
+        and args.use_qubo
+        and unified_width > 0
+        and len(selected) < effective_beam
+        and (unified_focus_n < 0 or int(best_n) <= unified_focus_n)
+    ):
+        n_window = max(0, int(getattr(args, "unified_wang_qubo_n_window", 1) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(
+            unified_width,
+            effective_beam - len(selected),
+            int(getattr(args, "unified_wang_qubo_select", unified_width) or unified_width),
+        )
+        boosted, add_qvars, add_qtime, metrics = _select_unified_wang_qubo_supplement(remaining, args, target)
+        if add_qvars:
+            if not hasattr(args, "_unified_wang_qubo_calls_done"):
+                args._unified_wang_qubo_calls_done = 0
+            if not hasattr(args, "_unified_wang_qubo_vars"):
+                args._unified_wang_qubo_vars = 0
+            if not hasattr(args, "_unified_wang_qubo_time"):
+                args._unified_wang_qubo_time = 0.0
+            if not hasattr(args, "_unified_wang_fixed_prefix_selected"):
+                args._unified_wang_fixed_prefix_selected = 0
+            if not hasattr(args, "_unified_wang_fix_pair_selected"):
+                args._unified_wang_fix_pair_selected = 0
+            qcalls += 1
+            qvars += add_qvars
+            qtime += add_qtime
+            args._unified_wang_qubo_calls_done += 1
+            args._unified_wang_qubo_vars += add_qvars
+            args._unified_wang_qubo_time += add_qtime
+            args._unified_wang_fixed_prefix_selected += int(metrics.get("fixed_prefix_selected", 0))
+            args._unified_wang_fix_pair_selected += int(metrics.get("fix_pair_selected", 0))
+            for code in boosted:
+                if code not in selected:
+                    selected_by_qubo.add(code)
+                selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
     qubo_enabled = (
         args.use_qubo
         and candidate_count >= args.qubo_min_candidates
-        and args._qubo_calls_done < args.max_qubo_calls
+        and getattr(args, "_qubo_calls_done", 0) < args.max_qubo_calls
         and (args.qubo_focus_n < 0 or best_n <= args.qubo_focus_n)
     )
     if qubo_enabled and args.qubo_mode == "supplement":
-        boosted, qvars, qtime = _select_qubo_boosted(dict(ranked), args)
-        if qvars:
-            qcalls = 1
+        boosted, add_qvars, add_qtime = _select_qubo_boosted(dict(ranked), args)
+        if add_qvars:
+            if not hasattr(args, "_qubo_calls_done"):
+                args._qubo_calls_done = 0
+            qcalls += 1
+            qvars += add_qvars
+            qtime += add_qtime
             args._qubo_calls_done += 1
             for code in boosted:
                 if code not in selected:
@@ -2667,7 +2729,7 @@ def _select_enhanced_qubo_frontier(
             and cursor < len(ranked_remaining)
             and len(selected) < effective_beam
             and (args.qubo_mode != "majority_multi" or len(selected_by_qubo) < target_qubo)
-            and args._qubo_calls_done < args.max_qubo_calls
+            and getattr(args, "_qubo_calls_done", 0) < args.max_qubo_calls
         ):
             cohort = ranked_remaining[cursor : cursor + max(1, args.max_qubo_vars)]
             cursor += stride
@@ -2685,6 +2747,8 @@ def _select_enhanced_qubo_frontier(
             qcalls += 1
             qvars += add_qvars
             qtime += add_qtime
+            if not hasattr(args, "_qubo_calls_done"):
+                args._qubo_calls_done = 0
             args._qubo_calls_done += 1
             for code in boosted:
                 if code not in selected:
@@ -2698,7 +2762,7 @@ def _select_enhanced_qubo_frontier(
         args.use_qubo
         and getattr(args, "group_qubo_supplement", False)
         and candidate_count >= args.qubo_min_candidates
-        and args._group_qubo_calls_done < args.max_group_qubo_calls
+        and getattr(args, "_group_qubo_calls_done", 0) < args.max_group_qubo_calls
         and (args.qubo_focus_n < 0 or best_n <= args.qubo_focus_n)
         and _group_qubo_risk_active(args)
         and len(selected) < effective_beam
@@ -2713,6 +2777,14 @@ def _select_enhanced_qubo_frontier(
             remaining,
         )
         if add_qvars:
+            if not hasattr(args, "_group_qubo_calls_done"):
+                args._group_qubo_calls_done = 0
+            if not hasattr(args, "_group_qubo_vars"):
+                args._group_qubo_vars = 0
+            if not hasattr(args, "_group_qubo_time"):
+                args._group_qubo_time = 0.0
+            if not hasattr(args, "_group_qubo_selected_total"):
+                args._group_qubo_selected_total = 0
             qcalls += 1
             qvars += add_qvars
             qtime += add_qtime
@@ -4309,6 +4381,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._wang_pair_qubo_calls_done = 0
     args._wang_pair_qubo_vars = 0
     args._wang_pair_qubo_time = 0.0
+    args._unified_wang_qubo_calls_done = 0
+    args._unified_wang_qubo_vars = 0
+    args._unified_wang_qubo_time = 0.0
+    args._unified_wang_fixed_prefix_selected = 0
+    args._unified_wang_fix_pair_selected = 0
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
     args._best_n_history = []
@@ -4620,6 +4697,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         wang_pair_qubo_calls=args._wang_pair_qubo_calls_done,
         wang_pair_qubo_vars=args._wang_pair_qubo_vars,
         wang_pair_qubo_time_sec=args._wang_pair_qubo_time,
+        unified_wang_qubo_calls=args._unified_wang_qubo_calls_done,
+        unified_wang_qubo_vars=args._unified_wang_qubo_vars,
+        unified_wang_qubo_time_sec=args._unified_wang_qubo_time,
+        unified_wang_fixed_prefix_selected=args._unified_wang_fixed_prefix_selected,
+        unified_wang_fix_pair_selected=args._unified_wang_fix_pair_selected,
     )
 
 
@@ -4677,6 +4759,12 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"wang_rollout_added_total={result.wang_rollout_added_total}; "
             f"wang_pair_qubo_enabled={getattr(args, 'wang_pair_qubo_enabled', False)}; "
             f"wang_pair_qubo_calls={result.wang_pair_qubo_calls}; "
+            f"unified_wang_qubo_enabled={getattr(args, 'unified_wang_qubo_enabled', False)}; "
+            f"unified_wang_qubo_calls={result.unified_wang_qubo_calls}; "
+            f"unified_wang_qubo_vars={result.unified_wang_qubo_vars}; "
+            f"unified_wang_qubo_time_sec={result.unified_wang_qubo_time_sec:.6f}; "
+            f"unified_wang_fixed_prefix_selected={result.unified_wang_fixed_prefix_selected}; "
+            f"unified_wang_fix_pair_selected={result.unified_wang_fix_pair_selected}; "
             f"priority={args.priority}; beam_width={args.beam_width}; core_width={args.core_width}; "
             f"peak_frontier={result.peak_frontier}; peak_candidates={result.peak_candidates}; "
             f"depth_reached={result.depth_reached}; open={result.open_count}; "
@@ -4865,6 +4953,13 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "wang_feature_fix_pair_weight": getattr(args, "wang_feature_fix_pair_weight", 0.0),
             "wang_feature_risk_weight": getattr(args, "wang_feature_risk_weight", 0.0),
             "wang_feature_same_parent_weight": getattr(args, "wang_feature_same_parent_weight", 0.0),
+            "unified_wang_qubo_enabled": getattr(args, "unified_wang_qubo_enabled", False),
+            "unified_wang_qubo_calls": result.unified_wang_qubo_calls,
+            "unified_wang_qubo_vars": result.unified_wang_qubo_vars,
+            "unified_wang_qubo_time_sec": result.unified_wang_qubo_time_sec,
+            "unified_wang_fixed_prefix_selected": result.unified_wang_fixed_prefix_selected,
+            "unified_wang_fix_pair_selected": result.unified_wang_fix_pair_selected,
+            "unified_wang_pair_same_parent_penalty": getattr(args, "unified_wang_pair_same_parent_penalty", 0.0),
             "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
             "beam_width": args.beam_width,
             "core_width": args.core_width,
