@@ -604,6 +604,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
+            "qubo_scheduler_state_v7_wang_qubo_unified",
         ]
     return [name]
 
@@ -719,6 +720,21 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "wang_pair_qubo_select",
         "wang_pair_qubo_same_parent_penalty",
         "wang_probe_supplement_width",
+        "unified_wang_qubo_enabled",
+        "unified_wang_qubo_supplement_width",
+        "unified_wang_qubo_focus_n",
+        "unified_wang_qubo_n_window",
+        "unified_wang_qubo_max_vars",
+        "unified_wang_qubo_select",
+        "unified_wang_n_weight",
+        "unified_wang_depth_weight",
+        "unified_wang_fixed_prefix_weight",
+        "unified_wang_fix_pair_weight",
+        "unified_wang_target_gap_weight",
+        "unified_wang_same_parent_penalty",
+        "unified_wang_pair_same_parent_penalty",
+        "unified_wang_signature_penalty",
+        "unified_wang_complement_bonus",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -786,6 +802,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
     if variant == "qubo_scheduler_state_v5_wang_hybrid":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_hybrid"})
+    if variant == "qubo_scheduler_state_v7_wang_qubo_unified":
+        overrides.update({"solver_profile": "scheduler_state_v7_wang_qubo_unified"})
     if variant == "qubo_scheduler_state_v5_window":
         overrides.update({"solver_profile": "scheduler_state_v5_window_polish"})
     if variant == "qubo_scheduler_state_v6":
@@ -901,6 +919,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
+            "qubo_scheduler_state_v7_wang_qubo_unified",
             "qubo_scheduler_state_v5_window",
             "qubo_scheduler_state_v6",
             "qubo_bucket",
@@ -1007,6 +1026,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang-pair-qubo-select", type=int)
     parser.add_argument("--wang-pair-qubo-same-parent-penalty", type=float)
     parser.add_argument("--wang-probe-supplement-width", type=int)
+    parser.add_argument("--unified-wang-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--unified-wang-qubo-supplement-width", type=int)
+    parser.add_argument("--unified-wang-qubo-focus-n", type=int)
+    parser.add_argument("--unified-wang-qubo-n-window", type=int)
+    parser.add_argument("--unified-wang-qubo-max-vars", type=int)
+    parser.add_argument("--unified-wang-qubo-select", type=int)
+    parser.add_argument("--unified-wang-n-weight", type=float)
+    parser.add_argument("--unified-wang-depth-weight", type=float)
+    parser.add_argument("--unified-wang-fixed-prefix-weight", type=float)
+    parser.add_argument("--unified-wang-fix-pair-weight", type=float)
+    parser.add_argument("--unified-wang-target-gap-weight", type=float)
+    parser.add_argument("--unified-wang-same-parent-penalty", type=float)
+    parser.add_argument("--unified-wang-pair-same-parent-penalty", type=float)
+    parser.add_argument("--unified-wang-signature-penalty", type=float)
+    parser.add_argument("--unified-wang-complement-bonus", type=float)
     parser.add_argument(
         "--output",
         type=Path,

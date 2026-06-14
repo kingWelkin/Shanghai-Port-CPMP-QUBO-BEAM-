@@ -420,6 +420,74 @@ def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
     assert goal_ok, msg
 
 
+def test_compact_row_serializes_unified_wang_qubo_config_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+
+    instance = Instance(
+        "tiny_unified_wang_config",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1], [2], [3]],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+    )
+    args = _compact_args(
+        unified_wang_qubo_enabled=True,
+        unified_wang_qubo_supplement_width=12,
+        unified_wang_qubo_focus_n=-1,
+        unified_wang_qubo_n_window=1,
+        unified_wang_qubo_max_vars=64,
+        unified_wang_qubo_select=12,
+        unified_wang_n_weight=1000.0,
+        unified_wang_depth_weight=1.0,
+        unified_wang_fixed_prefix_weight=20.0,
+        unified_wang_fix_pair_weight=8.0,
+        unified_wang_target_gap_weight=1.0,
+        unified_wang_same_parent_penalty=0.10,
+        unified_wang_pair_same_parent_penalty=0.25,
+        unified_wang_signature_penalty=0.10,
+        unified_wang_complement_bonus=0.05,
+    )
+
+    row = _row_dict_from_instance_result(result, instance, args)
+
+    expected = {
+        "unified_wang_qubo_enabled": True,
+        "unified_wang_qubo_supplement_width": 12,
+        "unified_wang_qubo_focus_n": -1,
+        "unified_wang_qubo_n_window": 1,
+        "unified_wang_qubo_max_vars": 64,
+        "unified_wang_qubo_select": 12,
+        "unified_wang_n_weight": 1000.0,
+        "unified_wang_depth_weight": 1.0,
+        "unified_wang_fixed_prefix_weight": 20.0,
+        "unified_wang_fix_pair_weight": 8.0,
+        "unified_wang_target_gap_weight": 1.0,
+        "unified_wang_same_parent_penalty": 0.10,
+        "unified_wang_pair_same_parent_penalty": 0.25,
+        "unified_wang_signature_penalty": 0.10,
+        "unified_wang_complement_bonus": 0.05,
+    }
+    for field, value in expected.items():
+        assert row[field] == value
+
+
 def test_wang_incumbent_fallback_solves_when_compact_depth_is_zero():
     from benchmark_compact_beam_qubo_n0 import (
         _row_dict_from_instance_result,
@@ -722,6 +790,21 @@ def _compact_args(**overrides):
         "post_polish_window_time_limit": 0.001,
         "post_polish_window_repair_expanded": 20000,
         "post_polish_window_repair_depth_extra": 0,
+        "unified_wang_qubo_enabled": False,
+        "unified_wang_qubo_supplement_width": 0,
+        "unified_wang_qubo_focus_n": 8,
+        "unified_wang_qubo_n_window": 1,
+        "unified_wang_qubo_max_vars": 64,
+        "unified_wang_qubo_select": 12,
+        "unified_wang_n_weight": 1000.0,
+        "unified_wang_depth_weight": 1.0,
+        "unified_wang_fixed_prefix_weight": 0.0,
+        "unified_wang_fix_pair_weight": 0.0,
+        "unified_wang_target_gap_weight": 0.0,
+        "unified_wang_same_parent_penalty": 0.0,
+        "unified_wang_pair_same_parent_penalty": 0.0,
+        "unified_wang_signature_penalty": 0.0,
+        "unified_wang_complement_bonus": 0.0,
     }
     values.update(overrides)
     return argparse.Namespace(**values)
@@ -1568,6 +1651,31 @@ def test_solver_profile_scheduler_state_v5_wang_features_enables_generic_feature
     assert args.wang_feature_fixed_prefix_weight > 0.0
     assert args.wang_feature_fix_pair_weight > 0.0
     assert args.wang_pair_qubo_enabled is False
+
+
+def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_selector(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v7_wang_qubo_unified")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v7_wang_qubo_unified"
+    assert args.selection_policy == "scheduler_state_qubo"
+    assert args.scheduler_state_controller == "state_v2"
+    assert args.use_qubo is True
+    assert args.unified_wang_qubo_enabled is True
+    assert args.unified_wang_qubo_supplement_width > 0
+    assert args.unified_wang_qubo_select > 0
+    assert args.unified_wang_fixed_prefix_weight > 0.0
+    assert args.unified_wang_fix_pair_weight > 0.0
+    assert args.unified_wang_pair_same_parent_penalty > 0.0
+    assert args.wang_incumbent_enabled is False
+    assert args.wang_cap_enabled is False
+    assert args.wang_rollout_enabled is False
+    assert args.wang_pair_qubo_enabled is False
+    assert args.post_polish_qubo is False
 
 
 def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_and_window_polish(monkeypatch):
@@ -2812,6 +2920,16 @@ def test_open_runner_wang_rescue_variant_selects_reusable_profile():
     assert args.wang_pair_qubo_enabled is True
 
 
+def test_open_runner_unified_wang_qubo_variant_selects_reusable_profile():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v7_wang_qubo_unified"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v7_wang_qubo_unified")
+
+    assert args.solver_profile == "scheduler_state_v7_wang_qubo_unified"
+    assert "qubo_scheduler_state_v7_wang_qubo_unified" in _variant_names("wang_all")
+
+
 def test_open_runner_wang_all_expands_current_and_wang_variants():
     from open_cpmp_benchmarks import _variant_names, build_parser
 
@@ -2825,6 +2943,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue",
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_hybrid",
+        "qubo_scheduler_state_v7_wang_qubo_unified",
     ]
 
 
