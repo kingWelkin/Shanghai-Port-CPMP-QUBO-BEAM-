@@ -213,6 +213,19 @@ def _unified_wang_row_fields(result, args: argparse.Namespace) -> dict[str, obje
     }
 
 
+def _feasibility_escape_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
+        "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
+        "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
+        "feasibility_escape_n_window": getattr(args, "feasibility_escape_n_window", 1),
+        "feasibility_escape_dead_end_threshold": getattr(args, "feasibility_escape_dead_end_threshold", 0.45),
+        "feasibility_escape_min_temporary_slack": getattr(args, "feasibility_escape_min_temporary_slack", 1),
+        "feasibility_escape_calls": result.feasibility_escape_calls,
+        "feasibility_escape_added_total": result.feasibility_escape_added_total,
+    }
+
+
 def _priority_group_row_dict_from_instance_result(
     result,
     instance: Instance,
@@ -403,6 +416,7 @@ def _priority_group_row_dict_from_instance_result(
         "rescue_layers_used": result.rescue_layers_used,
     }
     row.update(_unified_wang_row_fields(result, args))
+    row.update(_feasibility_escape_row_fields(result, args))
     return row
 
 
@@ -638,11 +652,20 @@ def _variant_names(name: str) -> list[str]:
     if name == "wang_research_all":
         return [
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
         ]
     return [name]
+
+
+def _case_id_selected(case_id: str, case_ids_csv: str) -> bool:
+    requested = {part.strip() for part in str(case_ids_csv or "").split(",") if part.strip()}
+    if not requested:
+        return True
+    numeric = case_id.rsplit("_", 1)[-1]
+    return case_id in requested or numeric in requested
 
 
 def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance | None = None) -> argparse.Namespace:
@@ -792,6 +815,12 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "unified_wang_signature_penalty",
         "unified_wang_complement_bonus",
         "unified_wang_rollout_bonus",
+        "feasibility_escape_enabled",
+        "feasibility_escape_supplement_width",
+        "feasibility_escape_focus_n",
+        "feasibility_escape_n_window",
+        "feasibility_escape_dead_end_threshold",
+        "feasibility_escape_min_temporary_slack",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -859,6 +888,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_suffix_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
+    if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_feasibility_escape_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_dynamic_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_dynamic_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_risk_polish":
@@ -911,6 +942,7 @@ def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
         limit_per_family=args.limit_per_family,
         max_total=args.max_total,
     )
+    cases = [case for case in cases if _case_id_selected(case.case_id, args.case_ids)]
     rows: list[dict[str, object]] = []
     total_runs = len(cases) * len(_variant_names(args.variant))
     run_idx = 0
@@ -965,6 +997,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--refresh-source", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--families", nargs="+", default=["5x5_cv1_test"])
     parser.add_argument("--limit-per-family", type=int, default=20)
+    parser.add_argument("--case-ids", default="")
     parser.add_argument("--max-total", type=int)
     parser.add_argument(
         "--variant",
@@ -986,6 +1019,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -1127,6 +1161,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--unified-wang-signature-penalty", type=float)
     parser.add_argument("--unified-wang-complement-bonus", type=float)
     parser.add_argument("--unified-wang-rollout-bonus", type=float)
+    parser.add_argument("--feasibility-escape-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--feasibility-escape-supplement-width", type=int)
+    parser.add_argument("--feasibility-escape-focus-n", type=int)
+    parser.add_argument("--feasibility-escape-n-window", type=int)
+    parser.add_argument("--feasibility-escape-dead-end-threshold", type=float)
+    parser.add_argument("--feasibility-escape-min-temporary-slack", type=int)
     parser.add_argument(
         "--output",
         type=Path,

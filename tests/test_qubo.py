@@ -924,6 +924,12 @@ def _compact_args(**overrides):
         "unified_wang_complement_bonus": 0.0,
         "unified_wang_rollout_bonus": 0.0,
         "wang_rollout_inject_candidates": False,
+        "feasibility_escape_enabled": False,
+        "feasibility_escape_supplement_width": 0,
+        "feasibility_escape_focus_n": 8,
+        "feasibility_escape_n_window": 1,
+        "feasibility_escape_dead_end_threshold": 0.45,
+        "feasibility_escape_min_temporary_slack": 1,
     }
     values.update(overrides)
     return argparse.Namespace(**values)
@@ -2223,6 +2229,24 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_an
     assert args.post_polish_mode == "qubo_windows_v2"
     assert args.post_polish_accept == "better"
     assert args.post_polish_window_select >= 1
+
+
+def test_solver_profile_scheduler_state_v5_feasibility_escape_polish_extends_rescue_polish(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_feasibility_escape_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_feasibility_escape_polish"
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.feasibility_escape_enabled is True
+    assert args.feasibility_escape_supplement_width > 0
+    assert args.feasibility_escape_dead_end_threshold > 0.0
 
 
 def test_solver_profile_scheduler_state_v5_wang_rescue_suffix_polish_skips_windows(monkeypatch):
@@ -3571,6 +3595,26 @@ def test_open_runner_unified_wang_qubo_variant_selects_reusable_profile():
     assert args.wang_rollout_inject_candidates is True
 
 
+def test_open_runner_accepts_feasibility_escape_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_feasibility_escape_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_feasibility_escape_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_feasibility_escape_polish"
+    assert "qubo_scheduler_state_v5_feasibility_escape_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_case_ids_filter_accepts_full_or_numeric_ids():
+    from open_cpmp_benchmarks import _case_id_selected, build_parser
+
+    args = build_parser().parse_args(["--case-ids", "4,5x5_cv2_test_10"])
+
+    assert _case_id_selected("5x5_cv1_test_4", args.case_ids)
+    assert _case_id_selected("5x5_cv2_test_10", args.case_ids)
+    assert not _case_id_selected("5x5_cv1_test_5", args.case_ids)
+
+
 def test_open_runner_wang_all_expands_current_and_wang_variants():
     from open_cpmp_benchmarks import _variant_names, build_parser
 
@@ -3590,6 +3634,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
     ]
     assert _variant_names("wang_research_all") == [
         "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_feasibility_escape_polish",
         "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
         "qubo_scheduler_state_v5_wang_rescue_risk_polish",
         "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",

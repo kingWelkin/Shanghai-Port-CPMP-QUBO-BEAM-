@@ -127,6 +127,14 @@ COMPACT_EXTRA_FIELDS = [
     "unified_wang_qubo_time_sec",
     "unified_wang_fixed_prefix_selected",
     "unified_wang_fix_pair_selected",
+    "feasibility_escape_enabled",
+    "feasibility_escape_supplement_width",
+    "feasibility_escape_focus_n",
+    "feasibility_escape_n_window",
+    "feasibility_escape_dead_end_threshold",
+    "feasibility_escape_min_temporary_slack",
+    "feasibility_escape_calls",
+    "feasibility_escape_added_total",
     "target_layout_count",
     "beam_width",
     "core_width",
@@ -555,6 +563,12 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "unified_wang_signature_penalty": 0.0,
         "unified_wang_complement_bonus": 0.0,
         "unified_wang_rollout_bonus": 0.0,
+        "feasibility_escape_enabled": False,
+        "feasibility_escape_supplement_width": 0,
+        "feasibility_escape_focus_n": 8,
+        "feasibility_escape_n_window": 1,
+        "feasibility_escape_dead_end_threshold": 0.45,
+        "feasibility_escape_min_temporary_slack": 1,
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
@@ -1122,6 +1136,15 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
     "post_polish_window_repair_expanded": 6000,
     "post_polish_window_repair_depth_extra": 0,
 }
+_SOLVER_PROFILES["scheduler_state_v5_feasibility_escape_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "feasibility_escape_enabled": True,
+    "feasibility_escape_supplement_width": 4,
+    "feasibility_escape_focus_n": -1,
+    "feasibility_escape_n_window": 2,
+    "feasibility_escape_dead_end_threshold": 0.35,
+    "feasibility_escape_min_temporary_slack": 1,
+}
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_suffix_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "post_polish_window_select": 0,
@@ -1418,6 +1441,8 @@ class CompactBeamResult:
     unified_wang_qubo_time_sec: float = 0.0
     unified_wang_fixed_prefix_selected: int = 0
     unified_wang_fix_pair_selected: int = 0
+    feasibility_escape_calls: int = 0
+    feasibility_escape_added_total: int = 0
 
 
 @dataclass(frozen=True)
@@ -1578,6 +1603,15 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "unified_wang_signature_penalty": "--unified-wang-signature-penalty",
         "unified_wang_complement_bonus": "--unified-wang-complement-bonus",
         "unified_wang_rollout_bonus": "--unified-wang-rollout-bonus",
+        "feasibility_escape_enabled": (
+            "--feasibility-escape-enabled",
+            "--no-feasibility-escape-enabled",
+        ),
+        "feasibility_escape_supplement_width": "--feasibility-escape-supplement-width",
+        "feasibility_escape_focus_n": "--feasibility-escape-focus-n",
+        "feasibility_escape_n_window": "--feasibility-escape-n-window",
+        "feasibility_escape_dead_end_threshold": "--feasibility-escape-dead-end-threshold",
+        "feasibility_escape_min_temporary_slack": "--feasibility-escape-min-temporary-slack",
         "beam_width": "--beam-width",
         "core_width": "--core-width",
         "parent_core_cap": "--parent-core-cap",
@@ -5581,6 +5615,14 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "unified_wang_qubo_time_sec": result.unified_wang_qubo_time_sec,
             "unified_wang_fixed_prefix_selected": result.unified_wang_fixed_prefix_selected,
             "unified_wang_fix_pair_selected": result.unified_wang_fix_pair_selected,
+            "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
+            "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
+            "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
+            "feasibility_escape_n_window": getattr(args, "feasibility_escape_n_window", 1),
+            "feasibility_escape_dead_end_threshold": getattr(args, "feasibility_escape_dead_end_threshold", 0.45),
+            "feasibility_escape_min_temporary_slack": getattr(args, "feasibility_escape_min_temporary_slack", 1),
+            "feasibility_escape_calls": result.feasibility_escape_calls,
+            "feasibility_escape_added_total": result.feasibility_escape_added_total,
             "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
             "beam_width": args.beam_width,
             "core_width": args.core_width,
@@ -5989,6 +6031,12 @@ def main() -> int:
     parser.add_argument("--unified-wang-signature-penalty", type=float, default=None)
     parser.add_argument("--unified-wang-complement-bonus", type=float, default=None)
     parser.add_argument("--unified-wang-rollout-bonus", type=float, default=None)
+    parser.add_argument("--feasibility-escape-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--feasibility-escape-supplement-width", type=int, default=None)
+    parser.add_argument("--feasibility-escape-focus-n", type=int, default=None)
+    parser.add_argument("--feasibility-escape-n-window", type=int, default=None)
+    parser.add_argument("--feasibility-escape-dead-end-threshold", type=float, default=None)
+    parser.add_argument("--feasibility-escape-min-temporary-slack", type=int, default=None)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)
