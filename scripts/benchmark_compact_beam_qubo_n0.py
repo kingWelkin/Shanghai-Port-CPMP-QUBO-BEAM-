@@ -288,6 +288,131 @@ ACCEPTANCE_FIELDS = [
     "validation_msg",
     "moves_path",
 ]
+BEAM_SURVIVOR_TOP_LIMITS = (10, 64, 128)
+BEAM_SURVIVOR_FIELDS = [
+    "case",
+    "solver_profile",
+    "selection_policy",
+    "layer",
+    "layer_best_n",
+    "frontier_size",
+    "candidate_count",
+    "candidate_count_before_rollout",
+    "candidate_parent_count",
+    "selected_count",
+    "selected_parent_count",
+    "selected_frontier_parent_count",
+    "dead_parent_count",
+    "dead_parent_ratio",
+    "selected_children_top10_parent",
+    "selected_children_top64_parent",
+    "selected_children_top128_parent",
+    "selected_children_tail_half_parent",
+    "selected_parents_top10",
+    "selected_parents_top64",
+    "selected_parents_top128",
+    "selected_parents_tail_half",
+    "qubo_selected_count",
+    "qubo_selected_parent_count",
+    "rollout_candidate_count",
+    "rollout_appended_count",
+    "qcalls_total",
+    "qvars_total",
+    "qtime_total",
+    "on_final_search_path",
+    "path_child_selected_rank",
+    "path_parent_frontier_rank",
+]
+
+
+def _beam_survivor_parent_metrics(
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    selected_codes: list[bytes],
+    selected_by_qubo: set[bytes],
+    top_limits: tuple[int, ...] = BEAM_SURVIVOR_TOP_LIMITS,
+) -> dict[str, int | float]:
+    parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
+    selected_parent_sequence = [candidates[code][2] for code in selected_codes if code in candidates]
+    selected_parent_set = set(selected_parent_sequence)
+    selected_frontier_parent_set = {parent for parent in selected_parent_set if parent in parent_rank_by_code}
+    candidate_parent_set = {data[2] for data in candidates.values()}
+    qubo_selected_codes = [code for code in selected_codes if code in selected_by_qubo and code in candidates]
+    qubo_parent_set = {candidates[code][2] for code in qubo_selected_codes}
+    qubo_frontier_parent_set = {parent for parent in qubo_parent_set if parent in parent_rank_by_code}
+    frontier_size = len(frontier)
+    dead_parent_count = max(0, frontier_size - len(selected_frontier_parent_set))
+    metrics: dict[str, int | float] = {
+        "frontier_size": frontier_size,
+        "candidate_count": len(candidates),
+        "candidate_parent_count": len(candidate_parent_set),
+        "selected_count": len(selected_codes),
+        "selected_parent_count": len(selected_parent_set),
+        "selected_frontier_parent_count": len(selected_frontier_parent_set),
+        "dead_parent_count": dead_parent_count,
+        "dead_parent_ratio": dead_parent_count / frontier_size if frontier_size else 0.0,
+        "qubo_selected_count": len(qubo_selected_codes),
+        "qubo_selected_parent_count": len(qubo_frontier_parent_set),
+    }
+    for limit in top_limits:
+        metrics[f"selected_children_top{limit}_parent"] = sum(
+            1 for parent in selected_parent_sequence if parent_rank_by_code.get(parent, frontier_size + 1) <= limit
+        )
+        metrics[f"selected_parents_top{limit}"] = sum(
+            1 for parent in selected_frontier_parent_set if parent_rank_by_code.get(parent, frontier_size + 1) <= limit
+        )
+    tail_start_rank = frontier_size // 2 + 1
+    metrics["selected_children_tail_half_parent"] = sum(
+        1 for parent in selected_parent_sequence if parent_rank_by_code.get(parent, 0) >= tail_start_rank
+    )
+    metrics["selected_parents_tail_half"] = sum(
+        1 for parent in selected_frontier_parent_set if parent_rank_by_code.get(parent, 0) >= tail_start_rank
+    )
+    return metrics
+
+
+def _finalize_beam_survivor_rows(
+    records: list[dict[str, object]],
+    search_path_codes: list[bytes],
+) -> list[dict[str, object]]:
+    path_edges = set(zip(search_path_codes, search_path_codes[1:]))
+    rows: list[dict[str, object]] = []
+    for record in records:
+        row = dict(record["row"])
+        selected_rank_by_code = record["selected_rank_by_code"]
+        parent_by_code = record["parent_by_code"]
+        parent_rank_by_code = record["parent_rank_by_code"]
+        row["on_final_search_path"] = 0
+        row["path_child_selected_rank"] = 0
+        row["path_parent_frontier_rank"] = 0
+        for code, selected_rank in selected_rank_by_code.items():
+            parent_code = parent_by_code.get(code)
+            if (parent_code, code) in path_edges:
+                row["on_final_search_path"] = 1
+                row["path_child_selected_rank"] = selected_rank
+                row["path_parent_frontier_rank"] = parent_rank_by_code.get(parent_code, 0)
+                break
+        rows.append(row)
+    return rows
+
+
+def _write_beam_survivor_rows(rows: list[dict[str, object]], path: Path) -> None:
+    output = path if path.is_absolute() else ROOT / path
+    output.parent.mkdir(parents=True, exist_ok=True)
+    append = output.exists() and output.stat().st_size > 0
+    with output.open("a", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=BEAM_SURVIVOR_FIELDS, extrasaction="ignore")
+        if not append:
+            writer.writeheader()
+        writer.writerows(rows)
+
+
+def _reset_beam_survivor_output(path: Path | None) -> None:
+    if path is None:
+        return
+    output = path if path.is_absolute() else ROOT / path
+    if output.exists():
+        output.unlink()
 
 
 _DYNAMIC_QUBO_PRESETS: dict[str, dict[str, int | float | bool]] = {
@@ -1031,6 +1156,7 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "cases": None,
         "bays": ["01", "26"],
         "output": ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv",
+        "beam_survivor_telemetry_output": None,
         "target_final_n": 0,
         "alpha": 1.3,
         "max_moves": None,
@@ -4714,6 +4840,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     wang_rollout_added_total = 0
     stream_seq = 0
     depth_reached = 0
+    beam_survivor_output = getattr(args, "beam_survivor_telemetry_output", None)
+    beam_survivor_records: list[dict[str, object]] = []
+    layer_index = 0
 
     while target is None and frontier and time.perf_counter() < deadline:
         candidates: dict[bytes, tuple[int, int, bytes]] = {}
@@ -4822,6 +4951,30 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if appended_rollout_codes:
             rollout_codes |= appended_rollout_codes
             wang_rollout_added_total += len(appended_rollout_codes)
+        if beam_survivor_output is not None:
+            parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
+            row: dict[str, object] = {
+                "case": case,
+                "solver_profile": getattr(args, "solver_profile", ""),
+                "selection_policy": getattr(args, "selection_policy", ""),
+                "layer": layer_index,
+                "layer_best_n": layer_best_n,
+                "candidate_count_before_rollout": candidate_count_before_rollout,
+                "rollout_candidate_count": len(rollout_codes),
+                "rollout_appended_count": len(appended_rollout_codes),
+                "qcalls_total": qcalls,
+                "qvars_total": qvars,
+                "qtime_total": qtime,
+            }
+            row.update(_beam_survivor_parent_metrics(frontier, candidates, selected_codes, selected_by_qubo))
+            beam_survivor_records.append(
+                {
+                    "row": row,
+                    "selected_rank_by_code": {code: idx + 1 for idx, code in enumerate(selected_codes)},
+                    "parent_by_code": {code: candidates[code][2] for code in selected_codes if code in candidates},
+                    "parent_rank_by_code": parent_rank_by_code,
+                }
+            )
         selected_set = set(selected_codes)
         if getattr(args, "global_reservoir", False):
             max_add = max(0, getattr(args, "reservoir_add_per_layer", 0))
@@ -4854,6 +5007,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             next_frontier.append((code, n_value, depth))
         frontier = next_frontier
         peak_frontier = max(peak_frontier, len(frontier))
+        layer_index += 1
 
     moves: list[Move] = []
     status = "TARGET_REACHABLE" if target is not None else "TIME_LIMIT_OR_BEAM_EXHAUSTED"
@@ -4866,9 +5020,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     tail_ordered_trace = ""
     tail_ordered_gain = 0
     wang_incumbent_used = False
+    search_path_codes: list[bytes] = []
     if target is not None:
         codes = _backtrack(parent, target)
         original_codes = list(codes)
+        search_path_codes = list(original_codes)
         qubo_selected_on_search_path = sum(1 for code in original_codes[1:] if source_by_code.get(code) == "qubo")
         qubo_ancestor_on_search_path = sum(1 for code in original_codes[1:] if qubo_ancestor_by_code.get(code, False))
         codes, polish_stats = _post_polish_codes_with_qubo(
@@ -4919,6 +5075,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         status += (
             f"; wang_incumbent_used=True; wang_incumbent_moves={len(wang_incumbent.moves)}; "
             f"wang_incumbent_runtime_sec={wang_incumbent.runtime_sec:.6f}"
+        )
+    if beam_survivor_output is not None and beam_survivor_records:
+        _write_beam_survivor_rows(
+            _finalize_beam_survivor_rows(beam_survivor_records, search_path_codes),
+            Path(beam_survivor_output),
         )
     return CompactBeamResult(
         case=case,
@@ -5590,6 +5751,7 @@ def main() -> int:
     parser.add_argument("--cases", nargs="+")
     parser.add_argument("--bays", nargs="+", default=["01", "26"])
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv")
+    parser.add_argument("--beam-survivor-telemetry-output", type=Path)
     parser.add_argument(
         "--solver-profile",
         "--profile",
@@ -5883,6 +6045,9 @@ def main() -> int:
     args = parser.parse_args()
 
     output = args.output if args.output.is_absolute() else ROOT / args.output
+    if args.beam_survivor_telemetry_output is not None and not args.beam_survivor_telemetry_output.is_absolute():
+        args.beam_survivor_telemetry_output = ROOT / args.beam_survivor_telemetry_output
+    _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
     acceptance = output.with_name(output.stem + "_acceptance.csv")
     moves_dir = output.with_name(output.stem + "_moves")
     report = output.with_suffix(".md")

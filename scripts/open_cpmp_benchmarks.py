@@ -24,6 +24,7 @@ from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
     COMPACT_RESULT_FIELDS,
     SOLVER_NAME,
     _SOLVER_PROFILES,
+    _reset_beam_survivor_output,
     _row_dict_from_instance_result,
     _validate_instance_result,
     make_compact_args,
@@ -644,6 +645,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "target_final_n": 0,
         "time_limit": args.time_limit,
     }
+    if getattr(args, "beam_survivor_telemetry_output", None) is not None:
+        overrides["beam_survivor_telemetry_output"] = args.beam_survivor_telemetry_output
     stream_candidate_limit = int(getattr(args, "stream_candidate_limit", 0) or 0)
     if stream_candidate_limit > 0:
         overrides.update(
@@ -1084,6 +1087,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=ROOT / "docs" / "experiments" / "open_cpmp_dlts_speed_v2.csv",
     )
+    parser.add_argument("--beam-survivor-telemetry-output", type=Path)
     return parser
 
 
@@ -1092,6 +1096,9 @@ def main() -> int:
     args = parser.parse_args()
     args.source = args.source if args.source.is_absolute() else ROOT / args.source
     args.output = args.output if args.output.is_absolute() else ROOT / args.output
+    if args.beam_survivor_telemetry_output is not None and not args.beam_survivor_telemetry_output.is_absolute():
+        args.beam_survivor_telemetry_output = ROOT / args.beam_survivor_telemetry_output
+    _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
     rows = run_open_benchmark(args)
     _write_open_csv(rows, args.output)
     summary = args.output.with_name(args.output.stem + "_summary.md")

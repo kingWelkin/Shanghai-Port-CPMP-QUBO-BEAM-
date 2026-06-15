@@ -923,6 +923,91 @@ def _compact_args(**overrides):
     return argparse.Namespace(**values)
 
 
+def test_beam_survivor_metrics_count_dead_frontier_parents():
+    from benchmark_compact_beam_qubo_n0 import _beam_survivor_parent_metrics
+
+    p0, p1, p2, p3 = b"p0", b"p1", b"p2", b"p3"
+    c0, c1, c2, c3 = b"c0", b"c1", b"c2", b"c3"
+    frontier = [(p0, 5, 0), (p1, 5, 0), (p2, 5, 0), (p3, 5, 0)]
+    candidates = {
+        c0: (4, 1, p0),
+        c1: (4, 1, p0),
+        c2: (4, 1, p2),
+        c3: (4, 1, p3),
+    }
+
+    metrics = _beam_survivor_parent_metrics(
+        frontier,
+        candidates,
+        selected_codes=[c0, c1, c2],
+        selected_by_qubo={c1, c2},
+        top_limits=(1, 2, 3),
+    )
+
+    assert metrics["frontier_size"] == 4
+    assert metrics["candidate_count"] == 4
+    assert metrics["selected_count"] == 3
+    assert metrics["selected_parent_count"] == 2
+    assert metrics["dead_parent_count"] == 2
+    assert metrics["dead_parent_ratio"] == 0.5
+    assert metrics["selected_children_top1_parent"] == 2
+    assert metrics["selected_children_top2_parent"] == 2
+    assert metrics["selected_children_top3_parent"] == 3
+    assert metrics["selected_children_tail_half_parent"] == 1
+    assert metrics["selected_parents_top1"] == 1
+    assert metrics["selected_parents_top2"] == 1
+    assert metrics["selected_parents_top3"] == 2
+    assert metrics["selected_parents_tail_half"] == 1
+    assert metrics["qubo_selected_count"] == 2
+    assert metrics["qubo_selected_parent_count"] == 2
+
+
+def test_beam_survivor_rows_mark_final_search_path_edges():
+    from benchmark_compact_beam_qubo_n0 import _finalize_beam_survivor_rows
+
+    root, c0, c1, off_path = b"root", b"c0", b"c1", b"off"
+    records = [
+        {
+            "row": {"case": "toy", "layer": 0},
+            "selected_rank_by_code": {c0: 1, off_path: 2},
+            "parent_by_code": {c0: root, off_path: root},
+            "parent_rank_by_code": {root: 1},
+        },
+        {
+            "row": {"case": "toy", "layer": 1},
+            "selected_rank_by_code": {c1: 1},
+            "parent_by_code": {c1: c0},
+            "parent_rank_by_code": {c0: 1},
+        },
+    ]
+
+    rows = _finalize_beam_survivor_rows(records, [root, c0, c1])
+
+    assert rows[0]["on_final_search_path"] == 1
+    assert rows[0]["path_child_selected_rank"] == 1
+    assert rows[0]["path_parent_frontier_rank"] == 1
+    assert rows[1]["on_final_search_path"] == 1
+    assert rows[1]["path_child_selected_rank"] == 1
+    assert rows[1]["path_parent_frontier_rank"] == 1
+
+
+def test_open_runner_passes_beam_survivor_telemetry_output():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5",
+            "--beam-survivor-telemetry-output",
+            "docs/experiments/beam_survivor.csv",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5")
+
+    assert Path(args.beam_survivor_telemetry_output).as_posix().endswith("docs/experiments/beam_survivor.csv")
+
+
 def test_solver_profile_speed_v2_restores_historical_baseline_without_overriding_explicit_flags(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
 
