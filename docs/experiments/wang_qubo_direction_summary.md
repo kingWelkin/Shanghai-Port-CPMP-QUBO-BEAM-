@@ -47,6 +47,24 @@ Paired comparison versus `wang_rescue_polish`:
 - Dynamic survivor cap: 23 better, 16 worse, 71 tied; 2 new solves, 4 new failures; net -20 common-case moves and -0.573 seconds per case, but the lost coverage makes it unsafe as a default.
 - Risk group-QUBO polish: 12 better, 7 worse, 87 tied; 1 new solve, 8 new failures; not suitable for promotion.
 
+## 2026-06-15 Selective-Window Clean Confirmation
+
+Command:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_wang_rescue_selective_window_polish --time-limit 10 --alpha 10 --output docs\experiments\scratch_selective_window_polish_open120_clean.csv
+```
+
+Clean result:
+
+| algorithm | solved | full-quality penalty | solved moves | solved gap sum | avg runtime sec | reading |
+|---|---:|---:|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_wang_rescue_selective_window_polish` | 117/120 | 3960 | 3655 | 345 | 4.543 | not promoted |
+
+The remaining failures were `5x5_cv1_test_4`, `5x5_cv2_test_10`, and `7x5_cv2_test_12`. The third case is time-boundary sensitive: focused reruns with the same profile can solve it, but the clean 120-case run failed before reaching a feasible compact path. Even if that rerun is optimistically substituted at 44 moves, selective-window polish lands at 118/120, 3880 penalty, 3699 solved moves, and 357 gap sum, matching the suffix-only ablation and still trailing the current best rescue-polish result by 7 full-penalty points.
+
+Conclusion: selective-window polish is evidence that window repair can be pruned, but it is not a new best single algorithm. The bottleneck for the hard cases remains search-stage escape before post-polish, not window selection after a feasible path exists.
+
 Residual-failure autopsy on `5x5_cv1_test_4` and `5x5_cv2_test_10` found compact search tail plateaus near N=1/2 while Wang BS-B reaches feasible paths in 41 and 32 moves respectively. The first Wang moves mainly create and reuse temporary slack, so the next research direction should be a compact escape operator or trigger learned from Wang prefixes, not another direct fixed-pair score bump.
 
 ## Good Directions
@@ -68,8 +86,8 @@ These are worth preserving as main research directions.
 5. Path compression after rescue.
    The current best result improves from rescue to rescue-polish: 3887 -> 3873 full penalty and 3706 -> 3692 solved moves. This is a small but real quality direction.
 
-6. Selective window polish as a speed candidate.
-   The same-run research-all trial shows that filtering window candidates by relative score can cut window repair attempts (217 -> 146) and reduce runtime without obvious quality loss. It needs a clean confirmation run before replacing full rescue-polish.
+6. Selective window polish as a pruning ablation.
+   The same-run research-all trial showed that filtering window candidates can cut window repair attempts (217 -> 146), but the clean confirmation run fell to 117/120. Keep the signal for future polish pruning, but do not replace full rescue-polish with this profile.
 
 7. Suffix-only polish as a diagnostic ablation.
    Skipping window repair keeps 118/120 coverage and lands between rescue and full polish: penalty 3880, moves 3699, avg runtime 3.883s. It is useful evidence that window repair can be made more selective, but it is not enough to replace full rescue-polish.
@@ -78,8 +96,8 @@ These are worth preserving as main research directions.
 
 These are not proven yet, but the evidence supports further experiments.
 
-1. Re-run selective-window polish in a clean single-variant open120 run.
-   The paired run shows a speed/quality win, but the paired baseline was weaker than the previous curated clean run. A clean confirmation should decide whether selective-window becomes the speed-oriented default.
+1. Use selective-window evidence to design a safer polish budget.
+   The clean run says the current selective profile is not a default. The useful next step is a budgeted policy that preserves full rescue-polish on time-boundary cases and prunes only when search-stage feasibility is already comfortably reached.
 
 2. Focus only on the two residual failures.
    Compare QUBO-rescue-polish against Wang BS-B on `5x5_cv1_test_4` and `5x5_cv2_test_10`, then extract the first few Wang moves that escape the plateau.

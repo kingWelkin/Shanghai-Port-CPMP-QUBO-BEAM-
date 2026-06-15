@@ -62,6 +62,18 @@ Key reading:
 - Dynamic survivor cap fired on 351 layers and saved runtime, but it added 4 baseline failures while solving only 2 baseline failures.
 - Risk group-QUBO made 1111 group-QUBO calls and selected 22460 group candidates, but it produced too many 7x5 failures.
 
+Clean selective-window confirmation:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_wang_rescue_selective_window_polish --time-limit 10 --alpha 10 --output docs\experiments\scratch_selective_window_polish_open120_clean.csv
+```
+
+| algorithm | valid | full penalty | solved moves | solved gap sum | avg runtime sec | status |
+|---|---:|---:|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_wang_rescue_selective_window_polish` | 117/120 | 3960 | 3655 | 345 | 4.543 | not promoted |
+
+The clean run leaves `5x5_cv1_test_4`, `5x5_cv2_test_10`, and `7x5_cv2_test_12` unsolved. The `7x5_cv2_test_12` failure is a 10-second boundary case: a focused open-runner subset solved it in 44 moves, but substituting that optimistic rerun still gives only 118/120, 3880 full penalty, 3699 solved moves, and 357 gap sum. That matches the suffix-only ablation and remains behind `wang_rescue_polish`.
+
 ## Internal 30 Single-Bay Cases
 
 Command:
