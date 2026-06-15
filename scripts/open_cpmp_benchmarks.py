@@ -228,6 +228,28 @@ def _feasibility_escape_row_fields(result, args: argparse.Namespace) -> dict[str
     }
 
 
+def _wang2017_task_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "wang2017_task_enabled": getattr(args, "wang2017_task_enabled", False),
+        "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
+        "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),
+        "wang2017_task_n_window": getattr(args, "wang2017_task_n_window", 1),
+        "wang2017_task_calls": getattr(result, "wang2017_task_calls", 0),
+        "wang2017_task_added_total": getattr(result, "wang2017_task_added_total", 0),
+        "wang2017_task_active_layers": getattr(result, "wang2017_task_active_layers", 0),
+        "wang2017_task_selected_tier_protection_total": getattr(
+            result,
+            "wang2017_task_selected_tier_protection_total",
+            0,
+        ),
+        "wang2017_task_selected_stable_height_total": getattr(
+            result,
+            "wang2017_task_selected_stable_height_total",
+            0,
+        ),
+    }
+
+
 def _priority_group_row_dict_from_instance_result(
     result,
     instance: Instance,
@@ -419,6 +441,7 @@ def _priority_group_row_dict_from_instance_result(
     }
     row.update(_unified_wang_row_fields(result, args))
     row.update(_feasibility_escape_row_fields(result, args))
+    row.update(_wang2017_task_row_fields(result, args))
     return row
 
 
@@ -648,6 +671,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
         ]
@@ -655,6 +679,7 @@ def _variant_names(name: str) -> list[str]:
         return [
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
+            "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -823,6 +848,10 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "feasibility_escape_n_window",
         "feasibility_escape_dead_end_threshold",
         "feasibility_escape_min_temporary_slack",
+        "wang2017_task_enabled",
+        "wang2017_task_supplement_width",
+        "wang2017_task_focus_n",
+        "wang2017_task_n_window",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -892,6 +921,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
     if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_feasibility_escape_polish"})
+    if variant == "qubo_scheduler_state_v5_wang2017_task_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang2017_task_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_dynamic_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_dynamic_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_risk_polish":
@@ -1022,6 +1053,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
+            "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -1169,6 +1201,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--feasibility-escape-n-window", type=int)
     parser.add_argument("--feasibility-escape-dead-end-threshold", type=float)
     parser.add_argument("--feasibility-escape-min-temporary-slack", type=int)
+    parser.add_argument("--wang2017-task-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang2017-task-supplement-width", type=int)
+    parser.add_argument("--wang2017-task-focus-n", type=int)
+    parser.add_argument("--wang2017-task-n-window", type=int)
     parser.add_argument(
         "--output",
         type=Path,

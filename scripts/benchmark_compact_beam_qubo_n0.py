@@ -142,6 +142,15 @@ COMPACT_EXTRA_FIELDS = [
     "feasibility_escape_added_total",
     "feasibility_escape_active_layers",
     "feasibility_escape_gate_reasons",
+    "wang2017_task_enabled",
+    "wang2017_task_supplement_width",
+    "wang2017_task_focus_n",
+    "wang2017_task_n_window",
+    "wang2017_task_calls",
+    "wang2017_task_added_total",
+    "wang2017_task_active_layers",
+    "wang2017_task_selected_tier_protection_total",
+    "wang2017_task_selected_stable_height_total",
     "target_layout_count",
     "beam_width",
     "core_width",
@@ -655,6 +664,10 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "feasibility_escape_n_window": 1,
         "feasibility_escape_dead_end_threshold": 0.45,
         "feasibility_escape_min_temporary_slack": 1,
+        "wang2017_task_enabled": False,
+        "wang2017_task_supplement_width": 0,
+        "wang2017_task_focus_n": 8,
+        "wang2017_task_n_window": 1,
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
@@ -1231,6 +1244,13 @@ _SOLVER_PROFILES["scheduler_state_v5_feasibility_escape_polish"] = {
     "feasibility_escape_dead_end_threshold": 0.35,
     "feasibility_escape_min_temporary_slack": 1,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang2017_task_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "wang2017_task_enabled": True,
+    "wang2017_task_supplement_width": 4,
+    "wang2017_task_focus_n": -1,
+    "wang2017_task_n_window": 2,
+}
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_suffix_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "post_polish_window_select": 0,
@@ -1532,6 +1552,11 @@ class CompactBeamResult:
     feasibility_escape_added_total: int = 0
     feasibility_escape_active_layers: int = 0
     feasibility_escape_gate_reasons: str = ""
+    wang2017_task_calls: int = 0
+    wang2017_task_added_total: int = 0
+    wang2017_task_active_layers: int = 0
+    wang2017_task_selected_tier_protection_total: int = 0
+    wang2017_task_selected_stable_height_total: int = 0
 
 
 @dataclass(frozen=True)
@@ -1565,6 +1590,21 @@ class UnifiedWangQuboFeatures:
     rollout_preferred: int
     depth: int
     n_value: int
+
+
+@dataclass(frozen=True)
+class Wang2017TaskFeatures:
+    source: int
+    target: int
+    moved_group: int
+    tier_protection: int
+    task_move_estimate: int
+    stable_loss: int
+    affected_demand: int
+    target_stable_height: int
+    child_n: int
+    depth: int
+    dead_end_risk: float
 
 
 @dataclass(frozen=True)
@@ -1701,6 +1741,13 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "feasibility_escape_n_window": "--feasibility-escape-n-window",
         "feasibility_escape_dead_end_threshold": "--feasibility-escape-dead-end-threshold",
         "feasibility_escape_min_temporary_slack": "--feasibility-escape-min-temporary-slack",
+        "wang2017_task_enabled": (
+            "--wang2017-task-enabled",
+            "--no-wang2017-task-enabled",
+        ),
+        "wang2017_task_supplement_width": "--wang2017-task-supplement-width",
+        "wang2017_task_focus_n": "--wang2017-task-focus-n",
+        "wang2017_task_n_window": "--wang2017-task-n-window",
         "beam_width": "--beam-width",
         "core_width": "--core-width",
         "parent_core_cap": "--parent-core-cap",
@@ -2587,6 +2634,143 @@ def _select_feasibility_escape_supplement(
     return [item[3] for item in sorted(scored)[:target]]
 
 
+def _wang2017_stable_prefix_len(stack: list[int]) -> int:
+    if not stack:
+        return 0
+    prefix = 1
+    for idx in range(1, len(stack)):
+        if stack[idx - 1] > stack[idx]:
+            prefix += 1
+        else:
+            break
+    return prefix
+
+
+def _wang2017_infer_move(
+    parent_stacks: list[list[int]],
+    child_stacks: list[list[int]],
+) -> tuple[int, int, int] | None:
+    child_signature = sorted(tuple(stack) for stack in child_stacks)
+    for source, source_stack in enumerate(parent_stacks):
+        if not source_stack:
+            continue
+        moved = source_stack[-1]
+        for parent_target, target_stack in enumerate(parent_stacks):
+            if source == parent_target:
+                continue
+            expected = [list(stack) for stack in parent_stacks]
+            expected[source] = expected[source][:-1]
+            expected[parent_target] = expected[parent_target] + [moved]
+            if sorted(tuple(stack) for stack in expected) != child_signature:
+                continue
+            child_targets = [
+                idx
+                for idx, child_stack in enumerate(child_stacks)
+                if child_stack == expected[parent_target]
+            ]
+            if not child_targets:
+                continue
+            return source, child_targets[0], moved
+    return None
+
+
+def _wang2017_task_features_for_code(
+    parent_code: bytes,
+    child_code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> Wang2017TaskFeatures:
+    stack_count = int(args._stack_count)
+    max_height = int(args._max_height)
+    parent_stacks = [[int(box) for box in stack if int(box) > 0] for stack in _split(parent_code, stack_count, max_height)]
+    child_stacks = [[int(box) for box in stack if int(box) > 0] for stack in _split(child_code, stack_count, max_height)]
+    child_n = int(data[0])
+    depth = int(data[1])
+    move = _wang2017_infer_move(parent_stacks, child_stacks)
+    if move is None:
+        return Wang2017TaskFeatures(
+            source=-1,
+            target=-1,
+            moved_group=0,
+            tier_protection=1,
+            task_move_estimate=10**6,
+            stable_loss=10**6,
+            affected_demand=10**6,
+            target_stable_height=0,
+            child_n=child_n,
+            depth=depth,
+            dead_end_risk=1.0,
+        )
+    source, target_stack, moved_group = move
+    parent_stable = [_wang2017_stable_prefix_len(stack) for stack in parent_stacks]
+    child_stable = [_wang2017_stable_prefix_len(stack) for stack in child_stacks]
+    source_top_index = len(parent_stacks[source]) - 1
+    tier_protection = 1 if source_top_index < parent_stable[source] else 0
+    stable_loss = max(0, parent_stable[source] - child_stable[source])
+    target_gap = _candidate_target_gap(child_code, args) if getattr(args, "_layout_target_groups", ()) else 0
+    signals = compute_feasibility_signals(child_stacks, max_height, target_gap=target_gap)
+    affected_demand = (
+        int(signals.blocked_fixed_candidates)
+        + int(signals.target_gap)
+        + int(signals.low_tier_risk)
+    )
+    task_move_estimate = (
+        1
+        + stable_loss
+        + affected_demand
+        + int(round(float(signals.dead_end_risk) * 4.0))
+    )
+    return Wang2017TaskFeatures(
+        source=source,
+        target=target_stack,
+        moved_group=int(moved_group),
+        tier_protection=tier_protection,
+        task_move_estimate=task_move_estimate,
+        stable_loss=stable_loss,
+        affected_demand=affected_demand,
+        target_stable_height=child_stable[target_stack],
+        child_n=child_n,
+        depth=depth,
+        dead_end_risk=float(signals.dead_end_risk),
+    )
+
+
+def _wang2017_task_score(features: Wang2017TaskFeatures) -> tuple[float, int, int, int, int, int, int, int]:
+    return (
+        float(features.tier_protection),
+        int(features.task_move_estimate),
+        int(features.stable_loss),
+        int(features.affected_demand),
+        -int(features.target_stable_height),
+        -int(features.moved_group),
+        int(features.child_n),
+        int(features.depth),
+    )
+
+
+def _select_wang2017_task_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], dict[str, int]]:
+    target = max(0, min(int(target), len(ranked)))
+    metrics = {
+        "selected_tier_protection_total": 0,
+        "selected_stable_height_total": 0,
+    }
+    if target <= 0:
+        return [], metrics
+    scored: list[tuple[tuple[float, int, int, int, int, int, int, int], int, bytes, Wang2017TaskFeatures]] = []
+    for rank, (code, data) in enumerate(ranked):
+        parent_code = data[2]
+        features = _wang2017_task_features_for_code(parent_code, code, data, args)
+        scored.append((_wang2017_task_score(features), rank, code, features))
+    chosen = sorted(scored)[:target]
+    metrics["selected_tier_protection_total"] = sum(item[3].tier_protection for item in chosen)
+    metrics["selected_stable_height_total"] = sum(item[3].target_stable_height for item in chosen)
+    return [item[2] for item in chosen], metrics
+
+
 def _append_wang_rollout_frontier(
     selected_codes: list[bytes],
     candidates: dict[bytes, tuple[int, int, bytes]],
@@ -3435,6 +3619,47 @@ def _select_enhanced_qubo_frontier(
                         args._feasibility_escape_added_total += 1
                     if len(selected) >= effective_beam:
                         break
+    wang2017_width = max(0, int(getattr(args, "wang2017_task_supplement_width", 0) or 0))
+    wang2017_focus_n = int(getattr(args, "wang2017_task_focus_n", 8))
+    if (
+        getattr(args, "wang2017_task_enabled", False)
+        and wang2017_width > 0
+        and len(selected) < effective_beam
+        and (wang2017_focus_n < 0 or int(best_n) <= wang2017_focus_n)
+    ):
+        if not hasattr(args, "_wang2017_task_active_layers"):
+            args._wang2017_task_active_layers = 0
+        if not hasattr(args, "_wang2017_task_calls_done"):
+            args._wang2017_task_calls_done = 0
+        if not hasattr(args, "_wang2017_task_added_total"):
+            args._wang2017_task_added_total = 0
+        if not hasattr(args, "_wang2017_task_selected_tier_protection_total"):
+            args._wang2017_task_selected_tier_protection_total = 0
+        if not hasattr(args, "_wang2017_task_selected_stable_height_total"):
+            args._wang2017_task_selected_stable_height_total = 0
+        args._wang2017_task_active_layers += 1
+        n_window = max(0, int(getattr(args, "wang2017_task_n_window", 1) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(wang2017_width, effective_beam - len(selected))
+        boosted, metrics = _select_wang2017_task_supplement(remaining, args, target)
+        args._wang2017_task_calls_done += 1
+        args._wang2017_task_selected_tier_protection_total += int(
+            metrics.get("selected_tier_protection_total", 0)
+        )
+        args._wang2017_task_selected_stable_height_total += int(
+            metrics.get("selected_stable_height_total", 0)
+        )
+        for code in boosted:
+            before = len(selected)
+            selected.setdefault(code, None)
+            if len(selected) > before:
+                args._wang2017_task_added_total += 1
+            if len(selected) >= effective_beam:
+                break
     qubo_enabled = (
         args.use_qubo
         and candidate_count >= args.qubo_min_candidates
@@ -5140,6 +5365,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._feasibility_escape_added_total = 0
     args._feasibility_escape_active_layers = 0
     args._feasibility_escape_gate_reasons = {}
+    args._wang2017_task_calls_done = 0
+    args._wang2017_task_added_total = 0
+    args._wang2017_task_active_layers = 0
+    args._wang2017_task_selected_tier_protection_total = 0
+    args._wang2017_task_selected_stable_height_total = 0
     args._wang_rollout_candidate_codes = set()
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
@@ -5173,6 +5403,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         or float(getattr(args, "target_guided_weight", 0.0) or 0.0) > 0.0
         or float(getattr(args, "wang_probe_target_weight", 0.0) or 0.0) > 0.0
         or float(getattr(args, "unified_wang_target_gap_weight", 0.0) or 0.0) > 0.0
+        or bool(getattr(args, "wang2017_task_enabled", False))
         else ()
     )
     args._case_id = case
@@ -5535,6 +5766,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         feasibility_escape_added_total=args._feasibility_escape_added_total,
         feasibility_escape_active_layers=args._feasibility_escape_active_layers,
         feasibility_escape_gate_reasons=_format_feasibility_escape_gate_reasons(args._feasibility_escape_gate_reasons),
+        wang2017_task_calls=args._wang2017_task_calls_done,
+        wang2017_task_added_total=args._wang2017_task_added_total,
+        wang2017_task_active_layers=args._wang2017_task_active_layers,
+        wang2017_task_selected_tier_protection_total=args._wang2017_task_selected_tier_protection_total,
+        wang2017_task_selected_stable_height_total=args._wang2017_task_selected_stable_height_total,
     )
 
 
@@ -5839,6 +6075,27 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 result,
                 "feasibility_escape_gate_reasons",
                 _format_feasibility_escape_gate_reasons(getattr(args, "_feasibility_escape_gate_reasons", {})),
+            ),
+            "wang2017_task_enabled": getattr(args, "wang2017_task_enabled", False),
+            "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
+            "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),
+            "wang2017_task_n_window": getattr(args, "wang2017_task_n_window", 1),
+            "wang2017_task_calls": getattr(result, "wang2017_task_calls", 0),
+            "wang2017_task_added_total": getattr(result, "wang2017_task_added_total", 0),
+            "wang2017_task_active_layers": getattr(
+                result,
+                "wang2017_task_active_layers",
+                getattr(args, "_wang2017_task_active_layers", 0),
+            ),
+            "wang2017_task_selected_tier_protection_total": getattr(
+                result,
+                "wang2017_task_selected_tier_protection_total",
+                getattr(args, "_wang2017_task_selected_tier_protection_total", 0),
+            ),
+            "wang2017_task_selected_stable_height_total": getattr(
+                result,
+                "wang2017_task_selected_stable_height_total",
+                getattr(args, "_wang2017_task_selected_stable_height_total", 0),
             ),
             "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
             "beam_width": args.beam_width,
@@ -6255,6 +6512,10 @@ def main() -> int:
     parser.add_argument("--feasibility-escape-n-window", type=int, default=None)
     parser.add_argument("--feasibility-escape-dead-end-threshold", type=float, default=None)
     parser.add_argument("--feasibility-escape-min-temporary-slack", type=int, default=None)
+    parser.add_argument("--wang2017-task-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang2017-task-supplement-width", type=int, default=None)
+    parser.add_argument("--wang2017-task-focus-n", type=int, default=None)
+    parser.add_argument("--wang2017-task-n-window", type=int, default=None)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)

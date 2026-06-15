@@ -266,3 +266,36 @@ Wider CLI sweeps also did not change those two hard cases:
 | width 24, n-window 6, slack filter | final_n 17 | final_n 15 |
 
 This makes the current feasibility escape selector useful as telemetry and ablation scaffolding, but not as a quality improvement. Further work should not spend effort only widening this supplement; it needs a different continuation mechanism or a stronger learned/ranked branching policy.
+
+## Wang2017 Task-Guided Continuation Probe
+
+`scheduler_state_v5_wang2017_task_polish` extends `scheduler_state_v5_wang_rescue_polish` with a deterministic task-guided continuation supplement inspired by Wang 2017. The implemented signal infers one top move between compact parent and child states, then ranks candidate continuations by stable-tier protection, estimated task movement pressure, stable-prefix loss, feasibility pressure, target stack stable height, and moved-group value.
+
+This is not a full FBH reproduction. It is an ablation-friendly insertion of task-priority signals into the existing compact beam frontier.
+
+Full open-120 commands:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_wang2017_task_polish --time-limit 10 --alpha 10 --output docs\experiments\scratch_wang2017_task_open120_t10.csv
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_wang_rescue_polish --time-limit 10 --alpha 10 --output docs\experiments\scratch_wang_rescue_polish_open120_t10.csv
+```
+
+| variant | solved | invalid/unsolved | full penalty | avg runtime sec | task calls | task added |
+|---|---:|---:|---:|---:|---:|---:|
+| Wang rescue polish baseline | 115/120 | 5 | 4149 | 4.770 | 0 | 0 |
+| Wang2017 task polish | 19/120 | 101 | 11709 | 10.794 | 1342 | 5364 |
+
+Family-level result:
+
+| family | baseline solved | task solved | baseline penalty | task penalty |
+|---|---:|---:|---:|---:|
+| 5x5_cv1_test | 19/20 | 6/20 | 651 | 1537 |
+| 5x5_cv2_test | 19/20 | 4/20 | 604 | 1576 |
+| 5x5_cv3_test | 20/20 | 9/20 | 510 | 1228 |
+| 7x5_cv1_test | 18/20 | 0/20 | 928 | 2504 |
+| 7x5_cv2_test | 19/20 | 0/20 | 790 | 2454 |
+| 7x5_cv3_test | 20/20 | 0/20 | 666 | 2410 |
+
+The probe is strongly negative for promotion. It triggered often and inserted many candidates, but the extra feature scoring consumed runtime and displaced better baseline frontier choices. The 7x5 families are especially clear: the baseline solved 57/60, while the task-guided supplement solved 0/60.
+
+Keep this profile as an experimental ablation only. The next useful direction is not a wider all-layer task supplement; it should be a gated or learned continuation policy that only fires on diagnosed plateaus and is measured against the same full-case quality metrics.

@@ -930,6 +930,10 @@ def _compact_args(**overrides):
         "feasibility_escape_n_window": 1,
         "feasibility_escape_dead_end_threshold": 0.45,
         "feasibility_escape_min_temporary_slack": 1,
+        "wang2017_task_enabled": False,
+        "wang2017_task_supplement_width": 0,
+        "wang2017_task_focus_n": 8,
+        "wang2017_task_n_window": 1,
     }
     values.update(overrides)
     return argparse.Namespace(**values)
@@ -1194,6 +1198,157 @@ def test_feasibility_escape_gate_telemetry_is_serialized():
 
     assert row["feasibility_escape_active_layers"] == 3
     assert row["feasibility_escape_gate_reasons"] == "active:3;not_plateau:5"
+
+
+def test_wang2017_task_features_infer_move_and_penalize_stable_loss():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    parent_code, _parent_n = _encode([[5, 1, 4], [3, 2], [], []], stack_count, max_height)
+    dirty_child, dirty_n = _encode([[5, 1], [3, 2], [4], []], stack_count, max_height)
+    stable_child, stable_n = _encode([[5, 1, 4], [3], [2], []], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    dirty_features = bench._wang2017_task_features_for_code(parent_code, dirty_child, (dirty_n, 1, parent_code), args)
+    stable_features = bench._wang2017_task_features_for_code(parent_code, stable_child, (stable_n, 1, parent_code), args)
+
+    assert dirty_features.source == 3
+    assert dirty_features.target == 2
+    assert dirty_features.moved_group == 4
+    assert dirty_features.tier_protection == 0
+    assert stable_features.tier_protection > dirty_features.tier_protection
+    assert stable_features.stable_loss > dirty_features.stable_loss
+
+
+def test_wang2017_task_supplement_prefers_dirty_top_continuation():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    parent_code, _parent_n = _encode([[5, 1, 4], [3, 2], [], []], stack_count, max_height)
+    dirty_child, dirty_n = _encode([[5, 1], [3, 2], [4], []], stack_count, max_height)
+    stable_child, stable_n = _encode([[5, 1, 4], [3], [2], []], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    selected, metrics = bench._select_wang2017_task_supplement(
+        [
+            (stable_child, (stable_n, 1, parent_code)),
+            (dirty_child, (dirty_n, 1, parent_code)),
+        ],
+        args,
+        target=1,
+    )
+
+    assert selected == [dirty_child]
+    assert metrics["selected_tier_protection_total"] == 0
+    assert metrics["selected_stable_height_total"] >= 1
+
+
+def test_solver_profile_scheduler_state_v5_wang2017_task_polish_extends_rescue_polish(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang2017_task_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_wang2017_task_polish"
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.wang2017_task_enabled is True
+    assert args.wang2017_task_supplement_width > 0
+    assert args.wang2017_task_focus_n < 0
+
+
+def test_wang2017_task_selector_is_used_inside_enhanced_frontier(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    parent_code, _parent_n = _encode([[5, 1, 4], [3, 2], [], []], stack_count, max_height)
+    chosen_code, chosen_n = _encode([[5, 1], [3, 2], [4], []], stack_count, max_height)
+    other_code, other_n = _encode([[5, 1, 4], [3], [2], []], stack_count, max_height)
+    ranked = [
+        (other_code, (other_n, 1, parent_code)),
+        (chosen_code, (chosen_n, 1, parent_code)),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        use_qubo=True,
+        qubo_min_candidates=99,
+        wang2017_task_enabled=True,
+        wang2017_task_supplement_width=1,
+        wang2017_task_focus_n=-1,
+        wang2017_task_n_window=3,
+    )
+
+    def fake_selector(rows, selector_args, target):
+        assert rows
+        assert target == 1
+        return [chosen_code], {"selected_tier_protection_total": 0, "selected_stable_height_total": 1}
+
+    monkeypatch.setattr(bench, "_select_wang2017_task_supplement", fake_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=2,
+        core_width=1,
+        qubo_supplement_width=0,
+    )
+
+    assert chosen_code in selected
+    assert chosen_code not in selected_by_qubo
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+    assert args._wang2017_task_calls_done == 1
+    assert args._wang2017_task_added_total == 1
+    assert args._wang2017_task_selected_stable_height_total == 1
+
+
+def test_wang2017_task_telemetry_is_serialized():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+    from container_reshuffle.core import Instance
+
+    args = _compact_args()
+    result = CompactBeamResult(
+        case="case_a",
+        status="done",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        wang2017_task_calls=4,
+        wang2017_task_added_total=8,
+        wang2017_task_active_layers=4,
+        wang2017_task_selected_tier_protection_total=2,
+        wang2017_task_selected_stable_height_total=11,
+    )
+    row = _row_dict_from_instance_result(
+        result,
+        Instance("case_a", ProblemVariant.PREMARSHALLING_CPMP, 1, 2, 2, [[2, 1]]),
+        args,
+    )
+
+    assert row["wang2017_task_calls"] == 4
+    assert row["wang2017_task_added_total"] == 8
+    assert row["wang2017_task_selected_stable_height_total"] == 11
 
 
 def test_dlts_feature_row_contains_feasibility_and_selection_fields(monkeypatch):
@@ -3777,6 +3932,16 @@ def test_open_runner_accepts_feasibility_escape_variant():
     assert "qubo_scheduler_state_v5_feasibility_escape_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_accepts_wang2017_task_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang2017_task_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_wang2017_task_polish"
+    assert "qubo_scheduler_state_v5_wang2017_task_polish" in _variant_names("wang_research_all")
+
+
 def test_open_runner_case_ids_filter_accepts_full_or_numeric_ids():
     from open_cpmp_benchmarks import _case_id_selected, build_parser
 
@@ -3801,12 +3966,14 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue",
         "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
         "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang2017_task_polish",
         "qubo_scheduler_state_v5_wang_hybrid",
         "qubo_scheduler_state_v7_wang_qubo_unified",
     ]
     assert _variant_names("wang_research_all") == [
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_feasibility_escape_polish",
+        "qubo_scheduler_state_v5_wang2017_task_polish",
         "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
         "qubo_scheduler_state_v5_wang_rescue_risk_polish",
         "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -3836,6 +4003,7 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     dynamic_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_dynamic_polish")
     risk_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_risk_polish")
     selective_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_selective_window_polish")
+    wang2017_task_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_polish")
 
     assert feature_args.solver_profile == "scheduler_state_v5_wang_features"
     assert suffix_polish_args.solver_profile == "scheduler_state_v5_wang_rescue_suffix_polish"
@@ -3843,6 +4011,7 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     assert dynamic_args.solver_profile == "scheduler_state_v5_wang_rescue_dynamic_polish"
     assert risk_args.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
     assert selective_args.solver_profile == "scheduler_state_v5_wang_rescue_selective_window_polish"
+    assert wang2017_task_args.solver_profile == "scheduler_state_v5_wang2017_task_polish"
     assert "qubo_scheduler_state_v5_wang_features" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_suffix_polish" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_polish" in _variant_names("wang_all")
