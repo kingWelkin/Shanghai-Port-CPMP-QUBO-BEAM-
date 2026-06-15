@@ -934,6 +934,8 @@ def _compact_args(**overrides):
         "wang2017_task_supplement_width": 0,
         "wang2017_task_focus_n": 8,
         "wang2017_task_n_window": 1,
+        "wang2017_task_plateau_window": 0,
+        "wang2017_task_plateau_delta": 0,
     }
     values.update(overrides)
     return argparse.Namespace(**values)
@@ -1262,6 +1264,72 @@ def test_solver_profile_scheduler_state_v5_wang2017_task_polish_extends_rescue_p
     assert args.wang2017_task_enabled is True
     assert args.wang2017_task_supplement_width > 0
     assert args.wang2017_task_focus_n < 0
+
+
+def test_solver_profile_scheduler_state_v5_wang_rescue_light_polish_is_bounded(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_light_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_wang_rescue_light_polish"
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.wang_pair_qubo_focus_n == 8
+    assert args.wang_pair_qubo_supplement_width == 6
+    assert args.wang_pair_qubo_max_vars == 24
+    assert args.wang_pair_qubo_select == 6
+    assert args.rescue_qubo_supplement_width == 32
+    assert args.rescue_max_qubo_vars == 64
+    assert args.post_polish_qubo is True
+
+
+def test_wang2017_task_gate_reason_requires_plateau_and_tight_slack():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        wang2017_task_enabled=True,
+        wang2017_task_supplement_width=1,
+        wang2017_task_focus_n=-1,
+        wang2017_task_plateau_window=3,
+        wang2017_task_plateau_delta=0,
+        rescue_cap_slack=26,
+        _best_n_history=[17, 17, 17],
+        _layer_depth_slack=12,
+    )
+
+    assert bench._wang2017_task_gate_reason(args, best_n=17) == "active"
+    assert bench._wang2017_task_layer_active(args, best_n=17)
+
+    args._best_n_history = [19, 18, 17]
+    assert bench._wang2017_task_gate_reason(args, best_n=17) == "not_plateau"
+
+    args._best_n_history = [17, 17, 17]
+    args._layer_depth_slack = 27
+    assert bench._wang2017_task_gate_reason(args, best_n=17) == "slack_too_loose"
+
+    args.wang2017_task_enabled = False
+    assert bench._wang2017_task_gate_reason(args, best_n=17) == "disabled"
+
+
+def test_solver_profile_scheduler_state_v5_wang2017_task_guarded_polish_is_conservative(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang2017_task_guarded_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_wang2017_task_guarded_polish"
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.wang2017_task_enabled is True
+    assert args.wang2017_task_supplement_width == 1
+    assert args.wang2017_task_n_window == 0
+    assert args.wang2017_task_plateau_window == 7
 
 
 def test_wang2017_task_selector_is_used_inside_enhanced_frontier(monkeypatch):
@@ -3942,6 +4010,69 @@ def test_open_runner_accepts_wang2017_task_variant():
     assert "qubo_scheduler_state_v5_wang2017_task_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_accepts_wang2017_task_guarded_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang2017_task_guarded_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_guarded_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_wang2017_task_guarded_polish"
+    assert "qubo_scheduler_state_v5_wang2017_task_guarded_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_wang_rescue_light_polish_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang_rescue_light_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_light_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_wang_rescue_light_polish"
+    assert "qubo_scheduler_state_v5_wang_rescue_light_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_wang2017_task_guarded_portfolio_variant():
+    from open_cpmp_benchmarks import _variant_names, build_parser
+
+    build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio"])
+
+    assert "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio" in _variant_names("wang_research_all")
+
+
+def test_open_no_regret_row_keeps_valid_baseline_and_selects_shorter_valid_guarded():
+    from open_cpmp_benchmarks import _select_open_no_regret_row
+
+    baseline = {
+        "solver_profile": "scheduler_state_v5_wang_rescue_polish",
+        "moves": 10,
+        "final_n": 0,
+        "runtime_sec": 1.0,
+        "business_ok": True,
+        "goal_validation_ok": True,
+        "full_quality_penalty": 10,
+    }
+    invalid_guarded = {
+        "solver_profile": "scheduler_state_v5_wang2017_task_guarded_polish",
+        "moves": "",
+        "final_n": 2,
+        "runtime_sec": 2.0,
+        "business_ok": False,
+        "goal_validation_ok": False,
+        "full_quality_penalty": 50,
+    }
+    shorter_guarded = {
+        "solver_profile": "scheduler_state_v5_wang2017_task_guarded_polish",
+        "moves": 9,
+        "final_n": 0,
+        "runtime_sec": 2.0,
+        "business_ok": True,
+        "goal_validation_ok": True,
+        "full_quality_penalty": 9,
+    }
+
+    assert _select_open_no_regret_row([baseline, invalid_guarded]) is baseline
+    assert _select_open_no_regret_row([baseline, shorter_guarded]) is shorter_guarded
+
+
 def test_open_runner_case_ids_filter_accepts_full_or_numeric_ids():
     from open_cpmp_benchmarks import _case_id_selected, build_parser
 
@@ -3966,14 +4097,20 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue",
         "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
         "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_wang2017_task_polish",
+        "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+        "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
         "qubo_scheduler_state_v5_wang_hybrid",
         "qubo_scheduler_state_v7_wang_qubo_unified",
     ]
     assert _variant_names("wang_research_all") == [
         "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_feasibility_escape_polish",
         "qubo_scheduler_state_v5_wang2017_task_polish",
+        "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+        "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
         "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
         "qubo_scheduler_state_v5_wang_rescue_risk_polish",
         "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -4004,6 +4141,7 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     risk_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_risk_polish")
     selective_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_selective_window_polish")
     wang2017_task_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_polish")
+    wang2017_guarded_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_guarded_polish")
 
     assert feature_args.solver_profile == "scheduler_state_v5_wang_features"
     assert suffix_polish_args.solver_profile == "scheduler_state_v5_wang_rescue_suffix_polish"
@@ -4012,6 +4150,7 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     assert risk_args.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
     assert selective_args.solver_profile == "scheduler_state_v5_wang_rescue_selective_window_polish"
     assert wang2017_task_args.solver_profile == "scheduler_state_v5_wang2017_task_polish"
+    assert wang2017_guarded_args.solver_profile == "scheduler_state_v5_wang2017_task_guarded_polish"
     assert "qubo_scheduler_state_v5_wang_features" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_suffix_polish" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_polish" in _variant_names("wang_all")

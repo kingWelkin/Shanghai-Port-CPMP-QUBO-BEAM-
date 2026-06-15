@@ -17,10 +17,17 @@ For the open DLTS 5x5/7x5 test-120 suite, the best single QUBO-family algorithm 
 | `qubo_scheduler_state_v5` | 89/120 | 6334 | 2856 | 395 | 1.941 |
 | `wang_bs_b` | 120/120 | 4569 | 4569 | 1174 | 1.663 |
 
+The best current quality portfolio is:
+
+| portfolio | solved | full-quality penalty | solved moves | solved gap sum | selected avg runtime sec | actual dual-run avg sec |
+|---|---:|---:|---:|---:|---:|---:|
+| `qubo_scheduler_state_v5_wang2017_task_guarded_portfolio` | 118/120 | 3851 | 3670 | 328 | 4.129 | 8.866 |
+
 Interpretation:
 
 - `wang_bs_b` is still the strongest pure feasibility baseline: it solves all 120 cases and is fast.
 - `qubo_scheduler_state_v5_wang_rescue_polish` is the best single integrated algorithm for quality: it leaves 2 cases unsolved, but its solved paths are much shorter.
+- `qubo_scheduler_state_v5_wang2017_task_guarded_portfolio` is a slight quality improvement over the best single route, but it is a per-case no-regret portfolio over `wang_rescue_polish` and guarded Wang2017 task continuation, not a new single-route default.
 - On the 118 cases solved by both `wang_rescue_polish` and `wang_bs_b`, QUBO-rescue-polish uses 3692 moves versus Wang's 4496, saving 804 moves. QUBO-rescue-polish is shorter on 109 cases; Wang is shorter on 5; 4 are tied.
 - The two remaining unsolved cases for `wang_rescue_polish` are `5x5_cv1_test_4` and `5x5_cv2_test_10`.
 
@@ -125,6 +132,7 @@ These directions produced useful evidence, but should not be the main line now.
 | Dynamic survivor parent cap | 112/120, penalty 4339 in paired open120 | Faster than the paired baseline, but added 4 failures while solving only 2 baseline failures. Keep as an experiment switch, not default. |
 | Risk group-QUBO rescue-polish | 107/120, penalty 4986 in paired open120 | The generic feature selector is unstable on 7x5 and creates too many new failures. |
 | Suffix-only rescue polish | 118/120, penalty 3880, avg 3.883s | Skips all window repair attempts, but saves only about 0.018s average versus full polish while losing 7 full-penalty points. Keep as ablation, not default. |
+| Guarded Wang2017 task continuation as a single route | 110/120, penalty 4627 in paired open120 | Gating reduces damage versus the aggressive task profile, but still adds solved-to-unsolved regressions. Use it only through the no-regret portfolio for now. |
 | Unconditional Wang rescue on internal 30 | 508 moves vs 509 for scheduler v5, much slower | Not worth making the internal default. |
 
 ## Project Hygiene
@@ -137,6 +145,7 @@ These directions produced useful evidence, but should not be the main line now.
 ## Evidence Files
 
 - `scratch_wang_rescue_polish_test120_current.csv`
+- `scratch_wang2017_task_guarded_portfolio_vs_best_open120_t10.csv`
 - `scratch_wang_rescue_suffix_polish_test120_clean.csv`
 - `scratch_wang_rescue_test120_current.csv`
 - `scratch_wang_features_test120_current.csv`

@@ -26,6 +26,7 @@ Current open DLTS 5x5/7x5 test-120 ranking:
 
 | algorithm | valid | full penalty | solved moves | solved gap sum | avg runtime sec | status |
 |---|---:|---:|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_wang2017_task_guarded_portfolio` | 118/120 | 3851 | 3670 | 328 | 4.129 selected / 8.866 dual-run | best quality portfolio, not a single-route default |
 | `qubo_scheduler_state_v5_wang_rescue_polish` | 118/120 | 3873 | 3692 | 350 | 3.901 | best single QUBO-family quality result |
 | `qubo_scheduler_state_v5_wang_rescue_suffix_polish` | 118/120 | 3880 | 3699 | 357 | 3.883 | useful speed ablation, not promoted |
 | `qubo_scheduler_state_v5_wang_rescue` | 118/120 | 3887 | 3706 | 364 | 3.551 | strong, slightly less polished |
@@ -36,6 +37,7 @@ Current open DLTS 5x5/7x5 test-120 ranking:
 Main reading:
 
 - `wang_bs_b` is fastest and solves every case, but it pays for feasibility with long paths.
+- The guarded Wang2017 portfolio improves quality over the current best single route by choosing between `wang_rescue_polish` and guarded task-continuation per case. It is a quality portfolio: actual production use pays the dual-run cost unless a cheaper trigger is added.
 - `wang_rescue_polish` is the best single quality algorithm now: it is shorter than Wang on 109 of the 118 common solved cases and saves 804 moves on those common cases.
 - `wang_rescue_suffix_polish` proves that window repair can be skipped as an ablation, but the clean full-120 run only saves about 0.018 seconds per case versus full polish while losing 7 full-penalty points.
 - The remaining hard cases for the current best single QUBO-family line are `5x5_cv1_test_4` and `5x5_cv2_test_10`.
@@ -299,3 +301,35 @@ Family-level result:
 The probe is strongly negative for promotion. It triggered often and inserted many candidates, but the extra feature scoring consumed runtime and displaced better baseline frontier choices. The 7x5 families are especially clear: the baseline solved 57/60, while the task-guided supplement solved 0/60.
 
 Keep this profile as an experimental ablation only. The next useful direction is not a wider all-layer task supplement; it should be a gated or learned continuation policy that only fires on diagnosed plateaus and is measured against the same full-case quality metrics.
+
+## Guarded Wang2017 Task Continuation And Portfolio
+
+`scheduler_state_v5_wang2017_task_guarded_polish` keeps the Wang2017 task-continuation selector but gates it behind a strict plateau condition: plateau window 7, plateau delta 0, and rescue-depth slack no looser than the rescue cap slack. The goal is to make the Wang2017 mechanism an occasional plateau continuation instead of an all-layer frontier perturbation.
+
+Focused residual sweeps:
+
+| setting | solved | full penalty | task calls | task added | reading |
+|---|---:|---:|---:|---:|---|
+| plateau 3 | 12/20 | 1347 | 55 | 55 | too active, regresses |
+| plateau 5 | 15/20 | 1053 | 11 | 11 | small same-subset gain, still one regression |
+| plateau 7 | 17/20 | 867 | 3 | 3 | best residual smoke, no regression on that subset |
+
+Full open-120 single-route result:
+
+| variant | valid | invalid/unsolved | full penalty | solved moves | avg runtime sec | task calls |
+|---|---:|---:|---:|---:|---:|---:|
+| paired `wang_rescue_polish` baseline | 115/120 | 5 | 4149 | 3559 | 4.770 | 0 |
+| guarded Wang2017 task polish | 110/120 | 10 | 4627 | 3313 | 4.965 | 7 |
+
+The guarded single route is still negative for promotion. It solves `7x5_cv1_test_14`, but adds six solved-to-unsolved regressions in that paired run.
+
+The useful form is a no-regret open benchmark portfolio that runs both `qubo_scheduler_state_v5_wang_rescue_polish` and `qubo_scheduler_state_v5_wang2017_task_guarded_polish`, then selects the shorter valid solution per case and falls back by full-quality penalty when neither is valid.
+
+Against the current clean best single-route CSV (`scratch_wang_rescue_polish_test120_current.csv`):
+
+| variant | valid | full penalty | solved moves | solved gap sum | selected guarded | selected runtime sec | dual-run runtime sec |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `wang_rescue_polish` clean best | 118/120 | 3873 | 3692 | 350 | 0 | 468.069 | 468.069 |
+| guarded Wang2017 no-regret portfolio | 118/120 | 3851 | 3670 | 328 | 16 | 495.485 | 1063.871 |
+
+The portfolio has no worse full-quality cases versus the clean best, improves 14 cases by penalty or moves, and keeps the same two unsolved cases. This is a slight quality improvement, not a new default: it should be used only when quality is worth roughly double-running the two profiles, or after a future trigger predicts the 16 useful guarded cases cheaply.

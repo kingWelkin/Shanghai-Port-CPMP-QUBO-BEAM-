@@ -146,6 +146,8 @@ COMPACT_EXTRA_FIELDS = [
     "wang2017_task_supplement_width",
     "wang2017_task_focus_n",
     "wang2017_task_n_window",
+    "wang2017_task_plateau_window",
+    "wang2017_task_plateau_delta",
     "wang2017_task_calls",
     "wang2017_task_added_total",
     "wang2017_task_active_layers",
@@ -668,6 +670,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "wang2017_task_supplement_width": 0,
         "wang2017_task_focus_n": 8,
         "wang2017_task_n_window": 1,
+        "wang2017_task_plateau_window": 0,
+        "wang2017_task_plateau_delta": 0,
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
@@ -1146,6 +1150,19 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue"] = {
     "rescue_max_qubo_vars": 112,
     "rescue_next_n_weight": 0.75,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_light"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5"],
+    "wang_pair_qubo_enabled": True,
+    "wang_pair_qubo_supplement_width": 6,
+    "wang_pair_qubo_focus_n": 8,
+    "wang_pair_qubo_n_window": 1,
+    "wang_pair_qubo_max_vars": 24,
+    "wang_pair_qubo_select": 6,
+    "wang_pair_qubo_same_parent_penalty": 0.25,
+    "rescue_qubo_supplement_width": 32,
+    "rescue_max_qubo_vars": 64,
+    "rescue_next_n_weight": 0.70,
+}
 _SOLVER_PROFILES["scheduler_state_v5_wang_features"] = {
     **_SOLVER_PROFILES["scheduler_state_v5"],
     "group_qubo_supplement": True,
@@ -1235,6 +1252,22 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
     "post_polish_window_repair_expanded": 6000,
     "post_polish_window_repair_depth_extra": 0,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_light_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_light"],
+    "post_polish_qubo": True,
+    "post_polish_mode": "qubo_windows_v2",
+    "post_polish_accept": "better",
+    "post_polish_passes": 3,
+    "post_polish_suffix_max_candidates": 72,
+    "post_polish_suffix_select": 7,
+    "post_polish_suffix_max_qubo_vars": 64,
+    "post_polish_window_select": 2,
+    "post_polish_window_max_size": 8,
+    "post_polish_window_budget": 96,
+    "post_polish_window_qubo_vars": 72,
+    "post_polish_window_repair_expanded": 6000,
+    "post_polish_window_repair_depth_extra": 0,
+}
 _SOLVER_PROFILES["scheduler_state_v5_feasibility_escape_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "feasibility_escape_enabled": True,
@@ -1250,6 +1283,15 @@ _SOLVER_PROFILES["scheduler_state_v5_wang2017_task_polish"] = {
     "wang2017_task_supplement_width": 4,
     "wang2017_task_focus_n": -1,
     "wang2017_task_n_window": 2,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang2017_task_guarded_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "wang2017_task_enabled": True,
+    "wang2017_task_supplement_width": 1,
+    "wang2017_task_focus_n": -1,
+    "wang2017_task_n_window": 0,
+    "wang2017_task_plateau_window": 7,
+    "wang2017_task_plateau_delta": 0,
 }
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_suffix_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
@@ -1748,6 +1790,8 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "wang2017_task_supplement_width": "--wang2017-task-supplement-width",
         "wang2017_task_focus_n": "--wang2017-task-focus-n",
         "wang2017_task_n_window": "--wang2017-task-n-window",
+        "wang2017_task_plateau_window": "--wang2017-task-plateau-window",
+        "wang2017_task_plateau_delta": "--wang2017-task-plateau-delta",
         "beam_width": "--beam-width",
         "core_width": "--core-width",
         "parent_core_cap": "--parent-core-cap",
@@ -2632,6 +2676,32 @@ def _select_feasibility_escape_supplement(
         score = feasibility_escape_score(signals, int(data[0]), int(data[1]))
         scored.append((score, int(data[0]), int(data[1]), code))
     return [item[3] for item in sorted(scored)[:target]]
+
+
+def _wang2017_task_gate_reason(args: argparse.Namespace, best_n: int) -> str:
+    if not getattr(args, "wang2017_task_enabled", False):
+        return "disabled"
+    if int(getattr(args, "wang2017_task_supplement_width", 0) or 0) <= 0:
+        return "disabled"
+    focus_n = int(getattr(args, "wang2017_task_focus_n", 8))
+    if focus_n >= 0 and int(best_n) > focus_n:
+        return "focus_n"
+    window = max(0, int(getattr(args, "wang2017_task_plateau_window", 0) or 0))
+    if window > 1:
+        history = list(getattr(args, "_best_n_history", []) or [])
+        if len(history) < window:
+            return "history_warmup"
+        recent = history[-window:]
+        delta = max(0, int(getattr(args, "wang2017_task_plateau_delta", 0) or 0))
+        if max(recent) - min(recent) > delta:
+            return "not_plateau"
+        if int(getattr(args, "_layer_depth_slack", 10**9)) > int(getattr(args, "rescue_cap_slack", 26)):
+            return "slack_too_loose"
+    return "active"
+
+
+def _wang2017_task_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+    return _wang2017_task_gate_reason(args, best_n) == "active"
 
 
 def _wang2017_stable_prefix_len(stack: list[int]) -> int:
@@ -3626,6 +3696,7 @@ def _select_enhanced_qubo_frontier(
         and wang2017_width > 0
         and len(selected) < effective_beam
         and (wang2017_focus_n < 0 or int(best_n) <= wang2017_focus_n)
+        and _wang2017_task_layer_active(args, int(best_n))
     ):
         if not hasattr(args, "_wang2017_task_active_layers"):
             args._wang2017_task_active_layers = 0
@@ -6080,6 +6151,8 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
             "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),
             "wang2017_task_n_window": getattr(args, "wang2017_task_n_window", 1),
+            "wang2017_task_plateau_window": getattr(args, "wang2017_task_plateau_window", 0),
+            "wang2017_task_plateau_delta": getattr(args, "wang2017_task_plateau_delta", 0),
             "wang2017_task_calls": getattr(result, "wang2017_task_calls", 0),
             "wang2017_task_added_total": getattr(result, "wang2017_task_added_total", 0),
             "wang2017_task_active_layers": getattr(
@@ -6516,6 +6589,8 @@ def main() -> int:
     parser.add_argument("--wang2017-task-supplement-width", type=int, default=None)
     parser.add_argument("--wang2017-task-focus-n", type=int, default=None)
     parser.add_argument("--wang2017-task-n-window", type=int, default=None)
+    parser.add_argument("--wang2017-task-plateau-window", type=int, default=None)
+    parser.add_argument("--wang2017-task-plateau-delta", type=int, default=None)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)

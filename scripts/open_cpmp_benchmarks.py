@@ -48,8 +48,16 @@ OPEN_EXTRA_FIELDS = [
     "business_ok",
     "goal_validation_ok",
     "validation_msg",
+    "portfolio_profiles",
+    "portfolio_selected_profile",
+    "portfolio_runtime_sec",
 ]
 OPEN_RESULT_FIELDS = [field for field in OPEN_EXTRA_FIELDS if field not in COMPACT_RESULT_FIELDS] + COMPACT_RESULT_FIELDS
+
+_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS = (
+    "qubo_scheduler_state_v5_wang_rescue_polish",
+    "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+)
 
 
 @dataclass(frozen=True)
@@ -234,6 +242,8 @@ def _wang2017_task_row_fields(result, args: argparse.Namespace) -> dict[str, obj
         "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
         "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),
         "wang2017_task_n_window": getattr(args, "wang2017_task_n_window", 1),
+        "wang2017_task_plateau_window": getattr(args, "wang2017_task_plateau_window", 0),
+        "wang2017_task_plateau_delta": getattr(args, "wang2017_task_plateau_delta", 0),
         "wang2017_task_calls": getattr(result, "wang2017_task_calls", 0),
         "wang2017_task_added_total": getattr(result, "wang2017_task_added_total", 0),
         "wang2017_task_active_layers": getattr(result, "wang2017_task_active_layers", 0),
@@ -566,6 +576,33 @@ def _open_full_quality_penalty(row: dict[str, object], penalty_factor: int = 4) 
     return max(base, n0) + int(penalty_factor) * max(1, n0)
 
 
+def _stable_solver_priority(row: dict[str, object]) -> int:
+    return 0 if str(row.get("solver_profile")) == "scheduler_state_v5_wang_rescue_polish" else 1
+
+
+def _select_open_no_regret_row(rows: list[dict[str, object]]) -> dict[str, object]:
+    if not rows:
+        raise ValueError("no open benchmark rows to select")
+    valid_rows = [row for row in rows if _open_row_valid(row)]
+    if valid_rows:
+        return min(
+            valid_rows,
+            key=lambda row: (
+                int(_numeric(row, "moves", 10**9)),
+                float(_numeric(row, "runtime_sec", 0.0)),
+                _stable_solver_priority(row),
+            ),
+        )
+    return min(
+        rows,
+        key=lambda row: (
+            _open_full_quality_penalty(row),
+            float(_numeric(row, "runtime_sec", 0.0)),
+            _stable_solver_priority(row),
+        ),
+    )
+
+
 def _open_full_quality_summary(
     rows: list[dict[str, object]],
     penalty_factor: int = 4,
@@ -671,15 +708,21 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
+            "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+            "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
         ]
     if name == "wang_research_all":
         return [
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
+            "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+            "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -852,6 +895,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "wang2017_task_supplement_width",
         "wang2017_task_focus_n",
         "wang2017_task_n_window",
+        "wang2017_task_plateau_window",
+        "wang2017_task_plateau_delta",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -919,10 +964,14 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_suffix_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_light_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_light_polish"})
     if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_feasibility_escape_polish"})
     if variant == "qubo_scheduler_state_v5_wang2017_task_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang2017_task_polish"})
+    if variant == "qubo_scheduler_state_v5_wang2017_task_guarded_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang2017_task_guarded_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_dynamic_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_dynamic_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_risk_polish":
@@ -966,6 +1015,53 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
     return make_compact_args(**overrides)
 
 
+def _run_open_variant_row(
+    case: OpenCpmpCase,
+    instance: Instance,
+    args: argparse.Namespace,
+    variant: str,
+) -> dict[str, object]:
+    compact_args = _args_for_variant(args, variant, instance)
+    result = run_compact_beam_instance(case.case_id, instance, compact_args)
+    row = _open_row_dict_from_instance_result(result, instance, compact_args)
+    business_ok, goal_ok, msg = _open_validate_instance_result(result, instance, business_alpha=args.alpha)
+    reference_moves = case.reference.optimal_moves
+    moves = row.get("moves")
+    row.update(
+        {
+            "dataset": "DLTS",
+            "family": case.family,
+            "variant": variant,
+            "source_file": str(case.instance_path),
+            "reference_file": str(case.reference_path) if case.reference_path else "",
+            "reference_moves": reference_moves if reference_moves is not None else "",
+            "move_gap": (int(moves) - reference_moves) if moves not in (None, "") and reference_moves is not None else "",
+            "reference_tiers": case.reference.max_height if case.reference.max_height is not None else "",
+            "business_alpha": args.alpha,
+            "business_ok": business_ok,
+            "goal_validation_ok": goal_ok,
+            "validation_msg": msg,
+        }
+    )
+    row["full_quality_penalty"] = _open_full_quality_penalty(row)
+    return row
+
+
+def _print_open_case_done(label: str, case_id: str, row: dict[str, object]) -> None:
+    print(
+        f"CASE_DONE {label} {case_id} final_n={row['final_n']} moves={row['moves']} "
+        f"ref={row['reference_moves']} runtime={float(row['runtime_sec']):.3f}s "
+        f"goal_ok={row['goal_validation_ok']} business_ok={row['business_ok']}",
+        flush=True,
+    )
+
+
+def _open_variant_run_count(variant: str) -> int:
+    if variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
+        return len(_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
+    return 1
+
+
 def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
     source = ensure_dlts_source(args.source, auto_clone=args.auto_clone, refresh=args.refresh_source)
     families = None if args.families == ["all"] else args.families
@@ -977,7 +1073,8 @@ def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
     )
     cases = [case for case in cases if _case_id_selected(case.case_id, args.case_ids)]
     rows: list[dict[str, object]] = []
-    total_runs = len(cases) * len(_variant_names(args.variant))
+    variants = _variant_names(args.variant)
+    total_runs = len(cases) * sum(_open_variant_run_count(variant) for variant in variants)
     run_idx = 0
     for case in cases:
         try:
@@ -987,39 +1084,37 @@ def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
                 print(f"CASE_SKIP {case.case_id} reason={exc}", flush=True)
                 continue
             raise
-        for variant in _variant_names(args.variant):
+        for variant in variants:
+            if variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
+                candidates: list[dict[str, object]] = []
+                portfolio_runtime_sec = 0.0
+                for child_variant in _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS:
+                    run_idx += 1
+                    label = f"{variant}:{child_variant}"
+                    print(f"CASE_START {run_idx}/{total_runs} {label} {case.case_id}", flush=True)
+                    child_row = _run_open_variant_row(case, instance, args, child_variant)
+                    portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
+                    candidates.append(child_row)
+                    _print_open_case_done(label, case.case_id, child_row)
+                selected = dict(_select_open_no_regret_row(candidates))
+                selected["variant"] = variant
+                selected["portfolio_profiles"] = ",".join(_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
+                selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
+                selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+                selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
+                rows.append(selected)
+                print(
+                    f"CASE_DONE {variant} {case.case_id} selected_profile={selected['portfolio_selected_profile']} "
+                    f"final_n={selected['final_n']} moves={selected['moves']} "
+                    f"portfolio_runtime={portfolio_runtime_sec:.3f}s",
+                    flush=True,
+                )
+                continue
             run_idx += 1
-            compact_args = _args_for_variant(args, variant, instance)
             print(f"CASE_START {run_idx}/{total_runs} {variant} {case.case_id}", flush=True)
-            result = run_compact_beam_instance(case.case_id, instance, compact_args)
-            row = _open_row_dict_from_instance_result(result, instance, compact_args)
-            business_ok, goal_ok, msg = _open_validate_instance_result(result, instance, business_alpha=args.alpha)
-            reference_moves = case.reference.optimal_moves
-            moves = row.get("moves")
-            row.update(
-                {
-                    "dataset": "DLTS",
-                    "family": case.family,
-                    "variant": variant,
-                    "source_file": str(case.instance_path),
-                    "reference_file": str(case.reference_path) if case.reference_path else "",
-                    "reference_moves": reference_moves if reference_moves is not None else "",
-                    "move_gap": (int(moves) - reference_moves) if moves not in (None, "") and reference_moves is not None else "",
-                    "reference_tiers": case.reference.max_height if case.reference.max_height is not None else "",
-                    "business_alpha": args.alpha,
-                    "business_ok": business_ok,
-                    "goal_validation_ok": goal_ok,
-                    "validation_msg": msg,
-                }
-            )
-            row["full_quality_penalty"] = _open_full_quality_penalty(row)
+            row = _run_open_variant_row(case, instance, args, variant)
             rows.append(row)
-            print(
-                f"CASE_DONE {variant} {case.case_id} final_n={row['final_n']} moves={row['moves']} "
-                f"ref={row['reference_moves']} runtime={float(row['runtime_sec']):.3f}s "
-                f"goal_ok={goal_ok} business_ok={business_ok}",
-                flush=True,
-            )
+            _print_open_case_done(variant, case.case_id, row)
     return rows
 
 
@@ -1052,8 +1147,11 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
+            "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+            "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
@@ -1205,6 +1303,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang2017-task-supplement-width", type=int)
     parser.add_argument("--wang2017-task-focus-n", type=int)
     parser.add_argument("--wang2017-task-n-window", type=int)
+    parser.add_argument("--wang2017-task-plateau-window", type=int)
+    parser.add_argument("--wang2017-task-plateau-delta", type=int)
     parser.add_argument(
         "--output",
         type=Path,
