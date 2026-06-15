@@ -72,6 +72,7 @@ docs/experiments/**/*_moves/
 !docs/experiments/open_cpmp_time_matched_7x5_cv123_summary.md
 !docs/experiments/wang_vs_current_global_comparison.md
 !docs/experiments/wang_qubo_full_quality_trial_summary.md
+!docs/experiments/wang_qubo_direction_summary.md
 tmp_*
 outputs/
 external/

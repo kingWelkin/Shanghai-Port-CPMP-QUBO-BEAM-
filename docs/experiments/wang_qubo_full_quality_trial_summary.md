@@ -18,6 +18,27 @@ Penalty used in summaries:
 - Valid case: actual move count.
 - Invalid/unsolved case: `max(reference_or_cap13, n0) + 4 * n0`.
 
+## 2026-06-15 Current Consolidation
+
+The latest curated direction summary is [wang_qubo_direction_summary.md](wang_qubo_direction_summary.md). Use that file as the current navigation point for what is good, what remains worth testing, and what should not be promoted.
+
+Current open DLTS 5x5/7x5 test-120 ranking:
+
+| algorithm | valid | full penalty | solved moves | solved gap sum | avg runtime sec | status |
+|---|---:|---:|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_wang_rescue_polish` | 118/120 | 3873 | 3692 | 350 | 3.901 | best single QUBO-family quality result |
+| `qubo_scheduler_state_v5_wang_rescue` | 118/120 | 3887 | 3706 | 364 | 3.551 | strong, slightly less polished |
+| `qubo_scheduler_state_v5_wang_features` | 105/120 | 5162 | 3368 | 455 | 2.749 | useful ablation, not promoted |
+| `qubo_scheduler_state_v5` | 89/120 | 6334 | 2856 | 395 | 1.941 | fast baseline, weak hard-case coverage |
+| `wang_bs_b` | 120/120 | 4569 | 4569 | 1174 | 1.663 | best feasibility fallback, worse path quality |
+
+Main reading:
+
+- `wang_bs_b` is fastest and solves every case, but it pays for feasibility with long paths.
+- `wang_rescue_polish` is the best single quality algorithm now: it is shorter than Wang on 109 of the 118 common solved cases and saves 804 moves on those common cases.
+- The remaining hard cases for the current best single QUBO-family line are `5x5_cv1_test_4` and `5x5_cv2_test_10`.
+- Per-case portfolios can reach 120/120 and lower total moves, but they are an upper bound rather than the complete single algorithm requested for this line of work.
+
 ## Internal 30 Single-Bay Cases
 
 Command:

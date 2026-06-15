@@ -29,6 +29,10 @@
 
 > QUBO Beam `speed_v2` 微优化版在 30 个单贝位算例上全部达到 `N=0`，总步数 509，平均 2.237 秒。严格时间匹配下，classic no-QUBO 只解出 25/30，26 号贝位为 10/15。enhanced no-QUBO 作为强工程消融也能 30/30，但总步数为 510，说明 deterministic parent-diversity 机制本身很强；QUBO 当前的独立可见贡献主要是 1 步路径压缩和少量 frontier 路径祖先影响。
 
+## Wang/QUBO 方向收束
+
+最新 Wang/QUBO 方向总览见 [wang_qubo_direction_summary.md](wang_qubo_direction_summary.md)。当前 open DLTS 5x5/7x5 test-120 口径下，单一 QUBO-family 最好结果是 `qubo_scheduler_state_v5_wang_rescue_polish`：118/120 解出，full-quality penalty 3873，solved moves 3692，平均 3.901 秒。纯 Wang `wang_bs_b` 为 120/120 解出、4569 步、平均 1.663 秒；它更适合作为 feasibility fallback 和失败样例教师，不适合作为质量主算法。
+
 不再把旧版 `30/30 vs 21/30` 作为当前主结论。该结果属于早期代码/参数口径下的历史对照。
 
 ## 开源 CPMP 外部算例
@@ -88,6 +92,7 @@ cv1 唯一优先级分支的详细说明见 [open_cpmp_dlts_initial_external_ben
 - [compact_beam_qubo_speed_optimized_v2_full30_repeat.md](compact_beam_qubo_speed_optimized_v2_full30_repeat.md)：历史 2.274 秒档结果。
 - [open_cpmp_priority_group_benchmark_summary.md](open_cpmp_priority_group_benchmark_summary.md)：DLTS cv2/cv3 重复优先级扩展基准。
 - [results.md](results.md)：输出字段解释。
+- [wang_qubo_direction_summary.md](wang_qubo_direction_summary.md)：Wang/QUBO 当前最好结果、值得继续试的方向、以及实验后不应推进的方向。
 
 历史业务改善、Greedy/MIP 小规模 benchmark 和更早的配对算例报告仍保留在本目录，但不进入当前主结论。
 
