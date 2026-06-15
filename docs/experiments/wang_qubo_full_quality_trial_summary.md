@@ -41,6 +41,27 @@ Main reading:
 - The remaining hard cases for the current best single QUBO-family line are `5x5_cv1_test_4` and `5x5_cv2_test_10`.
 - Per-case portfolios can reach 120/120 and lower total moves, but they are an upper bound rather than the complete single algorithm requested for this line of work.
 
+2026-06-15 research-all paired run:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant wang_research_all --time-limit 10 --alpha 10 --output docs\experiments\wang_research_all_open120_t10.csv
+```
+
+This run should be interpreted as a same-run comparison because its paired `wang_rescue_polish` baseline solved 114/120, below the previous clean 118/120 result.
+
+| algorithm | valid | full penalty | solved moves | solved gap sum | avg runtime sec | status |
+|---|---:|---:|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_wang_rescue_selective_window_polish` | 114/120 | 4252 | 3501 | 305 | 3.923 | promising speed candidate, needs clean confirmation |
+| `qubo_scheduler_state_v5_wang_rescue_polish` | 114/120 | 4254 | 3505 | 307 | 4.793 | paired baseline for this run |
+| `qubo_scheduler_state_v5_wang_rescue_dynamic_polish` | 112/120 | 4339 | 3434 | 284 | 4.220 | faster but loses coverage |
+| `qubo_scheduler_state_v5_wang_rescue_risk_polish` | 107/120 | 4986 | 3190 | 255 | 4.983 | negative on 7x5 robustness |
+
+Key reading:
+
+- Selective-window polish reduced window attempts from 217 to 146 and had the best same-run full-quality penalty, but it needs a clean single-variant confirmation before promotion.
+- Dynamic survivor cap fired on 351 layers and saved runtime, but it added 4 baseline failures while solving only 2 baseline failures.
+- Risk group-QUBO made 1111 group-QUBO calls and selected 22460 group candidates, but it produced too many 7x5 failures.
+
 ## Internal 30 Single-Bay Cases
 
 Command:
@@ -128,7 +149,7 @@ The next Wang/QUBO probes are intentionally separated:
 
 - `scheduler_state_v5_wang_features` moves fixed-prefix and fix-pair signals into the generic group-QUBO linear score.
 - `scheduler_state_v5_wang_rescue_polish` keeps Wang rescue as a feasibility mechanism, then uses suffix/window polish to reduce long rescue paths.
-- `scripts/diagnose_wang_qubo_failures.py` focuses on `5x5_cv1_test_4` and `5x5_cv1_test_6`, comparing compact plateau signals with Wang BS-B early moves.
+- `scripts/diagnose_wang_qubo_failures.py` focuses on `5x5_cv1_test_4` and `5x5_cv2_test_10`, comparing compact plateau signals with Wang BS-B early moves.
 
 These probes should be judged by full-case quality first: valid count, invalid count, full-quality penalty, solved moves, and runtime.
 

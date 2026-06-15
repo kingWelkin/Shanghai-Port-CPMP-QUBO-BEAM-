@@ -11,11 +11,12 @@ if str(SCRIPTS) not in sys.path:
 
 
 def test_case_selector_accepts_exact_open_case_ids():
-    from diagnose_wang_qubo_failures import _case_selected
+    from diagnose_wang_qubo_failures import DEFAULT_CASES, _case_selected
 
     assert _case_selected("5x5_cv1_test_4", {"5x5_cv1_test_4"})
     assert not _case_selected("5x5_cv1_test_5", {"5x5_cv1_test_4"})
     assert _case_selected("5x5_cv1_test_6", set())
+    assert DEFAULT_CASES == ("5x5_cv1_test_4", "5x5_cv2_test_10")
 
 
 def test_diagnostic_row_degrades_when_wang_data_is_missing():
@@ -145,6 +146,8 @@ def test_main_uses_real_open_case_flow_without_network_clone(monkeypatch, tmp_pa
             "tiny_family",
             "--cases",
             "tiny_family_1",
+            "--compact-solver-profile",
+            "scheduler_state_v5_wang_rescue_polish",
             "--time-limit",
             "1",
             "--output",
@@ -157,7 +160,7 @@ def test_main_uses_real_open_case_flow_without_network_clone(monkeypatch, tmp_pa
     assert calls["ensure"] == (source, False, False)
     assert calls["discover"] == (source, ["tiny_family"], None, None)
     assert [item[0].name for item in calls["loaded"]] == ["1.dat"]
-    assert calls["compact_kwargs"]["solver_profile"] == "scheduler_state_v5_wang_rescue"
+    assert calls["compact_kwargs"]["solver_profile"] == "scheduler_state_v5_wang_rescue_polish"
     assert calls["compact_run"] == ("tiny_family_1", instance, compact_args)
     assert calls["wang"][0] is instance
     assert calls["wang"][1].max_candidates_per_layer == 64

@@ -635,6 +635,13 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
         ]
+    if name == "wang_research_all":
+        return [
+            "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
+            "qubo_scheduler_state_v5_wang_rescue_risk_polish",
+            "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
+        ]
     return [name]
 
 
@@ -852,6 +859,12 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_suffix_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_dynamic_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_dynamic_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_risk_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_risk_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_selective_window_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_selective_window_polish"})
     if variant == "qubo_scheduler_state_v5_wang_hybrid":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_hybrid"})
     if variant == "qubo_scheduler_state_v7_wang_qubo_unified":
@@ -973,6 +986,9 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
+            "qubo_scheduler_state_v5_wang_rescue_risk_polish",
+            "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
             "qubo_scheduler_state_v7_wang_qubo_pool",
@@ -983,6 +999,7 @@ def build_parser() -> argparse.ArgumentParser:
             "both",
             "all",
             "wang_all",
+            "wang_research_all",
         ],
         default="qubo",
     )

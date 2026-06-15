@@ -24,6 +24,31 @@ Interpretation:
 - On the 118 cases solved by both `wang_rescue_polish` and `wang_bs_b`, QUBO-rescue-polish uses 3692 moves versus Wang's 4496, saving 804 moves. QUBO-rescue-polish is shorter on 109 cases; Wang is shorter on 5; 4 are tied.
 - The two remaining unsolved cases for `wang_rescue_polish` are `5x5_cv1_test_4` and `5x5_cv2_test_10`.
 
+## 2026-06-15 Follow-Up Research-All Trial
+
+Command:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant wang_research_all --time-limit 10 --alpha 10 --output docs\experiments\wang_research_all_open120_t10.csv
+```
+
+This was a paired run of the current best profile and three new experimental profiles. The paired baseline was weaker than the previous curated clean run, so this table is best read as a same-run comparison, not as a replacement for the clean 118/120 result above.
+
+| algorithm | solved | full-quality penalty | solved moves | solved gap sum | avg runtime sec | reading |
+|---|---:|---:|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_wang_rescue_selective_window_polish` | 114/120 | 4252 | 3501 | 305 | 3.923 | best same-run result, promising speed candidate |
+| `qubo_scheduler_state_v5_wang_rescue_polish` | 114/120 | 4254 | 3505 | 307 | 4.793 | paired baseline for this run |
+| `qubo_scheduler_state_v5_wang_rescue_dynamic_polish` | 112/120 | 4339 | 3434 | 284 | 4.220 | faster but loses coverage |
+| `qubo_scheduler_state_v5_wang_rescue_risk_polish` | 107/120 | 4986 | 3190 | 255 | 4.983 | not robust on 7x5 |
+
+Paired comparison versus `wang_rescue_polish`:
+
+- Selective-window polish: 7 better, 3 worse, 103 tied on common solved cases; 1 new solve, 1 new failure; net -6 moves and -0.871 seconds per case. It reduced window attempts from 217 to 146 while keeping total post-polish saved moves slightly higher (32 vs 30).
+- Dynamic survivor cap: 23 better, 16 worse, 71 tied; 2 new solves, 4 new failures; net -20 common-case moves and -0.573 seconds per case, but the lost coverage makes it unsafe as a default.
+- Risk group-QUBO polish: 12 better, 7 worse, 87 tied; 1 new solve, 8 new failures; not suitable for promotion.
+
+Residual-failure autopsy on `5x5_cv1_test_4` and `5x5_cv2_test_10` found compact search tail plateaus near N=1/2 while Wang BS-B reaches feasible paths in 41 and 32 moves respectively. The first Wang moves mainly create and reuse temporary slack, so the next research direction should be a compact escape operator or trigger learned from Wang prefixes, not another direct fixed-pair score bump.
+
 ## Good Directions
 
 These are worth preserving as main research directions.
@@ -43,24 +68,27 @@ These are worth preserving as main research directions.
 5. Path compression after rescue.
    The current best result improves from rescue to rescue-polish: 3887 -> 3873 full penalty and 3706 -> 3692 solved moves. This is a small but real quality direction.
 
-6. Suffix-only polish as a diagnostic ablation.
+6. Selective window polish as a speed candidate.
+   The same-run research-all trial shows that filtering window candidates by relative score can cut window repair attempts (217 -> 146) and reduce runtime without obvious quality loss. It needs a clean confirmation run before replacing full rescue-polish.
+
+7. Suffix-only polish as a diagnostic ablation.
    Skipping window repair keeps 118/120 coverage and lands between rescue and full polish: penalty 3880, moves 3699, avg runtime 3.883s. It is useful evidence that window repair can be made more selective, but it is not enough to replace full rescue-polish.
 
 ## Worth Trying Next
 
 These are not proven yet, but the evidence supports further experiments.
 
-1. Run dynamic survivor parent-cap on full open120 at the same time budget as the current best.
-   The 7x5_cv1 5-case t=6 probe solved 3/5 with lower full penalty than the fixed-cap small probes, but it is too small to promote.
+1. Re-run selective-window polish in a clean single-variant open120 run.
+   The paired run shows a speed/quality win, but the paired baseline was weaker than the previous curated clean run. A clean confirmation should decide whether selective-window becomes the speed-oriented default.
 
 2. Focus only on the two residual failures.
    Compare QUBO-rescue-polish against Wang BS-B on `5x5_cv1_test_4` and `5x5_cv2_test_10`, then extract the first few Wang moves that escape the plateau.
 
-3. Make rescue compression more local and more frequent.
-   Rescue finds feasibility; compression should be a bounded suffix/window repair, not a second full solver.
+3. Turn Wang residual prefixes into a compact escape operator.
+   The current failure autopsy suggests Wang succeeds by creating temporary slack, not by merely selecting higher fixed-prefix/fix-pair states. Test a bounded escape move that inserts only compact parent-chain states.
 
-4. Add risk-aware survivor triggers.
-   Current dynamic cap uses dead-parent ratio. A stronger trigger should combine dead-parent ratio, on-path survivor loss, parent-top-share, and `best_n` plateau.
+4. Make dynamic survivor controls less aggressive.
+   The full paired run showed speed but added failures. A safer trigger should combine dead-parent ratio, on-path survivor loss, parent-top-share, and `best_n` plateau rather than dead-parent ratio alone.
 
 5. Keep QUBO as a small selector inside the beam.
    The strongest evidence still supports QUBO as candidate/suffix/window selection inside a classical search, not as the whole CPMP solver.
@@ -76,7 +104,8 @@ These directions produced useful evidence, but should not be the main line now.
 | Generic Wang fixed-prefix/fix-pair features | 105/120, penalty 5162 | Better than v5, but clearly worse than rescue/rescue-polish. |
 | Unified Wang-QUBO beam | 55/120 at t=3 in the better pressure run | Integrated feasibility pressure helps, but it is far behind rescue-polish. |
 | Candidate-pool QUBO bonus | 45/120 at t=3 | Wang-preferred one-step child as a QUBO bonus underperformed append-style baby lookahead and no-rollout. |
-| Dynamic survivor parent cap | 3/5 on the small 7x5_cv1 t=6 probe | Promising diagnostic, but only small-sample evidence; keep as an experiment switch. |
+| Dynamic survivor parent cap | 112/120, penalty 4339 in paired open120 | Faster than the paired baseline, but added 4 failures while solving only 2 baseline failures. Keep as an experiment switch, not default. |
+| Risk group-QUBO rescue-polish | 107/120, penalty 4986 in paired open120 | The generic feature selector is unstable on 7x5 and creates too many new failures. |
 | Suffix-only rescue polish | 118/120, penalty 3880, avg 3.883s | Skips all window repair attempts, but saves only about 0.018s average versus full polish while losing 7 full-penalty points. Keep as ablation, not default. |
 | Unconditional Wang rescue on internal 30 | 508 moves vs 509 for scheduler v5, much slower | Not worth making the internal default. |
 
@@ -97,3 +126,5 @@ These directions produced useful evidence, but should not be the main line now.
 - `open_wang_all_full_quality_5x5_7x5_test120.csv`
 - `wang_bs_b_open_5x5_7x5_test120.csv`
 - `scratch_survivor_dynamic_cap_7x5_cv1_5cases_t6.csv`
+- `wang_research_all_open120_t10.csv`
+- `wang_qubo_residual_failure_autopsy_current.csv`

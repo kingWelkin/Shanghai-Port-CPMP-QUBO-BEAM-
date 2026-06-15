@@ -676,6 +676,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "post_polish_window_budget": 96,
         "post_polish_window_qubo_vars": 72,
         "post_polish_window_select": 8,
+        "post_polish_window_min_score_ratio": 0.0,
         "post_polish_window_time_limit": 0.001,
         "post_polish_window_repair_expanded": 20000,
         "post_polish_window_repair_depth_extra": 0,
@@ -1124,6 +1125,41 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_suffix_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "post_polish_window_select": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_dynamic_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "survivor_parent_cap_enabled": True,
+    "survivor_parent_cap_trigger_ratio": 0.70,
+    "survivor_parent_cap_release_ratio": 0.55,
+    "survivor_parent_cap_value": 3,
+    "survivor_parent_cap_window": 2,
+    "survivor_parent_cap_min_n": 12,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_risk_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "group_qubo_supplement": True,
+    "max_group_qubo_calls": 48,
+    "qubo_group_max_vars": 96,
+    "qubo_group_select": 12,
+    "qubo_group_take": 2,
+    "qubo_group_lookahead_weight": 0.15,
+    "qubo_group_branch_weight": 0.03,
+    "group_qubo_risk_gate": True,
+    "group_qubo_risk_min_candidates": 12000,
+    "group_qubo_risk_parent_share": 0.18,
+    "group_qubo_risk_plateau_window": 3,
+    "group_qubo_risk_plateau_delta": 0,
+    "wang_feature_fixed_prefix_weight": 12.0,
+    "wang_feature_fix_pair_weight": 5.0,
+    "wang_feature_risk_weight": 0.5,
+    "wang_feature_same_parent_weight": 0.60,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_selective_window_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "post_polish_window_select": 3,
+    "post_polish_window_min_score_ratio": 0.80,
+    "post_polish_window_max_size": 10,
+    "post_polish_window_repair_expanded": 8000,
 }
 _SOLVER_PROFILES["scheduler_state_v5_window_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5"],
@@ -4482,6 +4518,13 @@ def _select_post_polish_windows_v2_qubo(
     requested = int(getattr(args, "post_polish_window_select", 8))
     if requested <= 0:
         return [], 0, 0.0
+    min_score_ratio = float(getattr(args, "post_polish_window_min_score_ratio", 0.0) or 0.0)
+    if min_score_ratio > 0.0:
+        best_score = max((window.score for window in windows), default=0.0)
+        if best_score > 0.0:
+            windows = [window for window in windows if window.score >= best_score * min_score_ratio]
+            if not windows:
+                return [], 0, 0.0
     target = max(1, min(requested, len(windows)))
     usable = windows[: max(1, min(int(getattr(args, "post_polish_window_qubo_vars", 72)), len(windows)))]
     if len(usable) <= target:

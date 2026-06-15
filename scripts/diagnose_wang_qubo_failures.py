@@ -25,7 +25,7 @@ from container_reshuffle.solvers.classical_cpmp import WangBsBabyMovesSolver
 from open_cpmp_benchmarks import discover_dlts_cases, ensure_dlts_source, load_dlts_dat
 from run_business_exact_target_search_sqlite import _encode
 
-DEFAULT_CASES = ("5x5_cv1_test_4", "5x5_cv1_test_6")
+DEFAULT_CASES = ("5x5_cv1_test_4", "5x5_cv2_test_10")
 FIELDS = [
     "case_id",
     "family",
@@ -119,6 +119,7 @@ def main() -> int:
     parser.add_argument("--source", type=Path, default=ROOT / "external" / "DLTS")
     parser.add_argument("--families", nargs="+", default=["5x5_cv1_test"])
     parser.add_argument("--cases", nargs="+", default=list(DEFAULT_CASES))
+    parser.add_argument("--compact-solver-profile", default="scheduler_state_v5_wang_rescue")
     parser.add_argument("--time-limit", type=float, default=10.0)
     parser.add_argument("--wang-move-limit", type=int, default=8)
     parser.add_argument(
@@ -137,7 +138,7 @@ def main() -> int:
             continue
         instance = load_dlts_dat(case.instance_path, max_height=case.reference.max_height)
         compact_args = make_compact_args(
-            solver_profile="scheduler_state_v5_wang_rescue",
+            solver_profile=args.compact_solver_profile,
             alpha=10.0,
             time_limit=args.time_limit,
             max_moves=None,

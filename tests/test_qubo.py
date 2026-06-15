@@ -2240,6 +2240,68 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_suffix_polish_skips_windo
     assert args.post_polish_window_select == 0
 
 
+def test_solver_profile_scheduler_state_v5_wang_rescue_dynamic_polish_enables_survivor_cap(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_dynamic_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.rescue_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.survivor_parent_cap_enabled is True
+    assert args.survivor_parent_cap_value < args.parent_core_cap
+
+
+def test_solver_profile_scheduler_state_v5_wang_rescue_risk_polish_adds_small_group_qubo(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_risk_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.rescue_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.group_qubo_supplement is True
+    assert args.qubo_group_select <= 12
+    assert args.wang_feature_fixed_prefix_weight > 0.0
+    assert args.wang_feature_same_parent_weight > 0.0
+
+
+def test_solver_profile_scheduler_state_v5_wang_rescue_selective_window_polish_filters_windows(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_selective_window_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.rescue_enabled is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.post_polish_window_select >= 2
+    assert args.post_polish_window_min_score_ratio > 0.0
+
+
+def test_post_polish_windows_v2_min_score_ratio_filters_low_signal_windows():
+    from benchmark_compact_beam_qubo_n0 import PostPolishWindow, _select_post_polish_windows_v2_qubo
+
+    windows = [
+        PostPolishWindow(start=0, end=4, old_len=4, min_n=2, max_n=4, score=10.0),
+        PostPolishWindow(start=4, end=8, old_len=4, min_n=2, max_n=5, score=7.0),
+        PostPolishWindow(start=8, end=12, old_len=4, min_n=3, max_n=6, score=2.0),
+    ]
+    args = _compact_args(post_polish_window_select=3, post_polish_window_min_score_ratio=0.80)
+
+    selected, qvars, qtime = _select_post_polish_windows_v2_qubo(windows, args)
+
+    assert selected == [windows[0]]
+    assert qvars == 0
+    assert qtime == 0.0
+
+
 def test_rescue_layer_gate_requires_plateau_near_cap_and_candidate_pressure():
     from benchmark_compact_beam_qubo_n0 import _rescue_layer_active
 
@@ -3513,6 +3575,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
     from open_cpmp_benchmarks import _variant_names, build_parser
 
     build_parser().parse_args(["--variant", "wang_all"])
+    build_parser().parse_args(["--variant", "wang_research_all"])
 
     assert _variant_names("wang_all") == [
         "qubo",
@@ -3524,6 +3587,12 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_hybrid",
         "qubo_scheduler_state_v7_wang_qubo_unified",
+    ]
+    assert _variant_names("wang_research_all") == [
+        "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
+        "qubo_scheduler_state_v5_wang_rescue_risk_polish",
+        "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
     ]
 
 
@@ -3547,10 +3616,16 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     feature_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_features")
     suffix_polish_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_suffix_polish")
     polish_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
+    dynamic_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_dynamic_polish")
+    risk_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_risk_polish")
+    selective_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_selective_window_polish")
 
     assert feature_args.solver_profile == "scheduler_state_v5_wang_features"
     assert suffix_polish_args.solver_profile == "scheduler_state_v5_wang_rescue_suffix_polish"
     assert polish_args.solver_profile == "scheduler_state_v5_wang_rescue_polish"
+    assert dynamic_args.solver_profile == "scheduler_state_v5_wang_rescue_dynamic_polish"
+    assert risk_args.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
+    assert selective_args.solver_profile == "scheduler_state_v5_wang_rescue_selective_window_polish"
     assert "qubo_scheduler_state_v5_wang_features" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_suffix_polish" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_polish" in _variant_names("wang_all")
