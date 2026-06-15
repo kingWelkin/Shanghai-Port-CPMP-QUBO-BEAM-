@@ -11,6 +11,7 @@ For the open DLTS 5x5/7x5 test-120 suite, the best single QUBO-family algorithm 
 | algorithm | solved | full-quality penalty | solved moves | solved gap sum | avg runtime sec |
 |---|---:|---:|---:|---:|---:|
 | `qubo_scheduler_state_v5_wang_rescue_polish` | 118/120 | 3873 | 3692 | 350 | 3.901 |
+| `qubo_scheduler_state_v5_wang_rescue_suffix_polish` | 118/120 | 3880 | 3699 | 357 | 3.883 |
 | `qubo_scheduler_state_v5_wang_rescue` | 118/120 | 3887 | 3706 | 364 | 3.551 |
 | `qubo_scheduler_state_v5_wang_features` | 105/120 | 5162 | 3368 | 455 | 2.749 |
 | `qubo_scheduler_state_v5` | 89/120 | 6334 | 2856 | 395 | 1.941 |
@@ -41,6 +42,9 @@ These are worth preserving as main research directions.
 
 5. Path compression after rescue.
    The current best result improves from rescue to rescue-polish: 3887 -> 3873 full penalty and 3706 -> 3692 solved moves. This is a small but real quality direction.
+
+6. Suffix-only polish as a diagnostic ablation.
+   Skipping window repair keeps 118/120 coverage and lands between rescue and full polish: penalty 3880, moves 3699, avg runtime 3.883s. It is useful evidence that window repair can be made more selective, but it is not enough to replace full rescue-polish.
 
 ## Worth Trying Next
 
@@ -73,6 +77,7 @@ These directions produced useful evidence, but should not be the main line now.
 | Unified Wang-QUBO beam | 55/120 at t=3 in the better pressure run | Integrated feasibility pressure helps, but it is far behind rescue-polish. |
 | Candidate-pool QUBO bonus | 45/120 at t=3 | Wang-preferred one-step child as a QUBO bonus underperformed append-style baby lookahead and no-rollout. |
 | Dynamic survivor parent cap | 3/5 on the small 7x5_cv1 t=6 probe | Promising diagnostic, but only small-sample evidence; keep as an experiment switch. |
+| Suffix-only rescue polish | 118/120, penalty 3880, avg 3.883s | Skips all window repair attempts, but saves only about 0.018s average versus full polish while losing 7 full-penalty points. Keep as ablation, not default. |
 | Unconditional Wang rescue on internal 30 | 508 moves vs 509 for scheduler v5, much slower | Not worth making the internal default. |
 
 ## Project Hygiene
@@ -85,6 +90,7 @@ These directions produced useful evidence, but should not be the main line now.
 ## Evidence Files
 
 - `scratch_wang_rescue_polish_test120_current.csv`
+- `scratch_wang_rescue_suffix_polish_test120_clean.csv`
 - `scratch_wang_rescue_test120_current.csv`
 - `scratch_wang_features_test120_current.csv`
 - `scratch_scheduler_state_v5_test120_current.csv`

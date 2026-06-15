@@ -630,6 +630,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_pair",
             "qubo_scheduler_state_v5_wang_features",
             "qubo_scheduler_state_v5_wang_rescue",
+            "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
@@ -847,6 +848,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_features"})
     if variant == "qubo_scheduler_state_v5_wang_rescue":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_suffix_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_suffix_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
     if variant == "qubo_scheduler_state_v5_wang_hybrid":
@@ -968,6 +971,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_pair",
             "qubo_scheduler_state_v5_wang_features",
             "qubo_scheduler_state_v5_wang_rescue",
+            "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",

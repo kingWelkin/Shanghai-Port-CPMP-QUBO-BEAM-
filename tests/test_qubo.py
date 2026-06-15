@@ -2225,6 +2225,21 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_an
     assert args.post_polish_window_select >= 1
 
 
+def test_solver_profile_scheduler_state_v5_wang_rescue_suffix_polish_skips_windows(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_suffix_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.post_polish_window_select == 0
+
+
 def test_rescue_layer_gate_requires_plateau_near_cap_and_candidate_pressure():
     from benchmark_compact_beam_qubo_n0 import _rescue_layer_active
 
@@ -3505,6 +3520,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_pair",
         "qubo_scheduler_state_v5_wang_features",
         "qubo_scheduler_state_v5_wang_rescue",
+        "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_hybrid",
         "qubo_scheduler_state_v7_wang_qubo_unified",
@@ -3529,11 +3545,14 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     )
 
     feature_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_features")
+    suffix_polish_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_suffix_polish")
     polish_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
 
     assert feature_args.solver_profile == "scheduler_state_v5_wang_features"
+    assert suffix_polish_args.solver_profile == "scheduler_state_v5_wang_rescue_suffix_polish"
     assert polish_args.solver_profile == "scheduler_state_v5_wang_rescue_polish"
     assert "qubo_scheduler_state_v5_wang_features" in _variant_names("wang_all")
+    assert "qubo_scheduler_state_v5_wang_rescue_suffix_polish" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_polish" in _variant_names("wang_all")
 
 
@@ -4247,6 +4266,22 @@ def test_post_polish_windows_v2_rejects_equal_length_bridge_by_default(monkeypat
     assert stats.window_attempts == 1
     assert stats.window_successes == 0
     assert stats.window_moves_saved == 0
+
+
+def test_post_polish_windows_v2_select_zero_skips_window_repair():
+    from benchmark_compact_beam_qubo_n0 import PostPolishWindow, _select_post_polish_windows_v2_qubo
+
+    windows = [
+        PostPolishWindow(start=0, end=3, old_len=3, min_n=2, max_n=4, score=12.0),
+        PostPolishWindow(start=3, end=6, old_len=3, min_n=1, max_n=3, score=10.0),
+    ]
+    args = _compact_args(post_polish_window_select=0)
+
+    selected, qvars, qtime = _select_post_polish_windows_v2_qubo(windows, args)
+
+    assert selected == []
+    assert qvars == 0
+    assert qtime == 0.0
 
 
 def test_post_polish_window_min_stacks_falls_back_to_legacy_for_small_instances(monkeypatch):

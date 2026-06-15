@@ -1121,6 +1121,10 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
     "post_polish_window_repair_expanded": 6000,
     "post_polish_window_repair_depth_extra": 0,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_suffix_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "post_polish_window_select": 0,
+}
 _SOLVER_PROFILES["scheduler_state_v5_window_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5"],
     "post_polish_mode": "qubo_windows_v2",
@@ -4475,7 +4479,10 @@ def _select_post_polish_windows_v2_qubo(
 ) -> tuple[list[PostPolishWindow], int, float]:
     if not windows:
         return [], 0, 0.0
-    target = max(1, min(int(getattr(args, "post_polish_window_select", 8)), len(windows)))
+    requested = int(getattr(args, "post_polish_window_select", 8))
+    if requested <= 0:
+        return [], 0, 0.0
+    target = max(1, min(requested, len(windows)))
     usable = windows[: max(1, min(int(getattr(args, "post_polish_window_qubo_vars", 72)), len(windows)))]
     if len(usable) <= target:
         return usable, 0, 0.0

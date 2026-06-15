@@ -27,6 +27,7 @@ Current open DLTS 5x5/7x5 test-120 ranking:
 | algorithm | valid | full penalty | solved moves | solved gap sum | avg runtime sec | status |
 |---|---:|---:|---:|---:|---:|---|
 | `qubo_scheduler_state_v5_wang_rescue_polish` | 118/120 | 3873 | 3692 | 350 | 3.901 | best single QUBO-family quality result |
+| `qubo_scheduler_state_v5_wang_rescue_suffix_polish` | 118/120 | 3880 | 3699 | 357 | 3.883 | useful speed ablation, not promoted |
 | `qubo_scheduler_state_v5_wang_rescue` | 118/120 | 3887 | 3706 | 364 | 3.551 | strong, slightly less polished |
 | `qubo_scheduler_state_v5_wang_features` | 105/120 | 5162 | 3368 | 455 | 2.749 | useful ablation, not promoted |
 | `qubo_scheduler_state_v5` | 89/120 | 6334 | 2856 | 395 | 1.941 | fast baseline, weak hard-case coverage |
@@ -36,6 +37,7 @@ Main reading:
 
 - `wang_bs_b` is fastest and solves every case, but it pays for feasibility with long paths.
 - `wang_rescue_polish` is the best single quality algorithm now: it is shorter than Wang on 109 of the 118 common solved cases and saves 804 moves on those common cases.
+- `wang_rescue_suffix_polish` proves that window repair can be skipped as an ablation, but the clean full-120 run only saves about 0.018 seconds per case versus full polish while losing 7 full-penalty points.
 - The remaining hard cases for the current best single QUBO-family line are `5x5_cv1_test_4` and `5x5_cv2_test_10`.
 - Per-case portfolios can reach 120/120 and lower total moves, but they are an upper bound rather than the complete single algorithm requested for this line of work.
 
