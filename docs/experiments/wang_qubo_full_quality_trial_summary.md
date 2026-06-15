@@ -252,3 +252,17 @@ python scripts\benchmark_compact_beam_qubo_n0.py --cases A1_01 --solver-profile 
 Promotion requires a full-case quality improvement against `qubo_scheduler_state_v5_wang_rescue_polish`, or solving one residual hard case without adding new failures in a clean paired run.
 
 The 2026-06-15 residual smoke solved 2/4 selected cases with full penalty 237 and solved moves 56; the original residual hard cases `5x5_cv1_test_4` and `5x5_cv2_test_10` remained unsolved.
+
+Gate diagnostic follow-up:
+
+The first residual smoke showed `feasibility_escape_calls=0`, so the selector was configured but not actually participating. The blocking gate was not depth slack; it was the parent-top-share requirement, which suppresses plateau layers when the candidate pool is already broadly spread across parents. Removing that hard parent-share requirement made the residual run produce nonzero telemetry (`5x5_cv1_test_4`: 8 active layers, 8 calls, 32 added candidates; `5x5_cv2_test_10`: 3 active layers, 3 calls, 12 added candidates), but the hard cases still ended at `final_n=17` and `final_n=15`.
+
+Wider CLI sweeps also did not change those two hard cases:
+
+| setting | 5x5_cv1_test_4 | 5x5_cv2_test_10 |
+|---|---:|---:|
+| width 12, n-window 4, no signal filter | final_n 17 | final_n 15 |
+| width 24, n-window 6, no signal filter | final_n 17 | final_n 15 |
+| width 24, n-window 6, slack filter | final_n 17 | final_n 15 |
+
+This makes the current feasibility escape selector useful as telemetry and ablation scaffolding, but not as a quality improvement. Further work should not spend effort only widening this supplement; it needs a different continuation mechanism or a stronger learned/ranked branching policy.

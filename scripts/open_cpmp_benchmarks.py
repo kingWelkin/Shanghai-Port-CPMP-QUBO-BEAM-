@@ -223,6 +223,8 @@ def _feasibility_escape_row_fields(result, args: argparse.Namespace) -> dict[str
         "feasibility_escape_min_temporary_slack": getattr(args, "feasibility_escape_min_temporary_slack", 1),
         "feasibility_escape_calls": result.feasibility_escape_calls,
         "feasibility_escape_added_total": result.feasibility_escape_added_total,
+        "feasibility_escape_active_layers": getattr(result, "feasibility_escape_active_layers", 0),
+        "feasibility_escape_gate_reasons": getattr(result, "feasibility_escape_gate_reasons", ""),
     }
 
 

@@ -140,6 +140,8 @@ COMPACT_EXTRA_FIELDS = [
     "feasibility_escape_min_temporary_slack",
     "feasibility_escape_calls",
     "feasibility_escape_added_total",
+    "feasibility_escape_active_layers",
+    "feasibility_escape_gate_reasons",
     "target_layout_count",
     "beam_width",
     "core_width",
@@ -1528,6 +1530,8 @@ class CompactBeamResult:
     unified_wang_fix_pair_selected: int = 0
     feasibility_escape_calls: int = 0
     feasibility_escape_added_total: int = 0
+    feasibility_escape_active_layers: int = 0
+    feasibility_escape_gate_reasons: str = ""
 
 
 @dataclass(frozen=True)
@@ -2537,20 +2541,30 @@ def _feasibility_signals_for_code(code: bytes, args: argparse.Namespace) -> Feas
     return compute_feasibility_signals(stacks, int(args._max_height), target_gap=target_gap)
 
 
-def _feasibility_escape_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+def _format_feasibility_escape_gate_reasons(counts: dict[str, int] | None) -> str:
+    if not counts:
+        return ""
+    return ";".join(f"{key}:{int(counts[key])}" for key in sorted(counts) if int(counts[key]) > 0)
+
+
+def _feasibility_escape_gate_reason(args: argparse.Namespace, best_n: int) -> str:
     if not getattr(args, "feasibility_escape_enabled", False):
-        return False
+        return "disabled"
     focus_n = int(getattr(args, "feasibility_escape_focus_n", 8))
     if focus_n >= 0 and int(best_n) > focus_n:
-        return False
+        return "focus_n"
     history = list(getattr(args, "_best_n_history", []) or [])
-    if len(history) < 3 or min(history[-3:]) != history[-3]:
-        return False
+    if len(history) < 3:
+        return "history_warmup"
+    if min(history[-3:]) != history[-3]:
+        return "not_plateau"
     if int(getattr(args, "_layer_depth_slack", 10**9)) > int(getattr(args, "rescue_cap_slack", 26)):
-        return False
-    if float(getattr(args, "_layer_parent_top_share", 0.0)) < 0.18:
-        return False
-    return True
+        return "slack_too_loose"
+    return "active"
+
+
+def _feasibility_escape_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+    return _feasibility_escape_gate_reason(args, best_n) == "active"
 
 
 def _select_feasibility_escape_supplement(
@@ -3386,31 +3400,41 @@ def _select_enhanced_qubo_frontier(
                     break
     feasibility_width = max(0, int(getattr(args, "feasibility_escape_supplement_width", 0) or 0))
     if (
-        _feasibility_escape_layer_active(args, int(best_n))
+        getattr(args, "feasibility_escape_enabled", False)
         and feasibility_width > 0
         and len(selected) < effective_beam
     ):
-        n_window = max(0, int(getattr(args, "feasibility_escape_n_window", 1) or 0))
-        remaining = [
-            (code, data)
-            for code, data in ranked
-            if code not in selected and data[0] <= int(best_n) + n_window
-        ]
-        target = min(feasibility_width, effective_beam - len(selected))
-        boosted = _select_feasibility_escape_supplement(remaining, args, target)
-        if boosted:
-            if not hasattr(args, "_feasibility_escape_calls_done"):
-                args._feasibility_escape_calls_done = 0
-            if not hasattr(args, "_feasibility_escape_added_total"):
-                args._feasibility_escape_added_total = 0
-            args._feasibility_escape_calls_done += 1
-            for code in boosted:
-                before = len(selected)
-                selected.setdefault(code, None)
-                if len(selected) > before:
-                    args._feasibility_escape_added_total += 1
-                if len(selected) >= effective_beam:
-                    break
+        gate_reason = _feasibility_escape_gate_reason(args, int(best_n))
+        if not hasattr(args, "_feasibility_escape_gate_reasons"):
+            args._feasibility_escape_gate_reasons = {}
+        args._feasibility_escape_gate_reasons[gate_reason] = (
+            int(args._feasibility_escape_gate_reasons.get(gate_reason, 0)) + 1
+        )
+        if gate_reason == "active":
+            if not hasattr(args, "_feasibility_escape_active_layers"):
+                args._feasibility_escape_active_layers = 0
+            args._feasibility_escape_active_layers += 1
+            n_window = max(0, int(getattr(args, "feasibility_escape_n_window", 1) or 0))
+            remaining = [
+                (code, data)
+                for code, data in ranked
+                if code not in selected and data[0] <= int(best_n) + n_window
+            ]
+            target = min(feasibility_width, effective_beam - len(selected))
+            boosted = _select_feasibility_escape_supplement(remaining, args, target)
+            if boosted:
+                if not hasattr(args, "_feasibility_escape_calls_done"):
+                    args._feasibility_escape_calls_done = 0
+                if not hasattr(args, "_feasibility_escape_added_total"):
+                    args._feasibility_escape_added_total = 0
+                args._feasibility_escape_calls_done += 1
+                for code in boosted:
+                    before = len(selected)
+                    selected.setdefault(code, None)
+                    if len(selected) > before:
+                        args._feasibility_escape_added_total += 1
+                    if len(selected) >= effective_beam:
+                        break
     qubo_enabled = (
         args.use_qubo
         and candidate_count >= args.qubo_min_candidates
@@ -5114,6 +5138,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._unified_wang_fix_pair_selected = 0
     args._feasibility_escape_calls_done = 0
     args._feasibility_escape_added_total = 0
+    args._feasibility_escape_active_layers = 0
+    args._feasibility_escape_gate_reasons = {}
     args._wang_rollout_candidate_codes = set()
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
@@ -5507,6 +5533,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         unified_wang_fix_pair_selected=args._unified_wang_fix_pair_selected,
         feasibility_escape_calls=args._feasibility_escape_calls_done,
         feasibility_escape_added_total=args._feasibility_escape_added_total,
+        feasibility_escape_active_layers=args._feasibility_escape_active_layers,
+        feasibility_escape_gate_reasons=_format_feasibility_escape_gate_reasons(args._feasibility_escape_gate_reasons),
     )
 
 
@@ -5802,6 +5830,16 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "feasibility_escape_min_temporary_slack": getattr(args, "feasibility_escape_min_temporary_slack", 1),
             "feasibility_escape_calls": result.feasibility_escape_calls,
             "feasibility_escape_added_total": result.feasibility_escape_added_total,
+            "feasibility_escape_active_layers": getattr(
+                result,
+                "feasibility_escape_active_layers",
+                getattr(args, "_feasibility_escape_active_layers", 0),
+            ),
+            "feasibility_escape_gate_reasons": getattr(
+                result,
+                "feasibility_escape_gate_reasons",
+                _format_feasibility_escape_gate_reasons(getattr(args, "_feasibility_escape_gate_reasons", {})),
+            ),
             "target_layout_count": len(getattr(args, "_layout_target_groups", ()) or ()),
             "beam_width": args.beam_width,
             "core_width": args.core_width,

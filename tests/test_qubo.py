@@ -1147,6 +1147,55 @@ def test_feasibility_escape_selector_is_used_inside_enhanced_frontier(monkeypatc
     assert args._feasibility_escape_added_total == 1
 
 
+def test_feasibility_escape_layer_active_allows_low_parent_share_plateau():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        feasibility_escape_enabled=True,
+        feasibility_escape_focus_n=-1,
+        rescue_cap_slack=26,
+        _best_n_history=[17, 17, 17],
+        _layer_depth_slack=14,
+        _layer_parent_top_share=0.006,
+    )
+
+    assert bench._feasibility_escape_gate_reason(args, best_n=17) == "active"
+    assert bench._feasibility_escape_layer_active(args, best_n=17)
+
+
+def test_feasibility_escape_gate_telemetry_is_serialized():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+    from container_reshuffle.core import Instance
+
+    args = _compact_args()
+    result = CompactBeamResult(
+        case="case_a",
+        status="done",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        feasibility_escape_active_layers=3,
+        feasibility_escape_gate_reasons="active:3;not_plateau:5",
+    )
+    row = _row_dict_from_instance_result(
+        result,
+        Instance("case_a", ProblemVariant.PREMARSHALLING_CPMP, 1, 2, 2, [[2, 1]]),
+        args,
+    )
+
+    assert row["feasibility_escape_active_layers"] == 3
+    assert row["feasibility_escape_gate_reasons"] == "active:3;not_plateau:5"
+
+
 def test_dlts_feature_row_contains_feasibility_and_selection_fields(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
     from container_reshuffle.solvers.feasibility_signals import FeasibilitySignals
