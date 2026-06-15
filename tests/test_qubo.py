@@ -1287,6 +1287,52 @@ def test_wang_rollout_successor_uses_legal_top_move_and_parent_depth():
     assert child_code != code
 
 
+def test_wang_rollout_successor_can_use_baby_lookahead_strategy(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+    from run_business_exact_target_search_sqlite import _encode
+
+    origin, origin_n = _encode([[5, 4], [3, 1, 2], []], 3, 3)
+    lookahead_child, lookahead_n = _encode([[5, 4], [3, 1], [2]], 3, 3)
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        wang_rollout_strategy="baby_lookahead",
+    )
+
+    def fake_baby_lookahead(code, n_value, depth, helper_args):
+        assert code == origin
+        assert n_value == origin_n
+        assert depth == 4
+        assert helper_args is args
+        return lookahead_child, (lookahead_n, 5, origin)
+
+    monkeypatch.setattr(compact, "_wang_baby_lookahead_successor", fake_baby_lookahead)
+
+    child = compact._wang_rollout_successor(origin, origin_n, depth=4, args=args)
+
+    assert child == (lookahead_child, (lookahead_n, 5, origin))
+
+
+def test_wang_baby_lookahead_successor_returns_one_legal_child():
+    from benchmark_compact_beam_qubo_n0 import _wang_baby_lookahead_successor
+    from run_business_exact_target_search_sqlite import _encode
+
+    code, n_value = _encode([[5, 4], [3, 1, 2], []], 3, 3)
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        wang_rollout_candidate_limit=64,
+    )
+
+    child = _wang_baby_lookahead_successor(code, n_value, depth=4, args=args)
+
+    assert child is not None
+    child_code, child_data = child
+    assert child_data[1] == 5
+    assert child_data[2] == code
+    assert child_code != code
+
+
 def test_wang_rollout_frontier_skips_known_shallower_code(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as compact
     from run_business_exact_target_search_sqlite import _encode
@@ -1784,7 +1830,11 @@ def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_sel
     assert args.unified_wang_pair_same_parent_penalty > 0.0
     assert args.wang_incumbent_enabled is False
     assert args.wang_cap_enabled is False
-    assert args.wang_rollout_enabled is False
+    assert args.wang_rollout_enabled is True
+    assert args.wang_rollout_strategy == "baby_lookahead"
+    assert args.wang_rollout_width == 2
+    assert args.wang_rollout_focus_n == -1
+    assert args.wang_rollout_plateau_window == 0
     assert args.wang_pair_qubo_enabled is False
     assert args.post_polish_qubo is False
     assert args.rescue_enabled is False
@@ -3044,13 +3094,34 @@ def test_open_runner_wang_rescue_variant_selects_reusable_profile():
 
 
 def test_open_runner_unified_wang_qubo_variant_selects_reusable_profile():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
 
     outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v7_wang_qubo_unified"])
     args = _args_for_variant(outer, "qubo_scheduler_state_v7_wang_qubo_unified")
+    _apply_solver_profile(args)
 
     assert args.solver_profile == "scheduler_state_v7_wang_qubo_unified"
+    assert args.wang_rollout_strategy == "baby_lookahead"
     assert "qubo_scheduler_state_v7_wang_qubo_unified" in _variant_names("wang_all")
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v7_wang_qubo_unified",
+            "--no-wang-rollout-enabled",
+            "--wang-rollout-strategy",
+            "local",
+            "--wang-rollout-candidate-limit",
+            "7",
+        ]
+    )
+    args = _args_for_variant(outer, "qubo_scheduler_state_v7_wang_qubo_unified")
+    _apply_solver_profile(args)
+
+    assert args.wang_rollout_enabled is False
+    assert args.wang_rollout_strategy == "local"
+    assert args.wang_rollout_candidate_limit == 7
 
 
 def test_open_runner_wang_all_expands_current_and_wang_variants():

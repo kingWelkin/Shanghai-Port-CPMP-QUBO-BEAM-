@@ -734,11 +734,13 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "wang_incumbent_time_limit",
         "wang_cap_enabled",
         "wang_rollout_enabled",
+        "wang_rollout_strategy",
         "wang_rollout_width",
         "wang_rollout_focus_n",
         "wang_rollout_plateau_window",
         "wang_rollout_plateau_delta",
         "wang_rollout_max_steps",
+        "wang_rollout_candidate_limit",
         "wang_pair_qubo_enabled",
         "wang_pair_qubo_supplement_width",
         "wang_pair_qubo_focus_n",
@@ -1040,11 +1042,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang-incumbent-time-limit", type=float)
     parser.add_argument("--wang-cap-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang-rollout-strategy", choices=["local", "baby_lookahead"])
     parser.add_argument("--wang-rollout-width", type=int)
     parser.add_argument("--wang-rollout-focus-n", type=int)
     parser.add_argument("--wang-rollout-plateau-window", type=int)
     parser.add_argument("--wang-rollout-plateau-delta", type=int)
     parser.add_argument("--wang-rollout-max-steps", type=int)
+    parser.add_argument("--wang-rollout-candidate-limit", type=int)
     parser.add_argument("--wang-pair-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang-pair-qubo-supplement-width", type=int)
     parser.add_argument("--wang-pair-qubo-focus-n", type=int)

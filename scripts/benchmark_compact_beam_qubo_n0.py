@@ -30,12 +30,32 @@ from benchmark_explainable_rule_macro_beam_all_single_bays import discover_singl
 from benchmark_fast_qubo_integrated_v1 import _exact_moves_by_case, _move_gap, _parse_case, _rel  # noqa: E402
 from benchmark_full_real_business_algorithms import TrajectoryResult  # noqa: E402
 from benchmark_target_astar_memory_n0 import _select_qubo_boosted  # noqa: E402
-from container_reshuffle.core import Instance, Move, Solution, State, apply_move, create_initial_state, validate_solution  # noqa: E402
+from container_reshuffle.core import (  # noqa: E402
+    Instance,
+    Move,
+    ProblemVariant,
+    Solution,
+    State,
+    apply_move,
+    create_initial_state,
+    future_disorder_count_stacks,
+    validate_solution,
+)
 from container_reshuffle.features import disorder_box_count, entropy_limit, max_entropy_along_moves  # noqa: E402
 from container_reshuffle.qubo.model import QuboModel  # noqa: E402
 from container_reshuffle.qubo.sampler import QuboSamplerConfig, SimulatedAnnealingQuboSampler  # noqa: E402
 from container_reshuffle.solvers.base import SolverConfig  # noqa: E402
-from container_reshuffle.solvers.classical_cpmp import WangBsBabyMovesSolver  # noqa: E402
+from container_reshuffle.solvers.classical_cpmp import (  # noqa: E402
+    WangBsBabyMovesSolver,
+    _WangNode,
+    _wang_apply_giant_move,
+    _wang_candidate_pairs,
+    _wang_first_interim_from_giant_child,
+    _wang_goal_stacks,
+    _wang_max_group,
+    _wang_node_rank,
+    _wang_prepare_node,
+)
 from run_business_exact_target_search_sqlite import (  # noqa: E402
     _encode,
     _remaining_lower_bound,
@@ -72,6 +92,10 @@ COMPACT_EXTRA_FIELDS = [
     "wang_incumbent_used",
     "wang_cap_enabled",
     "wang_rollout_enabled",
+    "wang_rollout_strategy",
+    "wang_rollout_width",
+    "wang_rollout_focus_n",
+    "wang_rollout_candidate_limit",
     "wang_rollout_added_total",
     "wang_pair_qubo_enabled",
     "wang_pair_qubo_calls",
@@ -357,11 +381,13 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "wang_incumbent_time_limit": 0.0,
         "wang_cap_enabled": False,
         "wang_rollout_enabled": False,
+        "wang_rollout_strategy": "local",
         "wang_rollout_width": 0,
         "wang_rollout_focus_n": 8,
         "wang_rollout_plateau_window": 3,
         "wang_rollout_plateau_delta": 0,
         "wang_rollout_max_steps": 1,
+        "wang_rollout_candidate_limit": 64,
         "wang_pair_qubo_enabled": False,
         "wang_pair_qubo_supplement_width": 0,
         "wang_pair_qubo_focus_n": 8,
@@ -908,7 +934,12 @@ _SOLVER_PROFILES["scheduler_state_v7_wang_qubo_unified"] = {
     "unified_wang_complement_bonus": 0.05,
     "wang_incumbent_enabled": False,
     "wang_cap_enabled": False,
-    "wang_rollout_enabled": False,
+    "wang_rollout_enabled": True,
+    "wang_rollout_strategy": "baby_lookahead",
+    "wang_rollout_width": 2,
+    "wang_rollout_focus_n": -1,
+    "wang_rollout_plateau_window": 0,
+    "wang_rollout_candidate_limit": 64,
     "wang_pair_qubo_enabled": False,
     "rescue_enabled": False,
     "rescue_max_layers": 0,
@@ -1320,11 +1351,13 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "wang_incumbent_time_limit": "--wang-incumbent-time-limit",
         "wang_cap_enabled": ("--wang-cap-enabled", "--no-wang-cap-enabled"),
         "wang_rollout_enabled": ("--wang-rollout-enabled", "--no-wang-rollout-enabled"),
+        "wang_rollout_strategy": "--wang-rollout-strategy",
         "wang_rollout_width": "--wang-rollout-width",
         "wang_rollout_focus_n": "--wang-rollout-focus-n",
         "wang_rollout_plateau_window": "--wang-rollout-plateau-window",
         "wang_rollout_plateau_delta": "--wang-rollout-plateau-delta",
         "wang_rollout_max_steps": "--wang-rollout-max-steps",
+        "wang_rollout_candidate_limit": "--wang-rollout-candidate-limit",
         "wang_pair_qubo_enabled": ("--wang-pair-qubo-enabled", "--no-wang-pair-qubo-enabled"),
         "wang_pair_qubo_supplement_width": "--wang-pair-qubo-supplement-width",
         "wang_pair_qubo_focus_n": "--wang-pair-qubo-focus-n",
@@ -1885,12 +1918,84 @@ def _wang_rollout_layer_active(args: argparse.Namespace, best_n: int) -> bool:
     return max(recent) - min(recent) <= delta
 
 
+def _wang_baby_lookahead_successor(
+    code: bytes,
+    n_value: int,
+    depth: int,
+    args: argparse.Namespace,
+) -> tuple[bytes, tuple[int, int, bytes]] | None:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return None
+
+    stacks = _code_to_stacks(code, stack_count, max_height)
+    instance = Instance(
+        instance_id=str(getattr(args, "_case_id", "wang_rollout")),
+        variant=ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=stack_count,
+        max_height=max_height,
+        container_count=sum(len(stack) for stack in stacks),
+        stacks=[list(stack) for stack in stacks],
+    )
+    disorder = future_disorder_count_stacks(stacks)
+    state = State(
+        stacks=[list(stack) for stack in stacks],
+        move_count=depth,
+        moves=[],
+        disorder_current=disorder,
+        disorder_total=disorder,
+        entropy_max=depth + disorder,
+    )
+    base = _wang_prepare_node(
+        instance,
+        _WangNode(
+            state,
+            tuple(0 for _ in range(stack_count)),
+            _wang_max_group(stacks),
+        ),
+    )
+    if _wang_goal_stacks(base.state.stacks):
+        return None
+
+    pairs = _wang_candidate_pairs(base.state.stacks, list(base.fixed), base.group, max_height)
+    limit = max(0, int(getattr(args, "wang_rollout_candidate_limit", 64) or 0))
+    if limit > 0:
+        pairs = pairs[:limit]
+
+    best: tuple[tuple, bytes, int] | None = None
+    for pair in pairs:
+        giant_child = _wang_apply_giant_move(instance, base, pair)
+        if giant_child is None:
+            continue
+        interim = _wang_first_interim_from_giant_child(instance, base, giant_child)
+        if interim.state.move_count != depth + 1:
+            continue
+        child_code, child_n = _encode(interim.state.stacks, stack_count, max_height)
+        if child_code == code:
+            continue
+        score = (
+            _wang_node_rank(instance, giant_child),
+            _wang_node_rank(instance, interim),
+            child_code,
+        )
+        if best is None or score < best[0]:
+            best = (score, child_code, child_n)
+
+    if best is None:
+        return None
+    return best[1], (best[2], depth + 1, code)
+
+
 def _wang_rollout_successor(
     code: bytes,
     n_value: int,
     depth: int,
     args: argparse.Namespace,
 ) -> tuple[bytes, tuple[int, int, bytes]] | None:
+    if getattr(args, "wang_rollout_strategy", "local") == "baby_lookahead":
+        return _wang_baby_lookahead_successor(code, n_value, depth, args)
+
     stack_count = int(getattr(args, "_stack_count", 0) or 0)
     max_height = int(getattr(args, "_max_height", 0) or 0)
     if stack_count <= 0 or max_height <= 0:
@@ -4844,6 +4949,10 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"wang_incumbent_moves={result.wang_incumbent_moves}; "
             f"wang_cap_enabled={getattr(args, 'wang_cap_enabled', False)}; "
             f"wang_rollout_enabled={getattr(args, 'wang_rollout_enabled', False)}; "
+            f"wang_rollout_strategy={getattr(args, 'wang_rollout_strategy', 'local')}; "
+            f"wang_rollout_width={getattr(args, 'wang_rollout_width', 0)}; "
+            f"wang_rollout_focus_n={getattr(args, 'wang_rollout_focus_n', 8)}; "
+            f"wang_rollout_candidate_limit={getattr(args, 'wang_rollout_candidate_limit', 64)}; "
             f"wang_rollout_added_total={result.wang_rollout_added_total}; "
             f"wang_pair_qubo_enabled={getattr(args, 'wang_pair_qubo_enabled', False)}; "
             f"wang_pair_qubo_calls={result.wang_pair_qubo_calls}; "
@@ -5032,6 +5141,10 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "wang_incumbent_used": result.wang_incumbent_used,
             "wang_cap_enabled": getattr(args, "wang_cap_enabled", False),
             "wang_rollout_enabled": getattr(args, "wang_rollout_enabled", False),
+            "wang_rollout_strategy": getattr(args, "wang_rollout_strategy", "local"),
+            "wang_rollout_width": getattr(args, "wang_rollout_width", 0),
+            "wang_rollout_focus_n": getattr(args, "wang_rollout_focus_n", 8),
+            "wang_rollout_candidate_limit": getattr(args, "wang_rollout_candidate_limit", 64),
             "wang_rollout_added_total": result.wang_rollout_added_total,
             "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
             "wang_pair_qubo_calls": result.wang_pair_qubo_calls,
@@ -5424,11 +5537,13 @@ def main() -> int:
     parser.add_argument("--wang-incumbent-time-limit", type=float, default=0.0)
     parser.add_argument("--wang-cap-enabled", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--wang-rollout-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--wang-rollout-strategy", choices=["local", "baby_lookahead"], default="local")
     parser.add_argument("--wang-rollout-width", type=int, default=0)
     parser.add_argument("--wang-rollout-focus-n", type=int, default=8)
     parser.add_argument("--wang-rollout-plateau-window", type=int, default=3)
     parser.add_argument("--wang-rollout-plateau-delta", type=int, default=0)
     parser.add_argument("--wang-rollout-max-steps", type=int, default=1)
+    parser.add_argument("--wang-rollout-candidate-limit", type=int, default=64)
     parser.add_argument("--wang-pair-qubo-enabled", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--wang-pair-qubo-supplement-width", type=int, default=0)
     parser.add_argument("--wang-pair-qubo-focus-n", type=int, default=8)
