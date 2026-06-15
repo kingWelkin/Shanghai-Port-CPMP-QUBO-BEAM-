@@ -348,6 +348,26 @@ BEAM_SURVIVOR_FIELDS = [
     "path_child_selected_rank",
     "path_parent_frontier_rank",
 ]
+DLTS_FEATURE_FIELDS = [
+    "case",
+    "solver_profile",
+    "layer",
+    "candidate_code",
+    "n_value",
+    "depth",
+    "parent_rank",
+    "selected",
+    "on_final_path",
+    "final_status",
+    "fixed_prefix_total",
+    "stable_prefix_total",
+    "target_gap",
+    "empty_slots",
+    "blocked_fixed_candidates",
+    "temporary_slack_moves",
+    "low_tier_risk",
+    "dead_end_risk",
+]
 
 
 def _beam_survivor_parent_metrics(
@@ -433,6 +453,65 @@ def _write_beam_survivor_rows(rows: list[dict[str, object]], path: Path) -> None
 
 
 def _reset_beam_survivor_output(path: Path | None) -> None:
+    if path is None:
+        return
+    output = path if path.is_absolute() else ROOT / path
+    if output.exists():
+        output.unlink()
+
+
+def _dlts_feature_row(
+    *,
+    case: str,
+    layer: int,
+    code: bytes,
+    data: tuple[int, int, bytes],
+    parent_rank: int,
+    selected: bool,
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    signals = _feasibility_signals_for_code(code, args)
+    return {
+        "case": case,
+        "solver_profile": getattr(args, "solver_profile", ""),
+        "layer": layer,
+        "candidate_code": code.hex(),
+        "n_value": int(data[0]),
+        "depth": int(data[1]),
+        "parent_rank": int(parent_rank),
+        "selected": 1 if selected else 0,
+        "on_final_path": 0,
+        "final_status": "",
+        "fixed_prefix_total": signals.fixed_prefix_total,
+        "stable_prefix_total": signals.stable_prefix_total,
+        "target_gap": signals.target_gap,
+        "empty_slots": signals.empty_slots,
+        "blocked_fixed_candidates": signals.blocked_fixed_candidates,
+        "temporary_slack_moves": signals.temporary_slack_moves,
+        "low_tier_risk": signals.low_tier_risk,
+        "dead_end_risk": f"{signals.dead_end_risk:.6f}",
+    }
+
+
+def _finalize_dlts_feature_rows(rows: list[dict[str, object]], search_path_codes: list[bytes], status: str) -> None:
+    path_hex = {code.hex() for code in search_path_codes}
+    for row in rows:
+        row["on_final_path"] = 1 if row["candidate_code"] in path_hex else 0
+        row["final_status"] = status
+
+
+def _write_dlts_feature_rows(rows: list[dict[str, object]], path: Path) -> None:
+    output = path if path.is_absolute() else ROOT / path
+    output.parent.mkdir(parents=True, exist_ok=True)
+    append = output.exists() and output.stat().st_size > 0
+    with output.open("a", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=DLTS_FEATURE_FIELDS, extrasaction="ignore")
+        if not append:
+            writer.writeheader()
+        writer.writerows(rows)
+
+
+def _reset_dlts_feature_output(path: Path | None) -> None:
     if path is None:
         return
     output = path if path.is_absolute() else ROOT / path
@@ -1243,6 +1322,7 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "bays": ["01", "26"],
         "output": ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv",
         "beam_survivor_telemetry_output": None,
+        "dlts_feature_output": None,
         "target_final_n": 0,
         "alpha": 1.3,
         "max_moves": None,
@@ -5100,6 +5180,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         getattr(args, "survivor_parent_cap_enabled", False)
     )
     beam_survivor_records: list[dict[str, object]] = []
+    dlts_feature_rows: list[dict[str, object]] = []
+    dlts_feature_output = getattr(args, "dlts_feature_output", None)
     layer_index = 0
 
     while target is None and frontier and time.perf_counter() < deadline:
@@ -5205,6 +5287,22 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         qcalls += add_qcalls
         qvars += add_qvars
         qtime += add_qtime
+        if dlts_feature_output is not None:
+            parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
+            selected_set = set(selected_codes)
+            ranked_candidates = _rank_bucket_topk_candidates(candidates, args)
+            for rank, (code, data) in enumerate(ranked_candidates[: min(256, len(ranked_candidates))], start=1):
+                dlts_feature_rows.append(
+                    _dlts_feature_row(
+                        case=case,
+                        layer=layer_index,
+                        code=code,
+                        data=data,
+                        parent_rank=parent_rank_by_code.get(data[2], rank),
+                        selected=code in selected_set,
+                        args=args,
+                    )
+                )
         appended_rollout_codes = _append_wang_rollout_frontier(selected_codes, candidates, args, depth_cap, best_depth)
         if appended_rollout_codes:
             rollout_codes |= appended_rollout_codes
@@ -5346,6 +5444,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             _finalize_beam_survivor_rows(beam_survivor_records, search_path_codes),
             Path(beam_survivor_output),
         )
+    if dlts_feature_output is not None and dlts_feature_rows:
+        _finalize_dlts_feature_rows(dlts_feature_rows, search_path_codes, status)
+        _write_dlts_feature_rows(dlts_feature_rows, Path(dlts_feature_output))
     return CompactBeamResult(
         case=case,
         status=status,
@@ -6041,6 +6142,7 @@ def main() -> int:
     parser.add_argument("--bays", nargs="+", default=["01", "26"])
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv")
     parser.add_argument("--beam-survivor-telemetry-output", type=Path)
+    parser.add_argument("--dlts-feature-output", type=Path)
     parser.add_argument(
         "--solver-profile",
         "--profile",
@@ -6348,7 +6450,10 @@ def main() -> int:
     output = args.output if args.output.is_absolute() else ROOT / args.output
     if args.beam_survivor_telemetry_output is not None and not args.beam_survivor_telemetry_output.is_absolute():
         args.beam_survivor_telemetry_output = ROOT / args.beam_survivor_telemetry_output
+    if args.dlts_feature_output is not None and not args.dlts_feature_output.is_absolute():
+        args.dlts_feature_output = ROOT / args.dlts_feature_output
     _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
+    _reset_dlts_feature_output(args.dlts_feature_output)
     acceptance = output.with_name(output.stem + "_acceptance.csv")
     moves_dir = output.with_name(output.stem + "_moves")
     report = output.with_suffix(".md")

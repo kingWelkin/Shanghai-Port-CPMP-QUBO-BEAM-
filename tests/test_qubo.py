@@ -1147,6 +1147,50 @@ def test_feasibility_escape_selector_is_used_inside_enhanced_frontier(monkeypatc
     assert args._feasibility_escape_added_total == 1
 
 
+def test_dlts_feature_row_contains_feasibility_and_selection_fields(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.solvers.feasibility_signals import FeasibilitySignals
+
+    code = b"candidate"
+    args = _compact_args(_case_id="case_a")
+
+    monkeypatch.setattr(
+        bench,
+        "_feasibility_signals_for_code",
+        lambda row_code, row_args: FeasibilitySignals(4, 4, 2, 3, 1, 5, 0, 0.25),
+    )
+
+    row = bench._dlts_feature_row(
+        case="case_a",
+        layer=2,
+        code=code,
+        data=(3, 9, b"parent"),
+        parent_rank=7,
+        selected=True,
+        args=args,
+    )
+
+    assert row["case"] == "case_a"
+    assert row["layer"] == 2
+    assert row["n_value"] == 3
+    assert row["depth"] == 9
+    assert row["parent_rank"] == 7
+    assert row["selected"] == 1
+    assert row["stable_prefix_total"] == 4
+    assert row["temporary_slack_moves"] == 5
+    assert row["on_final_path"] == 0
+
+
+def test_make_compact_args_accepts_dlts_feature_output(tmp_path):
+    from benchmark_compact_beam_qubo_n0 import make_compact_args
+
+    output = tmp_path / "features.csv"
+    args = make_compact_args(dlts_feature_output=output)
+
+    assert args.dlts_feature_output == output
+    assert "dlts_feature_output" in args._profile_explicit_keys
+
+
 def test_open_runner_passes_beam_survivor_telemetry_output():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
