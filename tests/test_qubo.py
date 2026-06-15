@@ -1068,6 +1068,85 @@ def test_enhanced_frontier_uses_dynamic_survivor_parent_core_cap():
     assert args._survivor_parent_cap_last_reason == "survivor_contract"
 
 
+def test_feasibility_escape_supplement_prefers_lower_escape_score(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.solvers.feasibility_signals import FeasibilitySignals
+
+    low = b"low"
+    high = b"high"
+    args = _compact_args(feasibility_escape_min_temporary_slack=1)
+
+    def fake_signals(code, selector_args):
+        if code == low:
+            return FeasibilitySignals(3, 3, 0, 2, 1, 3, 0, 0.20)
+        return FeasibilitySignals(1, 1, 4, 0, 0, 0, 3, 0.80)
+
+    monkeypatch.setattr(bench, "_feasibility_signals_for_code", fake_signals)
+
+    selected = bench._select_feasibility_escape_supplement(
+        [(high, (2, 7, b"p0")), (low, (2, 7, b"p1"))],
+        args,
+        target=1,
+    )
+
+    assert selected == [low]
+
+
+def test_feasibility_escape_selector_is_used_inside_enhanced_frontier(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 3
+    max_height = 3
+    chosen_code, chosen_n = _encode([[5, 4], [3, 1], [2]], stack_count, max_height)
+    other_code, other_n = _encode([[4, 5], [3, 1], [2]], stack_count, max_height)
+    ranked = [
+        (other_code, (other_n, 8, b"p0")),
+        (chosen_code, (chosen_n, 8, b"p1")),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        use_qubo=True,
+        qubo_min_candidates=99,
+        feasibility_escape_enabled=True,
+        feasibility_escape_supplement_width=1,
+        feasibility_escape_focus_n=-1,
+        feasibility_escape_n_window=2,
+        _best_n_history=[chosen_n, chosen_n, chosen_n],
+        _layer_depth_slack=1,
+        _layer_parent_top_share=0.50,
+    )
+
+    def fake_layer_active(selector_args, best_n):
+        return True
+
+    def fake_selector(rows, selector_args, target):
+        assert rows
+        assert target == 1
+        return [chosen_code]
+
+    monkeypatch.setattr(bench, "_feasibility_escape_layer_active", fake_layer_active)
+    monkeypatch.setattr(bench, "_select_feasibility_escape_supplement", fake_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=2,
+        core_width=1,
+        qubo_supplement_width=0,
+    )
+
+    assert chosen_code in selected
+    assert chosen_code not in selected_by_qubo
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+    assert args._feasibility_escape_calls_done == 1
+    assert args._feasibility_escape_added_total == 1
+
+
 def test_open_runner_passes_beam_survivor_telemetry_output():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 

@@ -44,6 +44,11 @@ from container_reshuffle.core import (  # noqa: E402
 from container_reshuffle.features import disorder_box_count, entropy_limit, max_entropy_along_moves  # noqa: E402
 from container_reshuffle.qubo.model import QuboModel  # noqa: E402
 from container_reshuffle.qubo.sampler import QuboSamplerConfig, SimulatedAnnealingQuboSampler  # noqa: E402
+from container_reshuffle.solvers.feasibility_signals import (  # noqa: E402
+    FeasibilitySignals,
+    compute_feasibility_signals,
+    feasibility_escape_score,
+)
 from container_reshuffle.solvers.base import SolverConfig  # noqa: E402
 from container_reshuffle.solvers.classical_cpmp import (  # noqa: E402
     WangBsBabyMovesSolver,
@@ -2446,6 +2451,48 @@ def _select_unified_wang_qubo_supplement(
     return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec, metrics
 
 
+def _feasibility_signals_for_code(code: bytes, args: argparse.Namespace) -> FeasibilitySignals:
+    stacks = _split(code, int(args._stack_count), int(args._max_height))
+    target_gap = _candidate_target_gap(code, args) if getattr(args, "_layout_target_groups", ()) else 0
+    return compute_feasibility_signals(stacks, int(args._max_height), target_gap=target_gap)
+
+
+def _feasibility_escape_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "feasibility_escape_enabled", False):
+        return False
+    focus_n = int(getattr(args, "feasibility_escape_focus_n", 8))
+    if focus_n >= 0 and int(best_n) > focus_n:
+        return False
+    history = list(getattr(args, "_best_n_history", []) or [])
+    if len(history) < 3 or min(history[-3:]) != history[-3]:
+        return False
+    if int(getattr(args, "_layer_depth_slack", 10**9)) > int(getattr(args, "rescue_cap_slack", 26)):
+        return False
+    if float(getattr(args, "_layer_parent_top_share", 0.0)) < 0.18:
+        return False
+    return True
+
+
+def _select_feasibility_escape_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> list[bytes]:
+    target = max(0, min(int(target), len(ranked)))
+    if target <= 0:
+        return []
+    threshold = float(getattr(args, "feasibility_escape_dead_end_threshold", 0.45) or 0.45)
+    min_slack = int(getattr(args, "feasibility_escape_min_temporary_slack", 1) or 1)
+    scored: list[tuple[float, int, int, bytes]] = []
+    for code, data in ranked:
+        signals = _feasibility_signals_for_code(code, args)
+        if signals.dead_end_risk < threshold and signals.temporary_slack_moves < min_slack:
+            continue
+        score = feasibility_escape_score(signals, int(data[0]), int(data[1]))
+        scored.append((score, int(data[0]), int(data[1]), code))
+    return [item[3] for item in sorted(scored)[:target]]
+
+
 def _append_wang_rollout_frontier(
     selected_codes: list[bytes],
     candidates: dict[bytes, tuple[int, int, bytes]],
@@ -3255,6 +3302,33 @@ def _select_enhanced_qubo_frontier(
                 if code not in selected:
                     selected_by_qubo.add(code)
                 selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
+    feasibility_width = max(0, int(getattr(args, "feasibility_escape_supplement_width", 0) or 0))
+    if (
+        _feasibility_escape_layer_active(args, int(best_n))
+        and feasibility_width > 0
+        and len(selected) < effective_beam
+    ):
+        n_window = max(0, int(getattr(args, "feasibility_escape_n_window", 1) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(feasibility_width, effective_beam - len(selected))
+        boosted = _select_feasibility_escape_supplement(remaining, args, target)
+        if boosted:
+            if not hasattr(args, "_feasibility_escape_calls_done"):
+                args._feasibility_escape_calls_done = 0
+            if not hasattr(args, "_feasibility_escape_added_total"):
+                args._feasibility_escape_added_total = 0
+            args._feasibility_escape_calls_done += 1
+            for code in boosted:
+                before = len(selected)
+                selected.setdefault(code, None)
+                if len(selected) > before:
+                    args._feasibility_escape_added_total += 1
                 if len(selected) >= effective_beam:
                     break
     qubo_enabled = (
@@ -4958,6 +5032,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._unified_wang_qubo_time = 0.0
     args._unified_wang_fixed_prefix_selected = 0
     args._unified_wang_fix_pair_selected = 0
+    args._feasibility_escape_calls_done = 0
+    args._feasibility_escape_added_total = 0
     args._wang_rollout_candidate_codes = set()
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
@@ -5328,6 +5404,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         unified_wang_qubo_time_sec=args._unified_wang_qubo_time,
         unified_wang_fixed_prefix_selected=args._unified_wang_fixed_prefix_selected,
         unified_wang_fix_pair_selected=args._unified_wang_fix_pair_selected,
+        feasibility_escape_calls=args._feasibility_escape_calls_done,
+        feasibility_escape_added_total=args._feasibility_escape_added_total,
     )
 
 
