@@ -1777,8 +1777,8 @@ def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_sel
     assert args.scheduler_state_controller == "state_v2"
     assert args.use_qubo is True
     assert args.unified_wang_qubo_enabled is True
-    assert args.unified_wang_qubo_supplement_width > 0
-    assert args.unified_wang_qubo_select > 0
+    assert args.unified_wang_qubo_supplement_width == 1
+    assert args.unified_wang_qubo_select == 1
     assert args.unified_wang_fixed_prefix_weight > 0.0
     assert args.unified_wang_fix_pair_weight > 0.0
     assert args.unified_wang_pair_same_parent_penalty > 0.0
