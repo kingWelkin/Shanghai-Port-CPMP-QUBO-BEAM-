@@ -916,6 +916,8 @@ def _compact_args(**overrides):
         "unified_wang_pair_same_parent_penalty": 0.0,
         "unified_wang_signature_penalty": 0.0,
         "unified_wang_complement_bonus": 0.0,
+        "unified_wang_rollout_bonus": 0.0,
+        "wang_rollout_inject_candidates": False,
     }
     values.update(overrides)
     return argparse.Namespace(**values)
@@ -1354,6 +1356,134 @@ def test_wang_rollout_frontier_skips_known_shallower_code(monkeypatch):
 
     assert added == set()
     assert known not in candidates
+
+
+def test_wang_rollout_candidate_injection_adds_child_before_selection(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+    from run_business_exact_target_search_sqlite import _encode
+
+    origin, origin_n = _encode([[3, 1], [2], []], 3, 3)
+    child, child_n = _encode([[3], [2, 1], []], 3, 3)
+    candidates = {origin: (origin_n, 4, b"root")}
+    frontier = [(origin, origin_n, 4)]
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        wang_rollout_enabled=True,
+        wang_rollout_inject_candidates=True,
+        wang_rollout_width=1,
+        wang_rollout_focus_n=99,
+        wang_rollout_plateau_window=0,
+    )
+    monkeypatch.setattr(compact, "_wang_rollout_successor", lambda *_args: (child, (child_n, 5, origin)))
+
+    added = compact._inject_wang_rollout_candidates(frontier, candidates, args, depth_cap=20, best_depth={})
+
+    assert added == {child}
+    assert candidates[child] == (child_n, 5, origin)
+
+
+def test_wang_rollout_candidate_injection_skips_known_shallower_code(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+    from run_business_exact_target_search_sqlite import _encode
+
+    origin, origin_n = _encode([[3, 1], [2], []], 3, 3)
+    known, known_n = _encode([[3], [2, 1], []], 3, 3)
+    candidates = {origin: (origin_n, 4, b"root")}
+    frontier = [(origin, origin_n, 4)]
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        wang_rollout_enabled=True,
+        wang_rollout_inject_candidates=True,
+        wang_rollout_width=1,
+        wang_rollout_focus_n=99,
+        wang_rollout_plateau_window=0,
+    )
+    monkeypatch.setattr(compact, "_wang_rollout_successor", lambda *_args: (known, (known_n, 5, origin)))
+
+    added = compact._inject_wang_rollout_candidates(
+        frontier,
+        candidates,
+        args,
+        depth_cap=20,
+        best_depth={known: 2},
+    )
+
+    assert added == set()
+    assert known not in candidates
+
+
+def test_wang_rollout_candidate_injection_marks_existing_child(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+    from run_business_exact_target_search_sqlite import _encode
+
+    origin, origin_n = _encode([[3, 1], [2], []], 3, 3)
+    child, child_n = _encode([[3], [2, 1], []], 3, 3)
+    candidates = {child: (child_n, 5, origin)}
+    frontier = [(origin, origin_n, 4)]
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        wang_rollout_enabled=True,
+        wang_rollout_inject_candidates=True,
+        wang_rollout_width=1,
+        wang_rollout_focus_n=99,
+        wang_rollout_plateau_window=0,
+    )
+    monkeypatch.setattr(compact, "_wang_rollout_successor", lambda *_args: (child, (child_n, 5, origin)))
+
+    marked = compact._inject_wang_rollout_candidates(frontier, candidates, args, depth_cap=20, best_depth={})
+
+    assert marked == {child}
+    assert candidates == {child: (child_n, 5, origin)}
+
+
+def test_wang_rollout_candidate_injection_disables_post_selection_append(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+    from run_business_exact_target_search_sqlite import _encode
+
+    origin, origin_n = _encode([[3, 1], [2], []], 3, 3)
+    child, child_n = _encode([[3], [2, 1], []], 3, 3)
+    candidates = {origin: (origin_n, 4, b"root")}
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        wang_rollout_enabled=True,
+        wang_rollout_inject_candidates=True,
+        wang_rollout_width=1,
+        wang_rollout_focus_n=99,
+        wang_rollout_plateau_window=0,
+    )
+    monkeypatch.setattr(compact, "_wang_rollout_successor", lambda *_args: (child, (child_n, 5, origin)))
+
+    added = compact._append_wang_rollout_frontier([origin], candidates, args, depth_cap=20, best_depth={})
+
+    assert added == set()
+    assert child not in candidates
+
+
+def test_unified_wang_qubo_energy_rewards_rollout_candidate():
+    from benchmark_compact_beam_qubo_n0 import _unified_wang_qubo_linear_energy
+    from run_business_exact_target_search_sqlite import _encode
+
+    plain, plain_n = _encode([[3, 1], [2], []], 3, 3)
+    marked, marked_n = _encode([[3], [2, 1], []], 3, 3)
+    entries = [
+        (plain, (plain_n, 5, b"p1")),
+        (marked, (marked_n, 5, b"p2")),
+    ]
+    args = _compact_args(
+        _stack_count=3,
+        _max_height=3,
+        _wang_rollout_candidate_codes={marked},
+        unified_wang_rollout_bonus=25.0,
+    )
+
+    plain_energy = _unified_wang_qubo_linear_energy(plain, entries[0][1], entries, args)
+    marked_energy = _unified_wang_qubo_linear_energy(marked, entries[1][1], entries, args)
+
+    assert marked_energy < plain_energy
 
 
 def test_wang_pair_qubo_supplement_selects_high_fix_pair_candidate():
@@ -1828,10 +1958,12 @@ def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_sel
     assert args.unified_wang_fixed_prefix_weight > 0.0
     assert args.unified_wang_fix_pair_weight > 0.0
     assert args.unified_wang_pair_same_parent_penalty > 0.0
+    assert args.unified_wang_rollout_bonus == 0.0
     assert args.wang_incumbent_enabled is False
     assert args.wang_cap_enabled is False
     assert args.wang_rollout_enabled is True
     assert args.wang_rollout_strategy == "baby_lookahead"
+    assert args.wang_rollout_inject_candidates is False
     assert args.wang_rollout_width == 2
     assert args.wang_rollout_focus_n == -1
     assert args.wang_rollout_plateau_window == 0
@@ -1849,6 +1981,22 @@ def test_solver_profile_scheduler_state_v7_wang_qubo_unified_enables_unified_sel
     args._layer_depth_slack = 0
     args._layer_candidate_count = 12000
     assert _scheduler_state_action(args, best_n=30) != "rescue"
+
+
+def test_solver_profile_scheduler_state_v7_wang_qubo_pool_enables_rollout_candidate_pool(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v7_wang_qubo_pool")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v7_wang_qubo_pool"
+    assert args.unified_wang_qubo_enabled is True
+    assert args.wang_rollout_enabled is True
+    assert args.wang_rollout_strategy == "baby_lookahead"
+    assert args.wang_rollout_inject_candidates is True
+    assert args.unified_wang_rollout_bonus > 0.0
 
 
 def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_and_window_polish(monkeypatch):
@@ -3112,8 +3260,11 @@ def test_open_runner_unified_wang_qubo_variant_selects_reusable_profile():
             "--no-wang-rollout-enabled",
             "--wang-rollout-strategy",
             "local",
+            "--no-wang-rollout-inject-candidates",
             "--wang-rollout-candidate-limit",
             "7",
+            "--unified-wang-rollout-bonus",
+            "3.5",
         ]
     )
     args = _args_for_variant(outer, "qubo_scheduler_state_v7_wang_qubo_unified")
@@ -3121,7 +3272,16 @@ def test_open_runner_unified_wang_qubo_variant_selects_reusable_profile():
 
     assert args.wang_rollout_enabled is False
     assert args.wang_rollout_strategy == "local"
+    assert args.wang_rollout_inject_candidates is False
     assert args.wang_rollout_candidate_limit == 7
+    assert args.unified_wang_rollout_bonus == 3.5
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v7_wang_qubo_pool"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v7_wang_qubo_pool")
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v7_wang_qubo_pool"
+    assert args.wang_rollout_inject_candidates is True
 
 
 def test_open_runner_wang_all_expands_current_and_wang_variants():

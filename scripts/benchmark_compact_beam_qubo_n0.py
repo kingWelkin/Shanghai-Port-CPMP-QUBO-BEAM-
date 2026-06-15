@@ -93,6 +93,7 @@ COMPACT_EXTRA_FIELDS = [
     "wang_cap_enabled",
     "wang_rollout_enabled",
     "wang_rollout_strategy",
+    "wang_rollout_inject_candidates",
     "wang_rollout_width",
     "wang_rollout_focus_n",
     "wang_rollout_candidate_limit",
@@ -120,6 +121,7 @@ COMPACT_EXTRA_FIELDS = [
     "unified_wang_pair_same_parent_penalty",
     "unified_wang_signature_penalty",
     "unified_wang_complement_bonus",
+    "unified_wang_rollout_bonus",
     "unified_wang_qubo_calls",
     "unified_wang_qubo_vars",
     "unified_wang_qubo_time_sec",
@@ -382,6 +384,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "wang_cap_enabled": False,
         "wang_rollout_enabled": False,
         "wang_rollout_strategy": "local",
+        "wang_rollout_inject_candidates": False,
         "wang_rollout_width": 0,
         "wang_rollout_focus_n": 8,
         "wang_rollout_plateau_window": 3,
@@ -414,6 +417,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "unified_wang_pair_same_parent_penalty": 0.0,
         "unified_wang_signature_penalty": 0.0,
         "unified_wang_complement_bonus": 0.0,
+        "unified_wang_rollout_bonus": 0.0,
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
@@ -932,10 +936,12 @@ _SOLVER_PROFILES["scheduler_state_v7_wang_qubo_unified"] = {
     "unified_wang_pair_same_parent_penalty": 0.25,
     "unified_wang_signature_penalty": 0.10,
     "unified_wang_complement_bonus": 0.05,
+    "unified_wang_rollout_bonus": 0.0,
     "wang_incumbent_enabled": False,
     "wang_cap_enabled": False,
     "wang_rollout_enabled": True,
     "wang_rollout_strategy": "baby_lookahead",
+    "wang_rollout_inject_candidates": False,
     "wang_rollout_width": 2,
     "wang_rollout_focus_n": -1,
     "wang_rollout_plateau_window": 0,
@@ -950,6 +956,11 @@ _SOLVER_PROFILES["scheduler_state_v7_wang_qubo_unified"] = {
     "scheduler_state_initial_plateau_action": "protect",
     "scheduler_state_initial_plateau_lock": False,
     "post_polish_qubo": False,
+}
+_SOLVER_PROFILES["scheduler_state_v7_wang_qubo_pool"] = {
+    **_SOLVER_PROFILES["scheduler_state_v7_wang_qubo_unified"],
+    "wang_rollout_inject_candidates": True,
+    "unified_wang_rollout_bonus": 25.0,
 }
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue"],
@@ -1253,6 +1264,7 @@ class UnifiedWangQuboFeatures:
     fix_pair: int
     target_gap: int
     same_parent_count: int
+    rollout_preferred: int
     depth: int
     n_value: int
 
@@ -1352,6 +1364,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "wang_cap_enabled": ("--wang-cap-enabled", "--no-wang-cap-enabled"),
         "wang_rollout_enabled": ("--wang-rollout-enabled", "--no-wang-rollout-enabled"),
         "wang_rollout_strategy": "--wang-rollout-strategy",
+        "wang_rollout_inject_candidates": ("--wang-rollout-inject-candidates", "--no-wang-rollout-inject-candidates"),
         "wang_rollout_width": "--wang-rollout-width",
         "wang_rollout_focus_n": "--wang-rollout-focus-n",
         "wang_rollout_plateau_window": "--wang-rollout-plateau-window",
@@ -1380,6 +1393,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "unified_wang_pair_same_parent_penalty": "--unified-wang-pair-same-parent-penalty",
         "unified_wang_signature_penalty": "--unified-wang-signature-penalty",
         "unified_wang_complement_bonus": "--unified-wang-complement-bonus",
+        "unified_wang_rollout_bonus": "--unified-wang-rollout-bonus",
         "beam_width": "--beam-width",
         "core_width": "--core-width",
         "parent_core_cap": "--parent-core-cap",
@@ -1778,11 +1792,13 @@ def _unified_wang_qubo_features(
     fixed_prefix = _compact_wang_fixed_prefix_score(code, stack_count, max_height)
     target_gap = _candidate_target_gap(code, args)
     same_parent_count = sum(1 for other_code, data in entries if other_code != code and data[2] == parent)
+    rollout_codes = getattr(args, "_wang_rollout_candidate_codes", set()) or set()
     return UnifiedWangQuboFeatures(
         fixed_prefix=int(fixed_prefix),
         fix_pair=int(fix_pair),
         target_gap=int(target_gap),
         same_parent_count=int(same_parent_count),
+        rollout_preferred=1 if code in rollout_codes else 0,
         depth=int(depth),
         n_value=int(n_value),
     )
@@ -1805,6 +1821,7 @@ def _unified_wang_qubo_linear_energy(
     fix_pair_weight = _weight("unified_wang_fix_pair_weight", 0.0)
     target_gap_weight = _weight("unified_wang_target_gap_weight", 0.0)
     same_parent_penalty = _weight("unified_wang_same_parent_penalty", 0.0)
+    rollout_bonus = _weight("unified_wang_rollout_bonus", 0.0)
     return (
         n_weight * float(features.n_value)
         + depth_weight * float(features.depth)
@@ -1812,6 +1829,7 @@ def _unified_wang_qubo_linear_energy(
         - fix_pair_weight * float(features.fix_pair)
         + target_gap_weight * float(features.target_gap)
         + same_parent_penalty * float(features.same_parent_count)
+        - rollout_bonus * float(features.rollout_preferred)
     )
 
 
@@ -2208,6 +2226,8 @@ def _append_wang_rollout_frontier(
     depth_cap: int,
     best_depth: dict[bytes, int] | None = None,
 ) -> set[bytes]:
+    if getattr(args, "wang_rollout_inject_candidates", False):
+        return set()
     if not selected_codes:
         return set()
     best_n = min(candidates[code][0] for code in selected_codes if code in candidates)
@@ -2245,6 +2265,67 @@ def _append_wang_rollout_frontier(
         selected_codes.append(child_code)
         added.add(child_code)
     return added
+
+
+def _inject_wang_rollout_candidates(
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+) -> set[bytes]:
+    if not getattr(args, "wang_rollout_inject_candidates", False):
+        return set()
+    if not frontier:
+        return set()
+    best_n = min((data[0] for data in candidates.values()), default=min(item[1] for item in frontier))
+    if not _wang_rollout_layer_active(args, best_n):
+        return set()
+    width = max(0, int(getattr(args, "wang_rollout_width", 0) or 0))
+    if width <= 0:
+        return set()
+    marked: set[bytes] = set()
+    origins = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))
+    for code, n_value, depth in origins:
+        if len(marked) >= width:
+            break
+        child = _wang_rollout_successor(code, n_value, depth, args)
+        if child is None:
+            continue
+        child_code, child_data = child
+        child_n, child_depth, _child_parent = child_data
+        if child_code in marked:
+            continue
+        if child_depth + child_n > depth_cap:
+            continue
+        old_best_depth = best_depth.get(child_code) if best_depth is not None else None
+        if old_best_depth is not None and child_depth >= old_best_depth:
+            continue
+        old = candidates.get(child_code)
+        if old is not None and old[1] <= child_depth:
+            marked.add(child_code)
+            continue
+        candidates[child_code] = child_data
+        marked.add(child_code)
+    return marked
+
+
+def _update_layer_candidate_metrics(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    cap: int,
+) -> int:
+    layer_best_n = min(data[0] for data in candidates.values())
+    args._layer_best_n = layer_best_n
+    best_n_depth = min(data[1] for data in candidates.values() if data[0] == layer_best_n)
+    parent_counts: dict[bytes, int] = {}
+    for _code, data in candidates.items():
+        parent_counts[data[2]] = parent_counts.get(data[2], 0) + 1
+    args._layer_candidate_count = len(candidates)
+    args._layer_parent_count = len(parent_counts)
+    args._layer_parent_top_share = (max(parent_counts.values()) / len(candidates)) if candidates else 0.0
+    args._layer_depth_slack = cap - best_n_depth - layer_best_n
+    return layer_best_n
 
 
 def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
@@ -4578,6 +4659,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._unified_wang_qubo_time = 0.0
     args._unified_wang_fixed_prefix_selected = 0
     args._unified_wang_fix_pair_selected = 0
+    args._wang_rollout_candidate_codes = set()
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
     args._best_n_history = []
@@ -4722,23 +4804,24 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if stream_trim_enabled:
             stream_pruned_candidates += _trim_stream_candidates_batch(candidates, stream_candidate_limit, args)
         peak_candidates = max(peak_candidates, len(candidates))
-        layer_best_n = min(data[0] for data in candidates.values())
-        args._layer_best_n = layer_best_n
-        best_n_depth = min(data[1] for data in candidates.values() if data[0] == layer_best_n)
-        parent_counts: dict[bytes, int] = {}
-        for _code, data in candidates.items():
-            parent_counts[data[2]] = parent_counts.get(data[2], 0) + 1
-        args._layer_candidate_count = len(candidates)
-        args._layer_parent_count = len(parent_counts)
-        args._layer_parent_top_share = (max(parent_counts.values()) / len(candidates)) if candidates else 0.0
-        args._layer_depth_slack = cap - best_n_depth - layer_best_n
+        layer_best_n = _update_layer_candidate_metrics(candidates, args, cap)
         args._best_n_history.append(layer_best_n)
+        candidate_count_before_rollout = len(candidates)
+        rollout_codes = _inject_wang_rollout_candidates(frontier, candidates, args, depth_cap, best_depth)
+        args._wang_rollout_candidate_codes = set(rollout_codes)
+        if rollout_codes:
+            wang_rollout_added_total += max(0, len(candidates) - candidate_count_before_rollout)
+            peak_candidates = max(peak_candidates, len(candidates))
+            if len(candidates) != candidate_count_before_rollout:
+                _update_layer_candidate_metrics(candidates, args, cap)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         qcalls += add_qcalls
         qvars += add_qvars
         qtime += add_qtime
-        rollout_codes = _append_wang_rollout_frontier(selected_codes, candidates, args, depth_cap, best_depth)
-        wang_rollout_added_total += len(rollout_codes)
+        appended_rollout_codes = _append_wang_rollout_frontier(selected_codes, candidates, args, depth_cap, best_depth)
+        if appended_rollout_codes:
+            rollout_codes |= appended_rollout_codes
+            wang_rollout_added_total += len(appended_rollout_codes)
         selected_set = set(selected_codes)
         if getattr(args, "global_reservoir", False):
             max_add = max(0, getattr(args, "reservoir_add_per_layer", 0))
@@ -4766,7 +4849,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             n_value, depth, parent_code = candidates[code]
             parent[code] = parent_code
             best_depth[code] = depth
-            source_by_code[code] = "wang_rollout" if code in rollout_codes else ("qubo" if code in selected_by_qubo else "deterministic")
+            source_by_code[code] = "qubo" if code in selected_by_qubo else ("wang_rollout" if code in rollout_codes else "deterministic")
             qubo_ancestor_by_code[code] = code in selected_by_qubo or qubo_ancestor_by_code.get(parent_code, False)
             next_frontier.append((code, n_value, depth))
         frontier = next_frontier
@@ -4950,6 +5033,7 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"wang_cap_enabled={getattr(args, 'wang_cap_enabled', False)}; "
             f"wang_rollout_enabled={getattr(args, 'wang_rollout_enabled', False)}; "
             f"wang_rollout_strategy={getattr(args, 'wang_rollout_strategy', 'local')}; "
+            f"wang_rollout_inject_candidates={getattr(args, 'wang_rollout_inject_candidates', False)}; "
             f"wang_rollout_width={getattr(args, 'wang_rollout_width', 0)}; "
             f"wang_rollout_focus_n={getattr(args, 'wang_rollout_focus_n', 8)}; "
             f"wang_rollout_candidate_limit={getattr(args, 'wang_rollout_candidate_limit', 64)}; "
@@ -5142,6 +5226,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "wang_cap_enabled": getattr(args, "wang_cap_enabled", False),
             "wang_rollout_enabled": getattr(args, "wang_rollout_enabled", False),
             "wang_rollout_strategy": getattr(args, "wang_rollout_strategy", "local"),
+            "wang_rollout_inject_candidates": getattr(args, "wang_rollout_inject_candidates", False),
             "wang_rollout_width": getattr(args, "wang_rollout_width", 0),
             "wang_rollout_focus_n": getattr(args, "wang_rollout_focus_n", 8),
             "wang_rollout_candidate_limit": getattr(args, "wang_rollout_candidate_limit", 64),
@@ -5169,6 +5254,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "unified_wang_pair_same_parent_penalty": getattr(args, "unified_wang_pair_same_parent_penalty", 0.0),
             "unified_wang_signature_penalty": getattr(args, "unified_wang_signature_penalty", 0.0),
             "unified_wang_complement_bonus": getattr(args, "unified_wang_complement_bonus", 0.0),
+            "unified_wang_rollout_bonus": getattr(args, "unified_wang_rollout_bonus", 0.0),
             "unified_wang_qubo_calls": result.unified_wang_qubo_calls,
             "unified_wang_qubo_vars": result.unified_wang_qubo_vars,
             "unified_wang_qubo_time_sec": result.unified_wang_qubo_time_sec,
@@ -5538,6 +5624,7 @@ def main() -> int:
     parser.add_argument("--wang-cap-enabled", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--wang-rollout-enabled", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--wang-rollout-strategy", choices=["local", "baby_lookahead"], default="local")
+    parser.add_argument("--wang-rollout-inject-candidates", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--wang-rollout-width", type=int, default=0)
     parser.add_argument("--wang-rollout-focus-n", type=int, default=8)
     parser.add_argument("--wang-rollout-plateau-window", type=int, default=3)
@@ -5570,6 +5657,7 @@ def main() -> int:
     parser.add_argument("--unified-wang-pair-same-parent-penalty", type=float, default=None)
     parser.add_argument("--unified-wang-signature-penalty", type=float, default=None)
     parser.add_argument("--unified-wang-complement-bonus", type=float, default=None)
+    parser.add_argument("--unified-wang-rollout-bonus", type=float, default=None)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)

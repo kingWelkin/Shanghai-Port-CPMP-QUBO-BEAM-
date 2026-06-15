@@ -735,6 +735,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "wang_cap_enabled",
         "wang_rollout_enabled",
         "wang_rollout_strategy",
+        "wang_rollout_inject_candidates",
         "wang_rollout_width",
         "wang_rollout_focus_n",
         "wang_rollout_plateau_window",
@@ -764,6 +765,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "unified_wang_pair_same_parent_penalty",
         "unified_wang_signature_penalty",
         "unified_wang_complement_bonus",
+        "unified_wang_rollout_bonus",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -833,6 +835,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_hybrid"})
     if variant == "qubo_scheduler_state_v7_wang_qubo_unified":
         overrides.update({"solver_profile": "scheduler_state_v7_wang_qubo_unified"})
+    if variant == "qubo_scheduler_state_v7_wang_qubo_pool":
+        overrides.update({"solver_profile": "scheduler_state_v7_wang_qubo_pool"})
     if variant == "qubo_scheduler_state_v5_window":
         overrides.update({"solver_profile": "scheduler_state_v5_window_polish"})
     if variant == "qubo_scheduler_state_v6":
@@ -949,6 +953,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
+            "qubo_scheduler_state_v7_wang_qubo_pool",
             "qubo_scheduler_state_v5_window",
             "qubo_scheduler_state_v6",
             "qubo_bucket",
@@ -1043,6 +1048,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang-cap-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang-rollout-strategy", choices=["local", "baby_lookahead"])
+    parser.add_argument("--wang-rollout-inject-candidates", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang-rollout-width", type=int)
     parser.add_argument("--wang-rollout-focus-n", type=int)
     parser.add_argument("--wang-rollout-plateau-window", type=int)
@@ -1072,6 +1078,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--unified-wang-pair-same-parent-penalty", type=float)
     parser.add_argument("--unified-wang-signature-penalty", type=float)
     parser.add_argument("--unified-wang-complement-bonus", type=float)
+    parser.add_argument("--unified-wang-rollout-bonus", type=float)
     parser.add_argument(
         "--output",
         type=Path,

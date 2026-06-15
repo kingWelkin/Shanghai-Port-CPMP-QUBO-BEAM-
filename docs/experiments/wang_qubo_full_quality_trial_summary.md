@@ -161,3 +161,23 @@ python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv2_test 5x5_
 The gain is solve-rate and full-penalty oriented, not path compression. On open 120 it adds 8 solved cases and lowers full penalty by 476 with only about 0.025 seconds more average runtime, but solved move total rises because the newly solved cases are nontrivial. It is therefore useful as integrated feasibility pressure, while suffix/window compression remains a separate future question.
 
 Promotion should depend on full-case quality, not on smoke completion alone: valid count, invalid count, full-quality penalty, solved moves, reference gap, runtime, and unified QUBO counters.
+
+2026-06-15 candidate-pool probe:
+
+`scheduler_state_v7_wang_qubo_pool` keeps Wang baby-lookahead inside the ordinary candidate pool. It marks candidates preferred by the Wang baby-lookahead move and exposes that marker as `unified_wang_rollout_bonus` in the unified QUBO linear energy. It disables the post-selection rollout append, so this is the stricter "QUBO chooses the Wang-preferred candidate" variant.
+
+Command:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v7_wang_qubo_pool --time-limit 3 --output docs\experiments\scratch_unified_baby_pool_open120_t3.csv
+```
+
+| scope | variant | valid | invalid/unsolved | full penalty | solved moves | avg runtime sec | qcalls |
+|---|---|---:|---:|---:|---:|---:|---:|
+| open 120, 3s | no rollout | 47/120 | 73 | 9864 | 1272 | 2.099 | 6069 |
+| open 120, 3s | baby lookahead append | 55/120 | 65 | 9388 | 1554 | 2.124 | 5670 |
+| open 120, 3s | candidate-pool QUBO bonus | 45/120 | 75 | 10044 | 1220 | 2.203 | 5905 |
+| 5x5 cv1, 3s | baby lookahead append verify | 13/20 | 7 | 1083 | 382 | 1.325 | 918 |
+| 5x5 cv1, 3s | candidate-pool QUBO bonus | 11/20 | 9 | 1207 | 324 | 1.387 | 1007 |
+
+This probe is negative for promotion. The Wang-preferred one-move child is usually already present among ordinary successors, so the useful behavior of the previous baby-lookahead rollout is not candidate discovery; it is a controlled one-step continuation after the frontier selector. Turning that signal into only a QUBO linear bonus improves over a naive unmarked pool, but it underperforms both no-rollout and post-selection baby-lookahead on full-case quality. Keep `scheduler_state_v7_wang_qubo_pool` as an ablation profile only.
