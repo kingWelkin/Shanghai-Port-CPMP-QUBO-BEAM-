@@ -645,6 +645,10 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "target_final_n": 0,
         "time_limit": args.time_limit,
     }
+    for field in ("beam_width", "core_width", "parent_core_cap"):
+        value = getattr(args, field, None)
+        if value is not None:
+            overrides[field] = value
     if getattr(args, "beam_survivor_telemetry_output", None) is not None:
         overrides["beam_survivor_telemetry_output"] = args.beam_survivor_telemetry_output
     stream_candidate_limit = int(getattr(args, "stream_candidate_limit", 0) or 0)
@@ -972,6 +976,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--alpha", type=float, default=10.0)
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--time-limit", type=float, default=10.0)
+    parser.add_argument("--beam-width", type=int)
+    parser.add_argument("--core-width", type=int)
+    parser.add_argument("--parent-core-cap", type=int)
     parser.add_argument("--no-qubo-beam-width", type=int, default=1200)
     parser.add_argument("--adaptive-high-n", type=int, default=16)
     parser.add_argument("--adaptive-low-n", type=int, default=8)

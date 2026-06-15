@@ -1008,6 +1008,29 @@ def test_open_runner_passes_beam_survivor_telemetry_output():
     assert Path(args.beam_survivor_telemetry_output).as_posix().endswith("docs/experiments/beam_survivor.csv")
 
 
+def test_open_runner_passes_frontier_width_overrides():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_wang_rescue",
+            "--beam-width",
+            "1000",
+            "--core-width",
+            "900",
+            "--parent-core-cap",
+            "2",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue")
+
+    assert args.beam_width == 1000
+    assert args.core_width == 900
+    assert args.parent_core_cap == 2
+
+
 def test_solver_profile_speed_v2_restores_historical_baseline_without_overriding_explicit_flags(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
 
