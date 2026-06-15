@@ -131,6 +131,15 @@ COMPACT_EXTRA_FIELDS = [
     "beam_width",
     "core_width",
     "parent_core_cap",
+    "survivor_parent_cap_enabled",
+    "survivor_parent_cap_trigger_ratio",
+    "survivor_parent_cap_release_ratio",
+    "survivor_parent_cap_value",
+    "survivor_parent_cap_window",
+    "survivor_parent_cap_min_n",
+    "survivor_parent_cap_layers",
+    "survivor_parent_cap_last",
+    "survivor_parent_cap_last_reason",
     "peak_frontier",
     "peak_candidates",
     "depth_reached",
@@ -319,6 +328,9 @@ BEAM_SURVIVOR_FIELDS = [
     "qcalls_total",
     "qvars_total",
     "qtime_total",
+    "parent_core_cap_effective",
+    "parent_core_cap_reason",
+    "survivor_dead_parent_ratio_signal",
     "on_final_search_path",
     "path_child_selected_rank",
     "path_parent_frontier_rank",
@@ -546,6 +558,12 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
+        "survivor_parent_cap_enabled": False,
+        "survivor_parent_cap_trigger_ratio": 0.70,
+        "survivor_parent_cap_release_ratio": 0.55,
+        "survivor_parent_cap_value": 3,
+        "survivor_parent_cap_window": 2,
+        "survivor_parent_cap_min_n": 8,
         "selection_policy": "enhanced",
         "use_qubo": True,
         "qubo_mode": "focused_multi",
@@ -1523,6 +1541,15 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "beam_width": "--beam-width",
         "core_width": "--core-width",
         "parent_core_cap": "--parent-core-cap",
+        "survivor_parent_cap_enabled": (
+            "--survivor-parent-cap-enabled",
+            "--no-survivor-parent-cap-enabled",
+        ),
+        "survivor_parent_cap_trigger_ratio": "--survivor-parent-cap-trigger-ratio",
+        "survivor_parent_cap_release_ratio": "--survivor-parent-cap-release-ratio",
+        "survivor_parent_cap_value": "--survivor-parent-cap-value",
+        "survivor_parent_cap_window": "--survivor-parent-cap-window",
+        "survivor_parent_cap_min_n": "--survivor-parent-cap-min-n",
         "selection_policy": "--selection-policy",
         "use_qubo": ("--use-qubo", "--no-use-qubo"),
         "qubo_mode": "--qubo-mode",
@@ -2897,6 +2924,66 @@ def _plateau_active(history: list[int], window: int, delta: int) -> bool:
     return max(recent) - min(recent) <= delta
 
 
+def _survivor_parent_core_cap(args: argparse.Namespace, best_n: int) -> tuple[int, str]:
+    base_cap = max(0, int(getattr(args, "parent_core_cap", 0) or 0))
+    if not getattr(args, "survivor_parent_cap_enabled", False) or base_cap <= 0:
+        setattr(args, "_survivor_parent_cap_last", base_cap)
+        setattr(args, "_survivor_parent_cap_last_reason", "survivor_disabled")
+        setattr(args, "_survivor_parent_cap_last_signal", "")
+        return base_cap, "survivor_disabled"
+
+    min_n = max(0, int(getattr(args, "survivor_parent_cap_min_n", 0) or 0))
+    if min_n > 0 and best_n < min_n:
+        args._survivor_parent_cap_active = False
+        setattr(args, "_survivor_parent_cap_last", base_cap)
+        setattr(args, "_survivor_parent_cap_last_reason", "survivor_tail")
+        setattr(args, "_survivor_parent_cap_last_signal", "")
+        return base_cap, "survivor_tail"
+
+    window = max(1, int(getattr(args, "survivor_parent_cap_window", 1) or 1))
+    history = list(getattr(args, "_survivor_dead_parent_ratio_history", []) or [])
+    if len(history) < window:
+        setattr(args, "_survivor_parent_cap_last", base_cap)
+        setattr(args, "_survivor_parent_cap_last_reason", "survivor_warmup")
+        setattr(args, "_survivor_parent_cap_last_signal", "")
+        return base_cap, "survivor_warmup"
+
+    signal = sum(float(value) for value in history[-window:]) / window
+    setattr(args, "_survivor_parent_cap_last_signal", signal)
+    trigger = float(getattr(args, "survivor_parent_cap_trigger_ratio", 0.70) or 0.70)
+    release = float(getattr(args, "survivor_parent_cap_release_ratio", 0.55) or 0.55)
+    target_cap = int(getattr(args, "survivor_parent_cap_value", max(1, base_cap - 1)) or max(1, base_cap - 1))
+    target_cap = max(1, min(base_cap, target_cap))
+    active = bool(getattr(args, "_survivor_parent_cap_active", False))
+
+    if active and signal <= release:
+        args._survivor_parent_cap_active = False
+        cap, reason = base_cap, "survivor_release"
+    elif active:
+        cap, reason = target_cap, "survivor_hold"
+    elif signal >= trigger:
+        args._survivor_parent_cap_active = True
+        cap, reason = target_cap, "survivor_contract"
+    else:
+        cap, reason = base_cap, "survivor_stable"
+
+    setattr(args, "_survivor_parent_cap_last", cap)
+    setattr(args, "_survivor_parent_cap_last_reason", reason)
+    if cap < base_cap:
+        args._survivor_parent_cap_layers = int(getattr(args, "_survivor_parent_cap_layers", 0)) + 1
+    return cap, reason
+
+
+def _record_survivor_parent_cap_signal(args: argparse.Namespace, metrics: dict[str, int | float]) -> None:
+    if not getattr(args, "survivor_parent_cap_enabled", False):
+        return
+    history = list(getattr(args, "_survivor_dead_parent_ratio_history", []) or [])
+    history.append(float(metrics.get("dead_parent_ratio", 0.0) or 0.0))
+    window = max(1, int(getattr(args, "survivor_parent_cap_window", 1) or 1))
+    max_history = max(8, window * 4)
+    args._survivor_dead_parent_ratio_history = history[-max_history:]
+
+
 def _signal_adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> tuple[int, str]:
     high_n = int(getattr(args, "adaptive_high_n", 16))
     low_n = int(getattr(args, "adaptive_low_n", 8))
@@ -2979,18 +3066,20 @@ def _select_enhanced_qubo_frontier(
     effective_qubo_supplement = (
         qubo_supplement_width if qubo_supplement_width is not None else args.qubo_supplement_width
     )
+    best_n = int(ranked[0][1][0]) if ranked else 0
+    effective_parent_core_cap, _parent_cap_reason = _survivor_parent_core_cap(args, best_n)
 
     core_target = effective_core
 
     def add_deterministic_until(target_len: int) -> None:
         target_len = max(0, min(target_len, effective_beam))
-        if args.parent_core_cap > 0:
+        if effective_parent_core_cap > 0:
             parent_counts: dict[bytes, int] = {}
             for code, data in ranked:
                 if code in selected:
                     continue
                 parent_code = data[2]
-                if parent_counts.get(parent_code, 0) >= args.parent_core_cap:
+                if parent_counts.get(parent_code, 0) >= effective_parent_core_cap:
                     continue
                 selected.setdefault(code, None)
                 parent_counts[parent_code] = parent_counts.get(parent_code, 0) + 1
@@ -4799,6 +4888,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._adaptive_expand_layers = 0
     args._adaptive_last_width = 0
     args._adaptive_last_reason = ""
+    args._survivor_dead_parent_ratio_history = list(getattr(args, "_survivor_dead_parent_ratio_history", []) or [])
+    args._survivor_parent_cap_active = bool(getattr(args, "_survivor_parent_cap_active", False))
+    args._survivor_parent_cap_layers = 0
+    args._survivor_parent_cap_last = int(getattr(args, "parent_core_cap", 0) or 0)
+    args._survivor_parent_cap_last_reason = ""
+    args._survivor_parent_cap_last_signal = ""
     args._scheduler_state_last_action = ""
     args._scheduler_state_last_effective_action = ""
     args._scheduler_state_locked_action = ""
@@ -4841,6 +4936,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     stream_seq = 0
     depth_reached = 0
     beam_survivor_output = getattr(args, "beam_survivor_telemetry_output", None)
+    collect_survivor_metrics = beam_survivor_output is not None or bool(
+        getattr(args, "survivor_parent_cap_enabled", False)
+    )
     beam_survivor_records: list[dict[str, object]] = []
     layer_index = 0
 
@@ -4951,8 +5049,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if appended_rollout_codes:
             rollout_codes |= appended_rollout_codes
             wang_rollout_added_total += len(appended_rollout_codes)
-        if beam_survivor_output is not None:
+        survivor_metrics: dict[str, int | float] | None = None
+        if collect_survivor_metrics:
             parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
+            survivor_metrics = _beam_survivor_parent_metrics(frontier, candidates, selected_codes, selected_by_qubo)
+            _record_survivor_parent_cap_signal(args, survivor_metrics)
+        if beam_survivor_output is not None and survivor_metrics is not None:
             row: dict[str, object] = {
                 "case": case,
                 "solver_profile": getattr(args, "solver_profile", ""),
@@ -4965,8 +5067,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 "qcalls_total": qcalls,
                 "qvars_total": qvars,
                 "qtime_total": qtime,
+                "parent_core_cap_effective": getattr(args, "_survivor_parent_cap_last", getattr(args, "parent_core_cap", 0)),
+                "parent_core_cap_reason": getattr(args, "_survivor_parent_cap_last_reason", ""),
+                "survivor_dead_parent_ratio_signal": getattr(args, "_survivor_parent_cap_last_signal", ""),
             }
-            row.update(_beam_survivor_parent_metrics(frontier, candidates, selected_codes, selected_by_qubo))
+            row.update(survivor_metrics)
             beam_survivor_records.append(
                 {
                     "row": row,
@@ -5208,6 +5313,11 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"unified_wang_fixed_prefix_selected={result.unified_wang_fixed_prefix_selected}; "
             f"unified_wang_fix_pair_selected={result.unified_wang_fix_pair_selected}; "
             f"priority={args.priority}; beam_width={args.beam_width}; core_width={args.core_width}; "
+            f"parent_core_cap={getattr(args, 'parent_core_cap', 0)}; "
+            f"survivor_parent_cap_enabled={getattr(args, 'survivor_parent_cap_enabled', False)}; "
+            f"survivor_parent_cap_layers={getattr(args, '_survivor_parent_cap_layers', 0)}; "
+            f"survivor_parent_cap_last={getattr(args, '_survivor_parent_cap_last', getattr(args, 'parent_core_cap', 0))}; "
+            f"survivor_parent_cap_last_reason={getattr(args, '_survivor_parent_cap_last_reason', '')}; "
             f"peak_frontier={result.peak_frontier}; peak_candidates={result.peak_candidates}; "
             f"depth_reached={result.depth_reached}; open={result.open_count}; "
             f"qubo_used={args.use_qubo}; qubo_mode={args.qubo_mode}; qubo_focus_n={args.qubo_focus_n}; "
@@ -5425,6 +5535,15 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "beam_width": args.beam_width,
             "core_width": args.core_width,
             "parent_core_cap": getattr(args, "parent_core_cap", 0),
+            "survivor_parent_cap_enabled": getattr(args, "survivor_parent_cap_enabled", False),
+            "survivor_parent_cap_trigger_ratio": getattr(args, "survivor_parent_cap_trigger_ratio", 0.70),
+            "survivor_parent_cap_release_ratio": getattr(args, "survivor_parent_cap_release_ratio", 0.55),
+            "survivor_parent_cap_value": getattr(args, "survivor_parent_cap_value", 3),
+            "survivor_parent_cap_window": getattr(args, "survivor_parent_cap_window", 2),
+            "survivor_parent_cap_min_n": getattr(args, "survivor_parent_cap_min_n", 8),
+            "survivor_parent_cap_layers": getattr(args, "_survivor_parent_cap_layers", 0),
+            "survivor_parent_cap_last": getattr(args, "_survivor_parent_cap_last", getattr(args, "parent_core_cap", 0)),
+            "survivor_parent_cap_last_reason": getattr(args, "_survivor_parent_cap_last_reason", ""),
             "peak_frontier": result.peak_frontier,
             "peak_candidates": result.peak_candidates,
             "depth_reached": result.depth_reached,
@@ -5841,6 +5960,12 @@ def main() -> int:
     parser.add_argument("--beam-width", type=int, default=1200)
     parser.add_argument("--core-width", type=int, default=1080)
     parser.add_argument("--parent-core-cap", type=int, default=4)
+    parser.add_argument("--survivor-parent-cap-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--survivor-parent-cap-trigger-ratio", type=float, default=0.70)
+    parser.add_argument("--survivor-parent-cap-release-ratio", type=float, default=0.55)
+    parser.add_argument("--survivor-parent-cap-value", type=int, default=3)
+    parser.add_argument("--survivor-parent-cap-window", type=int, default=2)
+    parser.add_argument("--survivor-parent-cap-min-n", type=int, default=8)
     parser.add_argument(
         "--selection-policy",
         choices=[

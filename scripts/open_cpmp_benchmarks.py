@@ -649,6 +649,17 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         value = getattr(args, field, None)
         if value is not None:
             overrides[field] = value
+    for field in (
+        "survivor_parent_cap_enabled",
+        "survivor_parent_cap_trigger_ratio",
+        "survivor_parent_cap_release_ratio",
+        "survivor_parent_cap_value",
+        "survivor_parent_cap_window",
+        "survivor_parent_cap_min_n",
+    ):
+        value = getattr(args, field, None)
+        if value is not None:
+            overrides[field] = value
     if getattr(args, "beam_survivor_telemetry_output", None) is not None:
         overrides["beam_survivor_telemetry_output"] = args.beam_survivor_telemetry_output
     stream_candidate_limit = int(getattr(args, "stream_candidate_limit", 0) or 0)
@@ -979,6 +990,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--beam-width", type=int)
     parser.add_argument("--core-width", type=int)
     parser.add_argument("--parent-core-cap", type=int)
+    parser.add_argument("--survivor-parent-cap-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--survivor-parent-cap-trigger-ratio", type=float)
+    parser.add_argument("--survivor-parent-cap-release-ratio", type=float)
+    parser.add_argument("--survivor-parent-cap-value", type=int)
+    parser.add_argument("--survivor-parent-cap-window", type=int)
+    parser.add_argument("--survivor-parent-cap-min-n", type=int)
     parser.add_argument("--no-qubo-beam-width", type=int, default=1200)
     parser.add_argument("--adaptive-high-n", type=int, default=16)
     parser.add_argument("--adaptive-low-n", type=int, default=8)

@@ -809,6 +809,12 @@ def _compact_args(**overrides):
         "beam_width": 1200,
         "core_width": 1080,
         "parent_core_cap": 4,
+        "survivor_parent_cap_enabled": False,
+        "survivor_parent_cap_trigger_ratio": 0.70,
+        "survivor_parent_cap_release_ratio": 0.55,
+        "survivor_parent_cap_value": 3,
+        "survivor_parent_cap_window": 2,
+        "survivor_parent_cap_min_n": 8,
         "selection_policy": "enhanced",
         "use_qubo": True,
         "qubo_mode": "focused_multi",
@@ -991,6 +997,71 @@ def test_beam_survivor_rows_mark_final_search_path_edges():
     assert rows[1]["path_parent_frontier_rank"] == 1
 
 
+def test_survivor_parent_core_cap_contracts_releases_and_skips_tail():
+    from benchmark_compact_beam_qubo_n0 import _survivor_parent_core_cap
+
+    args = _compact_args(
+        parent_core_cap=4,
+        survivor_parent_cap_enabled=True,
+        survivor_parent_cap_value=2,
+        survivor_parent_cap_trigger_ratio=0.70,
+        survivor_parent_cap_release_ratio=0.55,
+        survivor_parent_cap_window=2,
+        survivor_parent_cap_min_n=8,
+        _survivor_dead_parent_ratio_history=[0.72, 0.74],
+    )
+
+    cap, reason = _survivor_parent_core_cap(args, best_n=20)
+
+    assert cap == 2
+    assert reason == "survivor_contract"
+    assert args._survivor_parent_cap_active is True
+
+    args._survivor_dead_parent_ratio_history = [0.40, 0.50]
+    cap, reason = _survivor_parent_core_cap(args, best_n=20)
+
+    assert cap == 4
+    assert reason == "survivor_release"
+    assert args._survivor_parent_cap_active is False
+
+    args._survivor_dead_parent_ratio_history = [0.90, 0.92]
+    cap, reason = _survivor_parent_core_cap(args, best_n=5)
+
+    assert cap == 4
+    assert reason == "survivor_tail"
+    assert args._survivor_parent_cap_active is False
+
+
+def test_enhanced_frontier_uses_dynamic_survivor_parent_core_cap():
+    from benchmark_compact_beam_qubo_n0 import _select_enhanced_qubo_frontier
+
+    ranked = [
+        (b"c00", (12, 1, b"p0")),
+        (b"c01", (12, 1, b"p0")),
+        (b"c10", (12, 1, b"p1")),
+        (b"c20", (12, 1, b"p2")),
+    ]
+    args = _compact_args(
+        use_qubo=False,
+        beam_width=3,
+        core_width=3,
+        parent_core_cap=4,
+        survivor_parent_cap_enabled=True,
+        survivor_parent_cap_value=1,
+        survivor_parent_cap_trigger_ratio=0.70,
+        survivor_parent_cap_release_ratio=0.55,
+        survivor_parent_cap_window=1,
+        survivor_parent_cap_min_n=8,
+        _survivor_dead_parent_ratio_history=[0.80],
+    )
+
+    selected, _selected_by_qubo, _qcalls, _qvars, _qtime = _select_enhanced_qubo_frontier(ranked, len(ranked), args)
+
+    assert selected == [b"c00", b"c10", b"c20"]
+    assert args._survivor_parent_cap_last == 1
+    assert args._survivor_parent_cap_last_reason == "survivor_contract"
+
+
 def test_open_runner_passes_beam_survivor_telemetry_output():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
@@ -1029,6 +1100,37 @@ def test_open_runner_passes_frontier_width_overrides():
     assert args.beam_width == 1000
     assert args.core_width == 900
     assert args.parent_core_cap == 2
+
+
+def test_open_runner_passes_survivor_parent_cap_overrides():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_wang_rescue",
+            "--survivor-parent-cap-enabled",
+            "--survivor-parent-cap-trigger-ratio",
+            "0.72",
+            "--survivor-parent-cap-release-ratio",
+            "0.50",
+            "--survivor-parent-cap-value",
+            "2",
+            "--survivor-parent-cap-window",
+            "3",
+            "--survivor-parent-cap-min-n",
+            "9",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue")
+
+    assert args.survivor_parent_cap_enabled is True
+    assert args.survivor_parent_cap_trigger_ratio == 0.72
+    assert args.survivor_parent_cap_release_ratio == 0.50
+    assert args.survivor_parent_cap_value == 2
+    assert args.survivor_parent_cap_window == 3
+    assert args.survivor_parent_cap_min_n == 9
 
 
 def test_solver_profile_speed_v2_restores_historical_baseline_without_overriding_explicit_flags(monkeypatch):
