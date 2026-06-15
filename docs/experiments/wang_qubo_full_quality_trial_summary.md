@@ -237,3 +237,18 @@ python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv2_test 5x5_
 | 5x5 cv1, 3s | candidate-pool QUBO bonus | 11/20 | 9 | 1207 | 324 | 1.387 | 1007 |
 
 This probe is negative for promotion. The Wang-preferred one-move child is usually already present among ordinary successors, so the useful behavior of the previous baby-lookahead rollout is not candidate discovery; it is a controlled one-step continuation after the frontier selector. Turning that signal into only a QUBO linear bonus improves over a naive unmarked pool, but it underperforms both no-rollout and post-selection baby-lookahead on full-case quality. Keep `scheduler_state_v7_wang_qubo_pool` as an ablation profile only.
+
+## Feasibility Escape And DLTS Feature Export Probe
+
+`scheduler_state_v5_feasibility_escape_polish` extends the current `scheduler_state_v5_wang_rescue_polish` line with a bounded feasibility escape selector. It uses deterministic state-feasibility, stability, temporary-slack, and dead-end-risk signals. It does not call original DLTS, train a neural model, or splice external move paths into compact parent chains.
+
+The first focused commands are:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test --case-ids 4,10 --variant qubo_scheduler_state_v5_feasibility_escape_polish --time-limit 10 --alpha 10 --output docs\experiments\scratch_feasibility_escape_residual.csv
+python scripts\benchmark_compact_beam_qubo_n0.py --cases A1_01 --solver-profile scheduler_state_v5_feasibility_escape_polish --time-limit 1 --dlts-feature-output docs\experiments\scratch_dlts_features_A1_01.csv --output docs\experiments\scratch_feasibility_escape_A1_01.csv
+```
+
+Promotion requires a full-case quality improvement against `qubo_scheduler_state_v5_wang_rescue_polish`, or solving one residual hard case without adding new failures in a clean paired run.
+
+The 2026-06-15 residual smoke solved 2/4 selected cases with full penalty 237 and solved moves 56; the original residual hard cases `5x5_cv1_test_4` and `5x5_cv2_test_10` remained unsolved.
