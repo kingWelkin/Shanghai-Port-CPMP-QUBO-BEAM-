@@ -5028,6 +5028,291 @@ def test_open_runner_accepts_wang_rescue_successor_cache_polish_variant():
     assert "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_jobs_defaults_to_serial_and_accepts_parallel_count():
+    from open_cpmp_benchmarks import build_parser
+
+    assert build_parser().parse_args([]).jobs == 1
+    assert build_parser().parse_args(["--jobs", "4"]).jobs == 4
+
+
+def test_open_runner_builds_stable_tasks_by_case_then_variant(tmp_path):
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, _build_open_run_tasks
+
+    cases = [
+        OpenCpmpCase("fam_a", "fam_a_0", tmp_path / "a0.dat", None, DltsReference()),
+        OpenCpmpCase("fam_b", "fam_b_0", tmp_path / "b0.dat", None, DltsReference()),
+    ]
+
+    tasks = _build_open_run_tasks(cases, ["variant_a", "variant_b"])
+
+    assert [(task.case.case_id, task.variant) for task in tasks] == [
+        ("fam_a_0", "variant_a"),
+        ("fam_a_0", "variant_b"),
+        ("fam_b_0", "variant_a"),
+        ("fam_b_0", "variant_b"),
+    ]
+    assert [task.task_index for task in tasks] == [0, 1, 2, 3]
+
+
+def test_open_runner_task_execution_returns_selected_portfolio_row(monkeypatch, tmp_path):
+    import argparse
+
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, OpenRunTask, _run_open_task
+
+    case = OpenCpmpCase("fam", "fam_0", tmp_path / "0.dat", None, DltsReference(optimal_moves=10))
+    args = argparse.Namespace(alpha=10.0, skip_invalid=True)
+    calls = []
+
+    def fake_load(path, max_height=None):
+        return object()
+
+    def fake_run(case_arg, instance, args_arg, variant):
+        calls.append(variant)
+        valid = variant.endswith("guarded_polish")
+        return {
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": variant,
+            "moves": 9 if valid else 10,
+            "final_n": 0,
+            "runtime_sec": 1.0,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "full_quality_penalty": 9 if valid else 10,
+        }
+
+    monkeypatch.setattr("open_cpmp_benchmarks.load_dlts_dat", fake_load)
+    monkeypatch.setattr("open_cpmp_benchmarks._run_open_variant_row", fake_run)
+
+    result = _run_open_task(
+        OpenRunTask(0, case, "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio"),
+        vars(args),
+    )
+
+    assert calls == [
+        "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
+    ]
+    assert result.task_index == 0
+    assert result.rows[0]["variant"] == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio"
+    assert result.rows[0]["portfolio_selected_profile"] == "qubo_scheduler_state_v5_wang2017_task_guarded_polish"
+
+
+def test_open_runner_collects_parallel_results_in_task_order(monkeypatch, tmp_path):
+    import argparse
+
+    import open_cpmp_benchmarks as open_runner
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, OpenRunTask, OpenRunTaskResult, _collect_parallel_open_rows
+
+    cases = [
+        OpenCpmpCase("fam", "case_2", tmp_path / "2.dat", None, DltsReference()),
+        OpenCpmpCase("fam", "case_1", tmp_path / "1.dat", None, DltsReference()),
+        OpenCpmpCase("fam", "case_0", tmp_path / "0.dat", None, DltsReference()),
+    ]
+    tasks = [OpenRunTask(index, case, "v") for index, case in enumerate(cases)]
+    args = argparse.Namespace(jobs=2)
+    submitted = []
+
+    def fake_run(task, payload):
+        index = tasks.index(task)
+        return OpenRunTaskResult(
+            task_index=2 - index,
+            case_id=f"case_{2 - index}",
+            variant="v",
+            rows=[
+                {
+                    "case": f"case_{2 - index}",
+                    "variant": "v",
+                    "final_n": 0,
+                    "moves": 1,
+                    "reference_moves": 1,
+                    "runtime_sec": 0.1,
+                    "goal_validation_ok": True,
+                    "business_ok": True,
+                }
+            ],
+        )
+
+    class FakeFuture:
+        def __init__(self, result):
+            self._result = result
+
+        def result(self):
+            return self._result
+
+    class FakeExecutor:
+        def __init__(self, max_workers):
+            self.max_workers = max_workers
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def submit(self, fn, task, payload):
+            future = FakeFuture(fn(task, payload))
+            submitted.append((self.max_workers, future))
+            return future
+
+    monkeypatch.setattr("open_cpmp_benchmarks._run_open_task", fake_run)
+    monkeypatch.setattr(open_runner, "ProcessPoolExecutor", FakeExecutor, raising=False)
+    monkeypatch.setattr(open_runner, "as_completed", lambda futures: list(reversed(futures)), raising=False)
+
+    rows = _collect_parallel_open_rows(tasks, args)
+
+    assert [item[0] for item in submitted] == [2, 2, 2]
+    assert [row["case"] for row in rows] == ["case_0", "case_1", "case_2"]
+
+
+def test_open_runner_serial_fallback_uses_serial_collector(monkeypatch):
+    from open_cpmp_benchmarks import build_parser, run_open_benchmark
+
+    args = build_parser().parse_args(["--jobs", "1"])
+    monkeypatch.setattr("open_cpmp_benchmarks.ensure_dlts_source", lambda source, auto_clone=True, refresh=False: source)
+    monkeypatch.setattr("open_cpmp_benchmarks.discover_dlts_cases", lambda *a, **k: [])
+    called = {"serial": 0, "parallel": 0}
+
+    def fake_serial(tasks, args):
+        called["serial"] += 1
+        return []
+
+    def fake_parallel(tasks, args):
+        called["parallel"] += 1
+        return []
+
+    monkeypatch.setattr("open_cpmp_benchmarks._collect_serial_open_rows", fake_serial)
+    monkeypatch.setattr("open_cpmp_benchmarks._collect_parallel_open_rows", fake_parallel)
+
+    assert run_open_benchmark(args) == []
+    assert called == {"serial": 1, "parallel": 0}
+
+
+def test_open_runner_jobs_uses_parallel_collector(monkeypatch):
+    from open_cpmp_benchmarks import build_parser, run_open_benchmark
+
+    args = build_parser().parse_args(["--jobs", "2"])
+    monkeypatch.setattr("open_cpmp_benchmarks.ensure_dlts_source", lambda source, auto_clone=True, refresh=False: source)
+    monkeypatch.setattr("open_cpmp_benchmarks.discover_dlts_cases", lambda *a, **k: [])
+    called = {"serial": 0, "parallel": 0}
+
+    def fake_serial(tasks, args):
+        called["serial"] += 1
+        return []
+
+    def fake_parallel(tasks, args):
+        called["parallel"] += 1
+        return []
+
+    monkeypatch.setattr("open_cpmp_benchmarks._collect_serial_open_rows", fake_serial)
+    monkeypatch.setattr("open_cpmp_benchmarks._collect_parallel_open_rows", fake_parallel)
+
+    assert run_open_benchmark(args) == []
+    assert called == {"serial": 0, "parallel": 1}
+
+
+def test_open_runner_parallel_matches_serial_rows_on_tiny_dlts(tmp_path):
+    from open_cpmp_benchmarks import build_parser, run_open_benchmark
+
+    source = tmp_path / "DLTS"
+    family = "tiny_cv1_test"
+    instance_dir = source / "instances" / family
+    instance_dir.mkdir(parents=True)
+    (instance_dir / "0.dat").write_text(
+        "\n".join(
+            [
+                "3 3",
+                "2 1 3",
+                "0",
+                "1 2",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (instance_dir / "1.dat").write_text(
+        "\n".join(
+            [
+                "3 3",
+                "1 1",
+                "1 2",
+                "1 3",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    common = [
+        "--source",
+        str(source),
+        "--no-auto-clone",
+        "--families",
+        family,
+        "--limit-per-family",
+        "2",
+        "--variant",
+        "classic_noqubo",
+        "--time-limit",
+        "1",
+        "--max-moves",
+        "4",
+        "--alpha",
+        "10",
+    ]
+    serial = run_open_benchmark(build_parser().parse_args([*common, "--jobs", "1"]))
+    parallel = run_open_benchmark(build_parser().parse_args([*common, "--jobs", "2"]))
+
+    fields = ["case", "variant", "solver_profile", "final_n", "moves", "goal_validation_ok", "business_ok"]
+    assert [{field: row[field] for field in fields} for row in parallel] == [
+        {field: row[field] for field in fields} for row in serial
+    ]
+
+
+def test_open_runner_serial_collector_prints_task_progress(monkeypatch, capsys, tmp_path):
+    import argparse
+
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, OpenRunTask, OpenRunTaskResult, _collect_serial_open_rows
+
+    case = OpenCpmpCase("fam", "fam_0", tmp_path / "0.dat", None, DltsReference(optimal_moves=1))
+    task = OpenRunTask(0, case, "variant_a")
+    args = argparse.Namespace(jobs=1)
+
+    def fake_run(task_arg, payload):
+        return OpenRunTaskResult(
+            task_index=task_arg.task_index,
+            case_id=task_arg.case.case_id,
+            variant=task_arg.variant,
+            rows=[
+                {
+                    "final_n": 0,
+                    "moves": 1,
+                    "reference_moves": 1,
+                    "runtime_sec": 0.25,
+                    "goal_validation_ok": True,
+                    "business_ok": True,
+                }
+            ],
+        )
+
+    monkeypatch.setattr("open_cpmp_benchmarks._run_open_task", fake_run)
+
+    assert _collect_serial_open_rows([task], args) == [
+        {
+            "final_n": 0,
+            "moves": 1,
+            "reference_moves": 1,
+            "runtime_sec": 0.25,
+            "goal_validation_ok": True,
+            "business_ok": True,
+        }
+    ]
+    out = capsys.readouterr().out
+    assert "CASE_START 1/1 variant_a fam_0" in out
+    assert "CASE_DONE variant_a fam_0 final_n=0 moves=1" in out
+
+
 def test_open_runner_wang_all_expands_current_and_wang_variants():
     from open_cpmp_benchmarks import _variant_names, build_parser
 

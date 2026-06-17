@@ -4,6 +4,8 @@
 
 **Goal:** Add `--jobs N` process-level parallel execution to `scripts/open_cpmp_benchmarks.py` while preserving default serial behavior and deterministic CSV row order.
 
+**Execution status:** Implemented on 2026-06-17. Focused open runner tests passed (`37 passed, 178 deselected`), full QUBO tests passed (`215 passed`), and a 4-case `5x5_cv1_test` smoke check matched serial and `--jobs 4` quality fields while reducing outer wall time from about 10.5s to about 5.7s.
+
 **Architecture:** Keep the existing serial runner as the source of truth for `--jobs 1`. For `--jobs > 1`, build picklable top-level run tasks, execute each case/variant task in a `ProcessPoolExecutor`, and merge returned rows by task order before writing existing CSV and summary outputs. Portfolio child variants stay inside one worker task so no-regret selection remains local and unchanged.
 
 **Tech Stack:** Python `argparse`, `dataclasses`, `concurrent.futures.ProcessPoolExecutor`, pytest, existing DLTS/open runner helpers.
@@ -16,7 +18,7 @@
 - Modify: `tests/test_qubo.py`
 - Modify: `scripts/open_cpmp_benchmarks.py`
 
-- [ ] **Step 1: Write the failing parser test**
+- [x] **Step 1: Write the failing parser test**
 
 Add near the open runner parser tests in `tests/test_qubo.py`:
 
@@ -28,7 +30,7 @@ def test_open_runner_jobs_defaults_to_serial_and_accepts_parallel_count():
     assert build_parser().parse_args(["--jobs", "4"]).jobs == 4
 ```
 
-- [ ] **Step 2: Run the parser test and verify RED**
+- [x] **Step 2: Run the parser test and verify RED**
 
 Run:
 
@@ -38,7 +40,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py::test_open_runner_job
 
 Expected: FAIL with `AttributeError` or argparse rejecting `--jobs`.
 
-- [ ] **Step 3: Add `--jobs` to the parser**
+- [x] **Step 3: Add `--jobs` to the parser**
 
 In `scripts/open_cpmp_benchmarks.py`, add:
 
@@ -51,7 +53,7 @@ parser.add_argument(
 )
 ```
 
-- [ ] **Step 4: Run the parser test and verify GREEN**
+- [x] **Step 4: Run the parser test and verify GREEN**
 
 Run the same focused pytest command.
 
@@ -63,7 +65,7 @@ Expected: PASS.
 - Modify: `tests/test_qubo.py`
 - Modify: `scripts/open_cpmp_benchmarks.py`
 
-- [ ] **Step 1: Write the failing task-order test**
+- [x] **Step 1: Write the failing task-order test**
 
 Add this test near the open runner tests:
 
@@ -87,7 +89,7 @@ def test_open_runner_builds_stable_tasks_by_case_then_variant(tmp_path):
     assert [task.task_index for task in tasks] == [0, 1, 2, 3]
 ```
 
-- [ ] **Step 2: Run the task-order test and verify RED**
+- [x] **Step 2: Run the task-order test and verify RED**
 
 Run:
 
@@ -97,7 +99,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py::test_open_runner_bui
 
 Expected: FAIL because `_build_open_run_tasks` does not exist.
 
-- [ ] **Step 3: Add task dataclasses and builder**
+- [x] **Step 3: Add task dataclasses and builder**
 
 In `scripts/open_cpmp_benchmarks.py`, add near the existing dataclasses:
 
@@ -129,7 +131,7 @@ def _build_open_run_tasks(cases: list[OpenCpmpCase], variants: list[str]) -> lis
     return tasks
 ```
 
-- [ ] **Step 4: Run the task-order test and verify GREEN**
+- [x] **Step 4: Run the task-order test and verify GREEN**
 
 Run the same focused pytest command.
 
@@ -141,7 +143,7 @@ Expected: PASS.
 - Modify: `tests/test_qubo.py`
 - Modify: `scripts/open_cpmp_benchmarks.py`
 
-- [ ] **Step 1: Write the failing task execution test with monkeypatched row runner**
+- [x] **Step 1: Write the failing task execution test with monkeypatched row runner**
 
 Add:
 
@@ -196,7 +198,7 @@ def test_open_runner_task_execution_returns_selected_portfolio_row(monkeypatch, 
     assert result.rows[0]["portfolio_selected_profile"] == "qubo_scheduler_state_v5_wang2017_task_guarded_polish"
 ```
 
-- [ ] **Step 2: Run the task execution test and verify RED**
+- [x] **Step 2: Run the task execution test and verify RED**
 
 Run:
 
@@ -206,7 +208,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py::test_open_runner_tas
 
 Expected: FAIL because `_run_open_task` does not exist.
 
-- [ ] **Step 3: Add `_run_open_task`**
+- [x] **Step 3: Add `_run_open_task`**
 
 In `scripts/open_cpmp_benchmarks.py`, add:
 
@@ -243,7 +245,7 @@ def _run_open_task(task: OpenRunTask, args_payload: dict[str, object]) -> OpenRu
     )
 ```
 
-- [ ] **Step 4: Run the task execution test and verify GREEN**
+- [x] **Step 4: Run the task execution test and verify GREEN**
 
 Run the same focused pytest command.
 
@@ -255,7 +257,7 @@ Expected: PASS.
 - Modify: `tests/test_qubo.py`
 - Modify: `scripts/open_cpmp_benchmarks.py`
 
-- [ ] **Step 1: Write the failing row-order test for parallel collection**
+- [x] **Step 1: Write the failing row-order test for parallel collection**
 
 Add:
 
@@ -284,7 +286,7 @@ def test_open_runner_collects_parallel_results_in_task_order(monkeypatch):
     assert [row["case"] for row in rows] == ["case_0", "case_1", "case_2"]
 ```
 
-- [ ] **Step 2: Run the row-order test and verify RED**
+- [x] **Step 2: Run the row-order test and verify RED**
 
 Run:
 
@@ -294,7 +296,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py::test_open_runner_col
 
 Expected: FAIL because `_collect_parallel_open_rows` does not exist.
 
-- [ ] **Step 3: Implement serial and parallel collectors**
+- [x] **Step 3: Implement serial and parallel collectors**
 
 In `scripts/open_cpmp_benchmarks.py`, import:
 
@@ -332,7 +334,7 @@ def _collect_parallel_open_rows(tasks: list[OpenRunTask], args: argparse.Namespa
     return _flatten_task_results(results)
 ```
 
-- [ ] **Step 4: Run the row-order test and verify GREEN**
+- [x] **Step 4: Run the row-order test and verify GREEN**
 
 Run the same focused pytest command.
 
@@ -344,7 +346,7 @@ Expected: PASS.
 - Modify: `tests/test_qubo.py`
 - Modify: `scripts/open_cpmp_benchmarks.py`
 
-- [ ] **Step 1: Write the failing integration test for serial fallback**
+- [x] **Step 1: Write the failing integration test for serial fallback**
 
 Add:
 
@@ -364,7 +366,7 @@ def test_open_runner_serial_fallback_uses_serial_collector(monkeypatch):
     assert called == {"serial": 1, "parallel": 0}
 ```
 
-- [ ] **Step 2: Write the failing integration test for `--jobs > 1`**
+- [x] **Step 2: Write the failing integration test for `--jobs > 1`**
 
 Add:
 
@@ -384,7 +386,7 @@ def test_open_runner_jobs_uses_parallel_collector(monkeypatch):
     assert called == {"serial": 0, "parallel": 1}
 ```
 
-- [ ] **Step 3: Run both integration tests and verify RED**
+- [x] **Step 3: Run both integration tests and verify RED**
 
 Run:
 
@@ -394,7 +396,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py::test_open_runner_ser
 
 Expected: FAIL until `run_open_benchmark` is routed through collectors.
 
-- [ ] **Step 4: Wire `run_open_benchmark` to collectors**
+- [x] **Step 4: Wire `run_open_benchmark` to collectors**
 
 Replace the inner serial loop in `run_open_benchmark` with:
 
@@ -406,7 +408,7 @@ if int(getattr(args, "jobs", 1)) <= 1:
 return _collect_parallel_open_rows(tasks, args)
 ```
 
-- [ ] **Step 5: Run both integration tests and verify GREEN**
+- [x] **Step 5: Run both integration tests and verify GREEN**
 
 Run the same focused pytest command.
 
@@ -418,7 +420,7 @@ Expected: PASS.
 - Modify: `docs/superpowers/plans/2026-06-17-open-runner-parallel.md`
 - Create benchmark artifacts only if the verification command produces useful final evidence.
 
-- [ ] **Step 1: Run focused open runner tests**
+- [x] **Step 1: Run focused open runner tests**
 
 Run:
 
@@ -428,7 +430,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py -k "open_runner or pa
 
 Expected: all selected tests pass.
 
-- [ ] **Step 2: Run full QUBO test suite**
+- [x] **Step 2: Run full QUBO test suite**
 
 Run:
 
@@ -438,7 +440,7 @@ $env:PYTHONPATH='.;src;scripts'; pytest tests\test_qubo.py --basetemp .tmp_pytes
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Run serial vs parallel smoke benchmark**
+- [x] **Step 3: Run serial vs parallel smoke benchmark**
 
 Run serial:
 
@@ -454,7 +456,7 @@ $env:PYTHONPATH='.;src;scripts'; python scripts\open_cpmp_benchmarks.py --source
 
 Compare rows on case, variant, final_n, moves, goal_validation_ok, business_ok, and full_quality_penalty. Runtime can differ.
 
-- [ ] **Step 4: Clean test temp directories**
+- [x] **Step 4: Clean test temp directories**
 
 Remove only known temp directories:
 
@@ -462,7 +464,7 @@ Remove only known temp directories:
 Remove-Item -LiteralPath .tmp_pytest_open_parallel,.tmp_pytest_full -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Stage only implementation, tests, plan updates, and selected benchmark artifacts. Do not stage `AGENTS.md`.
 

@@ -12,6 +12,7 @@ import math
 import re
 import subprocess
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -73,6 +74,30 @@ class OpenCpmpCase:
     instance_path: Path
     reference_path: Path | None
     reference: DltsReference
+
+
+@dataclass(frozen=True)
+class OpenRunTask:
+    task_index: int
+    case: OpenCpmpCase
+    variant: str
+
+
+@dataclass(frozen=True)
+class OpenRunTaskResult:
+    task_index: int
+    case_id: str
+    variant: str
+    rows: list[dict[str, object]]
+    skip_reason: str = ""
+
+
+def _build_open_run_tasks(cases: list[OpenCpmpCase], variants: list[str]) -> list[OpenRunTask]:
+    tasks: list[OpenRunTask] = []
+    for case in cases:
+        for variant in variants:
+            tasks.append(OpenRunTask(task_index=len(tasks), case=case, variant=variant))
+    return tasks
 
 
 def _case_sort_key(path: Path) -> tuple[int, str]:
@@ -1150,10 +1175,87 @@ def _print_open_case_done(label: str, case_id: str, row: dict[str, object]) -> N
     )
 
 
-def _open_variant_run_count(variant: str) -> int:
-    if variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
-        return len(_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
-    return 1
+def _print_open_task_start(run_idx: int, total_runs: int, task: OpenRunTask) -> None:
+    print(f"CASE_START {run_idx}/{total_runs} {task.variant} {task.case.case_id}", flush=True)
+
+
+def _print_open_task_result(result: OpenRunTaskResult) -> None:
+    if result.skip_reason:
+        print(f"CASE_SKIP {result.case_id} reason={result.skip_reason}", flush=True)
+        return
+    for row in result.rows:
+        _print_open_case_done(result.variant, result.case_id, row)
+
+
+def _run_open_task(task: OpenRunTask, args_payload: dict[str, object]) -> OpenRunTaskResult:
+    args = argparse.Namespace(**args_payload)
+    try:
+        instance = load_dlts_dat(task.case.instance_path, max_height=task.case.reference.max_height)
+    except ValueError as exc:
+        if args.skip_invalid:
+            return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [], str(exc))
+        raise
+
+    if task.variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
+        candidates: list[dict[str, object]] = []
+        portfolio_runtime_sec = 0.0
+        for child_variant in _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS:
+            child_row = _run_open_variant_row(task.case, instance, args, child_variant)
+            portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
+            candidates.append(child_row)
+        selected = dict(_select_open_no_regret_row(candidates))
+        selected["variant"] = task.variant
+        selected["portfolio_profiles"] = ",".join(_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
+        selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
+        selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+        selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
+        return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [selected])
+
+    return OpenRunTaskResult(
+        task.task_index,
+        task.case.case_id,
+        task.variant,
+        [_run_open_variant_row(task.case, instance, args, task.variant)],
+    )
+
+
+def _args_payload(args: argparse.Namespace) -> dict[str, object]:
+    return dict(vars(args))
+
+
+def _flatten_task_results(results: list[OpenRunTaskResult]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for result in sorted(results, key=lambda item: item.task_index):
+        rows.extend(result.rows)
+    return rows
+
+
+def _collect_serial_open_rows(tasks: list[OpenRunTask], args: argparse.Namespace) -> list[dict[str, object]]:
+    payload = _args_payload(args)
+    total_runs = len(tasks)
+    results: list[OpenRunTaskResult] = []
+    for run_idx, task in enumerate(tasks, start=1):
+        _print_open_task_start(run_idx, total_runs, task)
+        result = _run_open_task(task, payload)
+        results.append(result)
+        _print_open_task_result(result)
+    return _flatten_task_results(results)
+
+
+def _collect_parallel_open_rows(tasks: list[OpenRunTask], args: argparse.Namespace) -> list[dict[str, object]]:
+    payload = _args_payload(args)
+    results: list[OpenRunTaskResult] = []
+    total_runs = len(tasks)
+    with ProcessPoolExecutor(max_workers=max(1, int(args.jobs))) as executor:
+        futures = []
+        for run_idx, task in enumerate(tasks, start=1):
+            _print_open_task_start(run_idx, total_runs, task)
+            futures.append(executor.submit(_run_open_task, task, payload))
+        for future in as_completed(futures):
+            result = future.result()
+            results.append(result)
+            _print_open_task_result(result)
+    return _flatten_task_results(results)
 
 
 def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
@@ -1166,50 +1268,11 @@ def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
         max_total=args.max_total,
     )
     cases = [case for case in cases if _case_id_selected(case.case_id, args.case_ids)]
-    rows: list[dict[str, object]] = []
     variants = _variant_names(args.variant)
-    total_runs = len(cases) * sum(_open_variant_run_count(variant) for variant in variants)
-    run_idx = 0
-    for case in cases:
-        try:
-            instance = load_dlts_dat(case.instance_path, max_height=case.reference.max_height)
-        except ValueError as exc:
-            if args.skip_invalid:
-                print(f"CASE_SKIP {case.case_id} reason={exc}", flush=True)
-                continue
-            raise
-        for variant in variants:
-            if variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
-                candidates: list[dict[str, object]] = []
-                portfolio_runtime_sec = 0.0
-                for child_variant in _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS:
-                    run_idx += 1
-                    label = f"{variant}:{child_variant}"
-                    print(f"CASE_START {run_idx}/{total_runs} {label} {case.case_id}", flush=True)
-                    child_row = _run_open_variant_row(case, instance, args, child_variant)
-                    portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
-                    candidates.append(child_row)
-                    _print_open_case_done(label, case.case_id, child_row)
-                selected = dict(_select_open_no_regret_row(candidates))
-                selected["variant"] = variant
-                selected["portfolio_profiles"] = ",".join(_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
-                selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
-                selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
-                selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
-                rows.append(selected)
-                print(
-                    f"CASE_DONE {variant} {case.case_id} selected_profile={selected['portfolio_selected_profile']} "
-                    f"final_n={selected['final_n']} moves={selected['moves']} "
-                    f"portfolio_runtime={portfolio_runtime_sec:.3f}s",
-                    flush=True,
-                )
-                continue
-            run_idx += 1
-            print(f"CASE_START {run_idx}/{total_runs} {variant} {case.case_id}", flush=True)
-            row = _run_open_variant_row(case, instance, args, variant)
-            rows.append(row)
-            _print_open_case_done(variant, case.case_id, row)
-    return rows
+    tasks = _build_open_run_tasks(cases, variants)
+    if int(getattr(args, "jobs", 1)) <= 1:
+        return _collect_serial_open_rows(tasks, args)
+    return _collect_parallel_open_rows(tasks, args)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1221,6 +1284,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--limit-per-family", type=int, default=20)
     parser.add_argument("--case-ids", default="")
     parser.add_argument("--max-total", type=int)
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="Number of worker processes for open benchmark case/variant runs. Use 1 for serial execution.",
+    )
     parser.add_argument(
         "--variant",
         choices=[
