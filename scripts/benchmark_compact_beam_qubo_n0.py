@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from types import SimpleNamespace
+from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 for path in (ROOT, ROOT / "src", ROOT / "scripts"):
@@ -48,6 +49,10 @@ from container_reshuffle.solvers.feasibility_signals import (  # noqa: E402
     FeasibilitySignals,
     compute_feasibility_signals,
     feasibility_escape_score,
+)
+from container_reshuffle.solvers.frg_signals import (  # noqa: E402
+    compute_frg_transition_signals,
+    frg_transition_score,
 )
 from container_reshuffle.solvers.base import SolverConfig  # noqa: E402
 from container_reshuffle.solvers.classical_cpmp import (  # noqa: E402
@@ -79,6 +84,7 @@ COMPACT_EXTRA_FIELDS = [
     "qubo_influence_profile",
     "selection_policy",
     "priority",
+    "deterministic_qubo_sampler",
     "target_guided_weight",
     "target_guided_focus_n",
     "target_guided_supplement_width",
@@ -142,6 +148,44 @@ COMPACT_EXTRA_FIELDS = [
     "feasibility_escape_added_total",
     "feasibility_escape_active_layers",
     "feasibility_escape_gate_reasons",
+    "frg_candidate_supplement_enabled",
+    "frg_candidate_supplement_width",
+    "frg_candidate_focus_n",
+    "frg_candidate_n_window",
+    "frg_candidate_max_ranked",
+    "frg_candidate_selected_total",
+    "frg_compound_escape_enabled",
+    "frg_compound_escape_width",
+    "frg_compound_escape_focus_n",
+    "frg_compound_escape_plateau_window",
+    "frg_compound_escape_plateau_delta",
+    "frg_compound_escape_cap_slack",
+    "frg_compound_escape_min_candidates",
+    "frg_compound_guard_enabled",
+    "frg_compound_guard_max_stack_count",
+    "frg_compound_guard_max_initial_n",
+    "frg_compound_guard_min_best_n",
+    "frg_compound_guard_max_best_n",
+    "frg_compound_guard_min_candidates",
+    "frg_compound_guard_min_parent_count",
+    "frg_compound_guard_max_parent_share",
+    "frg_compound_appended_total",
+    "dlts_value_supplement_enabled",
+    "dlts_value_supplement_width",
+    "dlts_value_selected_total",
+    "bs_frg_qubo_enabled",
+    "bs_frg_qubo_supplement_width",
+    "bs_frg_qubo_focus_n",
+    "bs_frg_qubo_n_window",
+    "bs_frg_qubo_min_candidates",
+    "bs_frg_qubo_max_vars",
+    "bs_frg_qubo_same_parent_penalty",
+    "bs_frg_qubo_signature_penalty",
+    "bs_frg_qubo_n_band_penalty",
+    "bs_frg_qubo_calls",
+    "bs_frg_qubo_vars",
+    "bs_frg_qubo_time_sec",
+    "bs_frg_qubo_selected_total",
     "wang2017_task_enabled",
     "wang2017_task_supplement_width",
     "wang2017_task_focus_n",
@@ -666,6 +710,39 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "feasibility_escape_n_window": 1,
         "feasibility_escape_dead_end_threshold": 0.45,
         "feasibility_escape_min_temporary_slack": 1,
+        "frg_candidate_supplement_enabled": False,
+        "frg_candidate_supplement_width": 0,
+        "frg_candidate_focus_n": -1,
+        "frg_candidate_n_window": 2,
+        "frg_candidate_max_ranked": 96,
+        "frg_compound_escape_enabled": False,
+        "frg_compound_escape_width": 0,
+        "frg_compound_escape_focus_n": -1,
+        "frg_compound_escape_plateau_window": 5,
+        "frg_compound_escape_plateau_delta": 0,
+        "frg_compound_escape_cap_slack": 24,
+        "frg_compound_escape_min_candidates": 7000,
+        "frg_compound_guard_enabled": False,
+        "frg_compound_guard_max_stack_count": 0,
+        "frg_compound_guard_max_initial_n": -1,
+        "frg_compound_guard_min_best_n": -1,
+        "frg_compound_guard_max_best_n": -1,
+        "frg_compound_guard_min_candidates": 0,
+        "frg_compound_guard_min_parent_count": 0,
+        "frg_compound_guard_max_parent_share": 1.0,
+        "dlts_value_supplement_enabled": False,
+        "dlts_value_supplement_width": 0,
+        "bs_frg_qubo_enabled": False,
+        "bs_frg_qubo_supplement_width": 0,
+        "bs_frg_qubo_focus_n": -1,
+        "bs_frg_qubo_n_window": 2,
+        "bs_frg_qubo_min_candidates": 64,
+        "bs_frg_qubo_max_vars": 64,
+        "bs_frg_qubo_rank_weight": 0.05,
+        "bs_frg_qubo_same_parent_penalty": 0.35,
+        "bs_frg_qubo_signature_penalty": 0.15,
+        "bs_frg_qubo_n_band_penalty": 0.05,
+        "bs_frg_qubo_n_band_size": 1,
         "wang2017_task_enabled": False,
         "wang2017_task_supplement_width": 0,
         "wang2017_task_focus_n": 8,
@@ -701,6 +778,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "qubo_action_sim_weight": 0.0,
         "qubo_stack_sim_weight": 0.35,
         "qubo_sim_threshold": 0.80,
+        "deterministic_qubo_sampler": False,
         "group_qubo_supplement": False,
         "max_group_qubo_calls": 32,
         "qubo_group_max_vars": 96,
@@ -1153,11 +1231,11 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue"] = {
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_light"] = {
     **_SOLVER_PROFILES["scheduler_state_v5"],
     "wang_pair_qubo_enabled": True,
-    "wang_pair_qubo_supplement_width": 6,
-    "wang_pair_qubo_focus_n": 8,
+    "wang_pair_qubo_supplement_width": 8,
+    "wang_pair_qubo_focus_n": -1,
     "wang_pair_qubo_n_window": 1,
-    "wang_pair_qubo_max_vars": 24,
-    "wang_pair_qubo_select": 6,
+    "wang_pair_qubo_max_vars": 32,
+    "wang_pair_qubo_select": 8,
     "wang_pair_qubo_same_parent_penalty": 0.25,
     "rescue_qubo_supplement_width": 32,
     "rescue_max_qubo_vars": 64,
@@ -1276,6 +1354,71 @@ _SOLVER_PROFILES["scheduler_state_v5_feasibility_escape_polish"] = {
     "feasibility_escape_n_window": 2,
     "feasibility_escape_dead_end_threshold": 0.35,
     "feasibility_escape_min_temporary_slack": 1,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_dlts_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_candidate_supplement_enabled": True,
+    "frg_candidate_supplement_width": 8,
+    "frg_candidate_focus_n": -1,
+    "frg_candidate_n_window": 2,
+    "frg_candidate_max_ranked": 96,
+    "frg_compound_escape_enabled": False,
+    "frg_compound_escape_width": 0,
+    "dlts_value_supplement_enabled": True,
+    "dlts_value_supplement_width": 4,
+}
+_SOLVER_PROFILES["scheduler_state_v5_bs_frg_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "bs_frg_qubo_enabled": True,
+    "bs_frg_qubo_supplement_width": 1,
+    "bs_frg_qubo_focus_n": 8,
+    "bs_frg_qubo_n_window": 2,
+    "bs_frg_qubo_min_candidates": 256,
+    "bs_frg_qubo_max_vars": 64,
+    "bs_frg_qubo_rank_weight": 0.05,
+    "bs_frg_qubo_same_parent_penalty": 0.35,
+    "bs_frg_qubo_signature_penalty": 0.15,
+    "bs_frg_qubo_n_band_penalty": 0.05,
+    "bs_frg_qubo_n_band_size": 1,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_compound_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_frg_dlts_polish"],
+    "frg_compound_escape_enabled": True,
+    "frg_compound_escape_width": 2,
+    "frg_compound_escape_focus_n": -1,
+    "frg_compound_escape_plateau_window": 5,
+    "frg_compound_escape_plateau_delta": 0,
+    "frg_compound_escape_cap_slack": 24,
+    "frg_compound_escape_min_candidates": 7000,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_compound_loose_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_frg_compound_polish"],
+    "frg_compound_escape_width": 1,
+    "frg_compound_escape_plateau_window": 2,
+    "frg_compound_escape_cap_slack": 99,
+    "frg_compound_escape_min_candidates": 1,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_compound_guarded_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_candidate_supplement_enabled": False,
+    "frg_candidate_supplement_width": 0,
+    "dlts_value_supplement_enabled": False,
+    "dlts_value_supplement_width": 0,
+    "frg_compound_escape_enabled": True,
+    "frg_compound_escape_width": 1,
+    "frg_compound_escape_focus_n": -1,
+    "frg_compound_escape_plateau_window": 2,
+    "frg_compound_escape_plateau_delta": 0,
+    "frg_compound_escape_cap_slack": 99,
+    "frg_compound_escape_min_candidates": 1000,
+    "frg_compound_guard_enabled": True,
+    "frg_compound_guard_max_stack_count": 5,
+    "frg_compound_guard_max_initial_n": 18,
+    "frg_compound_guard_min_best_n": 12,
+    "frg_compound_guard_max_best_n": 18,
+    "frg_compound_guard_min_candidates": 1000,
+    "frg_compound_guard_min_parent_count": 3,
+    "frg_compound_guard_max_parent_share": 0.75,
 }
 _SOLVER_PROFILES["scheduler_state_v5_wang2017_task_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
@@ -1594,6 +1737,13 @@ class CompactBeamResult:
     feasibility_escape_added_total: int = 0
     feasibility_escape_active_layers: int = 0
     feasibility_escape_gate_reasons: str = ""
+    frg_candidate_selected_total: int = 0
+    frg_compound_appended_total: int = 0
+    dlts_value_selected_total: int = 0
+    bs_frg_qubo_calls: int = 0
+    bs_frg_qubo_vars: int = 0
+    bs_frg_qubo_time_sec: float = 0.0
+    bs_frg_qubo_selected_total: int = 0
     wang2017_task_calls: int = 0
     wang2017_task_added_total: int = 0
     wang2017_task_active_layers: int = 0
@@ -1783,6 +1933,54 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "feasibility_escape_n_window": "--feasibility-escape-n-window",
         "feasibility_escape_dead_end_threshold": "--feasibility-escape-dead-end-threshold",
         "feasibility_escape_min_temporary_slack": "--feasibility-escape-min-temporary-slack",
+        "frg_candidate_supplement_enabled": (
+            "--frg-candidate-supplement-enabled",
+            "--no-frg-candidate-supplement-enabled",
+        ),
+        "frg_candidate_supplement_width": "--frg-candidate-supplement-width",
+        "frg_candidate_focus_n": "--frg-candidate-focus-n",
+        "frg_candidate_n_window": "--frg-candidate-n-window",
+        "frg_candidate_max_ranked": "--frg-candidate-max-ranked",
+        "frg_compound_escape_enabled": (
+            "--frg-compound-escape-enabled",
+            "--no-frg-compound-escape-enabled",
+        ),
+        "frg_compound_escape_width": "--frg-compound-escape-width",
+        "frg_compound_escape_focus_n": "--frg-compound-escape-focus-n",
+        "frg_compound_escape_plateau_window": "--frg-compound-escape-plateau-window",
+        "frg_compound_escape_plateau_delta": "--frg-compound-escape-plateau-delta",
+        "frg_compound_escape_cap_slack": "--frg-compound-escape-cap-slack",
+        "frg_compound_escape_min_candidates": "--frg-compound-escape-min-candidates",
+        "frg_compound_guard_enabled": (
+            "--frg-compound-guard-enabled",
+            "--no-frg-compound-guard-enabled",
+        ),
+        "frg_compound_guard_max_stack_count": "--frg-compound-guard-max-stack-count",
+        "frg_compound_guard_max_initial_n": "--frg-compound-guard-max-initial-n",
+        "frg_compound_guard_min_best_n": "--frg-compound-guard-min-best-n",
+        "frg_compound_guard_max_best_n": "--frg-compound-guard-max-best-n",
+        "frg_compound_guard_min_candidates": "--frg-compound-guard-min-candidates",
+        "frg_compound_guard_min_parent_count": "--frg-compound-guard-min-parent-count",
+        "frg_compound_guard_max_parent_share": "--frg-compound-guard-max-parent-share",
+        "dlts_value_supplement_enabled": (
+            "--dlts-value-supplement-enabled",
+            "--no-dlts-value-supplement-enabled",
+        ),
+        "dlts_value_supplement_width": "--dlts-value-supplement-width",
+        "bs_frg_qubo_enabled": (
+            "--bs-frg-qubo-enabled",
+            "--no-bs-frg-qubo-enabled",
+        ),
+        "bs_frg_qubo_supplement_width": "--bs-frg-qubo-supplement-width",
+        "bs_frg_qubo_focus_n": "--bs-frg-qubo-focus-n",
+        "bs_frg_qubo_n_window": "--bs-frg-qubo-n-window",
+        "bs_frg_qubo_min_candidates": "--bs-frg-qubo-min-candidates",
+        "bs_frg_qubo_max_vars": "--bs-frg-qubo-max-vars",
+        "bs_frg_qubo_rank_weight": "--bs-frg-qubo-rank-weight",
+        "bs_frg_qubo_same_parent_penalty": "--bs-frg-qubo-same-parent-penalty",
+        "bs_frg_qubo_signature_penalty": "--bs-frg-qubo-signature-penalty",
+        "bs_frg_qubo_n_band_penalty": "--bs-frg-qubo-n-band-penalty",
+        "bs_frg_qubo_n_band_size": "--bs-frg-qubo-n-band-size",
         "wang2017_task_enabled": (
             "--wang2017-task-enabled",
             "--no-wang2017-task-enabled",
@@ -1840,6 +2038,10 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "qubo_time_limit": "--qubo-time-limit",
         "qubo_reads": "--qubo-reads",
         "qubo_iterations": "--qubo-iterations",
+        "deterministic_qubo_sampler": (
+            "--deterministic-qubo-sampler",
+            "--no-deterministic-qubo-sampler",
+        ),
         "group_qubo_risk_gate": ("--group-qubo-risk-gate", "--no-group-qubo-risk-gate"),
         "dynamic_min_frontier": "--dynamic-min-frontier",
         "dynamic_core_frontier": "--dynamic-core-frontier",
@@ -2111,6 +2313,29 @@ def _candidate_target_gap(code: bytes, args: argparse.Namespace) -> int:
     return min(_compact_target_gap(code, target, stack_count, max_height) for target in targets)
 
 
+def _qubo_sampler_config(
+    args: argparse.Namespace,
+    *,
+    num_reads: int,
+    random_seed: int,
+    time_limit_sec: float,
+    sa_iterations: int,
+) -> QuboSamplerConfig:
+    return QuboSamplerConfig(
+        num_reads=max(1, int(num_reads)),
+        random_seed=int(random_seed),
+        time_limit_sec=max(0.001, float(time_limit_sec)),
+        sa_iterations=max(1, int(sa_iterations)),
+        respect_time_limit=not bool(getattr(args, "deterministic_qubo_sampler", False)),
+    )
+
+
+class _WangStackFeatures(NamedTuple):
+    fixed_prefix: int
+    acceptor_top: int
+    dirty_boxes: tuple[int, ...]
+
+
 def _wang_fixed_prefix_len(chunk: bytes) -> int:
     height = _chunk_height_raw(chunk)
     if height <= 0:
@@ -2121,33 +2346,52 @@ def _wang_fixed_prefix_len(chunk: bytes) -> int:
     return prefix
 
 
+@lru_cache(maxsize=1048576)
+def _compact_wang_stack_features(chunk: bytes, max_height: int) -> _WangStackFeatures:
+    height = _chunk_height_raw(chunk)
+    dirty_count = _stack_n(chunk, max_height)
+    fixed_prefix = _wang_fixed_prefix_len(chunk)
+    acceptor_top = -1
+    if dirty_count == 0 and height < max_height:
+        acceptor_top = int(chunk[height - 1]) if height > 0 else 255
+    dirty_boxes: tuple[int, ...] = ()
+    if dirty_count > 0:
+        start = height - dirty_count
+        dirty_boxes = tuple(int(box) for box in chunk[start:height])
+    return _WangStackFeatures(
+        fixed_prefix=fixed_prefix,
+        acceptor_top=acceptor_top,
+        dirty_boxes=dirty_boxes,
+    )
+
+
 @lru_cache(maxsize=262144)
 def _compact_wang_fixed_prefix_score(code: bytes, stack_count: int, max_height: int) -> int:
     if stack_count <= 0 or max_height <= 0:
         return 0
-    return sum(_wang_fixed_prefix_len(chunk) for chunk in _split(code, stack_count, max_height))
+    return sum(
+        _compact_wang_stack_features(chunk, max_height).fixed_prefix
+        for chunk in _split(code, stack_count, max_height)
+    )
 
 
 @lru_cache(maxsize=262144)
 def _compact_wang_fix_pair_score(code: bytes, stack_count: int, max_height: int) -> int:
     if stack_count <= 0 or max_height <= 0:
         return 0
-    chunks = _split(code, stack_count, max_height)
-    acceptors: list[tuple[int, int]] = []
-    dirty: list[tuple[int, int]] = []
-    for stack_idx, chunk in enumerate(chunks):
-        height = _chunk_height_raw(chunk)
-        dirty_count = _stack_n(chunk, max_height)
-        if dirty_count == 0 and height < max_height:
-            top = chunk[height - 1] if height > 0 else 255
-            acceptors.append((stack_idx, top))
-        if dirty_count > 0:
-            start = height - dirty_count
-            dirty.extend((stack_idx, int(box)) for box in chunk[start:height])
-
+    features = [
+        _compact_wang_stack_features(chunk, max_height)
+        for chunk in _split(code, stack_count, max_height)
+    ]
+    acceptors = [
+        (stack_idx, feature.acceptor_top)
+        for stack_idx, feature in enumerate(features)
+        if feature.acceptor_top >= 0
+    ]
     score = 0
-    for origin, box in dirty:
-        score += sum(1 for stack_idx, top in acceptors if stack_idx != origin and box <= top)
+    for origin, feature in enumerate(features):
+        for box in feature.dirty_boxes:
+            score += sum(1 for stack_idx, top in acceptors if stack_idx != origin and box <= top)
     return score
 
 
@@ -2283,6 +2527,365 @@ def _wang_search_depth_cap(base_depth_cap: int, incumbent_moves: int | None, arg
 
 def _code_to_stacks(code: bytes, stack_count: int, max_height: int) -> list[list[int]]:
     return [[int(box) for box in chunk if box] for chunk in _split(code, stack_count, max_height)]
+
+
+def _select_frg_candidate_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> list[bytes]:
+    if not getattr(args, "frg_candidate_supplement_enabled", False):
+        return []
+    if target <= 0 or not ranked:
+        return []
+    best_n = int(ranked[0][1][0])
+    focus_n = int(getattr(args, "frg_candidate_focus_n", -1))
+    if focus_n >= 0 and best_n > focus_n:
+        return []
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return []
+    n_window = max(0, int(getattr(args, "frg_candidate_n_window", 2) or 0))
+    max_ranked = max(1, int(getattr(args, "frg_candidate_max_ranked", 96) or 96))
+    scored: list[tuple[float, int, int, bytes]] = []
+    for code, data in ranked[:max_ranked]:
+        n_value, depth, parent_code = data
+        if int(n_value) > best_n + n_window:
+            continue
+        before = _code_to_stacks(parent_code, stack_count, max_height)
+        after = _code_to_stacks(code, stack_count, max_height)
+        signals = compute_frg_transition_signals(before, after, max_height)
+        score = frg_transition_score(signals, n_value=int(n_value), depth=int(depth))
+        scored.append((score, int(n_value), int(depth), code))
+    scored.sort()
+    return [code for _score, _n, _depth, code in scored[:target]]
+
+
+def _select_dlts_value_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> list[bytes]:
+    if not getattr(args, "dlts_value_supplement_enabled", False):
+        return []
+    if target <= 0 or not ranked:
+        return []
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return []
+    scored: list[tuple[float, int, int, bytes]] = []
+    for code, data in ranked[:64]:
+        n_value, depth, parent_code = data
+        before = _code_to_stacks(parent_code, stack_count, max_height)
+        after = _code_to_stacks(code, stack_count, max_height)
+        signals = compute_frg_transition_signals(before, after, max_height)
+        value_score = (
+            1000.0 * float(n_value)
+            + float(depth)
+            - 12.0 * float(signals.fill_gain)
+            - 8.0 * float(signals.reduce_gain)
+            + 16.0 * float(signals.low_tier_damage)
+        )
+        scored.append((value_score, int(n_value), int(depth), code))
+    scored.sort()
+    return [code for _score, _n, _depth, code in scored[:target]]
+
+
+class BsFrgQuboFeatures(NamedTuple):
+    energy: float
+    n_value: int
+    depth: int
+    parent_code: bytes
+    signature: tuple[int, int, int, int, int]
+
+
+def _sign_bucket(value: int) -> int:
+    if value < 0:
+        return -1
+    if value > 0:
+        return 1
+    return 0
+
+
+def _bs_frg_qubo_features(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    rank: int,
+    args: argparse.Namespace,
+) -> BsFrgQuboFeatures:
+    n_value, depth, parent_code = data
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        frg_energy = float(n_value) * 1000.0 + float(depth)
+        signature = (int(n_value), 0, 0, 0, 0)
+    else:
+        before = _code_to_stacks(parent_code, stack_count, max_height)
+        after = _code_to_stacks(code, stack_count, max_height)
+        signals = compute_frg_transition_signals(before, after, max_height)
+        frg_energy = frg_transition_score(signals, n_value=int(n_value), depth=int(depth))
+        signature = (
+            min(3, max(0, int(signals.fill_gain))),
+            min(3, max(0, int(signals.reduce_gain))),
+            _sign_bucket(int(signals.unblocked_bad_delta)),
+            _sign_bucket(int(signals.stable_prefix_delta)),
+            min(3, max(0, int(signals.low_tier_damage))),
+        )
+    rank_weight = float(getattr(args, "bs_frg_qubo_rank_weight", 0.05) or 0.0)
+    energy = frg_energy + rank_weight * float(rank)
+    return BsFrgQuboFeatures(
+        energy=float(energy),
+        n_value=int(n_value),
+        depth=int(depth),
+        parent_code=parent_code,
+        signature=signature,
+    )
+
+
+def _normalize_values(values: list[float]) -> list[float]:
+    if not values:
+        return []
+    lo = min(values)
+    hi = max(values)
+    span = hi - lo
+    if span <= 1e-12:
+        return [0.0 for _value in values]
+    return [(value - lo) / span for value in values]
+
+
+def _bs_frg_selection_objective(
+    selected: set[int],
+    linear: list[float],
+    features: list[BsFrgQuboFeatures],
+    args: argparse.Namespace,
+) -> float:
+    value = sum(linear[idx] for idx in selected)
+    same_parent_penalty = float(getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35) or 0.0)
+    signature_penalty = float(getattr(args, "bs_frg_qubo_signature_penalty", 0.15) or 0.0)
+    n_band_penalty = float(getattr(args, "bs_frg_qubo_n_band_penalty", 0.05) or 0.0)
+    n_band_size = max(1, int(getattr(args, "bs_frg_qubo_n_band_size", 1) or 1))
+    ordered = sorted(selected)
+    for pos, i in enumerate(ordered):
+        for j in ordered[pos + 1 :]:
+            if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
+                value += same_parent_penalty
+            if signature_penalty > 0.0 and features[i].signature == features[j].signature:
+                value += signature_penalty
+            if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
+                value += n_band_penalty
+    return float(value)
+
+
+def _repair_bs_frg_selection(
+    picked: set[int],
+    target: int,
+    linear: list[float],
+    features: list[BsFrgQuboFeatures],
+    args: argparse.Namespace,
+) -> set[int]:
+    picked = {idx for idx in picked if 0 <= idx < len(linear)}
+    target = max(0, min(target, len(linear)))
+    while len(picked) > target:
+        picked.remove(
+            min(
+                picked,
+                key=lambda idx: (
+                    _bs_frg_selection_objective(picked - {idx}, linear, features, args),
+                    -linear[idx],
+                    idx,
+                ),
+            )
+        )
+    while len(picked) < target:
+        missing = [idx for idx in range(len(linear)) if idx not in picked]
+        if not missing:
+            break
+        picked.add(
+            min(
+                missing,
+                key=lambda idx: (
+                    _bs_frg_selection_objective(picked | {idx}, linear, features, args),
+                    linear[idx],
+                    idx,
+                ),
+            )
+        )
+    improved = True
+    while improved and len(picked) == target:
+        improved = False
+        current = _bs_frg_selection_objective(picked, linear, features, args)
+        best_swap: tuple[int, int, float] | None = None
+        for out_idx in sorted(picked):
+            base = picked - {out_idx}
+            for in_idx in range(len(linear)):
+                if in_idx in picked:
+                    continue
+                trial = base | {in_idx}
+                value = _bs_frg_selection_objective(trial, linear, features, args)
+                if value + 1e-12 < current and (
+                    best_swap is None or value < best_swap[2] - 1e-12
+                ):
+                    best_swap = (out_idx, in_idx, value)
+        if best_swap is not None:
+            picked.remove(best_swap[0])
+            picked.add(best_swap[1])
+            improved = True
+    return picked
+
+
+def _select_bs_frg_qubo_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], int, float]:
+    target = max(0, int(target))
+    if target <= 0 or not ranked:
+        return [], 0, 0.0
+    max_vars = max(1, int(getattr(args, "bs_frg_qubo_max_vars", 64) or 64))
+    usable = list(ranked[:max_vars])
+    target = min(target, len(usable))
+    if target <= 0:
+        return [], 0, 0.0
+    features = [
+        _bs_frg_qubo_features(code, data, rank, args)
+        for rank, (code, data) in enumerate(usable)
+    ]
+    linear = _normalize_values([feature.energy for feature in features])
+    model = QuboModel()
+    vars_ = [model.add_binary_var(f"bf_{idx}") for idx in range(len(usable))]
+    for idx, value in enumerate(linear):
+        model.add_linear(vars_[idx], value)
+
+    same_parent_penalty = float(getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35) or 0.0)
+    signature_penalty = float(getattr(args, "bs_frg_qubo_signature_penalty", 0.15) or 0.0)
+    n_band_penalty = float(getattr(args, "bs_frg_qubo_n_band_penalty", 0.05) or 0.0)
+    n_band_size = max(1, int(getattr(args, "bs_frg_qubo_n_band_size", 1) or 1))
+    for i in range(len(usable)):
+        for j in range(i + 1, len(usable)):
+            if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
+                model.add_quadratic(vars_[i], vars_[j], same_parent_penalty)
+            if signature_penalty > 0.0 and features[i].signature == features[j].signature:
+                model.add_quadratic(vars_[i], vars_[j], signature_penalty)
+            if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
+                model.add_quadratic(vars_[i], vars_[j], n_band_penalty)
+    model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
+    sample_set = SimulatedAnnealingQuboSampler().sample(
+        model,
+        _qubo_sampler_config(
+            args,
+            num_reads=int(getattr(args, "qubo_reads", 2) or 2),
+            random_seed=int(getattr(args, "seed", 37)) + 11003 + int(getattr(args, "_bs_frg_qubo_calls_done", 0)),
+            time_limit_sec=float(getattr(args, "qubo_time_limit", 0.001) or 0.001),
+            sa_iterations=int(getattr(args, "qubo_iterations", 20) or 20),
+        ),
+    )
+    picked: set[int] = set()
+    if sample_set.samples:
+        picked = {
+            idx
+            for idx in range(len(usable))
+            if sample_set.samples[0].binary_values.get(idx, 0) == 1
+        }
+    picked = _repair_bs_frg_selection(picked, target, linear, features, args)
+    ordered = sorted(
+        picked,
+        key=lambda idx: (
+            _bs_frg_selection_objective({idx}, linear, features, args),
+            features[idx].n_value,
+            features[idx].depth,
+            usable[idx][0],
+        ),
+    )
+    return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
+
+
+def _frg_compound_escape_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "frg_compound_escape_enabled", False):
+        return False
+    focus_n = int(getattr(args, "frg_compound_escape_focus_n", -1))
+    if focus_n >= 0 and int(best_n) > focus_n:
+        return False
+    min_candidates = int(getattr(args, "frg_compound_escape_min_candidates", 7000) or 0)
+    if int(getattr(args, "_layer_candidate_count", 0)) < min_candidates:
+        return False
+    cap_slack = int(getattr(args, "frg_compound_escape_cap_slack", 24) or 0)
+    if int(getattr(args, "_layer_depth_slack", 10**9)) > cap_slack:
+        return False
+    window = max(2, int(getattr(args, "frg_compound_escape_plateau_window", 5) or 5))
+    history = list(getattr(args, "_best_n_history", []) or [])
+    if len(history) < window:
+        return False
+    recent = history[-window:]
+    delta = max(0, int(getattr(args, "frg_compound_escape_plateau_delta", 0) or 0))
+    return max(recent) - min(recent) <= delta
+
+
+def _frg_compound_guard_accepts(
+    args: argparse.Namespace,
+    best_n: int,
+    origins: list[bytes],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+) -> bool:
+    if not getattr(args, "frg_compound_guard_enabled", False):
+        return True
+    max_stack_count = int(getattr(args, "frg_compound_guard_max_stack_count", 0) or 0)
+    if max_stack_count > 0 and int(getattr(args, "_stack_count", 0) or 0) > max_stack_count:
+        return False
+    max_initial_n = int(getattr(args, "frg_compound_guard_max_initial_n", -1))
+    if max_initial_n >= 0 and int(getattr(args, "_initial_n", 0) or 0) > max_initial_n:
+        return False
+    min_best_n = int(getattr(args, "frg_compound_guard_min_best_n", -1))
+    if min_best_n >= 0 and int(best_n) < min_best_n:
+        return False
+    max_best_n = int(getattr(args, "frg_compound_guard_max_best_n", -1))
+    if max_best_n >= 0 and int(best_n) > max_best_n:
+        return False
+    min_candidates = int(getattr(args, "frg_compound_guard_min_candidates", 0) or 0)
+    if min_candidates > 0 and int(getattr(args, "_layer_candidate_count", 0)) < min_candidates:
+        return False
+    parent_counts: dict[bytes, int] = {}
+    for code in origins:
+        data = candidates.get(code)
+        if data is None:
+            continue
+        parent_counts[data[2]] = parent_counts.get(data[2], 0) + 1
+    if not parent_counts:
+        return False
+    min_parent_count = int(getattr(args, "frg_compound_guard_min_parent_count", 0) or 0)
+    if min_parent_count > 0 and len(parent_counts) < min_parent_count:
+        return False
+    max_parent_share = float(getattr(args, "frg_compound_guard_max_parent_share", 1.0) or 1.0)
+    if max_parent_share < 1.0 and max(parent_counts.values()) / float(sum(parent_counts.values())) > max_parent_share:
+        return False
+    return True
+
+
+def _frg_best_successor(
+    code: bytes,
+    n_value: int,
+    depth: int,
+    args: argparse.Namespace,
+) -> tuple[bytes, tuple[int, int, bytes]] | None:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return None
+    before = _code_to_stacks(code, stack_count, max_height)
+    best: tuple[float, int, int, bytes] | None = None
+    for child_code, child_n in _successors_with_n_cached(code, int(n_value), stack_count, max_height):
+        child_depth = int(depth) + 1
+        after = _code_to_stacks(child_code, stack_count, max_height)
+        signals = compute_frg_transition_signals(before, after, max_height)
+        score = frg_transition_score(signals, n_value=int(child_n), depth=child_depth)
+        item = (score, int(child_n), child_depth, child_code)
+        if best is None or item < best:
+            best = item
+    if best is None:
+        return None
+    _score, child_n, child_depth, child_code = best
+    return child_code, (child_n, child_depth, code)
 
 
 def _moves_reach_n0_with_cap(instance: Instance, moves: list[Move], cap: int) -> bool:
@@ -2490,11 +3093,12 @@ def _select_wang_pair_qubo_supplement(
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0)))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
-            num_reads=max(1, int(getattr(args, "qubo_reads", 2) or 2)),
+        _qubo_sampler_config(
+            args,
+            num_reads=int(getattr(args, "qubo_reads", 2) or 2),
             random_seed=int(getattr(args, "seed", 37)) + 7001 + int(getattr(args, "_wang_pair_qubo_calls_done", 0)),
-            time_limit_sec=max(0.001, float(getattr(args, "qubo_time_limit", 0.001) or 0.001)),
-            sa_iterations=max(1, int(getattr(args, "qubo_iterations", 20) or 20)),
+            time_limit_sec=float(getattr(args, "qubo_time_limit", 0.001) or 0.001),
+            sa_iterations=int(getattr(args, "qubo_iterations", 20) or 20),
         ),
     )
     picked: set[int] = set()
@@ -2571,11 +3175,12 @@ def _select_unified_wang_qubo_supplement(
     model.add_exactly_k_penalty(vars_, target, _float_attr("qubo_penalty_a", 30.0))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
-            num_reads=max(1, _int_attr("qubo_reads", 2)),
+        _qubo_sampler_config(
+            args,
+            num_reads=_int_attr("qubo_reads", 2),
             random_seed=_int_attr("seed", 37) + 9001 + _int_attr("_unified_wang_qubo_calls_done", 0),
-            time_limit_sec=max(0.001, _float_attr("qubo_time_limit", 0.001)),
-            sa_iterations=max(1, _int_attr("qubo_iterations", 20)),
+            time_limit_sec=_float_attr("qubo_time_limit", 0.001),
+            sa_iterations=_int_attr("qubo_iterations", 20),
         ),
     )
     picked: set[int] = set()
@@ -2886,6 +3491,54 @@ def _append_wang_rollout_frontier(
         candidates[child_code] = child_data
         selected_codes.append(child_code)
         added.add(child_code)
+    return added
+
+
+def _append_frg_compound_frontier(
+    selected_codes: list[bytes],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+) -> set[bytes]:
+    origins = [code for code in selected_codes if code in candidates]
+    if not origins:
+        return set()
+    best_n = min(candidates[code][0] for code in origins)
+    if not _frg_compound_escape_active(args, best_n):
+        return set()
+    if not _frg_compound_guard_accepts(args, best_n, origins, candidates):
+        return set()
+    width = max(0, int(getattr(args, "frg_compound_escape_width", 0) or 0))
+    if width <= 0:
+        return set()
+    if not hasattr(args, "_frg_compound_appended_total"):
+        args._frg_compound_appended_total = 0
+    added: set[bytes] = set()
+    selected_set = set(selected_codes)
+    for code in sorted(origins, key=lambda item: _candidate_sort_key((item, candidates[item]), args)):
+        if len(added) >= width:
+            break
+        n_value, depth, _parent_code = candidates[code]
+        child = _frg_best_successor(code, n_value, depth, args)
+        if child is None:
+            continue
+        child_code, child_data = child
+        child_n, child_depth, _child_parent = child_data
+        if child_code in selected_set or child_code in added:
+            continue
+        if child_depth + child_n > depth_cap:
+            continue
+        old_best_depth = best_depth.get(child_code) if best_depth is not None else None
+        if old_best_depth is not None and child_depth >= old_best_depth:
+            continue
+        old = candidates.get(child_code)
+        if old is not None and old[1] <= child_depth:
+            continue
+        candidates[child_code] = child_data
+        selected_codes.append(child_code)
+        added.add(child_code)
+        args._frg_compound_appended_total += 1
     return added
 
 
@@ -3220,11 +3873,12 @@ def _select_group_qubo_supplement(
     model.add_exactly_k_penalty(vars_, target_groups, args.qubo_penalty_a)
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
+        _qubo_sampler_config(
+            args,
             num_reads=args.qubo_reads,
             random_seed=args.seed + 5003 + args._group_qubo_calls_done,
-            time_limit_sec=max(0.001, args.qubo_time_limit),
-            sa_iterations=max(1, args.qubo_iterations),
+            time_limit_sec=args.qubo_time_limit,
+            sa_iterations=args.qubo_iterations,
         ),
     )
     picked: set[int] = set()
@@ -3311,11 +3965,12 @@ def _select_dynamic_qubo_frontier(
 
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
+        _qubo_sampler_config(
+            args,
             num_reads=args.qubo_reads,
             random_seed=args.seed + 7001 + args._group_qubo_calls_done,
-            time_limit_sec=max(0.001, args.qubo_time_limit),
-            sa_iterations=max(1, args.qubo_iterations),
+            time_limit_sec=args.qubo_time_limit,
+            sa_iterations=args.qubo_iterations,
         ),
     )
     picked: set[int] = set()
@@ -3601,6 +4256,86 @@ def _select_enhanced_qubo_frontier(
                 if code not in selected:
                     selected_by_qubo.add(code)
                 selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
+    frg_width = max(0, int(getattr(args, "frg_candidate_supplement_width", 0) or 0))
+    if (
+        getattr(args, "frg_candidate_supplement_enabled", False)
+        and frg_width > 0
+        and len(selected) < effective_beam
+    ):
+        target = min(frg_width, effective_beam - len(selected))
+        remaining = [(code, data) for code, data in ranked if code not in selected]
+        boosted = _select_frg_candidate_supplement(remaining, args, target)
+        if boosted:
+            if not hasattr(args, "_frg_candidate_selected_total"):
+                args._frg_candidate_selected_total = 0
+            for code in boosted:
+                before = len(selected)
+                selected.setdefault(code, None)
+                if len(selected) > before:
+                    args._frg_candidate_selected_total += 1
+                if len(selected) >= effective_beam:
+                    break
+    dlts_width = max(0, int(getattr(args, "dlts_value_supplement_width", 0) or 0))
+    if (
+        getattr(args, "dlts_value_supplement_enabled", False)
+        and dlts_width > 0
+        and len(selected) < effective_beam
+    ):
+        target = min(dlts_width, effective_beam - len(selected))
+        remaining = [(code, data) for code, data in ranked if code not in selected]
+        boosted = _select_dlts_value_supplement(remaining, args, target)
+        if boosted:
+            if not hasattr(args, "_dlts_value_selected_total"):
+                args._dlts_value_selected_total = 0
+            for code in boosted:
+                before = len(selected)
+                selected.setdefault(code, None)
+                if len(selected) > before:
+                    args._dlts_value_selected_total += 1
+                if len(selected) >= effective_beam:
+                    break
+    bs_frg_width = max(0, int(getattr(args, "bs_frg_qubo_supplement_width", 0) or 0))
+    bs_frg_focus_n = int(getattr(args, "bs_frg_qubo_focus_n", -1))
+    if (
+        getattr(args, "bs_frg_qubo_enabled", False)
+        and args.use_qubo
+        and bs_frg_width > 0
+        and len(selected) < effective_beam
+        and candidate_count >= max(1, int(getattr(args, "bs_frg_qubo_min_candidates", 64) or 64))
+        and (bs_frg_focus_n < 0 or int(best_n) <= bs_frg_focus_n)
+    ):
+        n_window = max(0, int(getattr(args, "bs_frg_qubo_n_window", 2) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(bs_frg_width, effective_beam - len(selected), len(remaining))
+        boosted, add_qvars, add_qtime = _select_bs_frg_qubo_supplement(remaining, args, target)
+        if add_qvars:
+            if not hasattr(args, "_bs_frg_qubo_calls_done"):
+                args._bs_frg_qubo_calls_done = 0
+            if not hasattr(args, "_bs_frg_qubo_vars"):
+                args._bs_frg_qubo_vars = 0
+            if not hasattr(args, "_bs_frg_qubo_time"):
+                args._bs_frg_qubo_time = 0.0
+            if not hasattr(args, "_bs_frg_qubo_selected_total"):
+                args._bs_frg_qubo_selected_total = 0
+            qcalls += 1
+            qvars += add_qvars
+            qtime += add_qtime
+            args._bs_frg_qubo_calls_done += 1
+            args._bs_frg_qubo_vars += add_qvars
+            args._bs_frg_qubo_time += add_qtime
+            for code in boosted:
+                if code not in selected:
+                    selected_by_qubo.add(code)
+                before = len(selected)
+                selected.setdefault(code, None)
+                if len(selected) > before:
+                    args._bs_frg_qubo_selected_total += 1
                 if len(selected) >= effective_beam:
                     break
     unified_width = max(0, int(getattr(args, "unified_wang_qubo_supplement_width", 0) or 0))
@@ -4738,11 +5473,12 @@ def _select_post_polish_suffixes_qubo(
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "post_polish_penalty_a", 18.0)))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
+        _qubo_sampler_config(
+            args,
             num_reads=int(getattr(args, "post_polish_qubo_reads", 2)),
             random_seed=int(getattr(args, "seed", 37)) + 2003,
-            time_limit_sec=max(0.001, float(getattr(args, "post_polish_qubo_time_limit", 0.001))),
-            sa_iterations=max(1, int(getattr(args, "post_polish_qubo_iterations", 20))),
+            time_limit_sec=float(getattr(args, "post_polish_qubo_time_limit", 0.001)),
+            sa_iterations=int(getattr(args, "post_polish_qubo_iterations", 20)),
         ),
     )
     selected: set[int] = set()
@@ -4924,11 +5660,12 @@ def _select_post_polish_windows_qubo(
     model.add_exactly_k_penalty(vars_, target, args.post_polish_penalty_a)
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
+        _qubo_sampler_config(
+            args,
             num_reads=args.post_polish_qubo_reads,
             random_seed=args.seed + 1009,
-            time_limit_sec=max(0.001, args.post_polish_qubo_time_limit),
-            sa_iterations=max(1, args.post_polish_qubo_iterations),
+            time_limit_sec=args.post_polish_qubo_time_limit,
+            sa_iterations=args.post_polish_qubo_iterations,
         ),
     )
 
@@ -5057,11 +5794,12 @@ def _select_post_polish_windows_v2_qubo(
     time_limit = float(getattr(args, "post_polish_window_time_limit", getattr(args, "post_polish_qubo_time_limit", 0.001)))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
-        QuboSamplerConfig(
+        _qubo_sampler_config(
+            args,
             num_reads=int(getattr(args, "post_polish_qubo_reads", 2)),
             random_seed=int(getattr(args, "seed", 37)) + 3011,
-            time_limit_sec=max(0.001, time_limit),
-            sa_iterations=max(1, int(getattr(args, "post_polish_qubo_iterations", 20))),
+            time_limit_sec=time_limit,
+            sa_iterations=int(getattr(args, "post_polish_qubo_iterations", 20)),
         ),
     )
 
@@ -5436,6 +6174,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._feasibility_escape_added_total = 0
     args._feasibility_escape_active_layers = 0
     args._feasibility_escape_gate_reasons = {}
+    args._frg_candidate_selected_total = 0
+    args._frg_compound_appended_total = 0
+    args._dlts_value_selected_total = 0
+    args._bs_frg_qubo_calls_done = 0
+    args._bs_frg_qubo_vars = 0
+    args._bs_frg_qubo_time = 0.0
+    args._bs_frg_qubo_selected_total = 0
     args._wang2017_task_calls_done = 0
     args._wang2017_task_added_total = 0
     args._wang2017_task_active_layers = 0
@@ -5635,6 +6380,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if appended_rollout_codes:
             rollout_codes |= appended_rollout_codes
             wang_rollout_added_total += len(appended_rollout_codes)
+        frg_compound_codes = _append_frg_compound_frontier(selected_codes, candidates, args, depth_cap, best_depth)
+        if frg_compound_codes:
+            peak_candidates = max(peak_candidates, len(candidates))
         survivor_metrics: dict[str, int | float] | None = None
         if collect_survivor_metrics:
             parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
@@ -5693,7 +6441,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             n_value, depth, parent_code = candidates[code]
             parent[code] = parent_code
             best_depth[code] = depth
-            source_by_code[code] = "qubo" if code in selected_by_qubo else ("wang_rollout" if code in rollout_codes else "deterministic")
+            source_by_code[code] = (
+                "qubo"
+                if code in selected_by_qubo
+                else ("wang_rollout" if code in rollout_codes else ("frg_compound" if code in frg_compound_codes else "deterministic"))
+            )
             qubo_ancestor_by_code[code] = code in selected_by_qubo or qubo_ancestor_by_code.get(parent_code, False)
             next_frontier.append((code, n_value, depth))
         frontier = next_frontier
@@ -5837,6 +6589,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         feasibility_escape_added_total=args._feasibility_escape_added_total,
         feasibility_escape_active_layers=args._feasibility_escape_active_layers,
         feasibility_escape_gate_reasons=_format_feasibility_escape_gate_reasons(args._feasibility_escape_gate_reasons),
+        frg_candidate_selected_total=args._frg_candidate_selected_total,
+        frg_compound_appended_total=args._frg_compound_appended_total,
+        dlts_value_selected_total=args._dlts_value_selected_total,
+        bs_frg_qubo_calls=args._bs_frg_qubo_calls_done,
+        bs_frg_qubo_vars=args._bs_frg_qubo_vars,
+        bs_frg_qubo_time_sec=args._bs_frg_qubo_time,
+        bs_frg_qubo_selected_total=args._bs_frg_qubo_selected_total,
         wang2017_task_calls=args._wang2017_task_calls_done,
         wang2017_task_added_total=args._wang2017_task_added_total,
         wang2017_task_active_layers=args._wang2017_task_active_layers,
@@ -6076,6 +6835,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "qubo_influence_profile": getattr(args, "qubo_influence_profile", "stable"),
             "selection_policy": getattr(args, "selection_policy", "enhanced"),
             "priority": args.priority,
+            "deterministic_qubo_sampler": getattr(args, "deterministic_qubo_sampler", False),
             "target_guided_weight": getattr(args, "target_guided_weight", 0.0),
             "target_guided_focus_n": getattr(args, "target_guided_focus_n", 8),
             "target_guided_supplement_width": getattr(args, "target_guided_supplement_width", 0),
@@ -6147,6 +6907,36 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 "feasibility_escape_gate_reasons",
                 _format_feasibility_escape_gate_reasons(getattr(args, "_feasibility_escape_gate_reasons", {})),
             ),
+            "frg_candidate_supplement_enabled": getattr(args, "frg_candidate_supplement_enabled", False),
+            "frg_candidate_supplement_width": getattr(args, "frg_candidate_supplement_width", 0),
+            "frg_candidate_focus_n": getattr(args, "frg_candidate_focus_n", -1),
+            "frg_candidate_n_window": getattr(args, "frg_candidate_n_window", 2),
+            "frg_candidate_max_ranked": getattr(args, "frg_candidate_max_ranked", 96),
+            "frg_candidate_selected_total": result.frg_candidate_selected_total,
+            "frg_compound_escape_enabled": getattr(args, "frg_compound_escape_enabled", False),
+            "frg_compound_escape_width": getattr(args, "frg_compound_escape_width", 0),
+            "frg_compound_escape_focus_n": getattr(args, "frg_compound_escape_focus_n", -1),
+            "frg_compound_escape_plateau_window": getattr(args, "frg_compound_escape_plateau_window", 5),
+            "frg_compound_escape_plateau_delta": getattr(args, "frg_compound_escape_plateau_delta", 0),
+            "frg_compound_escape_cap_slack": getattr(args, "frg_compound_escape_cap_slack", 24),
+            "frg_compound_escape_min_candidates": getattr(args, "frg_compound_escape_min_candidates", 7000),
+            "frg_compound_appended_total": result.frg_compound_appended_total,
+            "dlts_value_supplement_enabled": getattr(args, "dlts_value_supplement_enabled", False),
+            "dlts_value_supplement_width": getattr(args, "dlts_value_supplement_width", 0),
+            "dlts_value_selected_total": result.dlts_value_selected_total,
+            "bs_frg_qubo_enabled": getattr(args, "bs_frg_qubo_enabled", False),
+            "bs_frg_qubo_supplement_width": getattr(args, "bs_frg_qubo_supplement_width", 0),
+            "bs_frg_qubo_focus_n": getattr(args, "bs_frg_qubo_focus_n", -1),
+            "bs_frg_qubo_n_window": getattr(args, "bs_frg_qubo_n_window", 2),
+            "bs_frg_qubo_min_candidates": getattr(args, "bs_frg_qubo_min_candidates", 64),
+            "bs_frg_qubo_max_vars": getattr(args, "bs_frg_qubo_max_vars", 64),
+            "bs_frg_qubo_same_parent_penalty": getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35),
+            "bs_frg_qubo_signature_penalty": getattr(args, "bs_frg_qubo_signature_penalty", 0.15),
+            "bs_frg_qubo_n_band_penalty": getattr(args, "bs_frg_qubo_n_band_penalty", 0.05),
+            "bs_frg_qubo_calls": result.bs_frg_qubo_calls,
+            "bs_frg_qubo_vars": result.bs_frg_qubo_vars,
+            "bs_frg_qubo_time_sec": result.bs_frg_qubo_time_sec,
+            "bs_frg_qubo_selected_total": result.bs_frg_qubo_selected_total,
             "wang2017_task_enabled": getattr(args, "wang2017_task_enabled", False),
             "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
             "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),
@@ -6585,6 +7375,31 @@ def main() -> int:
     parser.add_argument("--feasibility-escape-n-window", type=int, default=None)
     parser.add_argument("--feasibility-escape-dead-end-threshold", type=float, default=None)
     parser.add_argument("--feasibility-escape-min-temporary-slack", type=int, default=None)
+    parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-candidate-supplement-width", type=int, default=None)
+    parser.add_argument("--frg-candidate-focus-n", type=int, default=None)
+    parser.add_argument("--frg-candidate-n-window", type=int, default=None)
+    parser.add_argument("--frg-candidate-max-ranked", type=int, default=None)
+    parser.add_argument("--frg-compound-escape-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-compound-escape-width", type=int, default=None)
+    parser.add_argument("--frg-compound-escape-focus-n", type=int, default=None)
+    parser.add_argument("--frg-compound-escape-plateau-window", type=int, default=None)
+    parser.add_argument("--frg-compound-escape-plateau-delta", type=int, default=None)
+    parser.add_argument("--frg-compound-escape-cap-slack", type=int, default=None)
+    parser.add_argument("--frg-compound-escape-min-candidates", type=int, default=None)
+    parser.add_argument("--dlts-value-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--dlts-value-supplement-width", type=int, default=None)
+    parser.add_argument("--bs-frg-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-qubo-supplement-width", type=int, default=None)
+    parser.add_argument("--bs-frg-qubo-focus-n", type=int, default=None)
+    parser.add_argument("--bs-frg-qubo-n-window", type=int, default=None)
+    parser.add_argument("--bs-frg-qubo-min-candidates", type=int, default=None)
+    parser.add_argument("--bs-frg-qubo-max-vars", type=int, default=None)
+    parser.add_argument("--bs-frg-qubo-rank-weight", type=float, default=None)
+    parser.add_argument("--bs-frg-qubo-same-parent-penalty", type=float, default=None)
+    parser.add_argument("--bs-frg-qubo-signature-penalty", type=float, default=None)
+    parser.add_argument("--bs-frg-qubo-n-band-penalty", type=float, default=None)
+    parser.add_argument("--bs-frg-qubo-n-band-size", type=int, default=None)
     parser.add_argument("--wang2017-task-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang2017-task-supplement-width", type=int, default=None)
     parser.add_argument("--wang2017-task-focus-n", type=int, default=None)
@@ -6780,6 +7595,7 @@ def main() -> int:
     parser.add_argument("--qubo-time-limit", type=float, default=0.001)
     parser.add_argument("--qubo-reads", type=int, default=2)
     parser.add_argument("--qubo-iterations", type=int, default=20)
+    parser.add_argument("--deterministic-qubo-sampler", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--post-polish-qubo", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--post-polish-mode", choices=["legacy", "qubo_windows_v2"], default="legacy")
     parser.add_argument("--post-polish-accept", choices=["better", "equal_or_better"], default="better")

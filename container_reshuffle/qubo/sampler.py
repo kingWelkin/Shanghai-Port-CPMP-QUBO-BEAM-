@@ -24,6 +24,7 @@ class QuboSamplerConfig:
     num_reads: int = 50
     random_seed: int = 1
     time_limit_sec: float = 60.0
+    respect_time_limit: bool = True
     external_command: Optional[str] = None
     working_dir: Optional[str] = None
     sa_iterations: int = 5000
@@ -71,7 +72,7 @@ class SimulatedAnnealingQuboSampler(IQuboSampler):
         reads = max(1, config.num_reads)
         iterations = max(1, config.sa_iterations)
         samples: List[QuboSample] = []
-        deadline = start + max(0.001, config.time_limit_sec)
+        deadline = start + max(0.001, config.time_limit_sec) if config.respect_time_limit else math.inf
 
         for _ in range(reads):
             x = {i: rng.randint(0, 1) for i in range(n)}

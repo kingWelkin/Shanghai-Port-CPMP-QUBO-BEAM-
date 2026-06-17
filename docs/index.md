@@ -3,6 +3,7 @@
 ## 读者入口
 
 - 想了解当前主算法：看 [当前 QUBO Beam 主算法完整描述](guides/current-qubo-beam-algorithm.md)
+- 想直接知道当前最好的单一质量算法：看 [当前最佳算法说明](guides/current-best-algorithm.md)
 - 想看 QUBO 机制归因和正负结果边界：看 [QUBO 机制归因记录](guides/qubo-mechanism-attribution.md)
 - 想了解扩大 QUBO 影响为什么没有进入主线：看 [QUBO 影响增强 profile 试验记录](guides/qubo-quality-profile-probes.md)
 - 想了解实例感知 scheduler、轻 rescue 和 top-k 候选裁剪：看 [实例感知调度器试验记录](guides/instance-aware-scheduler-probes.md)

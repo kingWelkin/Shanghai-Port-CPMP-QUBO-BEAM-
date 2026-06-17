@@ -413,6 +413,7 @@ def _select_qubo_boosted(
             random_seed=args.seed,
             time_limit_sec=max(0.001, args.qubo_time_limit),
             sa_iterations=max(1, args.qubo_iterations),
+            respect_time_limit=not bool(getattr(args, "deterministic_qubo_sampler", False)),
         ),
     )
 

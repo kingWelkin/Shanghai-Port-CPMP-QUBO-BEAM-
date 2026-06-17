@@ -47,6 +47,72 @@ def test_sa_sampler_returns_samples():
     assert ss.samples
 
 
+def test_sa_sampler_can_ignore_tiny_time_limit_for_fixed_iterations():
+    model = QuboModel()
+    x = model.add_binary_var("x")
+    model.add_linear(x, -1.0)
+
+    ss = SimulatedAnnealingQuboSampler().sample(
+        model,
+        QuboSamplerConfig(
+            num_reads=5,
+            sa_iterations=20,
+            time_limit_sec=0.0,
+            respect_time_limit=False,
+        ),
+    )
+
+    assert len(ss.samples) == 5
+
+
+def test_compact_qubo_sampler_config_disables_wall_clock_limit_when_requested():
+    from benchmark_compact_beam_qubo_n0 import _qubo_sampler_config
+
+    args = _compact_args(deterministic_qubo_sampler=True)
+
+    config = _qubo_sampler_config(
+        args,
+        num_reads=2,
+        random_seed=37,
+        time_limit_sec=0.001,
+        sa_iterations=20,
+    )
+
+    assert config.respect_time_limit is False
+
+
+def test_generic_qubo_boosted_respects_deterministic_sampler_flag(monkeypatch):
+    import benchmark_target_astar_memory_n0 as target
+    from benchmark_compact_beam_qubo_n0 import make_compact_args
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+
+    captured: dict[str, bool] = {}
+
+    def fake_sample(self, model, config):
+        captured["respect_time_limit"] = config.respect_time_limit
+        return QuboSampleSet(samples=[QuboSample({0: 1, 1: 1}, 0.0)], sampler_name="fake", runtime_sec=0.0)
+
+    monkeypatch.setattr(target.SimulatedAnnealingQuboSampler, "sample", fake_sample)
+    args = make_compact_args(
+        use_qubo=True,
+        qubo_min_candidates=1,
+        qubo_core_width=0,
+        qubo_supplement_width=1,
+        max_qubo_vars=4,
+        deterministic_qubo_sampler=True,
+    )
+    candidates = {
+        bytes([idx + 1]): (1, idx, b"parent")
+        for idx in range(4)
+    }
+
+    selected, qvars, _qtime = target._select_qubo_boosted(candidates, args)
+
+    assert selected
+    assert qvars == 2
+    assert captured["respect_time_limit"] is False
+
+
 def test_qubo_beam_selection_selects_b():
     inst = Instance("x", ProblemVariant.PREMARSHALLING_CPMP, 2, 2, 2, [[1, 2], []])
     candidates = [
@@ -761,6 +827,96 @@ def test_open_priority_group_row_serializes_unified_wang_qubo_fields():
         assert row[field] == value
 
 
+def test_open_priority_group_row_serializes_frg_dlts_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_frg_dlts_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        wang_pair_qubo_calls=11,
+        wang_pair_qubo_vars=22,
+        wang_pair_qubo_time_sec=0.33,
+        frg_candidate_selected_total=13,
+        frg_compound_appended_total=3,
+        dlts_value_selected_total=7,
+    )
+    args = _compact_args(
+        wang_pair_qubo_enabled=True,
+        wang_feature_fixed_prefix_weight=3.0,
+        wang_feature_fix_pair_weight=2.0,
+        wang_feature_risk_weight=1.0,
+        wang_feature_same_parent_weight=0.5,
+        frg_candidate_supplement_enabled=True,
+        frg_candidate_supplement_width=8,
+        frg_candidate_focus_n=-1,
+        frg_candidate_n_window=2,
+        frg_candidate_max_ranked=96,
+        frg_compound_escape_enabled=True,
+        frg_compound_escape_width=2,
+        frg_compound_escape_focus_n=-1,
+        frg_compound_escape_plateau_window=5,
+        frg_compound_escape_plateau_delta=0,
+        frg_compound_escape_cap_slack=24,
+        frg_compound_escape_min_candidates=7000,
+        dlts_value_supplement_enabled=True,
+        dlts_value_supplement_width=4,
+    )
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert requires_priority_group_semantics(instance)
+    expected = {
+        "frg_candidate_supplement_enabled": True,
+        "frg_candidate_supplement_width": 8,
+        "frg_candidate_focus_n": -1,
+        "frg_candidate_n_window": 2,
+        "frg_candidate_max_ranked": 96,
+        "frg_candidate_selected_total": 13,
+        "frg_compound_escape_enabled": True,
+        "frg_compound_escape_width": 2,
+        "frg_compound_escape_focus_n": -1,
+        "frg_compound_escape_plateau_window": 5,
+        "frg_compound_escape_plateau_delta": 0,
+        "frg_compound_escape_cap_slack": 24,
+        "frg_compound_escape_min_candidates": 7000,
+        "frg_compound_appended_total": 3,
+        "dlts_value_supplement_enabled": True,
+        "dlts_value_supplement_width": 4,
+        "dlts_value_selected_total": 7,
+        "wang_pair_qubo_enabled": True,
+        "wang_pair_qubo_calls": 11,
+        "wang_pair_qubo_vars": 22,
+        "wang_pair_qubo_time_sec": 0.33,
+        "wang_feature_fixed_prefix_weight": 3.0,
+        "wang_feature_fix_pair_weight": 2.0,
+        "wang_feature_risk_weight": 1.0,
+        "wang_feature_same_parent_weight": 0.5,
+    }
+    for field, value in expected.items():
+        assert row[field] == value
+
+
 def test_open_runner_full_quality_summary_penalizes_invalid_rows():
     from open_cpmp_benchmarks import _open_full_quality_summary
 
@@ -838,6 +994,7 @@ def _compact_args(**overrides):
         "qubo_sim_threshold": 0.80,
         "qubo_time_limit": 0.001,
         "qubo_iterations": 20,
+        "deterministic_qubo_sampler": False,
         "group_qubo_supplement": False,
         "max_group_qubo_calls": 32,
         "qubo_group_max_vars": 96,
@@ -930,6 +1087,31 @@ def _compact_args(**overrides):
         "feasibility_escape_n_window": 1,
         "feasibility_escape_dead_end_threshold": 0.45,
         "feasibility_escape_min_temporary_slack": 1,
+        "frg_candidate_supplement_enabled": False,
+        "frg_candidate_supplement_width": 0,
+        "frg_candidate_focus_n": -1,
+        "frg_candidate_n_window": 2,
+        "frg_candidate_max_ranked": 96,
+        "frg_compound_escape_enabled": False,
+        "frg_compound_escape_width": 0,
+        "frg_compound_escape_focus_n": -1,
+        "frg_compound_escape_plateau_window": 5,
+        "frg_compound_escape_plateau_delta": 0,
+        "frg_compound_escape_cap_slack": 24,
+        "frg_compound_escape_min_candidates": 7000,
+        "dlts_value_supplement_enabled": False,
+        "dlts_value_supplement_width": 0,
+        "bs_frg_qubo_enabled": False,
+        "bs_frg_qubo_supplement_width": 0,
+        "bs_frg_qubo_focus_n": -1,
+        "bs_frg_qubo_n_window": 2,
+        "bs_frg_qubo_min_candidates": 64,
+        "bs_frg_qubo_max_vars": 64,
+        "bs_frg_qubo_rank_weight": 0.05,
+        "bs_frg_qubo_same_parent_penalty": 0.35,
+        "bs_frg_qubo_signature_penalty": 0.15,
+        "bs_frg_qubo_n_band_penalty": 0.05,
+        "bs_frg_qubo_n_band_size": 1,
         "wang2017_task_enabled": False,
         "wang2017_task_supplement_width": 0,
         "wang2017_task_focus_n": 8,
@@ -1153,6 +1335,96 @@ def test_feasibility_escape_selector_is_used_inside_enhanced_frontier(monkeypatc
     assert args._feasibility_escape_added_total == 1
 
 
+def test_bs_frg_qubo_supplement_selects_quality_diverse_candidates(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    parent_a, _ = _encode([[5, 1, 4], [3, 2], [], []], stack_count, max_height)
+    parent_b, _ = _encode([[5, 4], [3, 1, 2], [], []], stack_count, max_height)
+    low_frg_a, low_n = _encode([[5, 1], [3, 2], [4], []], stack_count, max_height)
+    duplicate_parent_a, duplicate_n = _encode([[5, 1], [3], [4], [2]], stack_count, max_height)
+    low_frg_b, low_b_n = _encode([[5], [3, 1, 2], [4], []], stack_count, max_height)
+    weak, weak_n = _encode([[5, 1, 4], [3], [2], []], stack_count, max_height)
+    ranked = [
+        (weak, (weak_n, 4, parent_a)),
+        (low_frg_a, (low_n, 4, parent_a)),
+        (duplicate_parent_a, (duplicate_n, 4, parent_a)),
+        (low_frg_b, (low_b_n, 4, parent_b)),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        bs_frg_qubo_max_vars=4,
+        bs_frg_qubo_same_parent_penalty=3.0,
+        bs_frg_qubo_signature_penalty=1.0,
+    )
+
+    def fake_sample(self, model, config):
+        values = {idx: 1 for idx in range(len(model.var_index))}
+        return QuboSampleSet(samples=[QuboSample(values, model.evaluate(values))], sampler_name="fake", runtime_sec=0.25)
+
+    monkeypatch.setattr(bench.SimulatedAnnealingQuboSampler, "sample", fake_sample)
+
+    selected, qvars, qtime = bench._select_bs_frg_qubo_supplement(ranked, args, target=2)
+
+    assert qvars == 4
+    assert qtime == 0.25
+    assert selected == [duplicate_parent_a, low_frg_b]
+
+
+def test_bs_frg_qubo_selector_is_used_inside_enhanced_frontier(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    core, core_n = _encode([[5, 4], [3, 2], [1], []], stack_count, max_height)
+    chosen, chosen_n = _encode([[5, 1], [3, 2], [4], []], stack_count, max_height)
+    other, other_n = _encode([[5, 1, 4], [3], [2], []], stack_count, max_height)
+    ranked = [
+        (core, (core_n, 3, b"p0")),
+        (other, (other_n, 3, b"p1")),
+        (chosen, (chosen_n, 3, b"p2")),
+    ]
+    args = _compact_args(
+        beam_width=2,
+        core_width=1,
+        parent_core_cap=0,
+        use_qubo=True,
+        qubo_min_candidates=99,
+        bs_frg_qubo_enabled=True,
+        bs_frg_qubo_supplement_width=1,
+        bs_frg_qubo_focus_n=-1,
+        bs_frg_qubo_min_candidates=1,
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+
+    def fake_selector(rows, selector_args, target):
+        assert rows
+        assert target == 1
+        return [chosen], 3, 0.125
+
+    monkeypatch.setattr(bench, "_select_bs_frg_qubo_supplement", fake_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+    )
+
+    assert selected == [core, chosen]
+    assert chosen in selected_by_qubo
+    assert qcalls == 1
+    assert qvars == 3
+    assert qtime == 0.125
+    assert args._bs_frg_qubo_calls_done == 1
+    assert args._bs_frg_qubo_selected_total == 1
+
+
 def test_feasibility_escape_layer_active_allows_low_parent_share_plateau():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -1200,6 +1472,127 @@ def test_feasibility_escape_gate_telemetry_is_serialized():
 
     assert row["feasibility_escape_active_layers"] == 3
     assert row["feasibility_escape_gate_reasons"] == "active:3;not_plateau:5"
+
+
+def test_frg_dlts_supplement_telemetry_is_serialized():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+    from container_reshuffle.core import Instance
+
+    args = _compact_args(
+        frg_candidate_supplement_enabled=True,
+        frg_candidate_supplement_width=8,
+        dlts_value_supplement_enabled=True,
+        dlts_value_supplement_width=4,
+    )
+    result = CompactBeamResult(
+        case="case_a",
+        status="done",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        frg_candidate_selected_total=2,
+        frg_compound_appended_total=3,
+        dlts_value_selected_total=1,
+    )
+    row = _row_dict_from_instance_result(
+        result,
+        Instance("case_a", ProblemVariant.PREMARSHALLING_CPMP, 1, 2, 2, [[2, 1]]),
+        args,
+    )
+
+    assert row["frg_candidate_supplement_enabled"] is True
+    assert row["frg_candidate_supplement_width"] == 8
+    assert row["frg_candidate_selected_total"] == 2
+    assert row["frg_compound_appended_total"] == 3
+    assert row["dlts_value_supplement_enabled"] is True
+    assert row["dlts_value_supplement_width"] == 4
+    assert row["dlts_value_selected_total"] == 1
+
+
+def test_bs_frg_qubo_telemetry_is_serialized():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+    from container_reshuffle.core import Instance
+
+    args = _compact_args(
+        bs_frg_qubo_enabled=True,
+        bs_frg_qubo_supplement_width=4,
+        bs_frg_qubo_focus_n=-1,
+        bs_frg_qubo_n_window=2,
+        bs_frg_qubo_max_vars=64,
+    )
+    result = CompactBeamResult(
+        case="case_a",
+        status="done",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        bs_frg_qubo_calls=2,
+        bs_frg_qubo_vars=8,
+        bs_frg_qubo_time_sec=0.125,
+        bs_frg_qubo_selected_total=3,
+    )
+    row = _row_dict_from_instance_result(
+        result,
+        Instance("case_a", ProblemVariant.PREMARSHALLING_CPMP, 1, 2, 2, [[2, 1]]),
+        args,
+    )
+
+    assert row["bs_frg_qubo_enabled"] is True
+    assert row["bs_frg_qubo_supplement_width"] == 4
+    assert row["bs_frg_qubo_focus_n"] == -1
+    assert row["bs_frg_qubo_calls"] == 2
+    assert row["bs_frg_qubo_vars"] == 8
+    assert row["bs_frg_qubo_time_sec"] == 0.125
+    assert row["bs_frg_qubo_selected_total"] == 3
+
+
+def test_deterministic_qubo_sampler_flag_is_serialized():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+    from container_reshuffle.core import Instance
+
+    args = _compact_args(deterministic_qubo_sampler=True)
+    result = CompactBeamResult(
+        case="case_a",
+        status="done",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+    )
+
+    row = _row_dict_from_instance_result(
+        result,
+        Instance("case_a", ProblemVariant.PREMARSHALLING_CPMP, 1, 2, 2, [[2, 1]]),
+        args,
+    )
+
+    assert row["deterministic_qubo_sampler"] is True
 
 
 def test_wang2017_task_features_infer_move_and_penalize_stable_loss():
@@ -1266,6 +1659,24 @@ def test_solver_profile_scheduler_state_v5_wang2017_task_polish_extends_rescue_p
     assert args.wang2017_task_focus_n < 0
 
 
+def test_solver_profile_scheduler_state_v5_bs_frg_qubo_polish_extends_rescue_polish(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_bs_frg_qubo_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_bs_frg_qubo_polish"
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.bs_frg_qubo_enabled is True
+    assert args.bs_frg_qubo_supplement_width > 0
+    assert args.bs_frg_qubo_focus_n == 8
+    assert args.bs_frg_qubo_max_vars <= 64
+
+
 def test_solver_profile_scheduler_state_v5_wang_rescue_light_polish_is_bounded(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
 
@@ -1277,10 +1688,10 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_light_polish_is_bounded(m
     assert args.solver_profile == "scheduler_state_v5_wang_rescue_light_polish"
     assert args.rescue_enabled is True
     assert args.wang_pair_qubo_enabled is True
-    assert args.wang_pair_qubo_focus_n == 8
-    assert args.wang_pair_qubo_supplement_width == 6
-    assert args.wang_pair_qubo_max_vars == 24
-    assert args.wang_pair_qubo_select == 6
+    assert args.wang_pair_qubo_focus_n == -1
+    assert args.wang_pair_qubo_supplement_width == 8
+    assert args.wang_pair_qubo_max_vars == 32
+    assert args.wang_pair_qubo_select == 8
     assert args.rescue_qubo_supplement_width == 32
     assert args.rescue_max_qubo_vars == 64
     assert args.post_polish_qubo is True
@@ -1478,6 +1889,48 @@ def test_open_runner_passes_beam_survivor_telemetry_output():
     args = _args_for_variant(outer, "qubo_scheduler_state_v5")
 
     assert Path(args.beam_survivor_telemetry_output).as_posix().endswith("docs/experiments/beam_survivor.csv")
+
+
+def test_open_runner_passes_deterministic_qubo_sampler_flag():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_wang_rescue_polish",
+            "--deterministic-qubo-sampler",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
+
+    assert args.deterministic_qubo_sampler is True
+
+
+def test_open_runner_passes_bs_frg_qubo_overrides():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "--bs-frg-qubo-supplement-width",
+            "5",
+            "--bs-frg-qubo-min-candidates",
+            "12",
+            "--bs-frg-qubo-max-vars",
+            "32",
+            "--bs-frg-qubo-same-parent-penalty",
+            "0.7",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_bs_frg_qubo_polish")
+
+    assert args.bs_frg_qubo_supplement_width == 5
+    assert args.bs_frg_qubo_min_candidates == 12
+    assert args.bs_frg_qubo_max_vars == 32
+    assert args.bs_frg_qubo_same_parent_penalty == 0.7
 
 
 def test_open_runner_passes_frontier_width_overrides():
@@ -1785,6 +2238,32 @@ def test_wang_probe_fixed_prefix_allows_repeated_priority_groups():
     code, _n = _encode([[5, 5, 3], [4, 2, 4], []], 3, 4)
 
     assert _compact_wang_fixed_prefix_score(code, stack_count=3, max_height=4) == 5
+
+
+def test_wang_stack_feature_cache_reuses_shared_chunks():
+    from benchmark_compact_beam_qubo_n0 import (
+        _compact_wang_fix_pair_score,
+        _compact_wang_fixed_prefix_score,
+        _compact_wang_stack_features,
+    )
+    from run_business_exact_target_search_sqlite import _encode
+
+    _compact_wang_fix_pair_score.cache_clear()
+    _compact_wang_fixed_prefix_score.cache_clear()
+    _compact_wang_stack_features.cache_clear()
+
+    first, _first_n = _encode([[5, 4], [3, 1, 2], []], 3, 3)
+    second, _second_n = _encode([[5, 4], [3, 2, 1], []], 3, 3)
+
+    assert _compact_wang_fixed_prefix_score(first, 3, 3) >= 0
+    assert _compact_wang_fix_pair_score(first, 3, 3) >= 0
+    before = _compact_wang_stack_features.cache_info()
+
+    assert _compact_wang_fixed_prefix_score(second, 3, 3) >= 0
+    assert _compact_wang_fix_pair_score(second, 3, 3) >= 0
+    after = _compact_wang_stack_features.cache_info()
+
+    assert after.hits > before.hits
 
 
 def test_solver_profile_wang_probe_v1_uses_protected_supplement(monkeypatch):
@@ -2124,6 +2603,204 @@ def test_wang_pair_qubo_supplement_selects_high_fix_pair_candidate():
 
     assert selected == [probe_code]
     assert qvars == 2
+
+
+def test_frg_candidate_supplement_prefers_fill_transition_score():
+    from benchmark_compact_beam_qubo_n0 import _select_frg_candidate_supplement
+    from run_business_exact_target_search_sqlite import _encode
+
+    parent_code, _parent_n = _encode([[6, 5], [4, 7, 2], [3], []], 4, 3)
+    reduce_code, _reduce_n = _encode([[6], [4, 7, 2], [3, 5], []], 4, 3)
+    fill_code, _fill_n = _encode([[6, 5, 2], [4, 7], [3], []], 4, 3)
+    ranked = [
+        (reduce_code, (3, 10, parent_code)),
+        (fill_code, (3, 10, parent_code)),
+    ]
+    args = _compact_args(
+        _stack_count=4,
+        _max_height=3,
+        frg_candidate_supplement_enabled=True,
+        frg_candidate_focus_n=-1,
+        frg_candidate_n_window=2,
+        frg_candidate_max_ranked=8,
+    )
+
+    selected = _select_frg_candidate_supplement(ranked, args, target=1)
+
+    assert selected == [fill_code]
+
+
+def test_frg_and_dlts_supplements_are_used_inside_enhanced_frontier(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    core_code, core_n = _encode([[6, 5], [4, 7, 2], [3], []], stack_count, max_height)
+    frg_code, frg_n = _encode([[6, 5, 2], [4, 7], [3], []], stack_count, max_height)
+    dlts_code, dlts_n = _encode([[6, 5], [4, 7], [3, 2], []], stack_count, max_height)
+    parent_code = core_code
+    ranked = [
+        (core_code, (core_n, 8, parent_code)),
+        (frg_code, (frg_n, 9, parent_code)),
+        (dlts_code, (dlts_n, 9, parent_code)),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        use_qubo=True,
+        qubo_min_candidates=99,
+        frg_candidate_supplement_enabled=True,
+        frg_candidate_supplement_width=1,
+        dlts_value_supplement_enabled=True,
+        dlts_value_supplement_width=1,
+    )
+
+    def fake_frg(rows, selector_args, target):
+        assert rows
+        assert selector_args is args
+        assert target == 1
+        return [frg_code]
+
+    def fake_dlts(rows, selector_args, target):
+        assert rows
+        assert selector_args is args
+        assert target == 1
+        return [dlts_code]
+
+    monkeypatch.setattr(bench, "_select_frg_candidate_supplement", fake_frg)
+    monkeypatch.setattr(bench, "_select_dlts_value_supplement", fake_dlts)
+
+    selected, _selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=3,
+        core_width=1,
+        qubo_supplement_width=0,
+    )
+
+    assert selected == [core_code, frg_code, dlts_code]
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+    assert args._frg_candidate_selected_total == 1
+    assert args._dlts_value_selected_total == 1
+
+
+def test_frg_compound_escape_gate_requires_plateau_tight_slack_and_pressure():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        frg_compound_escape_enabled=True,
+        frg_compound_escape_focus_n=-1,
+        frg_compound_escape_plateau_window=4,
+        frg_compound_escape_plateau_delta=0,
+        frg_compound_escape_cap_slack=12,
+        frg_compound_escape_min_candidates=5000,
+        _best_n_history=[16, 16, 16, 16],
+        _layer_candidate_count=6000,
+        _layer_depth_slack=12,
+    )
+
+    assert bench._frg_compound_escape_active(args, best_n=16)
+
+    args._layer_depth_slack = 13
+    assert not bench._frg_compound_escape_active(args, best_n=16)
+
+    args._layer_depth_slack = 12
+    args._best_n_history = [18, 17, 16, 16]
+    assert not bench._frg_compound_escape_active(args, best_n=16)
+
+    args._best_n_history = [16, 16, 16, 16]
+    args._layer_candidate_count = 4999
+    assert not bench._frg_compound_escape_active(args, best_n=16)
+
+
+def test_frg_compound_guard_requires_small_residual_pressure_and_parent_diversity():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent_a = b"a" * 25
+    parent_b = b"b" * 25
+    parent_c = b"c" * 25
+    origins = [b"1" * 25, b"2" * 25, b"3" * 25, b"4" * 25]
+    candidates = {
+        origins[0]: (16, 8, parent_a),
+        origins[1]: (16, 9, parent_b),
+        origins[2]: (17, 8, parent_c),
+        origins[3]: (17, 9, parent_c),
+    }
+    args = _compact_args(
+        frg_compound_guard_enabled=True,
+        frg_compound_guard_max_stack_count=5,
+        frg_compound_guard_max_initial_n=18,
+        frg_compound_guard_min_best_n=12,
+        frg_compound_guard_max_best_n=18,
+        frg_compound_guard_min_candidates=1000,
+        frg_compound_guard_min_parent_count=3,
+        frg_compound_guard_max_parent_share=0.75,
+        _stack_count=5,
+        _initial_n=15,
+        _layer_candidate_count=5000,
+    )
+
+    assert bench._frg_compound_guard_accepts(args, best_n=16, origins=origins, candidates=candidates)
+
+    args._stack_count = 7
+    assert not bench._frg_compound_guard_accepts(args, best_n=16, origins=origins, candidates=candidates)
+
+    args._stack_count = 5
+    assert not bench._frg_compound_guard_accepts(args, best_n=20, origins=origins, candidates=candidates)
+
+    args._initial_n = 20
+    assert not bench._frg_compound_guard_accepts(args, best_n=16, origins=origins, candidates=candidates)
+
+    args._initial_n = 15
+    args._layer_candidate_count = 999
+    assert not bench._frg_compound_guard_accepts(args, best_n=16, origins=origins, candidates=candidates)
+
+    args._layer_candidate_count = 5000
+    collapsed = {code: (16, 8, parent_a) for code in origins}
+    assert not bench._frg_compound_guard_accepts(args, best_n=16, origins=origins, candidates=collapsed)
+
+
+def test_append_frg_compound_frontier_adds_best_legal_successor():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    parent_code, _parent_n = _encode([[6, 5], [4, 7, 2], [3], []], stack_count, max_height)
+    expected_child, _expected_n = _encode([[2], [3], [4, 7], [6, 5]], stack_count, max_height)
+    selected_codes = [parent_code]
+    candidates = {parent_code: (2, 10, b"root")}
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        frg_compound_escape_enabled=True,
+        frg_compound_escape_width=1,
+        frg_compound_escape_focus_n=-1,
+        frg_compound_escape_plateau_window=4,
+        frg_compound_escape_plateau_delta=0,
+        frg_compound_escape_cap_slack=12,
+        frg_compound_escape_min_candidates=5000,
+        _best_n_history=[2, 2, 2, 2],
+        _layer_candidate_count=6000,
+        _layer_depth_slack=12,
+    )
+
+    added = bench._append_frg_compound_frontier(
+        selected_codes,
+        candidates,
+        args,
+        depth_cap=99,
+        best_depth={},
+    )
+
+    assert added == {expected_child}
+    assert selected_codes == [parent_code, expected_child]
+    assert candidates[expected_child] == (1, 11, parent_code)
+    assert args._frg_compound_appended_total == 1
 
 
 def test_unified_wang_selector_is_used_inside_enhanced_frontier(monkeypatch):
@@ -2642,6 +3319,87 @@ def test_solver_profile_scheduler_state_v5_feasibility_escape_polish_extends_res
     assert args.feasibility_escape_enabled is True
     assert args.feasibility_escape_supplement_width > 0
     assert args.feasibility_escape_dead_end_threshold > 0.0
+
+
+def test_solver_profile_scheduler_state_v5_frg_dlts_polish_extends_current_best(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_frg_dlts_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_frg_dlts_polish"
+    assert args.post_polish_qubo is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.wang_pair_qubo_enabled is True
+    assert args.frg_candidate_supplement_enabled is True
+    assert args.frg_candidate_supplement_width == 8
+    assert args.frg_compound_escape_enabled is False
+    assert args.dlts_value_supplement_enabled is True
+    assert args.dlts_value_supplement_width == 4
+
+
+def test_solver_profile_scheduler_state_v5_frg_compound_polish_is_gated(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_frg_compound_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_frg_compound_polish"
+    assert args.post_polish_qubo is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.frg_candidate_supplement_enabled is True
+    assert args.dlts_value_supplement_enabled is True
+    assert args.frg_compound_escape_enabled is True
+    assert args.frg_compound_escape_width == 2
+    assert args.frg_compound_escape_plateau_window == 5
+    assert args.frg_compound_escape_cap_slack == 24
+    assert args.frg_compound_escape_min_candidates == 7000
+
+
+def test_solver_profile_scheduler_state_v5_frg_compound_loose_polish_is_residual_probe(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_frg_compound_loose_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_frg_compound_loose_polish"
+    assert args.frg_candidate_supplement_enabled is True
+    assert args.dlts_value_supplement_enabled is True
+    assert args.frg_compound_escape_enabled is True
+    assert args.frg_compound_escape_width == 1
+    assert args.frg_compound_escape_plateau_window == 2
+    assert args.frg_compound_escape_cap_slack == 99
+    assert args.frg_compound_escape_min_candidates == 1
+
+
+def test_solver_profile_scheduler_state_v5_frg_compound_guarded_polish_uses_gate_stack(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_frg_compound_guarded_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_frg_compound_guarded_polish"
+    assert args.frg_candidate_supplement_enabled is False
+    assert args.dlts_value_supplement_enabled is False
+    assert args.frg_compound_escape_enabled is True
+    assert args.frg_compound_escape_width == 1
+    assert args.frg_compound_escape_plateau_window == 2
+    assert args.frg_compound_escape_cap_slack == 99
+    assert args.frg_compound_escape_min_candidates == 1000
+    assert args.frg_compound_guard_enabled is True
+    assert args.frg_compound_guard_max_stack_count == 5
+    assert args.frg_compound_guard_max_initial_n == 18
+    assert args.frg_compound_guard_min_best_n == 12
+    assert args.frg_compound_guard_max_best_n == 18
+    assert args.frg_compound_guard_min_parent_count == 3
 
 
 def test_solver_profile_scheduler_state_v5_wang_rescue_suffix_polish_skips_windows(monkeypatch):
@@ -4000,6 +4758,81 @@ def test_open_runner_accepts_feasibility_escape_variant():
     assert "qubo_scheduler_state_v5_feasibility_escape_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_accepts_frg_dlts_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_frg_dlts_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_frg_dlts_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_frg_dlts_polish"
+    assert "qubo_scheduler_state_v5_frg_dlts_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_bs_frg_qubo_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_bs_frg_qubo_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_bs_frg_qubo_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_bs_frg_qubo_polish"
+    assert "qubo_scheduler_state_v5_bs_frg_qubo_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_frg_compound_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_frg_compound_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_frg_compound_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_frg_compound_polish"
+    assert "qubo_scheduler_state_v5_frg_compound_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_frg_compound_loose_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_frg_compound_loose_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_frg_compound_loose_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_frg_compound_loose_polish"
+    assert "qubo_scheduler_state_v5_frg_compound_loose_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_frg_compound_guarded_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_frg_compound_guarded_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_frg_compound_guarded_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_frg_compound_guarded_polish"
+    assert "qubo_scheduler_state_v5_frg_compound_guarded_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_passes_frg_compound_overrides():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_frg_compound_polish",
+            "--frg-compound-escape-width",
+            "4",
+            "--frg-compound-escape-plateau-window",
+            "2",
+            "--frg-compound-escape-cap-slack",
+            "99",
+            "--frg-compound-escape-min-candidates",
+            "1",
+        ]
+    )
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_frg_compound_polish")
+
+    assert args.frg_compound_escape_width == 4
+    assert args.frg_compound_escape_plateau_window == 2
+    assert args.frg_compound_escape_cap_slack == 99
+    assert args.frg_compound_escape_min_candidates == 1
+
+
 def test_open_runner_accepts_wang2017_task_variant():
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
 
@@ -4108,6 +4941,11 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_feasibility_escape_polish",
+        "qubo_scheduler_state_v5_frg_dlts_polish",
+        "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+        "qubo_scheduler_state_v5_frg_compound_polish",
+        "qubo_scheduler_state_v5_frg_compound_loose_polish",
+        "qubo_scheduler_state_v5_frg_compound_guarded_polish",
         "qubo_scheduler_state_v5_wang2017_task_polish",
         "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
         "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",

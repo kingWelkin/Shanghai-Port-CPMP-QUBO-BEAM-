@@ -221,6 +221,19 @@ def _unified_wang_row_fields(result, args: argparse.Namespace) -> dict[str, obje
     }
 
 
+def _wang_pair_qubo_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
+        "wang_pair_qubo_calls": getattr(result, "wang_pair_qubo_calls", 0),
+        "wang_pair_qubo_vars": getattr(result, "wang_pair_qubo_vars", 0),
+        "wang_pair_qubo_time_sec": getattr(result, "wang_pair_qubo_time_sec", 0.0),
+        "wang_feature_fixed_prefix_weight": getattr(args, "wang_feature_fixed_prefix_weight", 0.0),
+        "wang_feature_fix_pair_weight": getattr(args, "wang_feature_fix_pair_weight", 0.0),
+        "wang_feature_risk_weight": getattr(args, "wang_feature_risk_weight", 0.0),
+        "wang_feature_same_parent_weight": getattr(args, "wang_feature_same_parent_weight", 0.0),
+    }
+
+
 def _feasibility_escape_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
     return {
         "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
@@ -233,6 +246,28 @@ def _feasibility_escape_row_fields(result, args: argparse.Namespace) -> dict[str
         "feasibility_escape_added_total": result.feasibility_escape_added_total,
         "feasibility_escape_active_layers": getattr(result, "feasibility_escape_active_layers", 0),
         "feasibility_escape_gate_reasons": getattr(result, "feasibility_escape_gate_reasons", ""),
+    }
+
+
+def _frg_dlts_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "frg_candidate_supplement_enabled": getattr(args, "frg_candidate_supplement_enabled", False),
+        "frg_candidate_supplement_width": getattr(args, "frg_candidate_supplement_width", 0),
+        "frg_candidate_focus_n": getattr(args, "frg_candidate_focus_n", -1),
+        "frg_candidate_n_window": getattr(args, "frg_candidate_n_window", 2),
+        "frg_candidate_max_ranked": getattr(args, "frg_candidate_max_ranked", 96),
+        "frg_candidate_selected_total": getattr(result, "frg_candidate_selected_total", 0),
+        "frg_compound_escape_enabled": getattr(args, "frg_compound_escape_enabled", False),
+        "frg_compound_escape_width": getattr(args, "frg_compound_escape_width", 0),
+        "frg_compound_escape_focus_n": getattr(args, "frg_compound_escape_focus_n", -1),
+        "frg_compound_escape_plateau_window": getattr(args, "frg_compound_escape_plateau_window", 5),
+        "frg_compound_escape_plateau_delta": getattr(args, "frg_compound_escape_plateau_delta", 0),
+        "frg_compound_escape_cap_slack": getattr(args, "frg_compound_escape_cap_slack", 24),
+        "frg_compound_escape_min_candidates": getattr(args, "frg_compound_escape_min_candidates", 7000),
+        "frg_compound_appended_total": getattr(result, "frg_compound_appended_total", 0),
+        "dlts_value_supplement_enabled": getattr(args, "dlts_value_supplement_enabled", False),
+        "dlts_value_supplement_width": getattr(args, "dlts_value_supplement_width", 0),
+        "dlts_value_selected_total": getattr(result, "dlts_value_selected_total", 0),
     }
 
 
@@ -449,8 +484,10 @@ def _priority_group_row_dict_from_instance_result(
         "bucket_min_candidates": getattr(args, "bucket_min_candidates", 0),
         "rescue_layers_used": result.rescue_layers_used,
     }
+    row.update(_wang_pair_qubo_row_fields(result, args))
     row.update(_unified_wang_row_fields(result, args))
     row.update(_feasibility_escape_row_fields(result, args))
+    row.update(_frg_dlts_row_fields(result, args))
     row.update(_wang2017_task_row_fields(result, args))
     return row
 
@@ -720,6 +757,11 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
+            "qubo_scheduler_state_v5_frg_dlts_polish",
+            "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "qubo_scheduler_state_v5_frg_compound_polish",
+            "qubo_scheduler_state_v5_frg_compound_loose_polish",
+            "qubo_scheduler_state_v5_frg_compound_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
@@ -750,6 +792,9 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         value = getattr(args, field, None)
         if value is not None:
             overrides[field] = value
+    value = getattr(args, "deterministic_qubo_sampler", None)
+    if value is not None:
+        overrides["deterministic_qubo_sampler"] = value
     for field in (
         "survivor_parent_cap_enabled",
         "survivor_parent_cap_trigger_ratio",
@@ -891,6 +936,39 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "feasibility_escape_n_window",
         "feasibility_escape_dead_end_threshold",
         "feasibility_escape_min_temporary_slack",
+        "frg_candidate_supplement_enabled",
+        "frg_candidate_supplement_width",
+        "frg_candidate_focus_n",
+        "frg_candidate_n_window",
+        "frg_candidate_max_ranked",
+        "frg_compound_escape_enabled",
+        "frg_compound_escape_width",
+        "frg_compound_escape_focus_n",
+        "frg_compound_escape_plateau_window",
+        "frg_compound_escape_plateau_delta",
+        "frg_compound_escape_cap_slack",
+        "frg_compound_escape_min_candidates",
+        "frg_compound_guard_enabled",
+        "frg_compound_guard_max_stack_count",
+        "frg_compound_guard_max_initial_n",
+        "frg_compound_guard_min_best_n",
+        "frg_compound_guard_max_best_n",
+        "frg_compound_guard_min_candidates",
+        "frg_compound_guard_min_parent_count",
+        "frg_compound_guard_max_parent_share",
+        "dlts_value_supplement_enabled",
+        "dlts_value_supplement_width",
+        "bs_frg_qubo_enabled",
+        "bs_frg_qubo_supplement_width",
+        "bs_frg_qubo_focus_n",
+        "bs_frg_qubo_n_window",
+        "bs_frg_qubo_min_candidates",
+        "bs_frg_qubo_max_vars",
+        "bs_frg_qubo_rank_weight",
+        "bs_frg_qubo_same_parent_penalty",
+        "bs_frg_qubo_signature_penalty",
+        "bs_frg_qubo_n_band_penalty",
+        "bs_frg_qubo_n_band_size",
         "wang2017_task_enabled",
         "wang2017_task_supplement_width",
         "wang2017_task_focus_n",
@@ -968,6 +1046,16 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_light_polish"})
     if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_feasibility_escape_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_dlts_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_dlts_polish"})
+    if variant == "qubo_scheduler_state_v5_bs_frg_qubo_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_bs_frg_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_compound_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_compound_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_compound_loose_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_compound_loose_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_compound_guarded_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_compound_guarded_polish"})
     if variant == "qubo_scheduler_state_v5_wang2017_task_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang2017_task_polish"})
     if variant == "qubo_scheduler_state_v5_wang2017_task_guarded_polish":
@@ -1149,6 +1237,11 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
+            "qubo_scheduler_state_v5_frg_dlts_polish",
+            "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "qubo_scheduler_state_v5_frg_compound_polish",
+            "qubo_scheduler_state_v5_frg_compound_loose_polish",
+            "qubo_scheduler_state_v5_frg_compound_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
@@ -1277,6 +1370,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang-pair-qubo-select", type=int)
     parser.add_argument("--wang-pair-qubo-same-parent-penalty", type=float)
     parser.add_argument("--wang-probe-supplement-width", type=int)
+    parser.add_argument("--deterministic-qubo-sampler", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--unified-wang-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--unified-wang-qubo-supplement-width", type=int)
     parser.add_argument("--unified-wang-qubo-focus-n", type=int)
@@ -1299,6 +1393,31 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--feasibility-escape-n-window", type=int)
     parser.add_argument("--feasibility-escape-dead-end-threshold", type=float)
     parser.add_argument("--feasibility-escape-min-temporary-slack", type=int)
+    parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-candidate-supplement-width", type=int)
+    parser.add_argument("--frg-candidate-focus-n", type=int)
+    parser.add_argument("--frg-candidate-n-window", type=int)
+    parser.add_argument("--frg-candidate-max-ranked", type=int)
+    parser.add_argument("--frg-compound-escape-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-compound-escape-width", type=int)
+    parser.add_argument("--frg-compound-escape-focus-n", type=int)
+    parser.add_argument("--frg-compound-escape-plateau-window", type=int)
+    parser.add_argument("--frg-compound-escape-plateau-delta", type=int)
+    parser.add_argument("--frg-compound-escape-cap-slack", type=int)
+    parser.add_argument("--frg-compound-escape-min-candidates", type=int)
+    parser.add_argument("--dlts-value-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--dlts-value-supplement-width", type=int)
+    parser.add_argument("--bs-frg-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-qubo-supplement-width", type=int)
+    parser.add_argument("--bs-frg-qubo-focus-n", type=int)
+    parser.add_argument("--bs-frg-qubo-n-window", type=int)
+    parser.add_argument("--bs-frg-qubo-min-candidates", type=int)
+    parser.add_argument("--bs-frg-qubo-max-vars", type=int)
+    parser.add_argument("--bs-frg-qubo-rank-weight", type=float)
+    parser.add_argument("--bs-frg-qubo-same-parent-penalty", type=float)
+    parser.add_argument("--bs-frg-qubo-signature-penalty", type=float)
+    parser.add_argument("--bs-frg-qubo-n-band-penalty", type=float)
+    parser.add_argument("--bs-frg-qubo-n-band-size", type=int)
     parser.add_argument("--wang2017-task-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--wang2017-task-supplement-width", type=int)
     parser.add_argument("--wang2017-task-focus-n", type=int)

@@ -133,6 +133,8 @@ These directions produced useful evidence, but should not be the main line now.
 | Risk group-QUBO rescue-polish | 107/120, penalty 4986 in paired open120 | The generic feature selector is unstable on 7x5 and creates too many new failures. |
 | Suffix-only rescue polish | 118/120, penalty 3880, avg 3.883s | Skips all window repair attempts, but saves only about 0.018s average versus full polish while losing 7 full-penalty points. Keep as ablation, not default. |
 | Guarded Wang2017 task continuation as a single route | 110/120, penalty 4627 in paired open120 | Gating reduces damage versus the aggressive task profile, but still adds solved-to-unsolved regressions. Use it only through the no-regret portfolio for now. |
+| FRG/DLTS loose compound escape | 116/120, penalty 4078; residual smoke solves `5x5_cv2_test_10` | Useful residual-specialist signal, but it creates new failures on `5x5_cv2_test_12`, `7x5_cv2_test_9`, and `7x5_cv3_test_11`. Keep as guarded-trigger evidence, not default. |
+| FRG guarded loose compound escape | 118/120, penalty 3890; solves `5x5_cv2_test_10` | The gate stack fixes the loose-profile 7x5 regressions, but the full run still trails the clean best `3873` baseline and misses `7x5_cv2_test_12`. Keep as a coverage-oriented research profile, not default. |
 | Unconditional Wang rescue on internal 30 | 508 moves vs 509 for scheduler v5, much slower | Not worth making the internal default. |
 
 ## Project Hygiene
@@ -155,3 +157,6 @@ These directions produced useful evidence, but should not be the main line now.
 - `scratch_survivor_dynamic_cap_7x5_cv1_5cases_t6.csv`
 - `wang_research_all_open120_t10.csv`
 - `wang_qubo_residual_failure_autopsy_current.csv`
+- `scratch_frg_compound_loose_open120_t10.csv`
+- `scratch_frg_compound_guarded_open120.csv`
+- `frg_dlts_paper_ideas_results.md`
