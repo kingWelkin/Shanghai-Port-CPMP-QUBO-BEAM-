@@ -392,6 +392,7 @@ def _priority_group_row_dict_from_instance_result(
         "post_polish_window_successes": result.post_polish_window_successes,
         "post_polish_window_moves_saved": result.post_polish_window_moves_saved,
         "post_polish_window_time_sec": result.post_polish_window_time_sec,
+        "post_polish_successor_cache": getattr(args, "post_polish_successor_cache", False),
         "global_reservoir": getattr(args, "global_reservoir", False),
         "reservoir_size": result.reservoir_size,
         "peak_reservoir": result.peak_reservoir,
@@ -745,6 +746,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
@@ -755,6 +757,7 @@ def _variant_names(name: str) -> list[str]:
     if name == "wang_research_all":
         return [
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
@@ -969,6 +972,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "bs_frg_qubo_signature_penalty",
         "bs_frg_qubo_n_band_penalty",
         "bs_frg_qubo_n_band_size",
+        "post_polish_successor_cache",
         "wang2017_task_enabled",
         "wang2017_task_supplement_width",
         "wang2017_task_focus_n",
@@ -1042,6 +1046,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_suffix_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_successor_cache_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_light_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_light_polish"})
     if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
@@ -1235,6 +1241,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue",
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
+            "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",

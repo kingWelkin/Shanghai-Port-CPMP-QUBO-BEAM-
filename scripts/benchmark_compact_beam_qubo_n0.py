@@ -259,6 +259,7 @@ COMPACT_EXTRA_FIELDS = [
     "post_polish_window_successes",
     "post_polish_window_moves_saved",
     "post_polish_window_time_sec",
+    "post_polish_successor_cache",
     "global_reservoir",
     "reservoir_size",
     "peak_reservoir",
@@ -875,6 +876,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "post_polish_window_time_limit": 0.001,
         "post_polish_window_repair_expanded": 20000,
         "post_polish_window_repair_depth_extra": 0,
+        "post_polish_successor_cache": False,
         "tail_order_steps": 6,
         "seed": 37,
         "adaptive_high_n": 16,
@@ -1329,6 +1331,10 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
     "post_polish_window_qubo_vars": 72,
     "post_polish_window_repair_expanded": 6000,
     "post_polish_window_repair_depth_extra": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_successor_cache_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "post_polish_successor_cache": True,
 }
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_light_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_light"],
@@ -2129,6 +2135,10 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "post_polish_window_time_limit": "--post-polish-window-time-limit",
         "post_polish_window_repair_expanded": "--post-polish-window-repair-expanded",
         "post_polish_window_repair_depth_extra": "--post-polish-window-repair-depth-extra",
+        "post_polish_successor_cache": (
+            "--post-polish-successor-cache",
+            "--no-post-polish-successor-cache",
+        ),
         "adaptive_controller": "--adaptive-controller",
         "adaptive_expand_frontier": "--adaptive-expand-frontier",
         "adaptive_contract_pressure": "--adaptive-contract-pressure",
@@ -2874,7 +2884,7 @@ def _frg_best_successor(
         return None
     before = _code_to_stacks(code, stack_count, max_height)
     best: tuple[float, int, int, bytes] | None = None
-    for child_code, child_n in _successors_with_n_cached(code, int(n_value), stack_count, max_height):
+    for child_code, child_n in _successors_with_n_uncached(code, int(n_value), stack_count, max_height):
         child_depth = int(depth) + 1
         after = _code_to_stacks(child_code, stack_count, max_height)
         signals = compute_frg_transition_signals(before, after, max_height)
@@ -3028,7 +3038,7 @@ def _wang_rollout_successor(
     max_height = int(getattr(args, "_max_height", 0) or 0)
     if stack_count <= 0 or max_height <= 0:
         return None
-    successors = list(_successors_with_n_cached(code, n_value, stack_count, max_height))
+    successors = list(_successors_with_n_uncached(code, n_value, stack_count, max_height))
     if not successors:
         return None
     child_code, child_n = min(
@@ -3793,7 +3803,7 @@ def _one_step_best_n(code: bytes, n_value: int, args: argparse.Namespace) -> int
     if cached is not None:
         return cached
     best = n_value
-    for _nxt, nxt_n in _successors_with_n_cached(code, n_value, args._stack_count, args._max_height):
+    for _nxt, nxt_n in _successors_with_n_uncached(code, n_value, args._stack_count, args._max_height):
         if nxt_n < best:
             best = nxt_n
             if best == 0:
@@ -5136,7 +5146,12 @@ def _cached_push_chunk(chunk: bytes, dst_h: int, src_top: int, max_height: int) 
     return chunk[:dst_h] + bytes((src_top,)) + _zero_bytes(max_height - dst_h - 1)
 
 
-def _successors_with_n_cached(code: bytes, current_n: int, stack_count: int, max_height: int):
+def _successors_with_n_uncached(
+    code: bytes,
+    current_n: int,
+    stack_count: int,
+    max_height: int,
+):
     chunks = tuple(code[i * max_height : (i + 1) * max_height] for i in range(stack_count))
     chunk_meta = [_cached_chunk_meta(chunk, max_height) for chunk in chunks]
     seen: set[bytes] = set()
@@ -5161,6 +5176,36 @@ def _successors_with_n_cached(code: bytes, current_n: int, stack_count: int, max
                 continue
             seen.add(nxt)
             yield nxt, nxt_n
+
+
+@lru_cache(maxsize=65536)
+def _successor_tuple_cached(
+    code: bytes,
+    current_n: int,
+    stack_count: int,
+    max_height: int,
+) -> tuple[tuple[bytes, int], ...]:
+    return tuple(_successors_with_n_uncached(code, current_n, stack_count, max_height))
+
+
+def _successors_with_n_cached(code: bytes, current_n: int, stack_count: int, max_height: int):
+    return _successor_tuple_cached(code, current_n, stack_count, max_height)
+
+
+_successors_with_n_cached.cache_clear = _successor_tuple_cached.cache_clear
+_successors_with_n_cached.cache_info = _successor_tuple_cached.cache_info
+
+
+def _post_polish_successors(
+    code: bytes,
+    current_n: int,
+    stack_count: int,
+    max_height: int,
+    args: argparse.Namespace,
+):
+    if bool(getattr(args, "post_polish_successor_cache", False)):
+        return _successors_with_n_cached(code, current_n, stack_count, max_height)
+    return _successors_with_n_uncached(code, current_n, stack_count, max_height)
 
 
 class _ReverseRank:
@@ -5532,7 +5577,7 @@ def _suffix_shorter_path_to_n0(
             continue
         expanded += 1
         next_depth = depth + 1
-        for nxt, nxt_n in _successors_with_n_cached(code, current_n, stack_count, max_height):
+        for nxt, nxt_n in _post_polish_successors(code, current_n, stack_count, max_height, args):
             if offset_depth + next_depth + nxt_n > cap:
                 continue
             if nxt_n > max_depth - next_depth:
@@ -5853,7 +5898,7 @@ def _bridge_shorter_path(
         current_n = _code_n(code, stack_count, max_height)
         expanded += 1
         next_depth = depth + 1
-        for nxt, nxt_n in _successors_with_n_cached(code, current_n, stack_count, max_height):
+        for nxt, nxt_n in _post_polish_successors(code, current_n, stack_count, max_height, args):
             if offset_depth + next_depth + nxt_n > cap:
                 continue
             old_depth = depth_by_code.get(nxt)
@@ -6278,7 +6323,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 continue
             expanded += 1
             next_depth = depth + 1
-            for nxt, nxt_n in _successors_with_n_cached(code, current_n, instance.stack_count, instance.max_height):
+            for nxt, nxt_n in _successors_with_n_uncached(code, current_n, instance.stack_count, instance.max_height):
                 generated += 1
                 if next_depth + nxt_n > cap:
                     pruned_business += 1
@@ -7022,6 +7067,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "post_polish_window_successes": result.post_polish_window_successes,
             "post_polish_window_moves_saved": result.post_polish_window_moves_saved,
             "post_polish_window_time_sec": result.post_polish_window_time_sec,
+            "post_polish_successor_cache": getattr(args, "post_polish_successor_cache", False),
             "global_reservoir": getattr(args, "global_reservoir", False),
             "reservoir_size": result.reservoir_size,
             "peak_reservoir": result.peak_reservoir,
@@ -7633,6 +7679,7 @@ def main() -> int:
     parser.add_argument("--post-polish-window-time-limit", type=float, default=0.001)
     parser.add_argument("--post-polish-window-repair-expanded", type=int, default=20000)
     parser.add_argument("--post-polish-window-repair-depth-extra", type=int, default=0)
+    parser.add_argument("--post-polish-successor-cache", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--tail-order-steps", type=int, default=6)
     parser.add_argument("--seed", type=int, default=37)
     args = parser.parse_args()

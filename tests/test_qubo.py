@@ -367,6 +367,54 @@ def test_compact_cached_successors_match_reference_successors():
     assert cached_next == reference_next
 
 
+def test_compact_full_state_successor_cache_hits_on_repeated_state():
+    from benchmark_compact_beam_qubo_n0 import _successors_with_n_cached
+    from run_business_exact_target_search_sqlite import _encode, _successors_with_n
+
+    _successors_with_n_cached.cache_clear()
+    code, n_value = _encode([[5, 2], [4, 3], [1], []], 4, 3)
+
+    first = tuple(_successors_with_n_cached(code, n_value, 4, 3))
+    after_first = _successors_with_n_cached.cache_info()
+    second = tuple(_successors_with_n_cached(code, n_value, 4, 3))
+    after_second = _successors_with_n_cached.cache_info()
+
+    assert first == tuple(_successors_with_n(code, n_value, 4, 3))
+    assert second == first
+    assert after_first.misses == 1
+    assert after_second.hits == 1
+
+
+def test_compact_uncached_successor_stream_matches_reference_without_filling_full_cache():
+    from benchmark_compact_beam_qubo_n0 import _successors_with_n_cached, _successors_with_n_uncached
+    from run_business_exact_target_search_sqlite import _encode, _successors_with_n
+
+    _successors_with_n_cached.cache_clear()
+    code, n_value = _encode([[5, 2], [4, 3], [1], []], 4, 3)
+
+    stream = tuple(_successors_with_n_uncached(code, n_value, 4, 3))
+
+    assert stream == tuple(_successors_with_n(code, n_value, 4, 3))
+    assert _successors_with_n_cached.cache_info().currsize == 0
+
+
+def test_post_polish_successor_cache_gate_uses_cache_only_when_enabled():
+    from benchmark_compact_beam_qubo_n0 import _post_polish_successors, _successors_with_n_cached
+    from run_business_exact_target_search_sqlite import _encode, _successors_with_n
+
+    code, n_value = _encode([[5, 2], [4, 3], [1], []], 4, 3)
+    reference = tuple(_successors_with_n(code, n_value, 4, 3))
+
+    _successors_with_n_cached.cache_clear()
+    uncached_args = _compact_args(post_polish_successor_cache=False)
+    assert tuple(_post_polish_successors(code, n_value, 4, 3, uncached_args)) == reference
+    assert _successors_with_n_cached.cache_info().currsize == 0
+
+    cached_args = _compact_args(post_polish_successor_cache=True)
+    assert tuple(_post_polish_successors(code, n_value, 4, 3, cached_args)) == reference
+    assert _successors_with_n_cached.cache_info().currsize == 1
+
+
 def test_compact_cached_successors_deduplicate_identical_stack_moves():
     from benchmark_compact_beam_qubo_n0 import _successors_with_n_cached
     from run_business_exact_target_search_sqlite import _encode, _successors_with_n
@@ -484,6 +532,43 @@ def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
     assert row["rescue_layers_used"] == 0
     assert business_ok
     assert goal_ok, msg
+
+
+def test_open_row_serializes_post_polish_successor_cache_for_priority_group_instances():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_open_cache_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+    )
+    args = _compact_args(post_polish_successor_cache=True)
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert row["post_polish_successor_cache"] is True
 
 
 def test_unified_wang_profile_initializes_target_layouts():
@@ -1023,6 +1108,7 @@ def _compact_args(**overrides):
         "post_polish_qubo": True,
         "post_polish_mode": "legacy",
         "post_polish_accept": "better",
+        "post_polish_successor_cache": False,
         "adaptive_high_n": 16,
         "adaptive_low_n": 8,
         "adaptive_high_frontier": 800,
@@ -3301,6 +3387,22 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_an
     assert args.post_polish_mode == "qubo_windows_v2"
     assert args.post_polish_accept == "better"
     assert args.post_polish_window_select >= 1
+    assert args.post_polish_successor_cache is False
+
+
+def test_solver_profile_scheduler_state_v5_wang_rescue_successor_cache_polish_is_opt_in(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_successor_cache_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_wang_rescue_successor_cache_polish"
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.post_polish_mode == "qubo_windows_v2"
+    assert args.post_polish_successor_cache is True
 
 
 def test_solver_profile_scheduler_state_v5_feasibility_escape_polish_extends_rescue_polish(monkeypatch):
@@ -4916,6 +5018,16 @@ def test_open_runner_case_ids_filter_accepts_full_or_numeric_ids():
     assert not _case_id_selected("5x5_cv1_test_5", args.case_ids)
 
 
+def test_open_runner_accepts_wang_rescue_successor_cache_polish_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_wang_rescue_successor_cache_polish"
+    assert "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish" in _variant_names("wang_research_all")
+
+
 def test_open_runner_wang_all_expands_current_and_wang_variants():
     from open_cpmp_benchmarks import _variant_names, build_parser
 
@@ -4930,6 +5042,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue",
         "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
         "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
         "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_wang2017_task_polish",
         "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
@@ -4939,6 +5052,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
     ]
     assert _variant_names("wang_research_all") == [
         "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
         "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_feasibility_escape_polish",
         "qubo_scheduler_state_v5_frg_dlts_polish",
