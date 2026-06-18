@@ -309,6 +309,18 @@ COMPACT_EXTRA_FIELDS = [
     "scheduler_state_rescue_plateau_window",
     "scheduler_state_rescue_plateau_delta",
     "scheduler_state_rescue_cap_slack",
+    "scarcity_group_qubo_enabled",
+    "scarcity_group_qubo_threshold",
+    "scarcity_group_qubo_plateau_window",
+    "scarcity_group_qubo_plateau_delta",
+    "scarcity_group_qubo_min_best_n_ratio",
+    "scarcity_group_qubo_min_candidates",
+    "scarcity_group_qubo_min_n",
+    "initial_workload_hardness",
+    "initial_scarcity_risk",
+    "initial_scarcity_n0",
+    "initial_scarcity_l0",
+    "initial_scarcity_one_safe_ratio",
     "scheduler_state_last_action",
     "scheduler_state_last_effective_action",
     "scheduler_state_locked_action",
@@ -838,6 +850,13 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "scheduler_state_rescue_plateau_window": 3,
         "scheduler_state_rescue_plateau_delta": 0,
         "scheduler_state_rescue_cap_slack": 8,
+        "scarcity_group_qubo_enabled": False,
+        "scarcity_group_qubo_threshold": 0.95,
+        "scarcity_group_qubo_plateau_window": 2,
+        "scarcity_group_qubo_plateau_delta": 0,
+        "scarcity_group_qubo_min_best_n_ratio": 0.70,
+        "scarcity_group_qubo_min_candidates": 1000,
+        "scarcity_group_qubo_min_n": 12,
         "post_polish_qubo": True,
         "post_polish_mode": "legacy",
         "post_polish_accept": "better",
@@ -1474,6 +1493,16 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_risk_polish"] = {
     "wang_feature_risk_weight": 0.5,
     "wang_feature_same_parent_weight": 0.60,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_scarcity_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_risk_polish"],
+    "scarcity_group_qubo_enabled": True,
+    "scarcity_group_qubo_threshold": 0.95,
+    "scarcity_group_qubo_plateau_window": 2,
+    "scarcity_group_qubo_plateau_delta": 0,
+    "scarcity_group_qubo_min_best_n_ratio": 0.70,
+    "scarcity_group_qubo_min_candidates": 1000,
+    "scarcity_group_qubo_min_n": 12,
+}
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_selective_window_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "post_polish_window_select": 3,
@@ -1833,6 +1862,112 @@ class PostPolishStats:
     window_time_sec: float = 0.0
 
 
+@dataclass(frozen=True)
+class InitialScarcityMetrics:
+    n0: int
+    d0: int
+    b0: int
+    l0: int
+    one_safe_ratio: float
+    buffer_scarcity: float
+    top_pressure: float
+    dirty_spread: float
+    workload_hardness: float
+    scarcity_risk: float
+
+
+def _business_blockers_from_stacks(stacks: list[list[int]]) -> list[tuple[int, int, int]]:
+    blockers: list[tuple[int, int, int]] = []
+    for stack_idx, stack in enumerate(stacks):
+        for level in range(1, len(stack)):
+            if stack[level] > stack[level - 1]:
+                blockers.extend((stack[idx], stack_idx, idx) for idx in range(level, len(stack)))
+                break
+    return blockers
+
+
+def _safe_targets_for_box(stacks: list[list[int]], max_height: int, box: int, source_stack: int) -> list[int]:
+    targets: list[int] = []
+    for stack_idx, stack in enumerate(stacks):
+        if stack_idx == source_stack or len(stack) >= max_height:
+            continue
+        if not stack or box < min(stack):
+            targets.append(stack_idx)
+    return targets
+
+
+def _initial_scarcity_metrics(stacks: list[list[int]], max_height: int) -> InitialScarcityMetrics:
+    stack_count = len(stacks)
+    container_count = sum(len(stack) for stack in stacks)
+    blockers = _business_blockers_from_stacks(stacks)
+    n0 = len(blockers)
+    if n0 == 0 or stack_count == 0:
+        return InitialScarcityMetrics(
+            n0=n0,
+            d0=0,
+            b0=0,
+            l0=0,
+            one_safe_ratio=0.0,
+            buffer_scarcity=0.0,
+            top_pressure=0.0,
+            dirty_spread=0.0,
+            workload_hardness=0.0,
+            scarcity_risk=0.0,
+        )
+
+    dirty_stacks = {stack_idx for _box, stack_idx, _level in blockers}
+    landing_sets = [
+        _safe_targets_for_box(stacks, max_height, box, stack_idx)
+        for box, stack_idx, _level in blockers
+    ]
+    l0 = sum(len(targets) for targets in landing_sets)
+    one_safe_ratio = sum(1 for targets in landing_sets if len(targets) <= 1) / n0
+    available_target_stacks = sum(1 for stack in stacks if len(stack) < max_height)
+    buffer_capacity = n0 * max(1, available_target_stacks - 1)
+    buffer_scarcity = 1.0 - (l0 / (buffer_capacity + 1e-9))
+
+    top_blockers = 0
+    top_safe_total = 0
+    for stack_idx, stack in enumerate(stacks):
+        if not stack:
+            continue
+        top_box = stack[-1]
+        for box, blocker_stack, level in blockers:
+            if box == top_box and blocker_stack == stack_idx and level == len(stack) - 1:
+                top_blockers += 1
+                top_safe_total += len(_safe_targets_for_box(stacks, max_height, top_box, stack_idx))
+                break
+    top_pressure = min(1.0, top_blockers / (top_safe_total + 1.0))
+
+    b0 = sum(len(stacks[stack_idx]) - 1 - level for _box, stack_idx, level in blockers)
+    d0 = len(dirty_stacks)
+    dirty_spread = d0 / stack_count
+    workload_hardness = (
+        0.40 * (b0 / max(1.0, container_count * max(1, max_height - 1)))
+        + 0.35 * (n0 / max(1, container_count))
+        + 0.15 * (d0 / stack_count)
+        + 0.10 * (container_count / 40.0)
+    )
+    scarcity_risk = (
+        0.45 * one_safe_ratio
+        + 0.25 * top_pressure
+        + 0.20 * buffer_scarcity
+        + 0.10 * dirty_spread
+    )
+    return InitialScarcityMetrics(
+        n0=n0,
+        d0=d0,
+        b0=b0,
+        l0=l0,
+        one_safe_ratio=one_safe_ratio,
+        buffer_scarcity=buffer_scarcity,
+        top_pressure=top_pressure,
+        dirty_spread=dirty_spread,
+        workload_hardness=workload_hardness,
+        scarcity_risk=scarcity_risk,
+    )
+
+
 def _case_filter(args: argparse.Namespace) -> list[str]:
     if args.cases:
         return [case if case.endswith("_single") else f"{case}_single" for case in args.cases]
@@ -2098,6 +2233,13 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "scheduler_state_rescue_plateau_window": "--scheduler-state-rescue-plateau-window",
         "scheduler_state_rescue_plateau_delta": "--scheduler-state-rescue-plateau-delta",
         "scheduler_state_rescue_cap_slack": "--scheduler-state-rescue-cap-slack",
+        "scarcity_group_qubo_enabled": ("--scarcity-group-qubo-enabled", "--no-scarcity-group-qubo-enabled"),
+        "scarcity_group_qubo_threshold": "--scarcity-group-qubo-threshold",
+        "scarcity_group_qubo_plateau_window": "--scarcity-group-qubo-plateau-window",
+        "scarcity_group_qubo_plateau_delta": "--scarcity-group-qubo-plateau-delta",
+        "scarcity_group_qubo_min_best_n_ratio": "--scarcity-group-qubo-min-best-n-ratio",
+        "scarcity_group_qubo_min_candidates": "--scarcity-group-qubo-min-candidates",
+        "scarcity_group_qubo_min_n": "--scarcity-group-qubo-min-n",
         "post_polish_qubo": ("--post-polish-qubo", "--no-post-polish-qubo"),
         "post_polish_mode": "--post-polish-mode",
         "post_polish_accept": "--post-polish-accept",
@@ -3827,6 +3969,32 @@ def _group_qubo_linear_score(rows: list[tuple[bytes, tuple[int, int, bytes]]], a
     return _wang_feature_adjusted_group_score(score, rows, args)
 
 
+def _scarcity_group_qubo_active(args: argparse.Namespace) -> bool:
+    if not getattr(args, "scarcity_group_qubo_enabled", False):
+        return False
+    if float(getattr(args, "_initial_scarcity_risk", 0.0) or 0.0) < float(
+        getattr(args, "scarcity_group_qubo_threshold", 0.95) or 0.95
+    ):
+        return False
+    history = list(getattr(args, "_best_n_history", []) or [])
+    best_n = int(getattr(args, "_layer_best_n", history[-1] if history else 0) or 0)
+    if best_n < int(getattr(args, "scarcity_group_qubo_min_n", 0) or 0):
+        return False
+    initial_n = max(1, int(getattr(args, "_initial_n", best_n if best_n > 0 else 1)))
+    min_ratio = float(getattr(args, "scarcity_group_qubo_min_best_n_ratio", 0.0) or 0.0)
+    if min_ratio > 0.0 and (best_n / initial_n) < min_ratio:
+        return False
+    if int(getattr(args, "_layer_candidate_count", 0)) < int(
+        getattr(args, "scarcity_group_qubo_min_candidates", 0) or 0
+    ):
+        return False
+    window = max(2, int(getattr(args, "scarcity_group_qubo_plateau_window", 2) or 2))
+    if len(history) < window:
+        return False
+    delta = max(0, int(getattr(args, "scarcity_group_qubo_plateau_delta", 0) or 0))
+    return _plateau_active(history, window, delta)
+
+
 def _group_qubo_risk_active(args: argparse.Namespace) -> bool:
     if not getattr(args, "group_qubo_risk_gate", False):
         return True
@@ -3840,7 +4008,7 @@ def _group_qubo_risk_active(args: argparse.Namespace) -> bool:
         recent = history[-window:]
         if min(recent) == recent[0] and max(recent) - min(recent) <= getattr(args, "group_qubo_risk_plateau_delta", 0):
             return True
-    return False
+    return _scarcity_group_qubo_active(args)
 
 
 def _select_group_qubo_supplement(
@@ -6269,6 +6437,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     )
     args._case_id = case
     args._initial_n = n0
+    scarcity_metrics = _initial_scarcity_metrics(instance.stacks, instance.max_height)
+    args._initial_workload_hardness = scarcity_metrics.workload_hardness
+    args._initial_scarcity_risk = scarcity_metrics.scarcity_risk
+    args._initial_scarcity_n0 = scarcity_metrics.n0
+    args._initial_scarcity_l0 = scarcity_metrics.l0
+    args._initial_scarcity_one_safe_ratio = scarcity_metrics.one_safe_ratio
     args._layer_best_n = n0
     args._priority_duplication_ratio = _priority_duplication_ratio_for_instance(instance)
     args._fill_ratio = instance.container_count / max(1, instance.stack_count * instance.max_height)
@@ -6795,6 +6969,9 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"scheduler_adaptive_max_parent_top_share={getattr(args, 'scheduler_adaptive_max_parent_top_share', 0.0)}; "
             f"scheduler_adaptive_plateau_window={getattr(args, 'scheduler_adaptive_plateau_window', 0)}; "
             f"scheduler_adaptive_cap_slack={getattr(args, 'scheduler_adaptive_cap_slack', 0)}; "
+            f"scarcity_group_qubo_enabled={getattr(args, 'scarcity_group_qubo_enabled', False)}; "
+            f"initial_scarcity_risk={getattr(args, '_initial_scarcity_risk', 0.0):.6f}; "
+            f"initial_workload_hardness={getattr(args, '_initial_workload_hardness', 0.0):.6f}; "
             f"scheduler_state_controller={getattr(args, 'scheduler_state_controller', 'off')}; "
             f"scheduler_state_contract_pressure={getattr(args, 'scheduler_state_contract_pressure', 0.0)}; "
             f"scheduler_state_max_contract_pressure={getattr(args, 'scheduler_state_max_contract_pressure', 0.0)}; "
@@ -7117,6 +7294,18 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "scheduler_state_rescue_plateau_window": getattr(args, "scheduler_state_rescue_plateau_window", 0),
             "scheduler_state_rescue_plateau_delta": getattr(args, "scheduler_state_rescue_plateau_delta", 0),
             "scheduler_state_rescue_cap_slack": getattr(args, "scheduler_state_rescue_cap_slack", 0),
+            "scarcity_group_qubo_enabled": getattr(args, "scarcity_group_qubo_enabled", False),
+            "scarcity_group_qubo_threshold": getattr(args, "scarcity_group_qubo_threshold", 0.0),
+            "scarcity_group_qubo_plateau_window": getattr(args, "scarcity_group_qubo_plateau_window", 0),
+            "scarcity_group_qubo_plateau_delta": getattr(args, "scarcity_group_qubo_plateau_delta", 0),
+            "scarcity_group_qubo_min_best_n_ratio": getattr(args, "scarcity_group_qubo_min_best_n_ratio", 0.0),
+            "scarcity_group_qubo_min_candidates": getattr(args, "scarcity_group_qubo_min_candidates", 0),
+            "scarcity_group_qubo_min_n": getattr(args, "scarcity_group_qubo_min_n", 0),
+            "initial_workload_hardness": getattr(args, "_initial_workload_hardness", 0.0),
+            "initial_scarcity_risk": getattr(args, "_initial_scarcity_risk", 0.0),
+            "initial_scarcity_n0": getattr(args, "_initial_scarcity_n0", 0),
+            "initial_scarcity_l0": getattr(args, "_initial_scarcity_l0", 0),
+            "initial_scarcity_one_safe_ratio": getattr(args, "_initial_scarcity_one_safe_ratio", 0.0),
             "scheduler_state_last_action": getattr(args, "_scheduler_state_last_action", ""),
             "scheduler_state_last_effective_action": getattr(args, "_scheduler_state_last_effective_action", ""),
             "scheduler_state_locked_action": getattr(args, "_scheduler_state_locked_action", ""),
@@ -7592,6 +7781,13 @@ def main() -> int:
     parser.add_argument("--scheduler-state-rescue-plateau-window", type=int, default=3)
     parser.add_argument("--scheduler-state-rescue-plateau-delta", type=int, default=0)
     parser.add_argument("--scheduler-state-rescue-cap-slack", type=int, default=8)
+    parser.add_argument("--scarcity-group-qubo-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--scarcity-group-qubo-threshold", type=float, default=0.95)
+    parser.add_argument("--scarcity-group-qubo-plateau-window", type=int, default=2)
+    parser.add_argument("--scarcity-group-qubo-plateau-delta", type=int, default=0)
+    parser.add_argument("--scarcity-group-qubo-min-best-n-ratio", type=float, default=0.70)
+    parser.add_argument("--scarcity-group-qubo-min-candidates", type=int, default=1000)
+    parser.add_argument("--scarcity-group-qubo-min-n", type=int, default=12)
     parser.add_argument("--bucket-key", choices=["n_depth", "f_n", "n_band"], default="n_depth")
     parser.add_argument("--bucket-n-band-size", type=int, default=2)
     parser.add_argument("--bucket-core-ratio", type=float, default=0.50)

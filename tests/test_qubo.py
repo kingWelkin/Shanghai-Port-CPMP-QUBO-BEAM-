@@ -3390,6 +3390,65 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_polish_combines_rescue_an
     assert args.post_polish_successor_cache is False
 
 
+def test_initial_scarcity_metrics_detect_high_risk_unique_case():
+    from benchmark_compact_beam_qubo_n0 import _initial_scarcity_metrics
+
+    stacks = [
+        [14, 7, 12, 20, 5],
+        [18, 3, 25, 23, 17],
+        [9, 19, 15, 11, 21],
+        [24, 2, 13, 4, 8],
+        [1, 16, 10, 22, 6],
+    ]
+
+    metrics = _initial_scarcity_metrics(stacks, max_height=7)
+
+    assert metrics.n0 == 17
+    assert metrics.l0 == 5
+    assert metrics.one_safe_ratio > 0.94
+    assert metrics.scarcity_risk > 0.95
+
+
+def test_scheduler_state_scarcity_profile_opens_group_qubo_on_high_static_risk(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, _group_qubo_risk_active
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_scarcity_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+    _apply_solver_profile(args)
+
+    assert args.group_qubo_supplement is True
+    assert args.group_qubo_risk_gate is True
+    assert args.scarcity_group_qubo_enabled is True
+    args._initial_scarcity_risk = args.scarcity_group_qubo_threshold + 0.01
+    args._best_n_history = [17, 17]
+    args._initial_n = 17
+    args._layer_best_n = 17
+    args._priority_duplication_ratio = 0.0
+    args._layer_candidate_count = args.group_qubo_risk_min_candidates - 1
+    args._layer_parent_top_share = args.group_qubo_risk_parent_share - 0.01
+    args._layer_top_n_band = 0
+    args._layer_depth_slack = 50
+
+    assert _group_qubo_risk_active(args) is True
+
+
+def test_scarcity_profile_does_not_override_rescue_cap_slack(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, _rescue_layer_active
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_scarcity_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+    _apply_solver_profile(args)
+
+    args._initial_scarcity_risk = args.scarcity_group_qubo_threshold + 0.01
+    args._best_n_history = [17, 17]
+    args._initial_n = 17
+    args._rescue_layers_used = 0
+    args._layer_candidate_count = 13000
+    args._layer_depth_slack = args.rescue_cap_slack + 20
+
+    assert _rescue_layer_active(args, best_n=17) is False
+
+
 def test_solver_profile_scheduler_state_v5_wang_rescue_successor_cache_polish_is_opt_in(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
 
@@ -5395,6 +5454,8 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
         "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
         "qubo_scheduler_state_v5_wang_rescue_risk_polish",
+        "qubo_scheduler_state_v5_wang_rescue_scarcity_polish",
+        "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
         "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
     ]
 
@@ -5421,6 +5482,8 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     polish_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
     dynamic_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_dynamic_polish")
     risk_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_risk_polish")
+    scarcity_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_scarcity_polish")
+    routed_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish")
     selective_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_selective_window_polish")
     wang2017_task_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_polish")
     wang2017_guarded_args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang2017_task_guarded_polish")
@@ -5430,12 +5493,51 @@ def test_open_runner_accepts_wang_feature_and_rescue_polish_variants():
     assert polish_args.solver_profile == "scheduler_state_v5_wang_rescue_polish"
     assert dynamic_args.solver_profile == "scheduler_state_v5_wang_rescue_dynamic_polish"
     assert risk_args.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
+    assert scarcity_args.solver_profile == "scheduler_state_v5_wang_rescue_scarcity_polish"
+    assert routed_args.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
     assert selective_args.solver_profile == "scheduler_state_v5_wang_rescue_selective_window_polish"
     assert wang2017_task_args.solver_profile == "scheduler_state_v5_wang2017_task_polish"
     assert wang2017_guarded_args.solver_profile == "scheduler_state_v5_wang2017_task_guarded_polish"
     assert "qubo_scheduler_state_v5_wang_features" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_suffix_polish" in _variant_names("wang_all")
     assert "qubo_scheduler_state_v5_wang_rescue_polish" in _variant_names("wang_all")
+
+
+def test_open_runner_hardness_routed_variant_selects_light_only_for_low_workload_scarcity():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish"])
+    low_workload_scarcity = Instance(
+        "low_workload_scarcity",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        5,
+        7,
+        25,
+        [[4, 2, 10, 11, 1], [1, 11, 12, 12, 7], [9, 9, 4, 2, 3], [7, 8, 8, 12, 5], [6, 3, 10, 6, 5]],
+    )
+    high_workload_scarcity = Instance(
+        "high_workload_scarcity",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        5,
+        7,
+        25,
+        [[14, 7, 12, 20, 5], [18, 3, 25, 23, 17], [9, 19, 15, 11, 21], [24, 2, 13, 4, 8], [1, 16, 10, 22, 6]],
+    )
+
+    routed_light = _args_for_variant(
+        outer,
+        "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
+        low_workload_scarcity,
+    )
+    routed_risk = _args_for_variant(
+        outer,
+        "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
+        high_workload_scarcity,
+    )
+
+    assert routed_light.solver_profile == "scheduler_state_v5_wang_rescue_light_polish"
+    assert routed_risk.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
+    assert "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish" in _variant_names("wang_research_all")
 
 
 def test_open_runner_bucket_variant_passes_bucket_selection_args():

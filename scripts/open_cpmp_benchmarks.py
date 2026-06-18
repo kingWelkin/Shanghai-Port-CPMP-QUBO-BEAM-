@@ -26,6 +26,7 @@ from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
     COMPACT_RESULT_FIELDS,
     SOLVER_NAME,
     _SOLVER_PROFILES,
+    _initial_scarcity_metrics,
     _reset_beam_survivor_output,
     _row_dict_from_instance_result,
     _validate_instance_result,
@@ -542,6 +543,18 @@ def _priority_group_row_dict_from_instance_result(
         "bucket_qubo_select": getattr(args, "bucket_qubo_select", 0),
         "bucket_min_candidates": getattr(args, "bucket_min_candidates", 0),
         "rescue_layers_used": result.rescue_layers_used,
+        "scarcity_group_qubo_enabled": getattr(args, "scarcity_group_qubo_enabled", False),
+        "scarcity_group_qubo_threshold": getattr(args, "scarcity_group_qubo_threshold", 0.0),
+        "scarcity_group_qubo_plateau_window": getattr(args, "scarcity_group_qubo_plateau_window", 0),
+        "scarcity_group_qubo_plateau_delta": getattr(args, "scarcity_group_qubo_plateau_delta", 0),
+        "scarcity_group_qubo_min_best_n_ratio": getattr(args, "scarcity_group_qubo_min_best_n_ratio", 0.0),
+        "scarcity_group_qubo_min_candidates": getattr(args, "scarcity_group_qubo_min_candidates", 0),
+        "scarcity_group_qubo_min_n": getattr(args, "scarcity_group_qubo_min_n", 0),
+        "initial_workload_hardness": getattr(args, "_initial_workload_hardness", 0.0),
+        "initial_scarcity_risk": getattr(args, "_initial_scarcity_risk", 0.0),
+        "initial_scarcity_n0": getattr(args, "_initial_scarcity_n0", 0),
+        "initial_scarcity_l0": getattr(args, "_initial_scarcity_l0", 0),
+        "initial_scarcity_one_safe_ratio": getattr(args, "_initial_scarcity_one_safe_ratio", 0.0),
     }
     row.update(_wang_pair_qubo_row_fields(result, args))
     row.update(_unified_wang_row_fields(result, args))
@@ -828,6 +841,8 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
+            "qubo_scheduler_state_v5_wang_rescue_scarcity_polish",
+            "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
         ]
     return [name]
@@ -1128,6 +1143,21 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_dynamic_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_risk_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_risk_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_scarcity_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_scarcity_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish":
+        selected_profile = "scheduler_state_v5_wang_rescue_risk_polish"
+        if instance is not None:
+            metrics = _initial_scarcity_metrics(instance.stacks, instance.max_height)
+            if (
+                instance.stack_count <= 6
+                and metrics.n0 >= 12
+                and metrics.scarcity_risk >= 0.95
+                and metrics.workload_hardness <= 0.49
+                and metrics.one_safe_ratio >= 0.90
+            ):
+                selected_profile = "scheduler_state_v5_wang_rescue_light_polish"
+        overrides.update({"solver_profile": selected_profile})
     if variant == "qubo_scheduler_state_v5_wang_rescue_selective_window_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_selective_window_polish"})
     if variant == "qubo_scheduler_state_v5_wang_hybrid":
@@ -1360,6 +1390,8 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
             "qubo_scheduler_state_v5_wang_rescue_dynamic_polish",
             "qubo_scheduler_state_v5_wang_rescue_risk_polish",
+            "qubo_scheduler_state_v5_wang_rescue_scarcity_polish",
+            "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
             "qubo_scheduler_state_v5_wang_rescue_selective_window_polish",
             "qubo_scheduler_state_v5_wang_hybrid",
             "qubo_scheduler_state_v7_wang_qubo_unified",
