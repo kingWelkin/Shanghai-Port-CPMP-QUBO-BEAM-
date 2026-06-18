@@ -1066,6 +1066,7 @@ def _compact_args(**overrides):
         "qubo_core_width": 224,
         "qubo_supplement_width": 24,
         "qubo_min_candidates": 64,
+        "qubo_start_layer": 0,
         "qubo_focus_n": 8,
         "qubo_first": False,
         "qubo_target_share": 0.5,
@@ -1167,6 +1168,7 @@ def _compact_args(**overrides):
         "unified_wang_complement_bonus": 0.0,
         "unified_wang_rollout_bonus": 0.0,
         "wang_rollout_inject_candidates": False,
+        "wang_pair_qubo_start_layer": 0,
         "feasibility_escape_enabled": False,
         "feasibility_escape_supplement_width": 0,
         "feasibility_escape_focus_n": 8,
@@ -1509,6 +1511,117 @@ def test_bs_frg_qubo_selector_is_used_inside_enhanced_frontier(monkeypatch):
     assert qtime == 0.125
     assert args._bs_frg_qubo_calls_done == 1
     assert args._bs_frg_qubo_selected_total == 1
+
+
+def test_enhanced_frontier_respects_generic_qubo_start_layer(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (b"core", (5, 1, b"p0")),
+        (b"chosen", (5, 1, b"p1")),
+    ]
+    args = _compact_args(
+        beam_width=1,
+        core_width=0,
+        parent_core_cap=0,
+        use_qubo=True,
+        qubo_mode="supplement",
+        qubo_min_candidates=1,
+        qubo_start_layer=2,
+        _layer_index=1,
+    )
+    calls: list[int] = []
+
+    def fake_selector(candidates, selector_args):
+        calls.append(selector_args._layer_index)
+        return [b"chosen"], 2, 0.125
+
+    monkeypatch.setattr(bench, "_select_qubo_boosted", fake_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+    )
+
+    assert selected == [b"core"]
+    assert selected_by_qubo == set()
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+    assert calls == []
+
+    args._layer_index = 2
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+    )
+
+    assert selected == [b"chosen"]
+    assert selected_by_qubo == {b"chosen"}
+    assert qcalls == 1
+    assert qvars == 2
+    assert qtime == 0.125
+    assert calls == [2]
+
+
+def test_enhanced_frontier_respects_wang_pair_qubo_start_layer(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (b"core", (5, 1, b"p0")),
+        (b"fallback", (5, 1, b"p1")),
+        (b"chosen", (5, 1, b"p2")),
+    ]
+    args = _compact_args(
+        beam_width=2,
+        core_width=1,
+        parent_core_cap=0,
+        use_qubo=True,
+        qubo_min_candidates=99,
+        wang_pair_qubo_enabled=True,
+        wang_pair_qubo_supplement_width=1,
+        wang_pair_qubo_focus_n=-1,
+        wang_pair_qubo_n_window=2,
+        wang_pair_qubo_start_layer=3,
+        _layer_index=2,
+    )
+    calls: list[int] = []
+
+    def fake_pair_selector(rows, selector_args, target):
+        calls.append(selector_args._layer_index)
+        assert target == 1
+        return [b"chosen"], 3, 0.25
+
+    monkeypatch.setattr(bench, "_select_wang_pair_qubo_supplement", fake_pair_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+    )
+
+    assert selected == [b"core", b"fallback"]
+    assert selected_by_qubo == set()
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+    assert calls == []
+
+    args._layer_index = 3
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+    )
+
+    assert selected == [b"core", b"chosen"]
+    assert selected_by_qubo == {b"chosen"}
+    assert qcalls == 1
+    assert qvars == 3
+    assert qtime == 0.25
+    assert calls == [3]
 
 
 def test_feasibility_escape_layer_active_allows_low_parent_share_plateau():
@@ -2017,6 +2130,59 @@ def test_open_runner_passes_bs_frg_qubo_overrides():
     assert args.bs_frg_qubo_min_candidates == 12
     assert args.bs_frg_qubo_max_vars == 32
     assert args.bs_frg_qubo_same_parent_penalty == 0.7
+
+
+def test_open_runner_passes_qubo_start_layer_overrides():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_wang_rescue_polish",
+            "--qubo-start-layer",
+            "4",
+            "--wang-pair-qubo-start-layer",
+            "8",
+            "--no-post-polish-qubo",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
+
+    assert args.qubo_start_layer == 4
+    assert args.wang_pair_qubo_start_layer == 8
+    assert args.post_polish_qubo is False
+
+
+def test_hardcoded_ablation_plan_includes_qubo_start_layers():
+    from ablate_hardcoded_params import default_ablation_variants
+
+    variants = {variant.name: variant for variant in default_ablation_variants()}
+
+    assert variants["qubo_start_layer_4"].extra_args == ("--qubo-start-layer", "4")
+    assert variants["wang_pair_start_layer_8"].extra_args == ("--wang-pair-qubo-start-layer", "8")
+
+
+def test_hardcoded_ablation_summary_keeps_full_quality_penalty(tmp_path):
+    from ablate_hardcoded_params import summarize_csv
+
+    csv_path = tmp_path / "result.csv"
+    csv_path.write_text(
+        "\n".join(
+            [
+                "business_ok,goal_validation_ok,moves,full_quality_penalty,runtime_sec,qubo_calls,wang_pair_qubo_calls,group_qubo_calls,post_polish_moves_saved",
+                "True,True,10,10,1.5,2,3,4,1",
+                "False,False,,99,2.5,5,6,7,0",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    summary = summarize_csv(csv_path, "probe")
+
+    assert summary["valid"] == 1
+    assert summary["moves_total"] == 10
+    assert summary["full_quality_penalty_total"] == 109
 
 
 def test_open_runner_passes_frontier_width_overrides():

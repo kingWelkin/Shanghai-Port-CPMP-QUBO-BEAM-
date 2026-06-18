@@ -284,6 +284,7 @@ def _unified_wang_row_fields(result, args: argparse.Namespace) -> dict[str, obje
 def _wang_pair_qubo_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
     return {
         "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
+        "wang_pair_qubo_start_layer": getattr(args, "wang_pair_qubo_start_layer", 0),
         "wang_pair_qubo_calls": getattr(result, "wang_pair_qubo_calls", 0),
         "wang_pair_qubo_vars": getattr(result, "wang_pair_qubo_vars", 0),
         "wang_pair_qubo_time_sec": getattr(result, "wang_pair_qubo_time_sec", 0.0),
@@ -412,6 +413,7 @@ def _priority_group_row_dict_from_instance_result(
         "dominated": result.dominated,
         "use_qubo": args.use_qubo,
         "qubo_mode": args.qubo_mode,
+        "qubo_start_layer": getattr(args, "qubo_start_layer", 0),
         "qubo_focus_n": args.qubo_focus_n,
         "qubo_first": args.qubo_first,
         "max_qubo_vars": args.max_qubo_vars,
@@ -870,6 +872,9 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         value = getattr(args, field, None)
         if value is not None:
             overrides[field] = value
+    value = getattr(args, "qubo_start_layer", None)
+    if value is not None:
+        overrides["qubo_start_layer"] = value
     value = getattr(args, "deterministic_qubo_sampler", None)
     if value is not None:
         overrides["deterministic_qubo_sampler"] = value
@@ -886,6 +891,9 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
             overrides[field] = value
     if getattr(args, "beam_survivor_telemetry_output", None) is not None:
         overrides["beam_survivor_telemetry_output"] = args.beam_survivor_telemetry_output
+    value = getattr(args, "post_polish_qubo", None)
+    if value is not None:
+        overrides["post_polish_qubo"] = value
     stream_candidate_limit = int(getattr(args, "stream_candidate_limit", 0) or 0)
     if stream_candidate_limit > 0:
         overrides.update(
@@ -985,6 +993,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "wang_rollout_max_steps",
         "wang_rollout_candidate_limit",
         "wang_pair_qubo_enabled",
+        "wang_pair_qubo_start_layer",
         "wang_pair_qubo_supplement_width",
         "wang_pair_qubo_focus_n",
         "wang_pair_qubo_n_window",
@@ -1413,6 +1422,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--core-width", type=int)
     parser.add_argument("--parent-core-cap", type=int)
     parser.add_argument("--hardness-route-light-threshold", type=float, default=0.65)
+    parser.add_argument("--post-polish-qubo", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--survivor-parent-cap-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--survivor-parent-cap-trigger-ratio", type=float)
     parser.add_argument("--survivor-parent-cap-release-ratio", type=float)
@@ -1506,6 +1516,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang-rollout-max-steps", type=int)
     parser.add_argument("--wang-rollout-candidate-limit", type=int)
     parser.add_argument("--wang-pair-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--wang-pair-qubo-start-layer", type=int)
     parser.add_argument("--wang-pair-qubo-supplement-width", type=int)
     parser.add_argument("--wang-pair-qubo-focus-n", type=int)
     parser.add_argument("--wang-pair-qubo-n-window", type=int)
@@ -1567,6 +1578,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wang2017-task-n-window", type=int)
     parser.add_argument("--wang2017-task-plateau-window", type=int)
     parser.add_argument("--wang2017-task-plateau-delta", type=int)
+    parser.add_argument("--qubo-start-layer", type=int)
     parser.add_argument(
         "--output",
         type=Path,

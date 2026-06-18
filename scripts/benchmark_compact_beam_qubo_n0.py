@@ -110,6 +110,7 @@ COMPACT_EXTRA_FIELDS = [
     "wang_rollout_candidate_limit",
     "wang_rollout_added_total",
     "wang_pair_qubo_enabled",
+    "wang_pair_qubo_start_layer",
     "wang_pair_qubo_calls",
     "wang_pair_qubo_vars",
     "wang_pair_qubo_time_sec",
@@ -219,6 +220,7 @@ COMPACT_EXTRA_FIELDS = [
     "dominated",
     "use_qubo",
     "qubo_mode",
+    "qubo_start_layer",
     "qubo_focus_n",
     "qubo_first",
     "max_qubo_vars",
@@ -692,6 +694,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "wang_rollout_max_steps": 1,
         "wang_rollout_candidate_limit": 64,
         "wang_pair_qubo_enabled": False,
+        "wang_pair_qubo_start_layer": 0,
         "wang_pair_qubo_supplement_width": 0,
         "wang_pair_qubo_focus_n": 8,
         "wang_pair_qubo_n_window": 1,
@@ -781,6 +784,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "qubo_core_width": 224,
         "qubo_supplement_width": 24,
         "qubo_min_candidates": 64,
+        "qubo_start_layer": 0,
         "qubo_focus_n": 8,
         "qubo_first": False,
         "qubo_target_share": 0.50,
@@ -2063,6 +2067,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "wang_rollout_max_steps": "--wang-rollout-max-steps",
         "wang_rollout_candidate_limit": "--wang-rollout-candidate-limit",
         "wang_pair_qubo_enabled": ("--wang-pair-qubo-enabled", "--no-wang-pair-qubo-enabled"),
+        "wang_pair_qubo_start_layer": "--wang-pair-qubo-start-layer",
         "wang_pair_qubo_supplement_width": "--wang-pair-qubo-supplement-width",
         "wang_pair_qubo_focus_n": "--wang-pair-qubo-focus-n",
         "wang_pair_qubo_n_window": "--wang-pair-qubo-n-window",
@@ -2172,6 +2177,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "qubo_core_width": "--qubo-core-width",
         "qubo_supplement_width": "--qubo-supplement-width",
         "qubo_min_candidates": "--qubo-min-candidates",
+        "qubo_start_layer": "--qubo-start-layer",
         "qubo_focus_n": "--qubo-focus-n",
         "qubo_first": ("--qubo-first", "--no-qubo-first"),
         "qubo_target_share": "--qubo-target-share",
@@ -4372,6 +4378,13 @@ def _adaptive_frontier_width(args: argparse.Namespace, best_n: int) -> int:
     return _record_adaptive_width(args, width, reason)
 
 
+def _layer_start_active(args: argparse.Namespace, field: str) -> bool:
+    start_layer = int(getattr(args, field, 0) or 0)
+    if start_layer <= 0:
+        return True
+    return int(getattr(args, "_layer_index", 0) or 0) >= start_layer
+
+
 def _select_enhanced_qubo_frontier(
     ranked: list[tuple[bytes, tuple[int, int, bytes]]],
     candidate_count: int,
@@ -4395,6 +4408,8 @@ def _select_enhanced_qubo_frontier(
 
     def add_deterministic_until(target_len: int) -> None:
         target_len = max(0, min(target_len, effective_beam))
+        if len(selected) >= target_len:
+            return
         if effective_parent_core_cap > 0:
             parent_counts: dict[bytes, int] = {}
             for code, data in ranked:
@@ -4427,6 +4442,7 @@ def _select_enhanced_qubo_frontier(
         and args.use_qubo
         and pair_width > 0
         and len(selected) < effective_beam
+        and _layer_start_active(args, "wang_pair_qubo_start_layer")
         and (pair_focus_n < 0 or int(best_n) <= pair_focus_n)
     ):
         n_window = max(0, int(getattr(args, "wang_pair_qubo_n_window", 1) or 0))
@@ -4668,6 +4684,7 @@ def _select_enhanced_qubo_frontier(
         args.use_qubo
         and candidate_count >= args.qubo_min_candidates
         and getattr(args, "_qubo_calls_done", 0) < args.max_qubo_calls
+        and _layer_start_active(args, "qubo_start_layer")
         and (args.qubo_focus_n < 0 or best_n <= args.qubo_focus_n)
     )
     if qubo_enabled and args.qubo_mode == "supplement":
@@ -4732,6 +4749,7 @@ def _select_enhanced_qubo_frontier(
         and getattr(args, "group_qubo_supplement", False)
         and candidate_count >= args.qubo_min_candidates
         and getattr(args, "_group_qubo_calls_done", 0) < args.max_group_qubo_calls
+        and _layer_start_active(args, "qubo_start_layer")
         and (args.qubo_focus_n < 0 or best_n <= args.qubo_focus_n)
         and _group_qubo_risk_active(args)
         and len(selected) < effective_beam
@@ -6587,6 +6605,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             stream_pruned_candidates += _trim_stream_candidates_batch(candidates, stream_candidate_limit, args)
         peak_candidates = max(peak_candidates, len(candidates))
         layer_best_n = _update_layer_candidate_metrics(candidates, args, cap)
+        args._layer_index = layer_index
         args._best_n_history.append(layer_best_n)
         candidate_count_before_rollout = len(candidates)
         rollout_codes = _inject_wang_rollout_candidates(frontier, candidates, args, depth_cap, best_depth)
@@ -6902,6 +6921,7 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"wang_rollout_candidate_limit={getattr(args, 'wang_rollout_candidate_limit', 64)}; "
             f"wang_rollout_added_total={result.wang_rollout_added_total}; "
             f"wang_pair_qubo_enabled={getattr(args, 'wang_pair_qubo_enabled', False)}; "
+            f"wang_pair_qubo_start_layer={getattr(args, 'wang_pair_qubo_start_layer', 0)}; "
             f"wang_pair_qubo_calls={result.wang_pair_qubo_calls}; "
             f"unified_wang_qubo_enabled={getattr(args, 'unified_wang_qubo_enabled', False)}; "
             f"unified_wang_qubo_calls={result.unified_wang_qubo_calls}; "
@@ -6917,7 +6937,8 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"survivor_parent_cap_last_reason={getattr(args, '_survivor_parent_cap_last_reason', '')}; "
             f"peak_frontier={result.peak_frontier}; peak_candidates={result.peak_candidates}; "
             f"depth_reached={result.depth_reached}; open={result.open_count}; "
-            f"qubo_used={args.use_qubo}; qubo_mode={args.qubo_mode}; qubo_focus_n={args.qubo_focus_n}; "
+            f"qubo_used={args.use_qubo}; qubo_mode={args.qubo_mode}; "
+            f"qubo_start_layer={getattr(args, 'qubo_start_layer', 0)}; qubo_focus_n={args.qubo_focus_n}; "
             f"qubo_first={args.qubo_first}; "
             f"group_qubo_supplement={getattr(args, 'group_qubo_supplement', False)}; "
             f"max_group_qubo_calls={getattr(args, 'max_group_qubo_calls', 0)}; "
@@ -7105,6 +7126,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "wang_rollout_candidate_limit": getattr(args, "wang_rollout_candidate_limit", 64),
             "wang_rollout_added_total": result.wang_rollout_added_total,
             "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
+            "wang_pair_qubo_start_layer": getattr(args, "wang_pair_qubo_start_layer", 0),
             "wang_pair_qubo_calls": result.wang_pair_qubo_calls,
             "wang_pair_qubo_vars": result.wang_pair_qubo_vars,
             "wang_pair_qubo_time_sec": result.wang_pair_qubo_time_sec,
@@ -7226,6 +7248,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "dominated": result.dominated,
             "use_qubo": args.use_qubo,
             "qubo_mode": args.qubo_mode,
+            "qubo_start_layer": getattr(args, "qubo_start_layer", 0),
             "qubo_focus_n": args.qubo_focus_n,
             "qubo_first": args.qubo_first,
             "max_qubo_vars": args.max_qubo_vars,
@@ -7601,6 +7624,7 @@ def main() -> int:
     parser.add_argument("--wang-rollout-max-steps", type=int, default=1)
     parser.add_argument("--wang-rollout-candidate-limit", type=int, default=64)
     parser.add_argument("--wang-pair-qubo-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--wang-pair-qubo-start-layer", type=int, default=0)
     parser.add_argument("--wang-pair-qubo-supplement-width", type=int, default=0)
     parser.add_argument("--wang-pair-qubo-focus-n", type=int, default=8)
     parser.add_argument("--wang-pair-qubo-n-window", type=int, default=1)
@@ -7714,6 +7738,7 @@ def main() -> int:
     parser.add_argument("--qubo-core-width", type=int, default=224)
     parser.add_argument("--qubo-supplement-width", type=int, default=24)
     parser.add_argument("--qubo-min-candidates", type=int, default=64)
+    parser.add_argument("--qubo-start-layer", type=int, default=0)
     parser.add_argument("--qubo-priority-bonus", type=float, default=0.0001)
     parser.add_argument("--qubo-diversity-weight", type=float, default=0.10)
     parser.add_argument("--qubo-frontier-n-window", type=int, default=0)
