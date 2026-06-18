@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import os
 import re
 import subprocess
 import sys
@@ -35,6 +36,7 @@ from container_reshuffle.core import Instance, Move, ProblemVariant, validate_in
 from container_reshuffle.features import future_disorder_count_stacks  # noqa: E402
 
 DLTS_URL = "https://github.com/ahottung/DLTS.git"
+OPEN_RUNNER_RECOMMENDED_MAX_JOBS = 16
 OPEN_EXTRA_FIELDS = [
     "dataset",
     "family",
@@ -98,6 +100,37 @@ def _build_open_run_tasks(cases: list[OpenCpmpCase], variants: list[str]) -> lis
         for variant in variants:
             tasks.append(OpenRunTask(task_index=len(tasks), case=case, variant=variant))
     return tasks
+
+
+def _parse_open_jobs(value: str) -> int | str:
+    if value.lower() == "auto":
+        return "auto"
+    try:
+        jobs = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a non-negative integer or 'auto'") from exc
+    if jobs < 0:
+        raise argparse.ArgumentTypeError("must be a non-negative integer or 'auto'")
+    return jobs
+
+
+def _resolve_open_jobs(jobs: int | str, cpu_count: int | None = None, warn: bool = True) -> int:
+    if cpu_count is None:
+        cpu_count = os.cpu_count() or 1
+    if isinstance(jobs, str) and jobs.lower() == "auto":
+        return max(1, min(int(cpu_count), OPEN_RUNNER_RECOMMENDED_MAX_JOBS))
+    resolved = int(jobs)
+    if resolved == 0:
+        return max(1, min(int(cpu_count), OPEN_RUNNER_RECOMMENDED_MAX_JOBS))
+    if warn and resolved > OPEN_RUNNER_RECOMMENDED_MAX_JOBS:
+        print(
+            f"WARNING --jobs={resolved} exceeds recommended safe cap "
+            f"{OPEN_RUNNER_RECOMMENDED_MAX_JOBS}; open120 timing evidence preserved 118/120 up to "
+            f"{OPEN_RUNNER_RECOMMENDED_MAX_JOBS} jobs, while 20 jobs dropped coverage.",
+            file=sys.stderr,
+            flush=True,
+        )
+    return resolved
 
 
 def _case_sort_key(path: Path) -> tuple[int, str]:
@@ -1270,7 +1303,8 @@ def run_open_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
     cases = [case for case in cases if _case_id_selected(case.case_id, args.case_ids)]
     variants = _variant_names(args.variant)
     tasks = _build_open_run_tasks(cases, variants)
-    if int(getattr(args, "jobs", 1)) <= 1:
+    args.jobs = _resolve_open_jobs(getattr(args, "jobs", 1))
+    if args.jobs <= 1:
         return _collect_serial_open_rows(tasks, args)
     return _collect_parallel_open_rows(tasks, args)
 
@@ -1286,9 +1320,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-total", type=int)
     parser.add_argument(
         "--jobs",
-        type=int,
+        type=_parse_open_jobs,
         default=1,
-        help="Number of worker processes for open benchmark case/variant runs. Use 1 for serial execution.",
+        help=(
+            "Number of worker processes for open benchmark case/variant runs. "
+            "Use 1 for serial execution, 0 or auto for the recommended safe cap."
+        ),
     )
     parser.add_argument(
         "--variant",

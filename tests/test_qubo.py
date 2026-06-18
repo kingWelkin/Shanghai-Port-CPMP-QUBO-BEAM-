@@ -5033,6 +5033,25 @@ def test_open_runner_jobs_defaults_to_serial_and_accepts_parallel_count():
 
     assert build_parser().parse_args([]).jobs == 1
     assert build_parser().parse_args(["--jobs", "4"]).jobs == 4
+    assert build_parser().parse_args(["--jobs", "0"]).jobs == 0
+    assert build_parser().parse_args(["--jobs", "auto"]).jobs == "auto"
+
+
+def test_open_runner_jobs_auto_resolves_to_safe_cap():
+    from open_cpmp_benchmarks import _resolve_open_jobs
+
+    assert _resolve_open_jobs("auto", cpu_count=20, warn=False) == 16
+    assert _resolve_open_jobs(0, cpu_count=20, warn=False) == 16
+    assert _resolve_open_jobs("0", cpu_count=20, warn=False) == 16
+    assert _resolve_open_jobs("auto", cpu_count=12, warn=False) == 12
+    assert _resolve_open_jobs(0, cpu_count=1, warn=False) == 1
+
+
+def test_open_runner_jobs_above_safe_cap_warns(capsys):
+    from open_cpmp_benchmarks import _resolve_open_jobs
+
+    assert _resolve_open_jobs(20) == 20
+    assert "exceeds recommended safe cap 16" in capsys.readouterr().err
 
 
 def test_open_runner_builds_stable_tasks_by_case_then_variant(tmp_path):
@@ -5210,6 +5229,32 @@ def test_open_runner_jobs_uses_parallel_collector(monkeypatch):
 
     assert run_open_benchmark(args) == []
     assert called == {"serial": 0, "parallel": 1}
+
+
+def test_open_runner_jobs_auto_uses_resolved_parallel_cap(monkeypatch):
+    import open_cpmp_benchmarks as open_runner
+    from open_cpmp_benchmarks import build_parser, run_open_benchmark
+
+    args = build_parser().parse_args(["--jobs", "auto"])
+    monkeypatch.setattr(open_runner.os, "cpu_count", lambda: 20)
+    monkeypatch.setattr("open_cpmp_benchmarks.ensure_dlts_source", lambda source, auto_clone=True, refresh=False: source)
+    monkeypatch.setattr("open_cpmp_benchmarks.discover_dlts_cases", lambda *a, **k: [])
+    called = {"serial": 0, "parallel": 0, "jobs": None}
+
+    def fake_serial(tasks, args):
+        called["serial"] += 1
+        return []
+
+    def fake_parallel(tasks, args):
+        called["parallel"] += 1
+        called["jobs"] = args.jobs
+        return []
+
+    monkeypatch.setattr("open_cpmp_benchmarks._collect_serial_open_rows", fake_serial)
+    monkeypatch.setattr("open_cpmp_benchmarks._collect_parallel_open_rows", fake_parallel)
+
+    assert run_open_benchmark(args) == []
+    assert called == {"serial": 0, "parallel": 1, "jobs": 16}
 
 
 def test_open_runner_parallel_matches_serial_rows_on_tiny_dlts(tmp_path):
