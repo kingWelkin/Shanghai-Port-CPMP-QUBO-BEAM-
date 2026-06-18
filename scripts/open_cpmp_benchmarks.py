@@ -27,6 +27,7 @@ from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
     SOLVER_NAME,
     _SOLVER_PROFILES,
     _initial_scarcity_metrics,
+    _light_route_score,
     _reset_beam_survivor_output,
     _row_dict_from_instance_result,
     _validate_instance_result,
@@ -555,6 +556,7 @@ def _priority_group_row_dict_from_instance_result(
         "initial_scarcity_n0": getattr(args, "_initial_scarcity_n0", 0),
         "initial_scarcity_l0": getattr(args, "_initial_scarcity_l0", 0),
         "initial_scarcity_one_safe_ratio": getattr(args, "_initial_scarcity_one_safe_ratio", 0.0),
+        "initial_light_route_score": getattr(args, "_initial_light_route_score", 0.0),
     }
     row.update(_wang_pair_qubo_row_fields(result, args))
     row.update(_unified_wang_row_fields(result, args))
@@ -1149,13 +1151,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         selected_profile = "scheduler_state_v5_wang_rescue_risk_polish"
         if instance is not None:
             metrics = _initial_scarcity_metrics(instance.stacks, instance.max_height)
-            if (
-                instance.stack_count <= 6
-                and metrics.n0 >= 12
-                and metrics.scarcity_risk >= 0.95
-                and metrics.workload_hardness <= 0.49
-                and metrics.one_safe_ratio >= 0.90
-            ):
+            threshold = float(getattr(args, "hardness_route_light_threshold", 0.65) or 0.65)
+            if _light_route_score(metrics, instance.container_count) >= threshold:
                 selected_profile = "scheduler_state_v5_wang_rescue_light_polish"
         overrides.update({"solver_profile": selected_profile})
     if variant == "qubo_scheduler_state_v5_wang_rescue_selective_window_polish":
@@ -1415,6 +1412,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--beam-width", type=int)
     parser.add_argument("--core-width", type=int)
     parser.add_argument("--parent-core-cap", type=int)
+    parser.add_argument("--hardness-route-light-threshold", type=float, default=0.65)
     parser.add_argument("--survivor-parent-cap-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--survivor-parent-cap-trigger-ratio", type=float)
     parser.add_argument("--survivor-parent-cap-release-ratio", type=float)

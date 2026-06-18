@@ -3409,6 +3409,32 @@ def test_initial_scarcity_metrics_detect_high_risk_unique_case():
     assert metrics.scarcity_risk > 0.95
 
 
+def test_light_route_score_prefers_low_workload_scarcity_over_high_workload():
+    from benchmark_compact_beam_qubo_n0 import _initial_scarcity_metrics, _light_route_score
+
+    low_workload_scarcity = [
+        [4, 2, 10, 11, 1],
+        [1, 11, 12, 12, 7],
+        [9, 9, 4, 2, 3],
+        [7, 8, 8, 12, 5],
+        [6, 3, 10, 6, 5],
+    ]
+    high_workload_scarcity = [
+        [14, 7, 12, 20, 5],
+        [18, 3, 25, 23, 17],
+        [9, 19, 15, 11, 21],
+        [24, 2, 13, 4, 8],
+        [1, 16, 10, 22, 6],
+    ]
+
+    low_score = _light_route_score(_initial_scarcity_metrics(low_workload_scarcity, max_height=7), 25)
+    high_score = _light_route_score(_initial_scarcity_metrics(high_workload_scarcity, max_height=7), 25)
+
+    assert low_score >= 0.65
+    assert high_score < 0.65
+    assert low_score > high_score
+
+
 def test_scheduler_state_scarcity_profile_opens_group_qubo_on_high_static_risk(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, _group_qubo_risk_active
 
@@ -5507,6 +5533,14 @@ def test_open_runner_hardness_routed_variant_selects_light_only_for_low_workload
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
 
     outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish"])
+    strict_outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
+            "--hardness-route-light-threshold",
+            "0.99",
+        ]
+    )
     low_workload_scarcity = Instance(
         "low_workload_scarcity",
         ProblemVariant.PREMARSHALLING_CPMP,
@@ -5537,6 +5571,13 @@ def test_open_runner_hardness_routed_variant_selects_light_only_for_low_workload
 
     assert routed_light.solver_profile == "scheduler_state_v5_wang_rescue_light_polish"
     assert routed_risk.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
+    strict_routed = _args_for_variant(
+        strict_outer,
+        "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish",
+        low_workload_scarcity,
+    )
+
+    assert strict_routed.solver_profile == "scheduler_state_v5_wang_rescue_risk_polish"
     assert "qubo_scheduler_state_v5_wang_rescue_hardness_routed_polish" in _variant_names("wang_research_all")
 
 

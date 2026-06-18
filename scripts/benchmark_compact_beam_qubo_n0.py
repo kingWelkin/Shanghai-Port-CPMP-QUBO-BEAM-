@@ -321,6 +321,7 @@ COMPACT_EXTRA_FIELDS = [
     "initial_scarcity_n0",
     "initial_scarcity_l0",
     "initial_scarcity_one_safe_ratio",
+    "initial_light_route_score",
     "scheduler_state_last_action",
     "scheduler_state_last_effective_action",
     "scheduler_state_locked_action",
@@ -1965,6 +1966,25 @@ def _initial_scarcity_metrics(stacks: list[list[int]], max_height: int) -> Initi
         dirty_spread=dirty_spread,
         workload_hardness=workload_hardness,
         scarcity_risk=scarcity_risk,
+    )
+
+
+def _clamp01(value: float) -> float:
+    return min(1.0, max(0.0, value))
+
+
+def _light_route_score(metrics: InitialScarcityMetrics, container_count: int) -> float:
+    if metrics.n0 <= 0 or container_count <= 0:
+        return 0.0
+    workload_fit = _clamp01((0.55 - metrics.workload_hardness) / 0.15)
+    scarcity_fit = _clamp01((metrics.scarcity_risk - 0.85) / 0.15)
+    one_safe_fit = _clamp01((metrics.one_safe_ratio - 0.75) / 0.25)
+    blocker_density_fit = _clamp01(((metrics.n0 / container_count) - 0.35) / 0.25)
+    return (
+        0.40 * workload_fit
+        + 0.30 * scarcity_fit
+        + 0.20 * one_safe_fit
+        + 0.10 * blocker_density_fit
     )
 
 
@@ -6443,6 +6463,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._initial_scarcity_n0 = scarcity_metrics.n0
     args._initial_scarcity_l0 = scarcity_metrics.l0
     args._initial_scarcity_one_safe_ratio = scarcity_metrics.one_safe_ratio
+    args._initial_light_route_score = _light_route_score(scarcity_metrics, instance.container_count)
     args._layer_best_n = n0
     args._priority_duplication_ratio = _priority_duplication_ratio_for_instance(instance)
     args._fill_ratio = instance.container_count / max(1, instance.stack_count * instance.max_height)
@@ -6972,6 +6993,7 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"scarcity_group_qubo_enabled={getattr(args, 'scarcity_group_qubo_enabled', False)}; "
             f"initial_scarcity_risk={getattr(args, '_initial_scarcity_risk', 0.0):.6f}; "
             f"initial_workload_hardness={getattr(args, '_initial_workload_hardness', 0.0):.6f}; "
+            f"initial_light_route_score={getattr(args, '_initial_light_route_score', 0.0):.6f}; "
             f"scheduler_state_controller={getattr(args, 'scheduler_state_controller', 'off')}; "
             f"scheduler_state_contract_pressure={getattr(args, 'scheduler_state_contract_pressure', 0.0)}; "
             f"scheduler_state_max_contract_pressure={getattr(args, 'scheduler_state_max_contract_pressure', 0.0)}; "
@@ -7306,6 +7328,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "initial_scarcity_n0": getattr(args, "_initial_scarcity_n0", 0),
             "initial_scarcity_l0": getattr(args, "_initial_scarcity_l0", 0),
             "initial_scarcity_one_safe_ratio": getattr(args, "_initial_scarcity_one_safe_ratio", 0.0),
+            "initial_light_route_score": getattr(args, "_initial_light_route_score", 0.0),
             "scheduler_state_last_action": getattr(args, "_scheduler_state_last_action", ""),
             "scheduler_state_last_effective_action": getattr(args, "_scheduler_state_last_effective_action", ""),
             "scheduler_state_locked_action": getattr(args, "_scheduler_state_locked_action", ""),
