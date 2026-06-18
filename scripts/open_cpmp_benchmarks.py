@@ -63,11 +63,6 @@ _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS = (
     "qubo_scheduler_state_v5_wang_rescue_polish",
     "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
 )
-_FRG_GUARDED_FALLBACK_VARIANT = "qubo_scheduler_state_v5_frg_guarded_fallback_polish"
-_FRG_GUARDED_FALLBACK_VARIANTS = (
-    "qubo_scheduler_state_v5_wang_rescue_polish",
-    "qubo_scheduler_state_v5_frg_compound_guarded_polish",
-)
 
 
 @dataclass(frozen=True)
@@ -845,7 +840,6 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
             "qubo_scheduler_state_v5_frg_compound_guarded_polish",
-            _FRG_GUARDED_FALLBACK_VARIANT,
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
@@ -1271,25 +1265,6 @@ def _run_open_task(task: OpenRunTask, args_payload: dict[str, object]) -> OpenRu
             return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [], str(exc))
         raise
 
-    if task.variant == _FRG_GUARDED_FALLBACK_VARIANT:
-        baseline_variant, fallback_variant = _FRG_GUARDED_FALLBACK_VARIANTS
-        baseline_row = _run_open_variant_row(task.case, instance, args, baseline_variant)
-        candidates = [baseline_row]
-        portfolio_variants = [baseline_variant]
-        portfolio_runtime_sec = _numeric(baseline_row, "runtime_sec", 0.0)
-        if not _open_row_valid(baseline_row):
-            fallback_row = _run_open_variant_row(task.case, instance, args, fallback_variant)
-            candidates.append(fallback_row)
-            portfolio_variants.append(fallback_variant)
-            portfolio_runtime_sec += _numeric(fallback_row, "runtime_sec", 0.0)
-        selected = dict(_select_open_no_regret_row(candidates))
-        selected["variant"] = task.variant
-        selected["portfolio_profiles"] = ",".join(portfolio_variants)
-        selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
-        selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
-        selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
-        return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [selected])
-
     if task.variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
         candidates: list[dict[str, object]] = []
         portfolio_runtime_sec = 0.0
@@ -1416,7 +1391,6 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
             "qubo_scheduler_state_v5_frg_compound_guarded_polish",
-            _FRG_GUARDED_FALLBACK_VARIANT,
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",

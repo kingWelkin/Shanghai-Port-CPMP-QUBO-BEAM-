@@ -28,7 +28,6 @@ def default_ablation_variants(base_variant: str = DEFAULT_BASE_VARIANT) -> tuple
     return (
         AblationVariant("base", base_variant),
         AblationVariant("v5_rescue_polish_baseline", "qubo_scheduler_state_v5_wang_rescue_polish"),
-        AblationVariant("adaptive_frg_guarded_fallback", "qubo_scheduler_state_v5_frg_guarded_fallback_polish"),
         AblationVariant("risk_only_endpoint", "qubo_scheduler_state_v5_wang_rescue_risk_polish"),
         AblationVariant("light_only_endpoint", "qubo_scheduler_state_v5_wang_rescue_light_polish"),
         AblationVariant("route_threshold_055", base_variant, ("--hardness-route-light-threshold", "0.55")),
