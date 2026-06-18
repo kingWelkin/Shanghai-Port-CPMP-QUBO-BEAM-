@@ -1896,6 +1896,24 @@ def test_solver_profile_scheduler_state_v5_wang_rescue_light_polish_is_bounded(m
     assert args.post_polish_qubo is True
 
 
+def test_solver_profile_scheduler_state_v5_wang_rescue_fast_polish_only_tightens_rescue_vars(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+
+    args = _compact_args(solver_profile="scheduler_state_v5_wang_rescue_fast_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_wang_rescue_fast_polish"
+    assert args.rescue_enabled is True
+    assert args.wang_pair_qubo_enabled is True
+    assert args.post_polish_qubo is True
+    assert args.wang_pair_qubo_supplement_width == 12
+    assert args.wang_pair_qubo_max_vars == 48
+    assert args.rescue_qubo_supplement_width == 56
+    assert args.rescue_max_qubo_vars == 64
+
+
 def test_wang2017_task_gate_reason_requires_plateau_and_tight_slack():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -2154,13 +2172,40 @@ def test_open_runner_passes_qubo_start_layer_overrides():
     assert args.post_polish_qubo is False
 
 
+def test_open_runner_passes_rescue_qubo_overrides():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_wang_rescue_polish",
+            "--rescue-qubo-supplement-width",
+            "32",
+            "--rescue-max-qubo-vars",
+            "64",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_polish")
+
+    assert args.rescue_qubo_supplement_width == 32
+    assert args.rescue_max_qubo_vars == 64
+
+
 def test_hardcoded_ablation_plan_includes_qubo_start_layers():
     from ablate_hardcoded_params import default_ablation_variants
 
     variants = {variant.name: variant for variant in default_ablation_variants()}
 
     assert variants["qubo_start_layer_4"].extra_args == ("--qubo-start-layer", "4")
+    assert variants["fast_polish_endpoint"].variant == "qubo_scheduler_state_v5_wang_rescue_fast_polish"
     assert variants["wang_pair_start_layer_8"].extra_args == ("--wang-pair-qubo-start-layer", "8")
+    assert variants["wang_pair_width_8"].extra_args == ("--wang-pair-qubo-supplement-width", "8")
+    assert variants["wang_pair_width_16"].extra_args == ("--wang-pair-qubo-supplement-width", "16")
+    assert variants["wang_pair_max_vars_32"].extra_args == ("--wang-pair-qubo-max-vars", "32")
+    assert variants["rescue_qubo_width_32"].extra_args == ("--rescue-qubo-supplement-width", "32")
+    assert variants["rescue_qubo_width_64"].extra_args == ("--rescue-qubo-supplement-width", "64")
+    assert variants["rescue_max_vars_64"].extra_args == ("--rescue-max-qubo-vars", "64")
 
 
 def test_hardcoded_ablation_summary_keeps_full_quality_penalty(tmp_path):
@@ -5216,6 +5261,16 @@ def test_open_runner_accepts_wang_rescue_light_polish_variant():
     assert "qubo_scheduler_state_v5_wang_rescue_light_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_accepts_wang_rescue_fast_polish_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_wang_rescue_fast_polish"])
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_wang_rescue_fast_polish")
+
+    assert args.solver_profile == "scheduler_state_v5_wang_rescue_fast_polish"
+    assert "qubo_scheduler_state_v5_wang_rescue_fast_polish" in _variant_names("wang_research_all")
+
+
 def test_open_runner_accepts_wang2017_task_guarded_portfolio_variant():
     from open_cpmp_benchmarks import _variant_names, build_parser
 
@@ -5624,6 +5679,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
+        "qubo_scheduler_state_v5_wang_rescue_fast_polish",
         "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_wang2017_task_polish",
         "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
@@ -5634,6 +5690,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
     assert _variant_names("wang_research_all") == [
         "qubo_scheduler_state_v5_wang_rescue_polish",
         "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
+        "qubo_scheduler_state_v5_wang_rescue_fast_polish",
         "qubo_scheduler_state_v5_wang_rescue_light_polish",
         "qubo_scheduler_state_v5_feasibility_escape_polish",
         "qubo_scheduler_state_v5_frg_dlts_polish",

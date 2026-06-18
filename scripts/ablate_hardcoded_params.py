@@ -28,6 +28,7 @@ def default_ablation_variants(base_variant: str = DEFAULT_BASE_VARIANT) -> tuple
     return (
         AblationVariant("base", base_variant),
         AblationVariant("v5_rescue_polish_baseline", "qubo_scheduler_state_v5_wang_rescue_polish"),
+        AblationVariant("fast_polish_endpoint", "qubo_scheduler_state_v5_wang_rescue_fast_polish"),
         AblationVariant("risk_only_endpoint", "qubo_scheduler_state_v5_wang_rescue_risk_polish"),
         AblationVariant("light_only_endpoint", "qubo_scheduler_state_v5_wang_rescue_light_polish"),
         AblationVariant("route_threshold_055", base_variant, ("--hardness-route-light-threshold", "0.55")),
@@ -39,12 +40,18 @@ def default_ablation_variants(base_variant: str = DEFAULT_BASE_VARIANT) -> tuple
         AblationVariant("wang_pair_start_layer_4", base_variant, ("--wang-pair-qubo-start-layer", "4")),
         AblationVariant("wang_pair_start_layer_8", base_variant, ("--wang-pair-qubo-start-layer", "8")),
         AblationVariant("wang_pair_start_layer_12", base_variant, ("--wang-pair-qubo-start-layer", "12")),
+        AblationVariant("wang_pair_width_8", base_variant, ("--wang-pair-qubo-supplement-width", "8")),
+        AblationVariant("wang_pair_width_16", base_variant, ("--wang-pair-qubo-supplement-width", "16")),
+        AblationVariant("wang_pair_max_vars_32", base_variant, ("--wang-pair-qubo-max-vars", "32")),
         AblationVariant(
             "all_qubo_start_layer_8",
             base_variant,
             ("--qubo-start-layer", "8", "--wang-pair-qubo-start-layer", "8"),
         ),
         AblationVariant("wang_pair_focus_8", base_variant, ("--wang-pair-qubo-focus-n", "8")),
+        AblationVariant("rescue_qubo_width_32", base_variant, ("--rescue-qubo-supplement-width", "32")),
+        AblationVariant("rescue_qubo_width_64", base_variant, ("--rescue-qubo-supplement-width", "64")),
+        AblationVariant("rescue_max_vars_64", base_variant, ("--rescue-max-qubo-vars", "64")),
         AblationVariant("wang_pair_off", base_variant, ("--no-wang-pair-qubo-enabled",)),
         AblationVariant("post_polish_off", base_variant, ("--no-post-polish-qubo",)),
     )

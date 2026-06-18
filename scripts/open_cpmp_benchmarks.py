@@ -822,6 +822,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
+            "qubo_scheduler_state_v5_wang_rescue_fast_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
@@ -833,6 +834,7 @@ def _variant_names(name: str) -> list[str]:
         return [
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
+            "qubo_scheduler_state_v5_wang_rescue_fast_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
@@ -953,6 +955,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "scheduler_state_rescue_plateau_window",
         "scheduler_state_rescue_plateau_delta",
         "scheduler_state_rescue_cap_slack",
+        "rescue_qubo_supplement_width",
+        "rescue_max_qubo_vars",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -1132,6 +1136,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_successor_cache_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_fast_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_fast_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_light_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_light_polish"})
     if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
@@ -1384,6 +1390,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue_suffix_polish",
             "qubo_scheduler_state_v5_wang_rescue_polish",
             "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
+            "qubo_scheduler_state_v5_wang_rescue_fast_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
@@ -1481,6 +1488,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler-state-rescue-plateau-window", type=int)
     parser.add_argument("--scheduler-state-rescue-plateau-delta", type=int)
     parser.add_argument("--scheduler-state-rescue-cap-slack", type=int)
+    parser.add_argument("--rescue-qubo-supplement-width", type=int)
+    parser.add_argument("--rescue-max-qubo-vars", type=int)
     parser.add_argument("--rank-bucket-topk", type=int, default=0)
     parser.add_argument(
         "--rank-bucket-key",

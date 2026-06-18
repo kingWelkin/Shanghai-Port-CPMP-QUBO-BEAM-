@@ -1356,6 +1356,10 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"] = {
     "post_polish_window_repair_expanded": 6000,
     "post_polish_window_repair_depth_extra": 0,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_fast_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "rescue_max_qubo_vars": 64,
+}
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_successor_cache_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "post_polish_successor_cache": True,
