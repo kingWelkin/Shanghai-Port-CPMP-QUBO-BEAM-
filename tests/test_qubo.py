@@ -2161,6 +2161,9 @@ def test_hardcoded_ablation_plan_includes_qubo_start_layers():
 
     assert variants["qubo_start_layer_4"].extra_args == ("--qubo-start-layer", "4")
     assert variants["wang_pair_start_layer_8"].extra_args == ("--wang-pair-qubo-start-layer", "8")
+    assert variants["adaptive_frg_guarded_fallback"].variant == (
+        "qubo_scheduler_state_v5_frg_guarded_fallback_polish"
+    )
 
 
 def test_hardcoded_ablation_summary_keeps_full_quality_penalty(tmp_path):
@@ -5161,6 +5164,14 @@ def test_open_runner_accepts_frg_compound_guarded_variant():
     assert "qubo_scheduler_state_v5_frg_compound_guarded_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_accepts_frg_guarded_fallback_variant():
+    from open_cpmp_benchmarks import _variant_names, build_parser
+
+    build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_frg_guarded_fallback_polish"])
+
+    assert "qubo_scheduler_state_v5_frg_guarded_fallback_polish" in _variant_names("wang_research_all")
+
+
 def test_open_runner_passes_frg_compound_overrides():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
@@ -5367,6 +5378,95 @@ def test_open_runner_task_execution_returns_selected_portfolio_row(monkeypatch, 
     assert result.task_index == 0
     assert result.rows[0]["variant"] == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio"
     assert result.rows[0]["portfolio_selected_profile"] == "qubo_scheduler_state_v5_wang2017_task_guarded_polish"
+
+
+def test_open_runner_frg_guarded_fallback_skips_specialist_when_baseline_valid(monkeypatch, tmp_path):
+    import argparse
+
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, OpenRunTask, _run_open_task
+
+    case = OpenCpmpCase("fam", "fam_0", tmp_path / "0.dat", None, DltsReference(optimal_moves=10))
+    args = argparse.Namespace(alpha=10.0, skip_invalid=True)
+    calls = []
+
+    def fake_load(path, max_height=None):
+        return object()
+
+    def fake_run(case_arg, instance, args_arg, variant):
+        calls.append(variant)
+        return {
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": variant,
+            "moves": 10,
+            "final_n": 0,
+            "runtime_sec": 1.0,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "full_quality_penalty": 10,
+        }
+
+    monkeypatch.setattr("open_cpmp_benchmarks.load_dlts_dat", fake_load)
+    monkeypatch.setattr("open_cpmp_benchmarks._run_open_variant_row", fake_run)
+
+    result = _run_open_task(
+        OpenRunTask(0, case, "qubo_scheduler_state_v5_frg_guarded_fallback_polish"),
+        vars(args),
+    )
+
+    assert calls == ["qubo_scheduler_state_v5_wang_rescue_polish"]
+    assert result.rows[0]["variant"] == "qubo_scheduler_state_v5_frg_guarded_fallback_polish"
+    assert result.rows[0]["portfolio_selected_profile"] == "qubo_scheduler_state_v5_wang_rescue_polish"
+    assert result.rows[0]["portfolio_profiles"] == "qubo_scheduler_state_v5_wang_rescue_polish"
+
+
+def test_open_runner_frg_guarded_fallback_runs_specialist_after_invalid_baseline(monkeypatch, tmp_path):
+    import argparse
+
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, OpenRunTask, _run_open_task
+
+    case = OpenCpmpCase("fam", "fam_0", tmp_path / "0.dat", None, DltsReference(optimal_moves=10))
+    args = argparse.Namespace(alpha=10.0, skip_invalid=True)
+    calls = []
+
+    def fake_load(path, max_height=None):
+        return object()
+
+    def fake_run(case_arg, instance, args_arg, variant):
+        calls.append(variant)
+        valid = variant == "qubo_scheduler_state_v5_frg_compound_guarded_polish"
+        return {
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": variant,
+            "moves": 9 if valid else "",
+            "final_n": 0 if valid else 2,
+            "runtime_sec": 2.0 if valid else 1.0,
+            "business_ok": valid,
+            "goal_validation_ok": valid,
+            "full_quality_penalty": 9 if valid else 99,
+        }
+
+    monkeypatch.setattr("open_cpmp_benchmarks.load_dlts_dat", fake_load)
+    monkeypatch.setattr("open_cpmp_benchmarks._run_open_variant_row", fake_run)
+
+    result = _run_open_task(
+        OpenRunTask(0, case, "qubo_scheduler_state_v5_frg_guarded_fallback_polish"),
+        vars(args),
+    )
+
+    assert calls == [
+        "qubo_scheduler_state_v5_wang_rescue_polish",
+        "qubo_scheduler_state_v5_frg_compound_guarded_polish",
+    ]
+    assert result.rows[0]["variant"] == "qubo_scheduler_state_v5_frg_guarded_fallback_polish"
+    assert result.rows[0]["portfolio_selected_profile"] == "qubo_scheduler_state_v5_frg_compound_guarded_polish"
+    assert result.rows[0]["portfolio_profiles"] == (
+        "qubo_scheduler_state_v5_wang_rescue_polish,qubo_scheduler_state_v5_frg_compound_guarded_polish"
+    )
+    assert result.rows[0]["portfolio_runtime_sec"] == "3.000000"
 
 
 def test_open_runner_collects_parallel_results_in_task_order(monkeypatch, tmp_path):
@@ -5641,6 +5741,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_frg_compound_polish",
         "qubo_scheduler_state_v5_frg_compound_loose_polish",
         "qubo_scheduler_state_v5_frg_compound_guarded_polish",
+        "qubo_scheduler_state_v5_frg_guarded_fallback_polish",
         "qubo_scheduler_state_v5_wang2017_task_polish",
         "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
         "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
