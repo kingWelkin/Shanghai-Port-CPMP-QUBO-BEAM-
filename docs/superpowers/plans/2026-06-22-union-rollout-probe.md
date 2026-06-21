@@ -11,22 +11,22 @@
 **Files:**
 - Modify: `tests/test_qubo.py`
 
-- [ ] Add a cache test that probes two candidate wrappers with the same compact layout code and asserts the injected completion function is called once.
-- [ ] Add scoring tests for rollout energy:
+- [x] Add a cache test that probes two candidate wrappers with the same compact layout code and asserts the injected completion function is called once.
+- [x] Add scoring tests for rollout energy:
   - feasible rollout lowers the union linear energy,
   - dead-end rollout raises the union linear energy.
-- [ ] Add profile wiring tests:
+- [x] Add profile wiring tests:
   - the new rollout profile enables `union_rollout_probe_enabled`,
   - the old union profile leaves it disabled,
   - `open_cpmp_benchmarks.py` accepts the new variant.
-- [ ] Run the focused tests and confirm they fail before implementation.
+- [x] Run the focused tests and confirm they fail before implementation.
 
 ## Task 2: Implement Probe Helpers
 
 **Files:**
 - Modify: `scripts/benchmark_compact_beam_qubo_n0.py`
 
-- [ ] Add disabled-by-default config fields and CSV fields:
+- [x] Add disabled-by-default config fields and CSV fields:
   - `union_rollout_probe_enabled`
   - `union_rollout_probe_max_candidates`
   - `union_rollout_probe_time_limit`
@@ -36,20 +36,20 @@
   - `union_rollout_probe_moves_weight`
   - `union_rollout_probe_dead_end_penalty`
   - telemetry counters for calls, candidates, feasible, time, cache hits, selected total.
-- [ ] Add a small `UnionRolloutProbeResult` structure and cache helper keyed by compact layout code.
-- [ ] Add a rollout energy helper used by `UnionDiversityQuboFeatures`.
-- [ ] Keep pairwise diversity terms unchanged in the first version.
+- [x] Add a small `UnionRolloutProbeResult` structure and cache helper keyed by compact layout code.
+- [x] Add a rollout energy helper used by `UnionDiversityQuboFeatures`.
+- [x] Keep pairwise diversity terms unchanged in the first version.
 
 ## Task 3: Wire Into Union Selector
 
 **Files:**
 - Modify: `scripts/benchmark_compact_beam_qubo_n0.py`
 
-- [ ] Sample a bounded set from the existing ranked child list before `_select_union_diversity_qubo_supplement`.
-- [ ] Reuse the current union focus window (`best_n + n_window`) and `union_rollout_probe_max_candidates`.
-- [ ] Run the FRG completion probe only for sampled candidates and only when the profile enables it.
-- [ ] Add rollout fields to union feature construction and apply only to the QUBO linear term.
-- [ ] Increment telemetry when probed candidates are selected by the union QUBO selector.
+- [x] Sample a bounded set from the existing ranked child list before `_select_union_diversity_qubo_supplement`.
+- [x] Reuse the current union focus window (`best_n + n_window`) and `union_rollout_probe_max_candidates`.
+- [x] Run the FRG completion probe only for sampled candidates and only when the profile enables it.
+- [x] Add rollout fields to union feature construction and apply only to the QUBO linear term.
+- [x] Increment telemetry when probed candidates are selected by the union QUBO selector.
 
 ## Task 4: Add Profile and Runners
 
@@ -58,10 +58,10 @@
 - Modify: `scripts/open_cpmp_benchmarks.py`
 - Modify as needed: `scripts/benchmark_compact_paper_set.py`
 
-- [ ] Add `scheduler_state_v5_qubo_diversity_union_rollout_polish` extending `scheduler_state_v5_qubo_diversity_union_polish`.
-- [ ] Add open runner variant `qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish`.
-- [ ] Ensure paper-set runner can pass the new profile by variant name.
-- [ ] Ensure all new telemetry fields appear in CSV output for compact, open120, and paper-set runs.
+- [x] Add `scheduler_state_v5_qubo_diversity_union_rollout_polish` extending `scheduler_state_v5_qubo_diversity_union_polish`.
+- [x] Add open runner variant `qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish`.
+- [x] Ensure paper-set runner can pass the new profile by variant name.
+- [x] Ensure all new telemetry fields appear in CSV output for compact, open120, and paper-set runs.
 
 ## Task 5: Verification and Decision
 
@@ -72,9 +72,10 @@ $env:PYTHONPATH='.'; $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest t
 $env:PYTHONPATH='.'; python -m py_compile scripts\benchmark_compact_beam_qubo_n0.py scripts\open_cpmp_benchmarks.py scripts\benchmark_compact_paper_set.py
 ```
 
-- [ ] Run focused tests and compile checks.
-- [ ] Run a tiny smoke benchmark for the new profile.
-- [ ] Run paper sample paired against current union if smoke is healthy.
+- [x] Run focused tests and compile checks.
+- [x] Run a tiny smoke benchmark for the new profile.
+- [x] Run paper sample paired against current union if smoke is healthy.
+  - Note: completed as `sample-per-family=1, t5` precheck, not the full `sample10, t20` promotion gate.
 - [ ] Run open120 guard if paper sample improves.
 - [ ] Commit only after tests pass and results are recorded.
 
