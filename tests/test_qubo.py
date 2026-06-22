@@ -1581,6 +1581,60 @@ def test_pareto_union_seed_respects_target_and_rank_trim():
     assert len(picked) == 2
     assert picked == [0, 1]
 
+
+def test_pareto_union_repair_avoids_same_parent_when_quality_tied():
+    from benchmark_compact_beam_qubo_n0 import _repair_pareto_union_selection
+
+    args = _compact_args(
+        pareto_union_same_parent_penalty=5.0,
+        pareto_union_same_source_penalty=0.0,
+        pareto_union_same_dest_penalty=0.0,
+        pareto_union_same_source_dest_penalty=0.0,
+        pareto_union_signature_penalty=0.0,
+        pareto_union_reduce_signature_penalty=0.0,
+        pareto_union_n_band_penalty=0.0,
+        pareto_union_risk_bucket_penalty=0.0,
+    )
+    features = [
+        _pareto_union_feature(rank=0, parent=b"same", source=0, dest=1, signature=(0,)),
+        _pareto_union_feature(rank=1, parent=b"same", source=1, dest=2, signature=(1,)),
+        _pareto_union_feature(rank=2, parent=b"diff", source=2, dest=3, signature=(2,)),
+    ]
+    picked = _repair_pareto_union_selection({0, 1}, 2, [0.0, 0.0, 0.01], features, args)
+
+    assert picked == {0, 2}
+
+
+def test_pareto_union_qubo_selects_exact_target(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_beam_qubo_n0 import _select_pareto_union_qubo_supplement
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+
+    def fake_sample(self, model, config):
+        return QuboSampleSet(samples=[QuboSample({0: 1, 1: 1, 2: 1}, 0.0)], sampler_name="fake", runtime_sec=0.0)
+
+    monkeypatch.setattr(bench.SimulatedAnnealingQuboSampler, "sample", fake_sample)
+    args = _compact_args(
+        use_qubo=True,
+        deterministic_qubo_sampler=True,
+        pareto_union_max_vars=4,
+        pareto_union_same_parent_penalty=5.0,
+    )
+    features = [
+        _pareto_union_feature(rank=0, parent=b"same", source=0, dest=1, signature=(0,)),
+        _pareto_union_feature(rank=1, parent=b"same", source=1, dest=2, signature=(1,)),
+        _pareto_union_feature(rank=2, parent=b"diff", source=2, dest=3, signature=(2,)),
+        _pareto_union_feature(rank=3, parent=b"other", source=3, dest=0, signature=(3,)),
+    ]
+    usable = [(bytes([idx + 1]), (feature.n_value, feature.depth, feature.parent_code)) for idx, feature in enumerate(features)]
+
+    selected, qvars, _qtime = _select_pareto_union_qubo_supplement(usable, features, args, target=2)
+
+    assert len(selected) == 2
+    assert qvars == 4
+
+
+
 def test_enhanced_frontier_respects_generic_qubo_start_layer(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 

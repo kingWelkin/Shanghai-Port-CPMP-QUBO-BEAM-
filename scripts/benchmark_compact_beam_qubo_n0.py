@@ -3047,6 +3047,194 @@ def _select_pareto_union_seed_indices(
         if len(picked) >= target:
             break
     return picked
+def _risk_bucket(value: float) -> int:
+    return max(0, min(4, int(float(value) * 5.0)))
+
+
+def _pareto_union_objective(
+    selected: set[int],
+    linear: list[float],
+    features: list[ParetoUnionFeatures],
+    args: argparse.Namespace,
+) -> float:
+    value = sum(linear[idx] for idx in selected)
+    penalties = {
+        "parent": float(getattr(args, "pareto_union_same_parent_penalty", 0.55) or 0.0),
+        "source": float(getattr(args, "pareto_union_same_source_penalty", 0.25) or 0.0),
+        "dest": float(getattr(args, "pareto_union_same_dest_penalty", 0.20) or 0.0),
+        "source_dest": float(getattr(args, "pareto_union_same_source_dest_penalty", 0.35) or 0.0),
+        "signature": float(getattr(args, "pareto_union_signature_penalty", 0.20) or 0.0),
+        "reduce": float(getattr(args, "pareto_union_reduce_signature_penalty", 0.15) or 0.0),
+        "n_band": float(getattr(args, "pareto_union_n_band_penalty", 0.08) or 0.0),
+        "risk": float(getattr(args, "pareto_union_risk_bucket_penalty", 0.08) or 0.0),
+    }
+    ordered = sorted(selected)
+    for pos, i in enumerate(ordered):
+        for j in ordered[pos + 1 :]:
+            if penalties["parent"] > 0.0 and features[i].parent_code == features[j].parent_code:
+                value += penalties["parent"]
+            if penalties["source"] > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
+                value += penalties["source"]
+            if penalties["dest"] > 0.0 and features[i].dest_stack >= 0 and features[i].dest_stack == features[j].dest_stack:
+                value += penalties["dest"]
+            if penalties["source_dest"] > 0.0 and features[i].source_dest == features[j].source_dest:
+                value += penalties["source_dest"]
+            if penalties["signature"] > 0.0 and features[i].signature == features[j].signature:
+                value += penalties["signature"]
+            if penalties["reduce"] > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
+                value += penalties["reduce"]
+            if penalties["n_band"] > 0.0 and features[i].n_band == features[j].n_band:
+                value += penalties["n_band"]
+            if penalties["risk"] > 0.0 and _risk_bucket(features[i].risk_score) == _risk_bucket(features[j].risk_score):
+                value += penalties["risk"]
+    return float(value)
+
+
+def _repair_pareto_union_selection(
+    picked: set[int],
+    target: int,
+    linear: list[float],
+    features: list[ParetoUnionFeatures],
+    args: argparse.Namespace,
+) -> set[int]:
+    picked = {idx for idx in picked if 0 <= idx < len(linear)}
+    target = max(0, min(target, len(linear)))
+    while len(picked) > target:
+        picked.remove(
+            min(
+                picked,
+                key=lambda idx: (
+                    _pareto_union_objective(picked - {idx}, linear, features, args),
+                    -features[idx].quality_rank,
+                    -linear[idx],
+                    idx,
+                ),
+            )
+        )
+    while len(picked) < target:
+        missing = [idx for idx in range(len(linear)) if idx not in picked]
+        if not missing:
+            break
+        picked.add(
+            min(
+                missing,
+                key=lambda idx: (
+                    _pareto_union_objective(picked | {idx}, linear, features, args),
+                    linear[idx],
+                    features[idx].quality_rank,
+                    idx,
+                ),
+            )
+        )
+    improved = True
+    while improved and len(picked) == target:
+        improved = False
+        current = _pareto_union_objective(picked, linear, features, args)
+        best_swap: tuple[int, int, float, tuple[float, int, int, int, int]] | None = None
+        for out_idx in sorted(picked):
+            base = picked - {out_idx}
+            for in_idx in range(len(linear)):
+                if in_idx in picked:
+                    continue
+                trial = base | {in_idx}
+                value = _pareto_union_objective(trial, linear, features, args)
+                key = (
+                    value,
+                    features[in_idx].quality_rank,
+                    -features[out_idx].quality_rank,
+                    in_idx,
+                    out_idx,
+                )
+                if value + 1e-12 < current and (best_swap is None or key < best_swap[3]):
+                    best_swap = (out_idx, in_idx, value, key)
+        if best_swap is not None:
+            picked.remove(best_swap[0])
+            picked.add(best_swap[1])
+            improved = True
+    return picked
+
+
+def _select_pareto_union_qubo_supplement(
+    usable: list[tuple[bytes, tuple[int, int, bytes]]],
+    features: list[ParetoUnionFeatures],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], int, float]:
+    target = max(0, int(target))
+    if target <= 0 or not usable:
+        return [], 0, 0.0
+    max_vars = max(1, int(getattr(args, "pareto_union_max_vars", 96) or 96))
+    usable = list(usable[:max_vars])
+    features = list(features[: len(usable)])
+    target = min(target, len(usable), len(features))
+    if target <= 0:
+        return [], 0, 0.0
+    linear = _normalize_values([feature.energy for feature in features])
+    model = QuboModel()
+    vars_ = [model.add_binary_var(f"pu_{idx}") for idx in range(len(usable))]
+    for idx, value in enumerate(linear):
+        model.add_linear(vars_[idx], value)
+
+    penalties = {
+        "parent": float(getattr(args, "pareto_union_same_parent_penalty", 0.55) or 0.0),
+        "source": float(getattr(args, "pareto_union_same_source_penalty", 0.25) or 0.0),
+        "dest": float(getattr(args, "pareto_union_same_dest_penalty", 0.20) or 0.0),
+        "source_dest": float(getattr(args, "pareto_union_same_source_dest_penalty", 0.35) or 0.0),
+        "signature": float(getattr(args, "pareto_union_signature_penalty", 0.20) or 0.0),
+        "reduce": float(getattr(args, "pareto_union_reduce_signature_penalty", 0.15) or 0.0),
+        "n_band": float(getattr(args, "pareto_union_n_band_penalty", 0.08) or 0.0),
+        "risk": float(getattr(args, "pareto_union_risk_bucket_penalty", 0.08) or 0.0),
+    }
+    for i in range(len(usable)):
+        for j in range(i + 1, len(usable)):
+            if penalties["parent"] > 0.0 and features[i].parent_code == features[j].parent_code:
+                model.add_quadratic(vars_[i], vars_[j], penalties["parent"])
+            if penalties["source"] > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
+                model.add_quadratic(vars_[i], vars_[j], penalties["source"])
+            if penalties["dest"] > 0.0 and features[i].dest_stack >= 0 and features[i].dest_stack == features[j].dest_stack:
+                model.add_quadratic(vars_[i], vars_[j], penalties["dest"])
+            if penalties["source_dest"] > 0.0 and features[i].source_dest == features[j].source_dest:
+                model.add_quadratic(vars_[i], vars_[j], penalties["source_dest"])
+            if penalties["signature"] > 0.0 and features[i].signature == features[j].signature:
+                model.add_quadratic(vars_[i], vars_[j], penalties["signature"])
+            if penalties["reduce"] > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
+                model.add_quadratic(vars_[i], vars_[j], penalties["reduce"])
+            if penalties["n_band"] > 0.0 and features[i].n_band == features[j].n_band:
+                model.add_quadratic(vars_[i], vars_[j], penalties["n_band"])
+            if penalties["risk"] > 0.0 and _risk_bucket(features[i].risk_score) == _risk_bucket(features[j].risk_score):
+                model.add_quadratic(vars_[i], vars_[j], penalties["risk"])
+    model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
+    sample_set = SimulatedAnnealingQuboSampler().sample(
+        model,
+        _qubo_sampler_config(
+            args,
+            num_reads=int(getattr(args, "qubo_reads", 2) or 2),
+            random_seed=int(getattr(args, "seed", 37)) + 17041,
+            time_limit_sec=float(getattr(args, "qubo_time_limit", 0.001) or 0.001),
+            sa_iterations=int(getattr(args, "qubo_iterations", 20) or 20),
+        ),
+    )
+    picked: set[int] = set()
+    if sample_set.samples:
+        picked = {
+            idx
+            for idx in range(len(usable))
+            if sample_set.samples[0].binary_values.get(idx, 0) == 1
+        }
+    picked = _repair_pareto_union_selection(picked, target, linear, features, args)
+    ordered = sorted(
+        picked,
+        key=lambda idx: (
+            _pareto_union_objective({idx}, linear, features, args),
+            features[idx].n_value,
+            features[idx].depth,
+            features[idx].quality_rank,
+            usable[idx][0],
+        ),
+    )
+    return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
+
+
 
 
 def _normalize_values(values: list[float]) -> list[float]:
