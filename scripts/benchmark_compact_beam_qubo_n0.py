@@ -149,6 +149,38 @@ COMPACT_EXTRA_FIELDS = [
     "feasibility_escape_added_total",
     "feasibility_escape_active_layers",
     "feasibility_escape_gate_reasons",
+    "pareto_union_enabled",
+    "pareto_union_candidate_window",
+    "pareto_union_seed_width",
+    "pareto_union_qubo_width",
+    "pareto_union_max_vars",
+    "pareto_union_n_band_size",
+    "pareto_union_quality_weight",
+    "pareto_union_repair_weight",
+    "pareto_union_space_weight",
+    "pareto_union_risk_weight",
+    "pareto_union_same_parent_penalty",
+    "pareto_union_same_source_penalty",
+    "pareto_union_same_dest_penalty",
+    "pareto_union_same_source_dest_penalty",
+    "pareto_union_signature_penalty",
+    "pareto_union_reduce_signature_penalty",
+    "pareto_union_n_band_penalty",
+    "pareto_union_risk_bucket_penalty",
+    "pareto_union_layers",
+    "pareto_union_seed_selected_total",
+    "pareto_union_qubo_calls",
+    "pareto_union_qubo_vars",
+    "pareto_union_qubo_time_sec",
+    "pareto_union_qubo_selected_total",
+    "pareto_union_quality_selected",
+    "pareto_union_space_selected",
+    "pareto_union_repair_selected",
+    "pareto_union_risk_selected",
+    "pareto_union_distinct_parent_count_last",
+    "pareto_union_distinct_source_count_last",
+    "pareto_union_distinct_dest_count_last",
+    "pareto_union_distinct_signature_count_last",
     "frg_candidate_supplement_enabled",
     "frg_candidate_supplement_width",
     "frg_candidate_focus_n",
@@ -727,6 +759,24 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "feasibility_escape_n_window": 1,
         "feasibility_escape_dead_end_threshold": 0.45,
         "feasibility_escape_min_temporary_slack": 1,
+        "pareto_union_enabled": False,
+        "pareto_union_candidate_window": 128,
+        "pareto_union_seed_width": 32,
+        "pareto_union_qubo_width": 32,
+        "pareto_union_max_vars": 96,
+        "pareto_union_n_band_size": 2,
+        "pareto_union_quality_weight": 1.00,
+        "pareto_union_repair_weight": 0.20,
+        "pareto_union_space_weight": 0.12,
+        "pareto_union_risk_weight": 0.16,
+        "pareto_union_same_parent_penalty": 0.55,
+        "pareto_union_same_source_penalty": 0.25,
+        "pareto_union_same_dest_penalty": 0.20,
+        "pareto_union_same_source_dest_penalty": 0.35,
+        "pareto_union_signature_penalty": 0.20,
+        "pareto_union_reduce_signature_penalty": 0.15,
+        "pareto_union_n_band_penalty": 0.08,
+        "pareto_union_risk_bucket_penalty": 0.08,
         "frg_candidate_supplement_enabled": False,
         "frg_candidate_supplement_width": 0,
         "frg_candidate_focus_n": -1,
@@ -2824,6 +2874,179 @@ def _bs_frg_qubo_features(
         parent_code=parent_code,
         signature=signature,
     )
+
+
+class ParetoUnionFeatures(NamedTuple):
+    energy: float
+    n_value: int
+    depth: int
+    parent_code: bytes
+    source_stack: int
+    dest_stack: int
+    source_dest: tuple[int, int]
+    signature: tuple[int, ...]
+    reduce_signature: tuple[int, ...]
+    n_band: int
+    space_score: float
+    repair_score: float
+    risk_score: float
+    quality_rank: int
+
+
+def _pareto_transition_source_stack(parent_code: bytes, code: bytes, stack_count: int, max_height: int) -> int:
+    if not parent_code or stack_count <= 0 or max_height <= 0:
+        return -1
+    before = _split(parent_code, stack_count, max_height)
+    after = _split(code, stack_count, max_height)
+    for idx, (before_chunk, after_chunk) in enumerate(zip(before, after)):
+        if _chunk_height_raw(after_chunk) < _chunk_height_raw(before_chunk):
+            return idx
+    return -1
+
+
+def _transition_dest_stack(parent_code: bytes, code: bytes, stack_count: int, max_height: int) -> int:
+    if not parent_code or stack_count <= 0 or max_height <= 0:
+        return -1
+    before = _split(parent_code, stack_count, max_height)
+    after = _split(code, stack_count, max_height)
+    for idx, (before_chunk, after_chunk) in enumerate(zip(before, after)):
+        if _chunk_height_raw(after_chunk) > _chunk_height_raw(before_chunk):
+            return idx
+    return -1
+
+
+def _pareto_union_space_score(code: bytes, stack_count: int, max_height: int) -> float:
+    if stack_count <= 0 or max_height <= 0:
+        return 0.0
+    chunks = _split(code, stack_count, max_height)
+    heights = [_chunk_height_raw(chunk) for chunk in chunks]
+    empty_slots = sum(max_height - height for height in heights)
+    total_slots = max(1.0, float(stack_count * max_height))
+    avg_pressure = sum(heights) / total_slots
+    max_pressure = max(heights, default=0) / max(1.0, float(max_height))
+    return max(0.0, float(empty_slots) / total_slots - 0.25 * avg_pressure - 0.25 * max_pressure)
+
+
+def _pareto_union_risk_score(code: bytes, stack_count: int, max_height: int) -> float:
+    if stack_count <= 0 or max_height <= 0:
+        return 0.0
+    stacks = _code_to_stacks(code, stack_count, max_height)
+    disorder = future_disorder_count_stacks(stacks)
+    total = sum(len(stack) for stack in stacks)
+    return float(disorder) / max(1.0, float(total))
+
+
+def _pareto_union_features(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    rank: int,
+    args: argparse.Namespace,
+) -> ParetoUnionFeatures:
+    n_value, depth, parent_code = data
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    source_stack = _pareto_transition_source_stack(parent_code, code, stack_count, max_height)
+    dest_stack = _transition_dest_stack(parent_code, code, stack_count, max_height)
+    signature: tuple[int, ...] = (int(n_value), 0, 0, 0, 0)
+    reduce_signature: tuple[int, ...] = (source_stack, 0, 0)
+    if stack_count > 0 and max_height > 0:
+        before = _code_to_stacks(parent_code, stack_count, max_height)
+        after = _code_to_stacks(code, stack_count, max_height)
+        signals = compute_frg_transition_signals(before, after, max_height)
+        signature = (
+            min(3, max(0, int(signals.fill_gain))),
+            min(3, max(0, int(signals.reduce_gain))),
+            _sign_bucket(int(signals.unblocked_bad_delta)),
+            _sign_bucket(int(signals.stable_prefix_delta)),
+            min(3, max(0, int(signals.low_tier_damage))),
+        )
+        reduce_signature = (
+            source_stack,
+            min(3, max(0, int(signals.reduce_gain))),
+            _sign_bucket(int(signals.unblocked_bad_delta)),
+        )
+    fixed = _compact_wang_fixed_prefix_score(code, stack_count, max_height) if stack_count > 0 and max_height > 0 else 0
+    pair = _compact_wang_fix_pair_score(code, stack_count, max_height) if stack_count > 0 and max_height > 0 else 0
+    repair_score = float(fixed + pair)
+    space_score = _pareto_union_space_score(code, stack_count, max_height)
+    risk_score = _pareto_union_risk_score(code, stack_count, max_height)
+    n_band_size = max(1, int(getattr(args, "pareto_union_n_band_size", 2) or 2))
+    quality_weight = float(getattr(args, "pareto_union_quality_weight", 1.0) or 1.0)
+    repair_weight = float(getattr(args, "pareto_union_repair_weight", 0.20) or 0.0)
+    space_weight = float(getattr(args, "pareto_union_space_weight", 0.12) or 0.0)
+    risk_weight = float(getattr(args, "pareto_union_risk_weight", 0.16) or 0.0)
+    quality_energy = float(int(n_value) * 1000 + int(depth)) + float(rank) * 0.02
+    energy = (
+        quality_weight * quality_energy
+        - repair_weight * repair_score
+        - space_weight * space_score
+        + risk_weight * risk_score
+    )
+    return ParetoUnionFeatures(
+        energy=float(energy),
+        n_value=int(n_value),
+        depth=int(depth),
+        parent_code=parent_code,
+        source_stack=int(source_stack),
+        dest_stack=int(dest_stack),
+        source_dest=(int(source_stack), int(dest_stack)),
+        signature=signature,
+        reduce_signature=reduce_signature,
+        n_band=int(n_value) // n_band_size,
+        space_score=float(space_score),
+        repair_score=float(repair_score),
+        risk_score=float(risk_score),
+        quality_rank=int(rank),
+    )
+
+
+def _select_pareto_union_seed_indices(
+    features: list[ParetoUnionFeatures],
+    args: argparse.Namespace,
+    target: int,
+) -> list[int]:
+    target = max(0, min(int(target), len(features)))
+    if target <= 0:
+        return []
+    seed_width = max(0, int(getattr(args, "pareto_union_seed_width", target) or 0))
+    if seed_width > 0:
+        target = min(target, seed_width)
+    picked: list[int] = []
+    seen: set[int] = set()
+
+    def add(idx: int) -> None:
+        if idx not in seen and len(picked) < target:
+            seen.add(idx)
+            picked.append(idx)
+
+    objective_orders = [
+        sorted(range(len(features)), key=lambda idx: (features[idx].energy, features[idx].quality_rank, idx)),
+        sorted(range(len(features)), key=lambda idx: (-features[idx].space_score, features[idx].quality_rank, idx)),
+        sorted(range(len(features)), key=lambda idx: (-features[idx].repair_score, features[idx].quality_rank, idx)),
+        sorted(range(len(features)), key=lambda idx: (features[idx].risk_score, features[idx].quality_rank, idx)),
+    ]
+    for order in objective_orders:
+        if order:
+            add(order[0])
+
+    for attr in ("source_dest", "parent_code", "signature"):
+        representatives: dict[object, int] = {}
+        for idx, feature in enumerate(features):
+            key = getattr(feature, attr)
+            if key not in representatives:
+                representatives[key] = idx
+        for idx in sorted(representatives.values(), key=lambda value: (features[value].quality_rank, value)):
+            add(idx)
+            if len(picked) >= target:
+                break
+        if len(picked) >= target:
+            break
+
+    for idx in sorted(range(len(features)), key=lambda value: (features[value].quality_rank, value)):
+        add(idx)
+        if len(picked) >= target:
+            break
+    return picked
 
 
 def _normalize_values(values: list[float]) -> list[float]:
