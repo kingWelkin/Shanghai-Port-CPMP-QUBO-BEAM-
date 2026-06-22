@@ -320,6 +320,10 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
         "union_rollout_probe_time_sec": getattr(result, "union_rollout_probe_time_sec", 0.0),
         "union_rollout_probe_cache_hits": getattr(result, "union_rollout_probe_cache_hits", 0),
         "union_rollout_probe_selected_total": getattr(result, "union_rollout_probe_selected_total", 0),
+        "union_rollout_terminal_graft": getattr(args, "union_rollout_terminal_graft", False),
+        "union_rollout_terminal_graft_respect_cap": getattr(args, "union_rollout_terminal_graft_respect_cap", True),
+        "union_rollout_terminal_grafted_total": getattr(result, "union_rollout_terminal_grafted_total", 0),
+        "union_rollout_terminal_graft_used": getattr(result, "union_rollout_terminal_graft_used", False),
     }
 
 
@@ -983,6 +987,10 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_frg_seed_ledger_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
             "qubo_scheduler_state_v5_pareto_union_polish",
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
@@ -1240,6 +1248,22 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_rollout_probe_final_n_weight",
         "union_rollout_probe_moves_weight",
         "union_rollout_probe_dead_end_penalty",
+        "union_rollout_terminal_graft",
+        "union_rollout_terminal_graft_respect_cap",
+        "frg_frontier_child_enabled",
+        "frg_frontier_child_parent_width",
+        "frg_frontier_child_limit",
+        "frg_frontier_child_max_steps",
+        "frg_frontier_child_append_only",
+        "frg_frontier_child_adaptive_enabled",
+        "frg_frontier_child_adaptive_parent_width",
+        "frg_frontier_child_adaptive_limit",
+        "frg_frontier_child_adaptive_max_steps",
+        "frg_frontier_child_adaptive_plateau_window",
+        "frg_frontier_child_adaptive_plateau_delta",
+        "frg_frontier_child_adaptive_min_n",
+        "frg_frontier_child_adaptive_small_stack_max",
+        "frg_frontier_child_adaptive_min_container_count",
         "frg_seed_enabled",
         "frg_seed_time_limit",
         "frg_seed_min_max_steps",
@@ -1417,6 +1441,14 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_frontier_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish"})
     if variant == "qubo_scheduler_state_v5_pareto_union_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_pareto_union_polish"})
     if variant == "qubo_scheduler_state_v5_frg_compound_polish":
@@ -1681,6 +1713,10 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_frg_seed_ledger_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
             "qubo_scheduler_state_v5_pareto_union_polish",
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
@@ -1908,6 +1944,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-rollout-probe-final-n-weight", type=float)
     parser.add_argument("--union-rollout-probe-moves-weight", type=float)
     parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float)
+    parser.add_argument("--union-rollout-terminal-graft", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--union-rollout-terminal-graft-respect-cap",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-parent-width", type=int)
+    parser.add_argument("--frg-frontier-child-limit", type=int)
+    parser.add_argument("--frg-frontier-child-max-steps", type=int)
+    parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-parent-width", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-limit", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-max-steps", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-plateau-window", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-plateau-delta", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-min-n", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-small-stack-max", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-min-container-count", type=int)
     parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-time-limit", type=float)
     parser.add_argument("--frg-seed-min-max-steps", type=int)

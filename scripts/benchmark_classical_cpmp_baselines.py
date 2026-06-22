@@ -18,6 +18,7 @@ from container_reshuffle.core import future_disorder_count_stacks  # noqa: E402
 from container_reshuffle.features import disorder_box_count  # noqa: E402
 from container_reshuffle.solvers.base import SolverConfig, failure_solution  # noqa: E402
 from container_reshuffle.solvers.beam import BeamSearchSolver  # noqa: E402
+from container_reshuffle.solvers.bs_frg import BsFrgSolver  # noqa: E402
 from container_reshuffle.solvers.classical_cpmp import (  # noqa: E402
     BrkgaCpmpSolver,
     LpfhMultiHeuristicSolver,
@@ -45,7 +46,7 @@ FIELDS = [
     "status",
 ]
 
-WANG_SOLVERS = {"wang_bs_g", "wang_bs_b"}
+PRIORITY_GROUP_SOLVERS = {"wang_bs_g", "wang_bs_b", "bs_frg"}
 
 
 def build_solver(name: str):
@@ -63,6 +64,8 @@ def build_solver(name: str):
         return WangBsBabyMovesSolver()
     if name == "brkga_cpmp":
         return BrkgaCpmpSolver()
+    if name == "bs_frg":
+        return BsFrgSolver()
     raise ValueError(f"unknown classical CPMP solver: {name}")
 
 
@@ -194,7 +197,7 @@ def main() -> int:
             priority_groups_supported = False
 
         for solver_name in args.solvers:
-            allow_priority_groups = (not priority_groups_supported) and solver_name in WANG_SOLVERS
+            allow_priority_groups = (not priority_groups_supported) and solver_name in PRIORITY_GROUP_SOLVERS
             if not priority_groups_supported and not allow_priority_groups:
                 rows.append(_unsupported_priority_group_row(instance, case.family, case.case_id, solver_name, reference_moves))
                 continue

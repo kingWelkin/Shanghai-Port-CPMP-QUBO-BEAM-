@@ -284,6 +284,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-rollout-probe-final-n-weight", type=float)
     parser.add_argument("--union-rollout-probe-moves-weight", type=float)
     parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float)
+    parser.add_argument("--union-rollout-terminal-graft", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--union-rollout-terminal-graft-respect-cap",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-parent-width", type=int)
+    parser.add_argument("--frg-frontier-child-limit", type=int)
+    parser.add_argument("--frg-frontier-child-max-steps", type=int)
+    parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-parent-width", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-limit", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-max-steps", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-plateau-window", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-plateau-delta", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-min-n", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-small-stack-max", type=int)
+    parser.add_argument("--frg-frontier-child-adaptive-min-container-count", type=int)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument(
         "--output",

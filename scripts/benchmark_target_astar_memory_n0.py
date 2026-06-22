@@ -32,6 +32,10 @@ from container_reshuffle.core import Move, Solution, apply_move, create_initial_
 from container_reshuffle.features import disorder_box_count, entropy_limit, max_entropy_along_moves  # noqa: E402
 from container_reshuffle.qubo.model import QuboModel  # noqa: E402
 from container_reshuffle.qubo.sampler import QuboSamplerConfig, SimulatedAnnealingQuboSampler  # noqa: E402
+from container_reshuffle.solvers.frg_signals import (  # noqa: E402
+    compute_frg_layout_signals,
+    compute_frg_transition_signals,
+)
 from extract_business_path_from_sqlite import _lift_to_physical  # noqa: E402
 from run_business_exact_target_search_sqlite import (  # noqa: E402
     _canonical,
@@ -205,6 +209,10 @@ def _code_layout_cost(code: bytes, args: argparse.Namespace) -> float:
         _chunk_layout_cost(_chunk_boxes(chunk, max_height), target_groups)
         for chunk in _split(code, stack_count, max_height)
     )
+
+
+def _code_to_stacks(code: bytes, stack_count: int, max_height: int) -> list[list[int]]:
+    return [[int(box) for box in chunk if box] for chunk in _split(code, stack_count, max_height)]
 
 
 def _layout_qubo_namespace(args: argparse.Namespace) -> argparse.Namespace:
@@ -455,6 +463,13 @@ def _qubo_linear_scores(
     layout_span = max(1.0, max_layout - min_layout)
     layout_weight = float(getattr(args, "layout_qubo_target_weight", 0.0)) if _uses_layout_qubo(args) else 0.0
     next_n_weight = float(getattr(args, "qubo_next_n_weight", 0.0))
+    frg_linear_enabled = bool(getattr(args, "frg_linear_score_enabled", False))
+    frg_fill_weight = float(getattr(args, "frg_linear_fill_weight", 0.0) or 0.0)
+    frg_reduce_weight = float(getattr(args, "frg_linear_reduce_weight", 0.0) or 0.0)
+    frg_unblocked_weight = float(getattr(args, "frg_linear_unblocked_weight", 0.0) or 0.0)
+    frg_assignment_weight = float(getattr(args, "frg_linear_assignment_weight", 0.0) or 0.0)
+    frg_max_height_weight = float(getattr(args, "frg_linear_max_height_ordered_weight", 0.0) or 0.0)
+    frg_pressure_weight = float(getattr(args, "frg_linear_height_pressure_weight", 0.0) or 0.0)
     if next_n_weight > 0.0:
         next_best_n = [
             _one_step_best_n(code, data[0], args)
@@ -467,6 +482,26 @@ def _qubo_linear_scores(
         next_best_n = []
         min_next_n = best_n
         next_n_span = 1.0
+    frg_adjustments: list[float] = []
+    if frg_linear_enabled:
+        stack_count = int(getattr(args, "_stack_count", 0) or 0)
+        max_height = int(getattr(args, "_max_height", 0) or 0)
+        for code, (_n_value, _depth, parent_code) in usable_items:
+            if stack_count <= 0 or max_height <= 0:
+                frg_adjustments.append(0.0)
+                continue
+            before = _code_to_stacks(parent_code, stack_count, max_height)
+            after = _code_to_stacks(code, stack_count, max_height)
+            transition = compute_frg_transition_signals(before, after, max_height)
+            layout = compute_frg_layout_signals(after, max_height)
+            frg_adjustments.append(
+                -frg_fill_weight * float(transition.fill_gain)
+                - frg_reduce_weight * float(transition.reduce_gain)
+                - frg_unblocked_weight * float(max(0, transition.unblocked_bad_delta))
+                - frg_assignment_weight * float(layout.reduction_pop_order_assignment_score)
+                + frg_max_height_weight * float(transition.max_height_ordered_penalty)
+                + frg_pressure_weight * float(layout.avg_height_pressure)
+            )
 
     scores: list[float] = []
     for idx, (_code, (n_value, depth, parent_code)) in enumerate(usable_items):
@@ -485,7 +520,13 @@ def _qubo_linear_scores(
             + args.qubo_parent_weight * parent_term
             + layout_weight * layout_term
             + next_n_weight * next_n_term
+            + (frg_adjustments[idx] if frg_linear_enabled else 0.0)
         )
+    if frg_linear_enabled:
+        lo = min(scores) if scores else 0.0
+        hi = max(scores) if scores else 0.0
+        span = hi - lo
+        return [0.0 if span <= 1e-12 else (score - lo) / span for score in scores]
     hi = max(scores) if scores else 0.0
     return [0.0 if hi <= 0.0 else score / hi for score in scores]
 

@@ -53,6 +53,7 @@ from container_reshuffle.solvers.feasibility_signals import (  # noqa: E402
 )
 from container_reshuffle.solvers.bs_frg import (  # noqa: E402
     _frg_completion_cached as _bs_frg_completion_cached,
+    _frg_step_children as _bs_frg_step_children,
     _initial_layout as _bs_frg_initial_layout,
 )
 from container_reshuffle.solvers.frg_signals import (  # noqa: E402
@@ -232,6 +233,27 @@ COMPACT_EXTRA_FIELDS = [
     "union_rollout_probe_time_sec",
     "union_rollout_probe_cache_hits",
     "union_rollout_probe_selected_total",
+    "union_rollout_terminal_graft",
+    "union_rollout_terminal_graft_respect_cap",
+    "union_rollout_terminal_grafted_total",
+    "union_rollout_terminal_graft_used",
+    "frg_frontier_child_enabled",
+    "frg_frontier_child_parent_width",
+    "frg_frontier_child_limit",
+    "frg_frontier_child_max_steps",
+    "frg_frontier_child_append_only",
+    "frg_frontier_child_adaptive_enabled",
+    "frg_frontier_child_adaptive_parent_width",
+    "frg_frontier_child_adaptive_limit",
+    "frg_frontier_child_adaptive_max_steps",
+    "frg_frontier_child_adaptive_plateau_window",
+    "frg_frontier_child_adaptive_plateau_delta",
+    "frg_frontier_child_adaptive_min_n",
+    "frg_frontier_child_adaptive_small_stack_max",
+    "frg_frontier_child_adaptive_min_container_count",
+    "frg_frontier_child_calls",
+    "frg_frontier_child_generated",
+    "frg_frontier_child_added_total",
     "frg_seed_enabled",
     "frg_seed_time_limit",
     "frg_seed_min_max_steps",
@@ -636,6 +658,7 @@ FRONTIER_TRACE_FIELDS = [
     "selected_rank",
     "selected_by_qubo",
     "selected_source",
+    "candidate_origin",
 ]
 
 
@@ -818,6 +841,7 @@ def _frontier_trace_candidate_rows(
     selected_source_by_code: dict[bytes, str],
     args: argparse.Namespace,
     top_k: int,
+    candidate_origin_by_code: dict[bytes, str] | None = None,
 ) -> list[dict[str, object]]:
     if not ranked or top_k <= 0:
         return []
@@ -825,6 +849,7 @@ def _frontier_trace_candidate_rows(
     selected_rank_by_code = {code: idx + 1 for idx, code in enumerate(selected_codes)}
     selected_set = set(selected_codes)
     selected_qubo_set = selected_by_qubo & selected_set
+    origin_by_code = candidate_origin_by_code or {}
     parent_candidate_counts: dict[bytes, int] = {}
     parent_selected_counts: dict[bytes, int] = {}
     parent_qubo_selected_counts: dict[bytes, int] = {}
@@ -887,6 +912,7 @@ def _frontier_trace_candidate_rows(
                 "selected_rank": int(selected_rank_by_code.get(code, 0)),
                 "selected_by_qubo": int(code in selected_qubo_set),
                 "selected_source": source,
+                "candidate_origin": origin_by_code.get(code, "beam"),
             }
         )
     return rows
@@ -1080,6 +1106,22 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_rollout_probe_final_n_weight": 0.08,
         "union_rollout_probe_moves_weight": 0.0,
         "union_rollout_probe_dead_end_penalty": 0.12,
+        "union_rollout_terminal_graft": False,
+        "union_rollout_terminal_graft_respect_cap": True,
+        "frg_frontier_child_enabled": False,
+        "frg_frontier_child_parent_width": 0,
+        "frg_frontier_child_limit": 0,
+        "frg_frontier_child_max_steps": 1,
+        "frg_frontier_child_append_only": False,
+        "frg_frontier_child_adaptive_enabled": False,
+        "frg_frontier_child_adaptive_parent_width": 0,
+        "frg_frontier_child_adaptive_limit": 0,
+        "frg_frontier_child_adaptive_max_steps": 1,
+        "frg_frontier_child_adaptive_plateau_window": 0,
+        "frg_frontier_child_adaptive_plateau_delta": 0,
+        "frg_frontier_child_adaptive_min_n": 0,
+        "frg_frontier_child_adaptive_small_stack_max": 0,
+        "frg_frontier_child_adaptive_min_container_count": 0,
         "frg_seed_enabled": False,
         "frg_seed_time_limit": 0.0,
         "frg_seed_min_max_steps": 256,
@@ -2005,6 +2047,55 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_polish"] = {
     "union_rollout_probe_moves_weight": 0.0,
     "union_rollout_probe_dead_end_penalty": 0.12,
 }
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "union_rollout_probe_enabled": True,
+    "union_rollout_probe_max_candidates": 16,
+    "union_rollout_probe_time_limit": 0.003,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.0,
+    "union_rollout_probe_final_n_weight": 0.0,
+    "union_rollout_probe_moves_weight": 0.0,
+    "union_rollout_probe_dead_end_penalty": 0.0,
+    "union_rollout_terminal_graft": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_frontier_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_parent_width": 16,
+    "frg_frontier_child_limit": 2,
+    "frg_frontier_child_max_steps": 3,
+    "frg_frontier_child_append_only": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_parent_width": 16,
+    "frg_frontier_child_limit": 2,
+    "frg_frontier_child_max_steps": 3,
+    "frg_frontier_child_append_only": False,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_parent_width": 4,
+    "frg_frontier_child_limit": 1,
+    "frg_frontier_child_max_steps": 2,
+    "frg_frontier_child_append_only": True,
+    "frg_frontier_child_adaptive_enabled": True,
+    "frg_frontier_child_adaptive_parent_width": 12,
+    "frg_frontier_child_adaptive_limit": 2,
+    "frg_frontier_child_adaptive_max_steps": 3,
+    "frg_frontier_child_adaptive_plateau_window": 2,
+    "frg_frontier_child_adaptive_plateau_delta": 0,
+    "frg_frontier_child_adaptive_min_n": 8,
+    "frg_frontier_child_adaptive_small_stack_max": 4,
+    "frg_frontier_child_adaptive_min_container_count": 0,
+}
 _SOLVER_PROFILES["scheduler_state_v5_pareto_union_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "frg_seed_enabled": False,
@@ -2453,6 +2544,11 @@ class CompactBeamResult:
     union_rollout_probe_time_sec: float = 0.0
     union_rollout_probe_cache_hits: int = 0
     union_rollout_probe_selected_total: int = 0
+    union_rollout_terminal_grafted_total: int = 0
+    union_rollout_terminal_graft_used: bool = False
+    frg_frontier_child_calls: int = 0
+    frg_frontier_child_generated: int = 0
+    frg_frontier_child_added_total: int = 0
     feasibility_escape_calls: int = 0
     feasibility_escape_added_total: int = 0
     feasibility_escape_active_layers: int = 0
@@ -2495,6 +2591,7 @@ class UnionRolloutProbeResult:
     moves: int
     status: str
     runtime_sec: float = 0.0
+    move_path: tuple[Move, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -2828,6 +2925,37 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_rollout_probe_final_n_weight": "--union-rollout-probe-final-n-weight",
         "union_rollout_probe_moves_weight": "--union-rollout-probe-moves-weight",
         "union_rollout_probe_dead_end_penalty": "--union-rollout-probe-dead-end-penalty",
+        "union_rollout_terminal_graft": (
+            "--union-rollout-terminal-graft",
+            "--no-union-rollout-terminal-graft",
+        ),
+        "union_rollout_terminal_graft_respect_cap": (
+            "--union-rollout-terminal-graft-respect-cap",
+            "--no-union-rollout-terminal-graft-respect-cap",
+        ),
+        "frg_frontier_child_enabled": (
+            "--frg-frontier-child-enabled",
+            "--no-frg-frontier-child-enabled",
+        ),
+        "frg_frontier_child_parent_width": "--frg-frontier-child-parent-width",
+        "frg_frontier_child_limit": "--frg-frontier-child-limit",
+        "frg_frontier_child_max_steps": "--frg-frontier-child-max-steps",
+        "frg_frontier_child_append_only": (
+            "--frg-frontier-child-append-only",
+            "--no-frg-frontier-child-append-only",
+        ),
+        "frg_frontier_child_adaptive_enabled": (
+            "--frg-frontier-child-adaptive-enabled",
+            "--no-frg-frontier-child-adaptive-enabled",
+        ),
+        "frg_frontier_child_adaptive_parent_width": "--frg-frontier-child-adaptive-parent-width",
+        "frg_frontier_child_adaptive_limit": "--frg-frontier-child-adaptive-limit",
+        "frg_frontier_child_adaptive_max_steps": "--frg-frontier-child-adaptive-max-steps",
+        "frg_frontier_child_adaptive_plateau_window": "--frg-frontier-child-adaptive-plateau-window",
+        "frg_frontier_child_adaptive_plateau_delta": "--frg-frontier-child-adaptive-plateau-delta",
+        "frg_frontier_child_adaptive_min_n": "--frg-frontier-child-adaptive-min-n",
+        "frg_frontier_child_adaptive_small_stack_max": "--frg-frontier-child-adaptive-small-stack-max",
+        "frg_frontier_child_adaptive_min_container_count": "--frg-frontier-child-adaptive-min-container-count",
         "frg_seed_enabled": ("--frg-seed-enabled", "--no-frg-seed-enabled"),
         "frg_seed_time_limit": "--frg-seed-time-limit",
         "frg_seed_min_max_steps": "--frg-seed-min-max-steps",
@@ -3697,7 +3825,93 @@ def _union_rollout_probe_completion(
         moves=len(rollout.moves),
         status=str(rollout.status),
         runtime_sec=runtime_sec,
+        move_path=tuple(rollout.moves),
     )
+
+
+def _canonical_to_physical_stack_map(
+    logical_stacks: list[list[int]],
+    physical_stacks: list[list[int]],
+) -> dict[int, int] | None:
+    unused = set(range(len(physical_stacks)))
+    stack_map: dict[int, int] = {}
+    for logical_idx, logical_stack in enumerate(logical_stacks):
+        matched: int | None = None
+        for physical_idx in sorted(unused):
+            if physical_stacks[physical_idx] == logical_stack:
+                matched = physical_idx
+                break
+        if matched is None:
+            return None
+        stack_map[logical_idx] = matched
+        unused.remove(matched)
+    return stack_map
+
+
+def _translate_moves_by_stack_map(moves: tuple[Move, ...], stack_map: dict[int, int]) -> list[Move] | None:
+    translated: list[Move] = []
+    for move in moves:
+        if move.from_stack not in stack_map or move.to_stack not in stack_map:
+            return None
+        translated.append(
+            Move(
+                step=move.step,
+                box=move.box,
+                from_stack=stack_map[move.from_stack],
+                to_stack=stack_map[move.to_stack],
+                from_level=move.from_level,
+                to_level=move.to_level,
+            )
+        )
+    return translated
+
+
+def _union_rollout_probe_grafted_moves(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    parent: dict[bytes, bytes | None],
+    instance: Instance,
+    args: argparse.Namespace,
+    rollout: UnionRolloutProbeResult,
+    *,
+    cap: int,
+) -> list[Move] | None:
+    if not getattr(args, "union_rollout_terminal_graft", False):
+        return None
+    if not rollout.feasible or int(rollout.final_n) != 0 or not rollout.move_path:
+        return None
+    _n_value, _depth, parent_code = data
+    try:
+        prefix_codes = _backtrack(parent, parent_code)
+    except (KeyError, RuntimeError):
+        return None
+    prefix_codes.append(code)
+    try:
+        prefix_moves = _codes_to_moves_instance(instance, prefix_codes)
+    except RuntimeError:
+        return None
+    state = State(stacks=[list(stack) for stack in instance.stacks])
+    try:
+        for move in prefix_moves:
+            state = apply_move(instance, state, move)
+    except Exception:
+        return None
+    stack_map = _canonical_to_physical_stack_map(
+        _code_to_stacks(code, instance.stack_count, instance.max_height),
+        state.stacks,
+    )
+    if stack_map is None:
+        return None
+    tail_moves = _translate_moves_by_stack_map(rollout.move_path, stack_map)
+    if tail_moves is None:
+        return None
+    grafted = prefix_moves + tail_moves
+    validation_cap = int(cap)
+    if not getattr(args, "union_rollout_terminal_graft_respect_cap", True):
+        validation_cap = 1_000_000_000
+    if not _moves_reach_n0_with_cap(instance, grafted, validation_cap):
+        return None
+    return grafted
 
 
 def _union_rollout_probe_results(
@@ -3747,6 +3961,246 @@ def _union_rollout_probe_results(
             args._union_rollout_probe_feasible += 1
     args._union_rollout_probe_current_results = results
     return results
+
+
+def _ensure_frg_frontier_child_counters(args: argparse.Namespace) -> None:
+    if not hasattr(args, "_frg_frontier_child_calls"):
+        args._frg_frontier_child_calls = 0
+    if not hasattr(args, "_frg_frontier_child_generated"):
+        args._frg_frontier_child_generated = 0
+    if not hasattr(args, "_frg_frontier_child_added_total"):
+        args._frg_frontier_child_added_total = 0
+
+
+def _frg_frontier_child_effective_params(args: argparse.Namespace) -> tuple[int, int, int]:
+    parent_width = max(0, int(getattr(args, "frg_frontier_child_parent_width", 0) or 0))
+    child_limit = max(0, int(getattr(args, "frg_frontier_child_limit", 0) or 0))
+    max_steps = max(1, int(getattr(args, "frg_frontier_child_max_steps", 1) or 1))
+    if not getattr(args, "frg_frontier_child_adaptive_enabled", False):
+        return parent_width, child_limit, max_steps
+
+    adaptive_parent_width = max(
+        parent_width,
+        int(getattr(args, "frg_frontier_child_adaptive_parent_width", 0) or 0),
+    )
+    adaptive_child_limit = max(
+        child_limit,
+        int(getattr(args, "frg_frontier_child_adaptive_limit", 0) or 0),
+    )
+    adaptive_max_steps = max(
+        max_steps,
+        int(getattr(args, "frg_frontier_child_adaptive_max_steps", 1) or 1),
+    )
+    small_stack_max = max(0, int(getattr(args, "frg_frontier_child_adaptive_small_stack_max", 0) or 0))
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    if small_stack_max > 0 and 0 < stack_count <= small_stack_max:
+        return adaptive_parent_width, adaptive_child_limit, adaptive_max_steps
+
+    min_container_count = max(
+        0,
+        int(getattr(args, "frg_frontier_child_adaptive_min_container_count", 0) or 0),
+    )
+    container_count = int(getattr(args, "_container_count", 0) or 0)
+    if min_container_count > 0 and container_count < min_container_count:
+        return parent_width, child_limit, max_steps
+
+    history = [int(value) for value in getattr(args, "_best_n_history", []) if value is not None]
+    window = max(1, int(getattr(args, "frg_frontier_child_adaptive_plateau_window", 0) or 0))
+    min_n = max(0, int(getattr(args, "frg_frontier_child_adaptive_min_n", 0) or 0))
+    plateau_delta = max(0, int(getattr(args, "frg_frontier_child_adaptive_plateau_delta", 0) or 0))
+    if len(history) < window:
+        return parent_width, child_limit, max_steps
+    recent = history[-window:]
+    current_n = int(recent[-1])
+    if current_n < min_n:
+        return parent_width, child_limit, max_steps
+    progress = int(recent[0]) - current_n
+    if progress > plateau_delta:
+        return parent_width, child_limit, max_steps
+    return adaptive_parent_width, adaptive_child_limit, adaptive_max_steps
+
+
+def _frg_frontier_child_rollout_children(
+    layout,
+    max_height: int,
+    step: int,
+    args: argparse.Namespace,
+    *,
+    child_limit: int,
+    max_steps: int,
+) -> list[tuple[object, tuple[Move, ...], tuple[object, ...]]]:
+    branch_limit = max(1, int(child_limit))
+    max_steps = max(1, int(max_steps))
+    paper_pure = bool(getattr(args, "frg_seed_paper_pure", True))
+    nodes: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = [(layout, (), ())]
+    outputs: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
+    seen_layouts = {getattr(layout, "stacks", ())}
+    while nodes:
+        next_nodes: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
+        for node_layout, prefix_moves, prefix_layouts in nodes:
+            if len(prefix_moves) >= max_steps:
+                continue
+            args._frg_frontier_child_calls += 1
+            children = _bs_frg_step_children(
+                node_layout,
+                max_height,
+                int(step) + len(prefix_moves),
+                limit=branch_limit,
+                paper_pure=paper_pure,
+            )
+            args._frg_frontier_child_generated += len(children)
+            for child in children:
+                child_moves = tuple(getattr(child, "moves", ()) or ())
+                if not child_moves:
+                    continue
+                combined_moves = prefix_moves + child_moves
+                child_layout = child.layout
+                combined_layouts = prefix_layouts + (child_layout,)
+                outputs.append((child_layout, combined_moves, combined_layouts))
+                layout_key = getattr(child_layout, "stacks", ())
+                if len(combined_moves) < max_steps and layout_key not in seen_layouts:
+                    seen_layouts.add(layout_key)
+                    next_nodes.append((child_layout, combined_moves, combined_layouts))
+        nodes = next_nodes
+    return outputs
+
+
+def _parent_chain_would_cycle(
+    parent_chain: dict[bytes, bytes | None] | None,
+    child_code: bytes,
+    parent_code: bytes,
+) -> bool:
+    if child_code == parent_code:
+        return True
+    if parent_chain is None:
+        return False
+    seen: set[bytes] = set()
+    current: bytes | None = parent_code
+    while current is not None:
+        if current == child_code:
+            return True
+        if current in seen:
+            return True
+        seen.add(current)
+        current = parent_chain.get(current)
+    return False
+
+
+def _inject_frg_frontier_child_candidates(
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+    parent_chain: dict[bytes, bytes | None] | None = None,
+) -> set[bytes]:
+    if not getattr(args, "frg_frontier_child_enabled", False):
+        return set()
+    if not frontier:
+        return set()
+    parent_width, child_limit, max_steps = _frg_frontier_child_effective_params(args)
+    if parent_width <= 0 or child_limit <= 0:
+        return set()
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return set()
+
+    _ensure_frg_frontier_child_counters(args)
+    added: set[bytes] = set()
+    origins = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))[:parent_width]
+    for code, _n_value, depth in origins:
+        if depth >= depth_cap:
+            continue
+        stacks = _code_to_stacks(code, stack_count, max_height)
+        group_count = max((int(box) for stack in stacks for box in stack), default=0)
+        instance = Instance(
+            "frg_frontier_child",
+            ProblemVariant.PREMARSHALLING_CPMP,
+            stack_count,
+            max_height,
+            group_count,
+            stacks,
+        )
+        layout = _bs_frg_initial_layout(instance)
+        children = _frg_frontier_child_rollout_children(
+            layout,
+            max_height,
+            int(depth),
+            args,
+            child_limit=child_limit,
+            max_steps=max_steps,
+        )
+        for child_layout, moves, layout_path in children:
+            if not moves:
+                continue
+            child_depth = int(depth) + len(moves)
+            previous_code = code
+            previous_depth = int(depth)
+            for prefix_layout in layout_path[:-1]:
+                prefix_stacks = [list(stack) for stack in getattr(prefix_layout, "stacks", ())]
+                if len(prefix_stacks) != stack_count:
+                    previous_code = b""
+                    break
+                prefix_code, _prefix_n = _encode(prefix_stacks, stack_count, max_height)
+                previous_depth += 1
+                if parent_chain is not None and prefix_code not in parent_chain:
+                    if _parent_chain_would_cycle(parent_chain, prefix_code, previous_code):
+                        previous_code = b""
+                        break
+                    parent_chain[prefix_code] = previous_code
+                previous_code = prefix_code
+            if not previous_code:
+                continue
+            child_stacks = [list(stack) for stack in getattr(child_layout, "stacks", ())]
+            if len(child_stacks) != stack_count:
+                continue
+            child_code, child_n = _encode(child_stacks, stack_count, max_height)
+            if child_code == code:
+                continue
+            if _parent_chain_would_cycle(parent_chain, child_code, previous_code):
+                continue
+            if child_depth + int(child_n) > depth_cap:
+                continue
+            old_best_depth = best_depth.get(child_code) if best_depth is not None else None
+            if old_best_depth is not None and child_depth >= old_best_depth:
+                continue
+            old = candidates.get(child_code)
+            if old is not None and old[1] <= child_depth:
+                continue
+            candidates[child_code] = (int(child_n), child_depth, previous_code)
+            added.add(child_code)
+    args._frg_frontier_child_added_total += len(added)
+    return added
+
+
+def _append_frg_frontier_child_frontier(
+    selected_codes: list[bytes],
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+    parent_chain: dict[bytes, bytes | None] | None = None,
+) -> set[bytes]:
+    if not getattr(args, "frg_frontier_child_append_only", False):
+        return set()
+    before_selected = set(selected_codes)
+    added = _inject_frg_frontier_child_candidates(
+        frontier,
+        candidates,
+        args,
+        depth_cap,
+        best_depth,
+        parent_chain=parent_chain,
+    )
+    appended: set[bytes] = set()
+    for code in sorted(added, key=lambda item: _candidate_sort_key((item, candidates[item]), args)):
+        if code in before_selected or code not in candidates:
+            continue
+        selected_codes.append(code)
+        appended.add(code)
+    return appended
 
 
 def _sign_bucket(value: int) -> int:
@@ -5582,7 +6036,8 @@ def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.N
         focus_n = int(getattr(args, "target_guided_focus_n", 8))
         layer_best_n = int(getattr(args, "_layer_best_n", n_value))
         if focus_n >= 0 and layer_best_n > focus_n:
-            return (n_value, depth, parent_code, code)
+            ledger_score = _candidate_feature_ledger_score(code, (n_value, depth, parent_code), args)
+            return (n_value, depth, ledger_score, parent_code, code)
         target_gap = _candidate_target_gap(code, args)
         weighted_gap = float(getattr(args, "target_guided_weight", 0.0)) * target_gap
         return (n_value, depth, weighted_gap, target_gap, parent_code, code)
@@ -7423,9 +7878,16 @@ def _select_next_frontier(
 
 def _backtrack(parent: dict[bytes, bytes | None], target: bytes) -> list[bytes]:
     codes = [target]
+    seen = {target}
     current = target
-    while parent[current] is not None:
-        current = parent[current]  # type: ignore[assignment]
+    while True:
+        next_code = parent[current]
+        if next_code is None:
+            break
+        if next_code in seen:
+            raise RuntimeError("parent chain cycle detected")
+        current = next_code
+        seen.add(current)
         codes.append(current)
     codes.reverse()
     return codes
@@ -8992,6 +9454,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._union_rollout_probe_time = 0.0
     args._union_rollout_probe_cache_hits = 0
     args._union_rollout_probe_selected_total = 0
+    args._union_rollout_terminal_grafted_total = 0
+    args._frg_frontier_child_calls = 0
+    args._frg_frontier_child_generated = 0
+    args._frg_frontier_child_added_total = 0
     args._union_rollout_probe_cache = {}
     args._union_rollout_probe_frg_cache = {}
     args._union_rollout_probe_current_results = {}
@@ -9077,6 +9543,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._fill_ratio = instance.container_count / max(1, instance.stack_count * instance.max_height)
     args._stack_count = instance.stack_count
     args._max_height = instance.max_height
+    args._container_count = instance.container_count
     stream_candidate_limit = max(0, getattr(args, "stream_candidate_limit", 0))
     stream_bucket_topk = max(0, int(getattr(args, "stream_bucket_topk", 0) or 0))
     stream_trim_enabled = stream_candidate_limit > 0
@@ -9094,6 +9561,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     reservoir_pulled_total = 0
     stream_pruned_candidates = 0
     wang_rollout_added_total = 0
+    rollout_terminal_moves: list[Move] | None = None
     stream_seq = 0
     depth_reached = 0
     beam_survivor_output = getattr(args, "beam_survivor_telemetry_output", None)
@@ -9208,10 +9676,46 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             peak_candidates = max(peak_candidates, len(candidates))
             if len(candidates) != candidate_count_before_rollout:
                 _update_layer_candidate_metrics(candidates, args, cap)
+        frg_frontier_child_codes: set[bytes] = set()
+        if not getattr(args, "frg_frontier_child_append_only", False):
+            candidate_count_before_frg_frontier = len(candidates)
+            frg_frontier_child_codes = _inject_frg_frontier_child_candidates(
+                frontier,
+                candidates,
+                args,
+                depth_cap,
+                best_depth,
+                parent_chain=parent,
+            )
+            if frg_frontier_child_codes:
+                peak_candidates = max(peak_candidates, len(candidates))
+                if len(candidates) != candidate_count_before_frg_frontier:
+                    _update_layer_candidate_metrics(candidates, args, cap)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         qcalls += add_qcalls
         qvars += add_qvars
         qtime += add_qtime
+        if getattr(args, "union_rollout_terminal_graft", False):
+            probe_results = getattr(args, "_union_rollout_probe_current_results", {}) or {}
+            for code, rollout in probe_results.items():
+                data = candidates.get(code)
+                if data is None:
+                    continue
+                grafted = _union_rollout_probe_grafted_moves(
+                    code,
+                    data,
+                    parent,
+                    instance,
+                    args,
+                    rollout,
+                    cap=cap,
+                )
+                if grafted is None:
+                    continue
+                if rollout_terminal_moves is None or len(grafted) < len(rollout_terminal_moves):
+                    rollout_terminal_moves = grafted
+                    depth_cap = min(depth_cap, max(0, len(grafted) - 1))
+                args._union_rollout_terminal_grafted_total += 1
         if dlts_feature_output is not None:
             parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
             selected_set = set(selected_codes)
@@ -9234,6 +9738,18 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             wang_rollout_added_total += len(appended_rollout_codes)
         frg_compound_codes = _append_frg_compound_frontier(selected_codes, candidates, args, depth_cap, best_depth)
         if frg_compound_codes:
+            peak_candidates = max(peak_candidates, len(candidates))
+        appended_frg_frontier_child_codes = _append_frg_frontier_child_frontier(
+            selected_codes,
+            frontier,
+            candidates,
+            args,
+            depth_cap,
+            best_depth,
+            parent_chain=parent,
+        )
+        if appended_frg_frontier_child_codes:
+            frg_frontier_child_codes |= appended_frg_frontier_child_codes
             peak_candidates = max(peak_candidates, len(candidates))
         survivor_metrics: dict[str, int | float] | None = None
         if collect_survivor_metrics:
@@ -9278,6 +9794,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     selected_source_by_code=dict(getattr(args, "_frontier_trace_last_selected_sources", {})),
                     args=args,
                     top_k=frontier_trace_top_k,
+                    candidate_origin_by_code={
+                        code: "frg_frontier_child" for code in frg_frontier_child_codes if code in candidates
+                    },
                 )
             )
         selected_set = set(selected_codes)
@@ -9310,7 +9829,15 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             source_by_code[code] = (
                 "qubo"
                 if code in selected_by_qubo
-                else ("wang_rollout" if code in rollout_codes else ("frg_compound" if code in frg_compound_codes else "deterministic"))
+                else (
+                    "wang_rollout"
+                    if code in rollout_codes
+                    else (
+                        "frg_frontier_child"
+                        if code in frg_frontier_child_codes
+                        else ("frg_compound" if code in frg_compound_codes else "deterministic")
+                    )
+                )
             )
             qubo_ancestor_by_code[code] = code in selected_by_qubo or qubo_ancestor_by_code.get(parent_code, False)
             next_frontier.append((code, n_value, depth))
@@ -9330,6 +9857,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     tail_ordered_gain = 0
     wang_incumbent_used = False
     frg_seed_used = False
+    union_rollout_terminal_graft_used = False
     search_path_codes: list[bytes] = []
     if target is not None:
         codes = _backtrack(parent, target)
@@ -9379,6 +9907,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 f"post_polish_window_moves_saved={polish_stats.window_moves_saved}; "
                 f"post_polish_bridge_expanded={polish_stats.bridge_expanded}"
             )
+    if rollout_terminal_moves is not None and (not moves or len(rollout_terminal_moves) < len(moves)):
+        moves = rollout_terminal_moves
+        union_rollout_terminal_graft_used = True
+        status += (
+            f"; union_rollout_terminal_graft_used=True; "
+            f"union_rollout_terminal_graft_moves={len(rollout_terminal_moves)}"
+        )
     if frg_seed is not None and frg_seed_accepted and (not moves or len(frg_seed.moves) < len(moves)):
         moves = list(frg_seed.moves)
         frg_seed_used = True
@@ -9499,6 +10034,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         union_rollout_probe_time_sec=args._union_rollout_probe_time,
         union_rollout_probe_cache_hits=args._union_rollout_probe_cache_hits,
         union_rollout_probe_selected_total=args._union_rollout_probe_selected_total,
+        union_rollout_terminal_grafted_total=args._union_rollout_terminal_grafted_total,
+        union_rollout_terminal_graft_used=union_rollout_terminal_graft_used,
+        frg_frontier_child_calls=args._frg_frontier_child_calls,
+        frg_frontier_child_generated=args._frg_frontier_child_generated,
+        frg_frontier_child_added_total=args._frg_frontier_child_added_total,
         feasibility_escape_calls=args._feasibility_escape_calls_done,
         feasibility_escape_added_total=args._feasibility_escape_added_total,
         feasibility_escape_active_layers=args._feasibility_escape_active_layers,
@@ -9894,6 +10434,51 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_rollout_probe_time_sec": result.union_rollout_probe_time_sec,
             "union_rollout_probe_cache_hits": result.union_rollout_probe_cache_hits,
             "union_rollout_probe_selected_total": result.union_rollout_probe_selected_total,
+            "union_rollout_terminal_graft": getattr(args, "union_rollout_terminal_graft", False),
+            "union_rollout_terminal_graft_respect_cap": getattr(
+                args,
+                "union_rollout_terminal_graft_respect_cap",
+                True,
+            ),
+            "union_rollout_terminal_grafted_total": result.union_rollout_terminal_grafted_total,
+            "union_rollout_terminal_graft_used": result.union_rollout_terminal_graft_used,
+            "frg_frontier_child_enabled": getattr(args, "frg_frontier_child_enabled", False),
+            "frg_frontier_child_parent_width": getattr(args, "frg_frontier_child_parent_width", 0),
+            "frg_frontier_child_limit": getattr(args, "frg_frontier_child_limit", 0),
+            "frg_frontier_child_max_steps": getattr(args, "frg_frontier_child_max_steps", 1),
+            "frg_frontier_child_append_only": getattr(args, "frg_frontier_child_append_only", False),
+            "frg_frontier_child_adaptive_enabled": getattr(args, "frg_frontier_child_adaptive_enabled", False),
+            "frg_frontier_child_adaptive_parent_width": getattr(
+                args,
+                "frg_frontier_child_adaptive_parent_width",
+                0,
+            ),
+            "frg_frontier_child_adaptive_limit": getattr(args, "frg_frontier_child_adaptive_limit", 0),
+            "frg_frontier_child_adaptive_max_steps": getattr(args, "frg_frontier_child_adaptive_max_steps", 1),
+            "frg_frontier_child_adaptive_plateau_window": getattr(
+                args,
+                "frg_frontier_child_adaptive_plateau_window",
+                0,
+            ),
+            "frg_frontier_child_adaptive_plateau_delta": getattr(
+                args,
+                "frg_frontier_child_adaptive_plateau_delta",
+                0,
+            ),
+            "frg_frontier_child_adaptive_min_n": getattr(args, "frg_frontier_child_adaptive_min_n", 0),
+            "frg_frontier_child_adaptive_small_stack_max": getattr(
+                args,
+                "frg_frontier_child_adaptive_small_stack_max",
+                0,
+            ),
+            "frg_frontier_child_adaptive_min_container_count": getattr(
+                args,
+                "frg_frontier_child_adaptive_min_container_count",
+                0,
+            ),
+            "frg_frontier_child_calls": result.frg_frontier_child_calls,
+            "frg_frontier_child_generated": result.frg_frontier_child_generated,
+            "frg_frontier_child_added_total": result.frg_frontier_child_added_total,
             "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
             "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
             "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
@@ -10524,6 +11109,26 @@ def main() -> int:
     parser.add_argument("--union-rollout-probe-final-n-weight", type=float, default=None)
     parser.add_argument("--union-rollout-probe-moves-weight", type=float, default=None)
     parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float, default=None)
+    parser.add_argument("--union-rollout-terminal-graft", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--union-rollout-terminal-graft-respect-cap",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-parent-width", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-limit", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-max-steps", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-parent-width", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-limit", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-max-steps", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-plateau-window", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-plateau-delta", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-min-n", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-small-stack-max", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-adaptive-min-container-count", type=int, default=None)
     parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-time-limit", type=float, default=None)
     parser.add_argument("--frg-seed-min-max-steps", type=int, default=None)
