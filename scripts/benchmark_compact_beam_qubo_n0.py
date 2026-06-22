@@ -1465,6 +1465,55 @@ _SOLVER_PROFILES["scheduler_state_v5_bs_frg_qubo_polish"] = {
     "bs_frg_qubo_n_band_penalty": 0.05,
     "bs_frg_qubo_n_band_size": 1,
 }
+_SOLVER_PROFILES["scheduler_state_v5_pareto_union_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_seed_enabled": True,
+    "frg_seed_time_limit": 0.75,
+    "frg_seed_min_max_steps": 2048,
+    "frg_seed_max_steps_multiplier": 12,
+    "frg_seed_max_steps_cap": 0,
+    "frg_seed_respect_cap": False,
+    "frg_seed_prune_to_incumbent": True,
+    "frg_seed_allow_large_over_cap": True,
+    "frg_seed_paper_pure": True,
+    "candidate_ledger_score_enabled": False,
+    "union_diversity_qubo_enabled": True,
+    "union_diversity_qubo_supplement_width": 4,
+    "union_diversity_qubo_focus_n": -1,
+    "union_diversity_qubo_n_window": 2,
+    "union_diversity_qubo_min_candidates": 64,
+    "union_diversity_qubo_max_vars": 48,
+    "union_diversity_qubo_select": 4,
+    "union_diversity_qubo_rank_weight": 0.02,
+    "union_diversity_qubo_wang_fixed_weight": 0.02,
+    "union_diversity_qubo_wang_pair_weight": 0.02,
+    "union_diversity_qubo_frg_weight": 0.04,
+    "union_diversity_qubo_rollout_bonus": 0.03,
+    "union_diversity_qubo_same_parent_penalty": 0.55,
+    "union_diversity_qubo_same_source_penalty": 0.25,
+    "union_diversity_qubo_signature_penalty": 0.20,
+    "union_diversity_qubo_reduce_signature_penalty": 0.15,
+    "union_diversity_qubo_n_band_penalty": 0.08,
+    "union_diversity_qubo_n_band_size": 1,
+    "pareto_union_enabled": True,
+    "pareto_union_candidate_window": 128,
+    "pareto_union_seed_width": 32,
+    "pareto_union_qubo_width": 32,
+    "pareto_union_max_vars": 96,
+    "pareto_union_n_band_size": 2,
+    "pareto_union_quality_weight": 1.00,
+    "pareto_union_repair_weight": 0.20,
+    "pareto_union_space_weight": 0.12,
+    "pareto_union_risk_weight": 0.16,
+    "pareto_union_same_parent_penalty": 0.55,
+    "pareto_union_same_source_penalty": 0.25,
+    "pareto_union_same_dest_penalty": 0.20,
+    "pareto_union_same_source_dest_penalty": 0.35,
+    "pareto_union_signature_penalty": 0.20,
+    "pareto_union_reduce_signature_penalty": 0.15,
+    "pareto_union_n_band_penalty": 0.08,
+    "pareto_union_risk_bucket_penalty": 0.08,
+}
 _SOLVER_PROFILES["scheduler_state_v5_frg_compound_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_frg_dlts_polish"],
     "frg_compound_escape_enabled": True,
@@ -1838,6 +1887,20 @@ class CompactBeamResult:
     bs_frg_qubo_vars: int = 0
     bs_frg_qubo_time_sec: float = 0.0
     bs_frg_qubo_selected_total: int = 0
+    pareto_union_layers: int = 0
+    pareto_union_seed_selected_total: int = 0
+    pareto_union_qubo_calls: int = 0
+    pareto_union_qubo_vars: int = 0
+    pareto_union_qubo_time_sec: float = 0.0
+    pareto_union_qubo_selected_total: int = 0
+    pareto_union_quality_selected: int = 0
+    pareto_union_space_selected: int = 0
+    pareto_union_repair_selected: int = 0
+    pareto_union_risk_selected: int = 0
+    pareto_union_distinct_parent_count_last: int = 0
+    pareto_union_distinct_source_count_last: int = 0
+    pareto_union_distinct_dest_count_last: int = 0
+    pareto_union_distinct_signature_count_last: int = 0
     wang2017_task_calls: int = 0
     wang2017_task_added_total: int = 0
     wang2017_task_active_layers: int = 0
@@ -3235,6 +3298,86 @@ def _select_pareto_union_qubo_supplement(
     return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
 
 
+def _ensure_pareto_union_telemetry(args: argparse.Namespace) -> None:
+    defaults = {
+        "_pareto_union_layers": 0,
+        "_pareto_union_seed_selected_total": 0,
+        "_pareto_union_qubo_calls_done": 0,
+        "_pareto_union_qubo_vars": 0,
+        "_pareto_union_qubo_time": 0.0,
+        "_pareto_union_qubo_selected_total": 0,
+        "_pareto_union_quality_selected": 0,
+        "_pareto_union_space_selected": 0,
+        "_pareto_union_repair_selected": 0,
+        "_pareto_union_risk_selected": 0,
+        "_pareto_union_distinct_parent_count_last": 0,
+        "_pareto_union_distinct_source_count_last": 0,
+        "_pareto_union_distinct_dest_count_last": 0,
+        "_pareto_union_distinct_signature_count_last": 0,
+    }
+    for name, value in defaults.items():
+        if not hasattr(args, name):
+            setattr(args, name, value)
+
+
+def _select_pareto_union_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], set[bytes], int, int, float]:
+    target = max(0, int(target))
+    if target <= 0 or not ranked:
+        return [], set(), 0, 0, 0.0
+
+    _ensure_pareto_union_telemetry(args)
+    window = max(1, int(getattr(args, "pareto_union_candidate_window", 128) or 128))
+    usable = list(ranked[:window])
+    features = [_pareto_union_features(code, data, rank, args) for rank, (code, data) in enumerate(usable)]
+    seed_target = min(
+        target,
+        max(0, int(getattr(args, "pareto_union_seed_width", 0) or 0)),
+        len(usable),
+    )
+    seed_indices = _select_pareto_union_seed_indices(features, args, seed_target)
+    seed_index_set = set(seed_indices)
+    selected_codes: list[bytes] = []
+    selected_set: set[bytes] = set()
+    for idx in seed_indices:
+        code = usable[idx][0]
+        if code not in selected_set:
+            selected_set.add(code)
+            selected_codes.append(code)
+
+    qcodes: list[bytes] = []
+    qcalls = qvars = 0
+    qtime = 0.0
+    qubo_target = min(
+        target - len(selected_codes),
+        max(0, int(getattr(args, "pareto_union_qubo_width", 0) or 0)),
+    )
+    if qubo_target > 0:
+        q_usable = [(code, data) for idx, (code, data) in enumerate(usable) if idx not in seed_index_set]
+        q_features = [feature for idx, feature in enumerate(features) if idx not in seed_index_set]
+        qcodes, qvars, qtime = _select_pareto_union_qubo_supplement(q_usable, q_features, args, qubo_target)
+        if qvars:
+            qcalls = 1
+        for code in qcodes:
+            if code not in selected_set:
+                selected_set.add(code)
+                selected_codes.append(code)
+
+    args._pareto_union_seed_selected_total += len(seed_indices)
+    args._pareto_union_qubo_selected_total += sum(1 for code in qcodes if code in selected_set)
+    args._pareto_union_quality_selected += int(0 in seed_index_set)
+    args._pareto_union_space_selected += sum(1 for idx in seed_indices if features[idx].space_score > 0.0)
+    args._pareto_union_repair_selected += sum(1 for idx in seed_indices if features[idx].repair_score > 0.0)
+    args._pareto_union_risk_selected += sum(1 for idx in seed_indices if features[idx].risk_score <= 0.25)
+    selected_features = [features[idx] for idx, (code, _data) in enumerate(usable) if code in selected_set]
+    args._pareto_union_distinct_parent_count_last = len({feature.parent_code for feature in selected_features})
+    args._pareto_union_distinct_source_count_last = len({feature.source_stack for feature in selected_features})
+    args._pareto_union_distinct_dest_count_last = len({feature.dest_stack for feature in selected_features})
+    args._pareto_union_distinct_signature_count_last = len({feature.signature for feature in selected_features})
+    return selected_codes[:target], set(qcodes), qcalls, qvars, qtime
 
 
 def _normalize_values(values: list[float]) -> list[float]:
@@ -5013,6 +5156,49 @@ def _select_enhanced_qubo_frontier(
             for code in boosted:
                 if code not in selected:
                     selected_by_qubo.add(code)
+                selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
+    pareto_width = max(0, int(getattr(args, "pareto_union_seed_width", 0) or 0)) + max(
+        0,
+        int(getattr(args, "pareto_union_qubo_width", 0) or 0),
+    )
+    if (
+        getattr(args, "pareto_union_enabled", False)
+        and args.use_qubo
+        and pareto_width > 0
+        and len(selected) < effective_beam
+        and candidate_count >= max(1, int(getattr(args, "union_diversity_qubo_min_candidates", 64) or 64))
+    ):
+        _ensure_pareto_union_telemetry(args)
+        n_window = max(0, int(getattr(args, "union_diversity_qubo_n_window", 2) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(pareto_width, effective_beam - len(selected), len(remaining))
+        boosted, pareto_qubo_codes, add_qcalls, add_qvars, add_qtime = _select_pareto_union_supplement(
+            remaining,
+            args,
+            target,
+        )
+        if boosted:
+            args._pareto_union_layers += 1
+            if add_qcalls:
+                qcalls += add_qcalls
+                qvars += add_qvars
+                qtime += add_qtime
+                args._pareto_union_qubo_calls_done += add_qcalls
+                args._pareto_union_qubo_vars += add_qvars
+                args._pareto_union_qubo_time += add_qtime
+            for code in boosted:
+                if code not in selected:
+                    if code in pareto_qubo_codes:
+                        selected_by_qubo.add(code)
+                        selected_source_by_code.setdefault(code, "pareto_union_qubo")
+                    else:
+                        selected_source_by_code.setdefault(code, "pareto_union_seed")
                 selected.setdefault(code, None)
                 if len(selected) >= effective_beam:
                     break
@@ -6847,6 +7033,20 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._bs_frg_qubo_vars = 0
     args._bs_frg_qubo_time = 0.0
     args._bs_frg_qubo_selected_total = 0
+    args._pareto_union_layers = 0
+    args._pareto_union_seed_selected_total = 0
+    args._pareto_union_qubo_calls_done = 0
+    args._pareto_union_qubo_vars = 0
+    args._pareto_union_qubo_time = 0.0
+    args._pareto_union_qubo_selected_total = 0
+    args._pareto_union_quality_selected = 0
+    args._pareto_union_space_selected = 0
+    args._pareto_union_repair_selected = 0
+    args._pareto_union_risk_selected = 0
+    args._pareto_union_distinct_parent_count_last = 0
+    args._pareto_union_distinct_source_count_last = 0
+    args._pareto_union_distinct_dest_count_last = 0
+    args._pareto_union_distinct_signature_count_last = 0
     args._wang2017_task_calls_done = 0
     args._wang2017_task_added_total = 0
     args._wang2017_task_active_layers = 0
@@ -7270,6 +7470,20 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         bs_frg_qubo_vars=args._bs_frg_qubo_vars,
         bs_frg_qubo_time_sec=args._bs_frg_qubo_time,
         bs_frg_qubo_selected_total=args._bs_frg_qubo_selected_total,
+        pareto_union_layers=args._pareto_union_layers,
+        pareto_union_seed_selected_total=args._pareto_union_seed_selected_total,
+        pareto_union_qubo_calls=args._pareto_union_qubo_calls_done,
+        pareto_union_qubo_vars=args._pareto_union_qubo_vars,
+        pareto_union_qubo_time_sec=args._pareto_union_qubo_time,
+        pareto_union_qubo_selected_total=args._pareto_union_qubo_selected_total,
+        pareto_union_quality_selected=args._pareto_union_quality_selected,
+        pareto_union_space_selected=args._pareto_union_space_selected,
+        pareto_union_repair_selected=args._pareto_union_repair_selected,
+        pareto_union_risk_selected=args._pareto_union_risk_selected,
+        pareto_union_distinct_parent_count_last=args._pareto_union_distinct_parent_count_last,
+        pareto_union_distinct_source_count_last=args._pareto_union_distinct_source_count_last,
+        pareto_union_distinct_dest_count_last=args._pareto_union_distinct_dest_count_last,
+        pareto_union_distinct_signature_count_last=args._pareto_union_distinct_signature_count_last,
         wang2017_task_calls=args._wang2017_task_calls_done,
         wang2017_task_added_total=args._wang2017_task_added_total,
         wang2017_task_active_layers=args._wang2017_task_active_layers,
@@ -7618,6 +7832,38 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "bs_frg_qubo_vars": result.bs_frg_qubo_vars,
             "bs_frg_qubo_time_sec": result.bs_frg_qubo_time_sec,
             "bs_frg_qubo_selected_total": result.bs_frg_qubo_selected_total,
+            "pareto_union_enabled": getattr(args, "pareto_union_enabled", False),
+            "pareto_union_candidate_window": getattr(args, "pareto_union_candidate_window", 128),
+            "pareto_union_seed_width": getattr(args, "pareto_union_seed_width", 0),
+            "pareto_union_qubo_width": getattr(args, "pareto_union_qubo_width", 0),
+            "pareto_union_max_vars": getattr(args, "pareto_union_max_vars", 96),
+            "pareto_union_n_band_size": getattr(args, "pareto_union_n_band_size", 2),
+            "pareto_union_quality_weight": getattr(args, "pareto_union_quality_weight", 1.0),
+            "pareto_union_repair_weight": getattr(args, "pareto_union_repair_weight", 0.20),
+            "pareto_union_space_weight": getattr(args, "pareto_union_space_weight", 0.12),
+            "pareto_union_risk_weight": getattr(args, "pareto_union_risk_weight", 0.16),
+            "pareto_union_same_parent_penalty": getattr(args, "pareto_union_same_parent_penalty", 0.55),
+            "pareto_union_same_source_penalty": getattr(args, "pareto_union_same_source_penalty", 0.25),
+            "pareto_union_same_dest_penalty": getattr(args, "pareto_union_same_dest_penalty", 0.20),
+            "pareto_union_same_source_dest_penalty": getattr(args, "pareto_union_same_source_dest_penalty", 0.35),
+            "pareto_union_signature_penalty": getattr(args, "pareto_union_signature_penalty", 0.20),
+            "pareto_union_reduce_signature_penalty": getattr(args, "pareto_union_reduce_signature_penalty", 0.15),
+            "pareto_union_n_band_penalty": getattr(args, "pareto_union_n_band_penalty", 0.08),
+            "pareto_union_risk_bucket_penalty": getattr(args, "pareto_union_risk_bucket_penalty", 0.08),
+            "pareto_union_layers": result.pareto_union_layers,
+            "pareto_union_seed_selected_total": result.pareto_union_seed_selected_total,
+            "pareto_union_qubo_calls": result.pareto_union_qubo_calls,
+            "pareto_union_qubo_vars": result.pareto_union_qubo_vars,
+            "pareto_union_qubo_time_sec": result.pareto_union_qubo_time_sec,
+            "pareto_union_qubo_selected_total": result.pareto_union_qubo_selected_total,
+            "pareto_union_quality_selected": result.pareto_union_quality_selected,
+            "pareto_union_space_selected": result.pareto_union_space_selected,
+            "pareto_union_repair_selected": result.pareto_union_repair_selected,
+            "pareto_union_risk_selected": result.pareto_union_risk_selected,
+            "pareto_union_distinct_parent_count_last": result.pareto_union_distinct_parent_count_last,
+            "pareto_union_distinct_source_count_last": result.pareto_union_distinct_source_count_last,
+            "pareto_union_distinct_dest_count_last": result.pareto_union_distinct_dest_count_last,
+            "pareto_union_distinct_signature_count_last": result.pareto_union_distinct_signature_count_last,
             "wang2017_task_enabled": getattr(args, "wang2017_task_enabled", False),
             "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
             "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),

@@ -1635,6 +1635,21 @@ def test_pareto_union_qubo_selects_exact_target(monkeypatch):
 
 
 
+def test_solver_profile_scheduler_state_v5_pareto_union_polish_extends_union(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(solver_profile="scheduler_state_v5_pareto_union_polish")
+
+    bench._apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_pareto_union_polish"
+    assert args.pareto_union_enabled is True
+    assert args.pareto_union_seed_width == 32
+    assert args.pareto_union_qubo_width == 32
+    assert args.union_diversity_qubo_enabled is True
+    assert args.frg_seed_enabled is True
+
+
 def test_enhanced_frontier_respects_generic_qubo_start_layer(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -1746,6 +1761,50 @@ def test_enhanced_frontier_respects_wang_pair_qubo_start_layer(monkeypatch):
     assert calls == [3]
 
 
+def test_enhanced_frontier_uses_pareto_union_supplement(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (b"core", (5, 1, b"p0")),
+        (b"seeded", (5, 1, b"p1")),
+        (b"qubo", (5, 1, b"p2")),
+    ]
+    args = _compact_args(
+        beam_width=3,
+        core_width=1,
+        parent_core_cap=0,
+        use_qubo=True,
+        qubo_min_candidates=99,
+        pareto_union_enabled=True,
+        pareto_union_candidate_window=8,
+        pareto_union_seed_width=1,
+        pareto_union_qubo_width=1,
+        union_diversity_qubo_min_candidates=1,
+    )
+    calls: list[int] = []
+
+    def fake_pareto_selector(rows, selector_args, target):
+        calls.append(target)
+        assert [code for code, _data in rows] == [b"seeded", b"qubo"]
+        return [b"seeded", b"qubo"], {b"qubo"}, 1, 7, 0.125
+
+    monkeypatch.setattr(bench, "_select_pareto_union_supplement", fake_pareto_selector)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+    )
+
+    assert selected == [b"core", b"seeded", b"qubo"]
+    assert selected_by_qubo == {b"qubo"}
+    assert qcalls == 1
+    assert qvars == 7
+    assert qtime == 0.125
+    assert calls == [2]
+    assert args._pareto_union_layers == 1
+
+
 def test_feasibility_escape_layer_active_allows_low_parent_share_plateau():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -1793,6 +1852,63 @@ def test_feasibility_escape_gate_telemetry_is_serialized():
 
     assert row["feasibility_escape_active_layers"] == 3
     assert row["feasibility_escape_gate_reasons"] == "active:3;not_plateau:5"
+
+
+def test_pareto_union_telemetry_is_serialized():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+    from container_reshuffle.core import Instance
+
+    args = _compact_args(
+        pareto_union_enabled=True,
+        pareto_union_seed_width=3,
+        pareto_union_qubo_width=2,
+    )
+    result = CompactBeamResult(
+        case="case_a",
+        status="done",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        pareto_union_layers=4,
+        pareto_union_seed_selected_total=7,
+        pareto_union_qubo_calls=3,
+        pareto_union_qubo_vars=24,
+        pareto_union_qubo_time_sec=0.25,
+        pareto_union_qubo_selected_total=5,
+        pareto_union_quality_selected=2,
+        pareto_union_space_selected=3,
+        pareto_union_repair_selected=4,
+        pareto_union_risk_selected=1,
+        pareto_union_distinct_parent_count_last=6,
+        pareto_union_distinct_source_count_last=5,
+        pareto_union_distinct_dest_count_last=4,
+        pareto_union_distinct_signature_count_last=3,
+    )
+    row = _row_dict_from_instance_result(
+        result,
+        Instance("case_a", ProblemVariant.PREMARSHALLING_CPMP, 1, 2, 2, [[2, 1]]),
+        args,
+    )
+
+    assert row["pareto_union_enabled"] is True
+    assert row["pareto_union_seed_width"] == 3
+    assert row["pareto_union_qubo_width"] == 2
+    assert row["pareto_union_layers"] == 4
+    assert row["pareto_union_seed_selected_total"] == 7
+    assert row["pareto_union_qubo_calls"] == 3
+    assert row["pareto_union_qubo_vars"] == 24
+    assert row["pareto_union_qubo_time_sec"] == 0.25
+    assert row["pareto_union_qubo_selected_total"] == 5
+    assert row["pareto_union_distinct_parent_count_last"] == 6
 
 
 def test_frg_dlts_supplement_telemetry_is_serialized():
@@ -5296,6 +5412,17 @@ def test_open_runner_accepts_bs_frg_qubo_variant():
 
     assert args.solver_profile == "scheduler_state_v5_bs_frg_qubo_polish"
     assert "qubo_scheduler_state_v5_bs_frg_qubo_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_pareto_union_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_pareto_union_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+
+    assert args.solver_profile == "scheduler_state_v5_pareto_union_polish"
+    assert variant in _variant_names("wang_research_all")
 
 
 def test_open_runner_accepts_frg_compound_variant():

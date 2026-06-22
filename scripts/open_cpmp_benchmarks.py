@@ -839,6 +839,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
             "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "qubo_scheduler_state_v5_pareto_union_polish",
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
             "qubo_scheduler_state_v5_frg_compound_guarded_polish",
@@ -1146,6 +1147,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_frg_dlts_polish"})
     if variant == "qubo_scheduler_state_v5_bs_frg_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_bs_frg_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_pareto_union_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_pareto_union_polish"})
     if variant == "qubo_scheduler_state_v5_frg_compound_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_frg_compound_polish"})
     if variant == "qubo_scheduler_state_v5_frg_compound_loose_polish":
@@ -1395,6 +1398,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
             "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "qubo_scheduler_state_v5_pareto_union_polish",
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
             "qubo_scheduler_state_v5_frg_compound_guarded_polish",
