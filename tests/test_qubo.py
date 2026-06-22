@@ -1198,6 +1198,18 @@ def _compact_args(**overrides):
         "union_rollout_probe_dead_end_penalty": 0.12,
         "union_rollout_terminal_graft": False,
         "union_rollout_terminal_graft_respect_cap": True,
+        "micro_rollout_enabled": False,
+        "micro_rollout_trace_only": False,
+        "receiver_safety_enabled": False,
+        "micro_rollout_window": 32,
+        "micro_first_child_limit": 8,
+        "micro_second_child_limit": 8,
+        "micro_cache_enabled": True,
+        "w_micro_delta_n": 0.05,
+        "w_micro_safe_continuation": 0.03,
+        "w_receiver_safe_delta": 0.03,
+        "w_last_buffer_consumed": 0.05,
+        "w_height_pressure": 0.02,
         "frg_frontier_child_enabled": False,
         "frg_frontier_child_parent_width": 0,
         "frg_frontier_child_limit": 0,
@@ -1777,6 +1789,60 @@ def test_union_diversity_qubo_selects_quality_diverse_candidates(monkeypatch):
     assert len(selected_parents) == 2
 
 
+def test_union_diversity_qubo_penalizes_same_origin_parent_and_n_band():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        union_diversity_qubo_same_origin_parent_n_band_penalty=3.0,
+        union_diversity_qubo_n_band_size=2,
+        union_diversity_qubo_same_parent_penalty=0.0,
+        union_diversity_qubo_same_source_penalty=0.0,
+        union_diversity_qubo_signature_penalty=0.0,
+        union_diversity_qubo_reduce_signature_penalty=0.0,
+        union_diversity_qubo_n_band_penalty=0.0,
+    )
+    base = dict(
+        energy=1.0,
+        n_value=5,
+        depth=4,
+        parent_code=b"p0",
+        source_stack=1,
+        signature=(0, 0, 0, 0, 0),
+        reduce_signature=(1, 0, 0),
+    )
+    same_origin = bench.UnionDiversityQuboFeatures(**base, origin="frg")
+    same_origin_peer = bench.UnionDiversityQuboFeatures(**base, origin="frg")
+    different_origin_peer = bench.UnionDiversityQuboFeatures(**base, origin="core")
+    linear = [0.0, 0.0, 0.0]
+
+    same_origin_value = bench._union_diversity_objective({0, 1}, linear, [same_origin, same_origin_peer], args)
+    mixed_origin_value = bench._union_diversity_objective({0, 1}, linear, [same_origin, different_origin_peer], args)
+
+    assert same_origin_value == 3.0
+    assert mixed_origin_value == 0.0
+
+
+def test_union_diversity_qubo_origin_aware_profile_is_opt_in(monkeypatch):
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    baseline = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_polish")
+    args = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_origin_aware_polish")
+    monkeypatch.setattr(sys, "argv", ["bench"])
+
+    _apply_solver_profile(baseline)
+    _apply_solver_profile(args)
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish"])
+    open_args = _args_for_variant(outer, "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish")
+
+    assert baseline.union_diversity_qubo_same_origin_parent_n_band_penalty == 0.0
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_origin_aware_polish"
+    assert args.union_diversity_qubo_same_origin_parent_n_band_penalty > 0.0
+    assert args.union_diversity_qubo_origin_similarity_penalty > 0.0
+    assert open_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_origin_aware_polish"
+    assert "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish" in _variant_names("wang_research_all")
+
+
 def test_union_diversity_qubo_selector_is_used_inside_enhanced_frontier(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
     from run_business_exact_target_search_sqlite import _encode
@@ -1887,6 +1953,165 @@ def test_union_rollout_probe_energy_prefers_feasible_and_penalizes_dead_end():
 
     assert bench._union_rollout_probe_energy_adjustment(feasible, args, n_value=5) < 0.0
     assert bench._union_rollout_probe_energy_adjustment(dead_end, args, n_value=5) > 0.0
+
+
+def test_micro_rollout_probe_obeys_two_step_limits_without_frontier_injection():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    graph = {
+        b"root": [(b"a", 4), (b"b", 5), (b"c", 1)],
+        b"a": [(b"a1", 2), (b"a2", 1)],
+        b"b": [(b"b1", 3), (b"b2", 0)],
+    }
+    calls: list[tuple[bytes, int]] = []
+
+    def fake_successors(code, current_n, args):
+        calls.append((code, current_n))
+        return graph.get(code, ())
+
+    args = _compact_args(
+        micro_first_child_limit=2,
+        micro_second_child_limit=1,
+        micro_cache_enabled=False,
+    )
+
+    result = bench._micro_rollout_probe(b"root", 5, args, successor_fn=fake_successors)
+
+    assert result.first_children_count == 2
+    assert result.second_children_count == 2
+    assert result.best_n == 2
+    assert result.best_delta_n == -3
+    assert result.has_reduce is True
+    assert result.has_safe_continuation is True
+    assert calls == [(b"root", 5), (b"a", 4), (b"b", 5)]
+
+
+def test_micro_rollout_linear_adjustment_sign_and_trace_only_neutrality():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    micro = bench.MicroRolloutProbeResult(
+        first_children_count=2,
+        second_children_count=2,
+        best_n=2,
+        best_delta_n=-3,
+        has_reduce=True,
+        has_safe_continuation=True,
+    )
+    receiver = bench.ReceiverSafetyScore(
+        safe_receivers_before=1,
+        safe_receivers_after=2,
+        safe_receiver_delta=1,
+        free_slots_before=3,
+        free_slots_after=3,
+        height_pressure_after=0.50,
+        last_buffer_consumed=False,
+    )
+    scoring_args = _compact_args(
+        micro_rollout_enabled=True,
+        receiver_safety_enabled=True,
+        w_micro_delta_n=0.05,
+        w_micro_safe_continuation=0.03,
+        w_receiver_safe_delta=0.03,
+        w_last_buffer_consumed=0.05,
+        w_height_pressure=0.02,
+    )
+    trace_args = _compact_args(
+        micro_rollout_enabled=True,
+        micro_rollout_trace_only=True,
+        receiver_safety_enabled=True,
+    )
+
+    assert bench._micro_rollout_linear_adjustment(micro, receiver, scoring_args) < 0.0
+    assert bench._micro_rollout_linear_adjustment(micro, receiver, trace_args) == 0.0
+
+
+def test_receiver_safety_scores_ordered_receiver_and_last_buffer_consumed():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent, _ = bench._encode([[5, 4], [3, 1], []], stack_count, max_height)
+    safer_child, _ = bench._encode([[5], [3, 1], [4]], stack_count, max_height)
+    risky_child, _ = bench._encode([[5, 4], [3], [1]], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    safer = bench._receiver_safety_score(parent, safer_child, args)
+    risky = bench._receiver_safety_score(parent, risky_child, args)
+
+    assert safer.safe_receivers_after >= safer.safe_receivers_before
+    assert risky.safe_receivers_after < risky.safe_receivers_before
+    assert risky.last_buffer_consumed is True
+    assert safer.free_slots_before == safer.free_slots_after
+    assert 0.0 <= safer.height_pressure_after <= 1.0
+
+
+def test_micro_rollout_trace_only_does_not_change_union_linear_energy(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        micro_rollout_enabled=True,
+        micro_rollout_trace_only=True,
+        receiver_safety_enabled=True,
+        union_diversity_qubo_rank_weight=0.0,
+        union_diversity_qubo_wang_fixed_weight=0.0,
+        union_diversity_qubo_wang_pair_weight=0.0,
+        union_diversity_qubo_frg_weight=0.0,
+        union_diversity_qubo_rollout_bonus=0.0,
+        _stack_count=3,
+        _max_height=3,
+    )
+    baseline_args = _compact_args(
+        union_diversity_qubo_rank_weight=0.0,
+        union_diversity_qubo_wang_fixed_weight=0.0,
+        union_diversity_qubo_wang_pair_weight=0.0,
+        union_diversity_qubo_frg_weight=0.0,
+        union_diversity_qubo_rollout_bonus=0.0,
+        _stack_count=3,
+        _max_height=3,
+    )
+    parent, _ = bench._encode([[5, 4], [3, 1], []], 3, 3)
+    child, child_n = bench._encode([[5], [3, 1], [4]], 3, 3)
+    data = (child_n, 7, parent)
+
+    def fake_probe(code, current_n, probe_args, *, successor_fn=None):
+        del code, current_n, probe_args, successor_fn
+        return bench.MicroRolloutProbeResult(2, 2, 0, -int(child_n), True, True)
+
+    monkeypatch.setattr(bench, "_micro_rollout_probe", fake_probe)
+
+    baseline = bench._union_diversity_qubo_features(child, data, 0, baseline_args)
+    traced = bench._union_diversity_qubo_features(child, data, 0, args)
+
+    assert traced.energy == baseline.energy
+    assert traced.micro_best_delta_n == -int(child_n)
+
+
+def test_solver_profiles_for_micro_rollout_are_ablation_friendly():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    mainline = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_polish")
+    trace = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_micro_trace_polish")
+    receiver = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_receiver_safety_polish")
+    micro = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_micro_only_polish")
+    combined = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_micro_rollout_polish")
+
+    for args in (mainline, trace, receiver, micro, combined):
+        bench._apply_solver_profile(args)
+        assert args.union_diversity_qubo_enabled is True
+        assert args.union_rollout_terminal_graft is False
+        assert args.frg_frontier_child_enabled is False
+
+    assert mainline.micro_rollout_enabled is False
+    assert mainline.receiver_safety_enabled is False
+    assert trace.micro_rollout_enabled is True
+    assert trace.receiver_safety_enabled is True
+    assert trace.micro_rollout_trace_only is True
+    assert receiver.micro_rollout_enabled is False
+    assert receiver.receiver_safety_enabled is True
+    assert micro.micro_rollout_enabled is True
+    assert micro.receiver_safety_enabled is False
+    assert combined.micro_rollout_enabled is True
+    assert combined.receiver_safety_enabled is True
 
 
 def test_union_rollout_terminal_graft_combines_child_prefix_and_rollout_tail():
@@ -2462,6 +2687,21 @@ def test_open_runner_accepts_qubo_diversity_union_rollout_variant():
     args = _args_for_variant(outer, variant)
 
     assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_rollout_polish"
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_open_and_paper_runners_accept_micro_rollout_union_variant():
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_args = _args_for_variant(paper_outer, paper_outer.variant)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"
     assert variant in _variant_names("wang_research_all")
 
 
@@ -3614,6 +3854,65 @@ def test_frontier_trace_candidate_rows_mark_sources_and_parent_reuse():
     assert rows[2]["selected"] == 0
     assert rows[2]["selected_source"] == "not_selected"
     assert rows[2]["candidate_origin"] == "beam"
+
+
+def test_frontier_trace_candidate_rows_include_micro_receiver_features():
+    from types import SimpleNamespace
+
+    from benchmark_compact_beam_qubo_n0 import _frontier_trace_candidate_rows
+
+    parent = b"p0"
+    child = b"c0"
+    args = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
+        selection_policy="scheduler_state_qubo",
+    )
+    args._micro_rollout_feature_trace_by_code = {
+        child: SimpleNamespace(
+            micro_first_children_count=3,
+            micro_second_children_count=7,
+            micro_best_n=2,
+            micro_best_delta_n=-3,
+            micro_has_reduce=True,
+            micro_has_safe_continuation=True,
+            receiver_safe_receivers_before=2,
+            receiver_safe_receivers_after=1,
+            receiver_safe_delta=-1,
+            receiver_free_slots_before=4,
+            receiver_free_slots_after=3,
+            receiver_height_pressure_after=0.75,
+            receiver_last_buffer_consumed=True,
+            micro_linear_adjustment=-0.11,
+        )
+    }
+
+    rows = _frontier_trace_candidate_rows(
+        case="toy",
+        layer=1,
+        ranked=[(child, (5, 4, parent))],
+        frontier=[(parent, 6, 3)],
+        selected_codes=[child],
+        selected_by_qubo={child},
+        selected_source_by_code={child: "qubo"},
+        candidate_origin_by_code={child: "beam"},
+        args=args,
+        top_k=1,
+    )
+
+    assert rows[0]["micro_first_children_count"] == 3
+    assert rows[0]["micro_second_children_count"] == 7
+    assert rows[0]["micro_best_n"] == 2
+    assert rows[0]["micro_best_delta_n"] == -3
+    assert rows[0]["micro_has_reduce"] == 1
+    assert rows[0]["micro_has_safe_continuation"] == 1
+    assert rows[0]["receiver_safe_receivers_before"] == 2
+    assert rows[0]["receiver_safe_receivers_after"] == 1
+    assert rows[0]["receiver_safe_delta"] == -1
+    assert rows[0]["receiver_free_slots_before"] == 4
+    assert rows[0]["receiver_free_slots_after"] == 3
+    assert rows[0]["receiver_height_pressure_after"] == 0.75
+    assert rows[0]["receiver_last_buffer_consumed"] == 1
+    assert rows[0]["micro_linear_adjustment"] == -0.11
 
 
 def test_open_runner_passes_deterministic_qubo_sampler_flag():
@@ -8192,7 +8491,12 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_frg_seed_qubo_polish",
         "qubo_scheduler_state_v5_frg_seed_ledger_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",

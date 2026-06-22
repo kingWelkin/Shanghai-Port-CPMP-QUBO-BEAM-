@@ -215,6 +215,8 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_reduce_signature_penalty",
     "union_diversity_qubo_n_band_penalty",
     "union_diversity_qubo_n_band_size",
+    "union_diversity_qubo_origin_similarity_penalty",
+    "union_diversity_qubo_same_origin_parent_n_band_penalty",
     "union_diversity_qubo_calls",
     "union_diversity_qubo_vars",
     "union_diversity_qubo_time_sec",
@@ -237,6 +239,23 @@ COMPACT_EXTRA_FIELDS = [
     "union_rollout_terminal_graft_respect_cap",
     "union_rollout_terminal_grafted_total",
     "union_rollout_terminal_graft_used",
+    "micro_rollout_enabled",
+    "micro_rollout_trace_only",
+    "receiver_safety_enabled",
+    "micro_rollout_window",
+    "micro_first_child_limit",
+    "micro_second_child_limit",
+    "micro_cache_enabled",
+    "w_micro_delta_n",
+    "w_micro_safe_continuation",
+    "w_receiver_safe_delta",
+    "w_last_buffer_consumed",
+    "w_height_pressure",
+    "micro_rollout_calls",
+    "micro_rollout_cache_hits",
+    "micro_rollout_candidates",
+    "micro_rollout_selected_total",
+    "receiver_safety_scored_total",
     "frg_frontier_child_enabled",
     "frg_frontier_child_parent_width",
     "frg_frontier_child_limit",
@@ -659,6 +678,20 @@ FRONTIER_TRACE_FIELDS = [
     "selected_by_qubo",
     "selected_source",
     "candidate_origin",
+    "micro_first_children_count",
+    "micro_second_children_count",
+    "micro_best_n",
+    "micro_best_delta_n",
+    "micro_has_reduce",
+    "micro_has_safe_continuation",
+    "receiver_safe_receivers_before",
+    "receiver_safe_receivers_after",
+    "receiver_safe_delta",
+    "receiver_free_slots_before",
+    "receiver_free_slots_after",
+    "receiver_height_pressure_after",
+    "receiver_last_buffer_consumed",
+    "micro_linear_adjustment",
 ]
 
 
@@ -850,6 +883,7 @@ def _frontier_trace_candidate_rows(
     selected_set = set(selected_codes)
     selected_qubo_set = selected_by_qubo & selected_set
     origin_by_code = candidate_origin_by_code or {}
+    micro_feature_by_code = getattr(args, "_micro_rollout_feature_trace_by_code", {}) or {}
     parent_candidate_counts: dict[bytes, int] = {}
     parent_selected_counts: dict[bytes, int] = {}
     parent_qubo_selected_counts: dict[bytes, int] = {}
@@ -873,6 +907,7 @@ def _frontier_trace_candidate_rows(
     rows: list[dict[str, object]] = []
     for rank, (code, data) in enumerate(top, start=1):
         n_value, depth, parent_code = data
+        micro_feature = micro_feature_by_code.get(code)
         selected = code in selected_set
         source = selected_source_by_code.get(code)
         if source is None:
@@ -913,6 +948,30 @@ def _frontier_trace_candidate_rows(
                 "selected_by_qubo": int(code in selected_qubo_set),
                 "selected_source": source,
                 "candidate_origin": origin_by_code.get(code, "beam"),
+                "micro_first_children_count": int(getattr(micro_feature, "micro_first_children_count", 0)),
+                "micro_second_children_count": int(getattr(micro_feature, "micro_second_children_count", 0)),
+                "micro_best_n": int(getattr(micro_feature, "micro_best_n", -1)),
+                "micro_best_delta_n": int(getattr(micro_feature, "micro_best_delta_n", 0)),
+                "micro_has_reduce": int(bool(getattr(micro_feature, "micro_has_reduce", False))),
+                "micro_has_safe_continuation": int(
+                    bool(getattr(micro_feature, "micro_has_safe_continuation", False))
+                ),
+                "receiver_safe_receivers_before": int(
+                    getattr(micro_feature, "receiver_safe_receivers_before", 0)
+                ),
+                "receiver_safe_receivers_after": int(
+                    getattr(micro_feature, "receiver_safe_receivers_after", 0)
+                ),
+                "receiver_safe_delta": int(getattr(micro_feature, "receiver_safe_delta", 0)),
+                "receiver_free_slots_before": int(getattr(micro_feature, "receiver_free_slots_before", 0)),
+                "receiver_free_slots_after": int(getattr(micro_feature, "receiver_free_slots_after", 0)),
+                "receiver_height_pressure_after": float(
+                    getattr(micro_feature, "receiver_height_pressure_after", 0.0)
+                ),
+                "receiver_last_buffer_consumed": int(
+                    bool(getattr(micro_feature, "receiver_last_buffer_consumed", False))
+                ),
+                "micro_linear_adjustment": float(getattr(micro_feature, "micro_linear_adjustment", 0.0)),
             }
         )
     return rows
@@ -1098,6 +1157,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_reduce_signature_penalty": 0.12,
         "union_diversity_qubo_n_band_penalty": 0.08,
         "union_diversity_qubo_n_band_size": 1,
+        "union_diversity_qubo_origin_similarity_penalty": 0.0,
+        "union_diversity_qubo_same_origin_parent_n_band_penalty": 0.0,
         "union_rollout_probe_enabled": False,
         "union_rollout_probe_max_candidates": 8,
         "union_rollout_probe_time_limit": 0.001,
@@ -1108,6 +1169,18 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_rollout_probe_dead_end_penalty": 0.12,
         "union_rollout_terminal_graft": False,
         "union_rollout_terminal_graft_respect_cap": True,
+        "micro_rollout_enabled": False,
+        "micro_rollout_trace_only": False,
+        "receiver_safety_enabled": False,
+        "micro_rollout_window": 32,
+        "micro_first_child_limit": 8,
+        "micro_second_child_limit": 8,
+        "micro_cache_enabled": True,
+        "w_micro_delta_n": 0.05,
+        "w_micro_safe_continuation": 0.03,
+        "w_receiver_safe_delta": 0.03,
+        "w_last_buffer_consumed": 0.05,
+        "w_height_pressure": 0.02,
         "frg_frontier_child_enabled": False,
         "frg_frontier_child_parent_width": 0,
         "frg_frontier_child_limit": 0,
@@ -2035,6 +2108,13 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"] = {
     "union_diversity_qubo_reduce_signature_penalty": 0.15,
     "union_diversity_qubo_n_band_penalty": 0.08,
     "union_diversity_qubo_n_band_size": 1,
+    "union_diversity_qubo_origin_similarity_penalty": 0.0,
+    "union_diversity_qubo_same_origin_parent_n_band_penalty": 0.0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_origin_aware_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "union_diversity_qubo_origin_similarity_penalty": 0.10,
+    "union_diversity_qubo_same_origin_parent_n_band_penalty": 0.35,
 }
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
@@ -2046,6 +2126,29 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_polish"] = {
     "union_rollout_probe_final_n_weight": 0.08,
     "union_rollout_probe_moves_weight": 0.0,
     "union_rollout_probe_dead_end_penalty": 0.12,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_trace_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "micro_rollout_enabled": True,
+    "micro_rollout_trace_only": True,
+    "receiver_safety_enabled": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_receiver_safety_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "receiver_safety_enabled": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_only_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "micro_rollout_enabled": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "micro_rollout_enabled": True,
+    "receiver_safety_enabled": True,
 }
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"] = {
@@ -2126,6 +2229,8 @@ _SOLVER_PROFILES["scheduler_state_v5_pareto_union_polish"] = {
     "union_diversity_qubo_reduce_signature_penalty": 0.15,
     "union_diversity_qubo_n_band_penalty": 0.08,
     "union_diversity_qubo_n_band_size": 1,
+    "union_diversity_qubo_origin_similarity_penalty": 0.0,
+    "union_diversity_qubo_same_origin_parent_n_band_penalty": 0.0,
     "pareto_union_enabled": True,
     "pareto_union_candidate_window": 16,
     "pareto_union_seed_width": 2,
@@ -2546,6 +2651,11 @@ class CompactBeamResult:
     union_rollout_probe_selected_total: int = 0
     union_rollout_terminal_grafted_total: int = 0
     union_rollout_terminal_graft_used: bool = False
+    micro_rollout_calls: int = 0
+    micro_rollout_cache_hits: int = 0
+    micro_rollout_candidates: int = 0
+    micro_rollout_selected_total: int = 0
+    receiver_safety_scored_total: int = 0
     frg_frontier_child_calls: int = 0
     frg_frontier_child_generated: int = 0
     frg_frontier_child_added_total: int = 0
@@ -2933,6 +3043,30 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--union-rollout-terminal-graft-respect-cap",
             "--no-union-rollout-terminal-graft-respect-cap",
         ),
+        "micro_rollout_enabled": (
+            "--micro-rollout-enabled",
+            "--no-micro-rollout-enabled",
+        ),
+        "micro_rollout_trace_only": (
+            "--micro-rollout-trace-only",
+            "--no-micro-rollout-trace-only",
+        ),
+        "receiver_safety_enabled": (
+            "--receiver-safety-enabled",
+            "--no-receiver-safety-enabled",
+        ),
+        "micro_rollout_window": "--micro-rollout-window",
+        "micro_first_child_limit": "--micro-first-child-limit",
+        "micro_second_child_limit": "--micro-second-child-limit",
+        "micro_cache_enabled": (
+            "--micro-cache-enabled",
+            "--no-micro-cache-enabled",
+        ),
+        "w_micro_delta_n": "--w-micro-delta-n",
+        "w_micro_safe_continuation": "--w-micro-safe-continuation",
+        "w_receiver_safe_delta": "--w-receiver-safe-delta",
+        "w_last_buffer_consumed": "--w-last-buffer-consumed",
+        "w_height_pressure": "--w-height-pressure",
         "frg_frontier_child_enabled": (
             "--frg-frontier-child-enabled",
             "--no-frg-frontier-child-enabled",
@@ -3725,10 +3859,247 @@ class UnionDiversityQuboFeatures(NamedTuple):
     source_stack: int
     signature: tuple[int, int, int, int, int]
     reduce_signature: tuple[int, int, int]
+    origin: str = "core"
     rollout_feasible: bool = False
     rollout_final_n: int = -1
     rollout_moves: int = 0
     rollout_status: str = ""
+    micro_first_children_count: int = 0
+    micro_second_children_count: int = 0
+    micro_best_delta_n: int = 0
+    micro_best_n: int = -1
+    micro_has_reduce: bool = False
+    micro_has_safe_continuation: bool = False
+    receiver_safe_receivers_before: int = 0
+    receiver_safe_receivers_after: int = 0
+    receiver_safe_delta: int = 0
+    receiver_free_slots_before: int = 0
+    receiver_free_slots_after: int = 0
+    receiver_height_pressure_after: float = 0.0
+    receiver_last_buffer_consumed: bool = False
+    micro_linear_adjustment: float = 0.0
+
+
+@dataclass(frozen=True)
+class MicroRolloutProbeResult:
+    first_children_count: int
+    second_children_count: int
+    best_n: int
+    best_delta_n: int
+    has_reduce: bool
+    has_safe_continuation: bool
+
+
+@dataclass(frozen=True)
+class ReceiverSafetyScore:
+    safe_receivers_before: int
+    safe_receivers_after: int
+    safe_receiver_delta: int
+    free_slots_before: int
+    free_slots_after: int
+    height_pressure_after: float
+    last_buffer_consumed: bool
+
+
+def _micro_rollout_successors(
+    code: bytes,
+    current_n: int,
+    args: argparse.Namespace,
+) -> tuple[tuple[bytes, int], ...]:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return ()
+    if bool(getattr(args, "micro_cache_enabled", True)):
+        return tuple(_successors_with_n_cached(code, int(current_n), stack_count, max_height))
+    return tuple(_successors_with_n_uncached(code, int(current_n), stack_count, max_height))
+
+
+def _micro_rollout_probe(
+    code: bytes,
+    current_n: int,
+    args: argparse.Namespace,
+    *,
+    successor_fn=None,
+) -> MicroRolloutProbeResult:
+    current_n = int(current_n)
+    cache_key = (code, current_n)
+    if bool(getattr(args, "micro_cache_enabled", True)):
+        cache = getattr(args, "_micro_rollout_cache", None)
+        if cache is None:
+            cache = {}
+            args._micro_rollout_cache = cache
+        cached = cache.get(cache_key)
+        if cached is not None:
+            if hasattr(args, "_micro_rollout_cache_hits"):
+                args._micro_rollout_cache_hits += 1
+            return cached
+    else:
+        cache = None
+
+    if successor_fn is None:
+        successor_fn = _micro_rollout_successors
+    if hasattr(args, "_micro_rollout_calls"):
+        args._micro_rollout_calls += 1
+
+    first_limit = max(0, int(getattr(args, "micro_first_child_limit", 8) or 0))
+    second_limit = max(0, int(getattr(args, "micro_second_child_limit", 8) or 0))
+    best_n = current_n
+    first_children = list(successor_fn(code, current_n, args))[:first_limit]
+    second_children_count = 0
+    has_safe_continuation = False
+    for child_code, child_n in first_children:
+        child_n = int(child_n)
+        best_n = min(best_n, child_n)
+        if child_n < current_n:
+            has_safe_continuation = True
+        if second_limit <= 0:
+            continue
+        second_children = list(successor_fn(child_code, child_n, args))[:second_limit]
+        second_children_count += len(second_children)
+        for _grandchild_code, grandchild_n in second_children:
+            grandchild_n = int(grandchild_n)
+            best_n = min(best_n, grandchild_n)
+            if grandchild_n < child_n or grandchild_n < current_n:
+                has_safe_continuation = True
+
+    result = MicroRolloutProbeResult(
+        first_children_count=len(first_children),
+        second_children_count=second_children_count,
+        best_n=int(best_n),
+        best_delta_n=int(best_n) - current_n,
+        has_reduce=int(best_n) < current_n,
+        has_safe_continuation=bool(has_safe_continuation),
+    )
+    if cache is not None:
+        cache[cache_key] = result
+    return result
+
+
+def _stack_is_ordered_receiver(chunk: bytes, max_height: int) -> bool:
+    height = _cached_height(chunk, max_height)
+    if height >= max_height:
+        return False
+    if _cached_stack_n(chunk, max_height) > 0:
+        return False
+    return True
+
+
+def _safe_receiver_count(code: bytes, stack_count: int, max_height: int) -> int:
+    chunks = _split(code, stack_count, max_height)
+    receiver_tops: list[int] = []
+    empty_receivers = 0
+    for chunk in chunks:
+        if not _stack_is_ordered_receiver(chunk, max_height):
+            continue
+        height = _cached_height(chunk, max_height)
+        if height == 0:
+            empty_receivers += 1
+        else:
+            receiver_tops.append(int(chunk[height - 1]))
+    if not receiver_tops:
+        return empty_receivers
+    top_threshold = max(receiver_tops) - 1
+    flexible_receivers = sum(1 for top in receiver_tops if top >= top_threshold)
+    return int(empty_receivers + flexible_receivers)
+
+
+def _free_slot_count(code: bytes, stack_count: int, max_height: int) -> int:
+    return int(sum(max_height - _cached_height(chunk, max_height) for chunk in _split(code, stack_count, max_height)))
+
+
+def _height_pressure(code: bytes, stack_count: int, max_height: int) -> float:
+    if stack_count <= 0 or max_height <= 0:
+        return 0.0
+    occupied = sum(_cached_height(chunk, max_height) for chunk in _split(code, stack_count, max_height))
+    return float(occupied) / float(stack_count * max_height)
+
+
+def _empty_buffer_low_receiver_move(
+    parent_code: bytes,
+    child_code: bytes,
+    stack_count: int,
+    max_height: int,
+) -> bool:
+    parent_chunks = tuple(_split(parent_code, stack_count, max_height))
+    child_chunks = tuple(_split(child_code, stack_count, max_height))
+    child_tops = [
+        int(chunk[_cached_height(chunk, max_height) - 1])
+        for chunk in child_chunks
+        if _stack_is_ordered_receiver(chunk, max_height) and _cached_height(chunk, max_height) > 0
+    ]
+    if not child_tops:
+        return False
+    low_threshold = max(child_tops) - 1
+    for src_idx, src_chunk in enumerate(parent_chunks):
+        src_h = _cached_height(src_chunk, max_height)
+        if src_h <= 0:
+            continue
+        moved = int(src_chunk[src_h - 1])
+        src_after = _cached_pop_chunk(src_chunk, src_h, max_height)
+        for dst_idx, dst_chunk in enumerate(parent_chunks):
+            if dst_idx == src_idx:
+                continue
+            dst_h = _cached_height(dst_chunk, max_height)
+            if dst_h != 0:
+                continue
+            dst_after = _cached_push_chunk(dst_chunk, dst_h, moved, max_height)
+            next_chunks = list(parent_chunks)
+            next_chunks[src_idx] = src_after
+            next_chunks[dst_idx] = dst_after
+            if tuple(sorted(next_chunks)) == child_chunks and moved < low_threshold:
+                return True
+    return False
+
+
+def _receiver_safety_score(parent_code: bytes, child_code: bytes, args: argparse.Namespace) -> ReceiverSafetyScore:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return ReceiverSafetyScore(0, 0, 0, 0, 0, 0.0, False)
+    before = _safe_receiver_count(parent_code, stack_count, max_height)
+    after = _safe_receiver_count(child_code, stack_count, max_height)
+    empty_buffer_consumed_by_low_receiver = _empty_buffer_low_receiver_move(
+        parent_code,
+        child_code,
+        stack_count,
+        max_height,
+    )
+    if empty_buffer_consumed_by_low_receiver:
+        after = max(0, after - 1)
+    free_before = _free_slot_count(parent_code, stack_count, max_height)
+    free_after = _free_slot_count(child_code, stack_count, max_height)
+    delta = int(after) - int(before)
+    return ReceiverSafetyScore(
+        safe_receivers_before=int(before),
+        safe_receivers_after=int(after),
+        safe_receiver_delta=delta,
+        free_slots_before=free_before,
+        free_slots_after=free_after,
+        height_pressure_after=_height_pressure(child_code, stack_count, max_height),
+        last_buffer_consumed=bool(empty_buffer_consumed_by_low_receiver or (before > 1 and after <= 1 and delta < 0)),
+    )
+
+
+def _micro_rollout_linear_adjustment(
+    micro: MicroRolloutProbeResult | None,
+    receiver: ReceiverSafetyScore | None,
+    args: argparse.Namespace,
+) -> float:
+    if bool(getattr(args, "micro_rollout_trace_only", False)):
+        return 0.0
+    adjustment = 0.0
+    if micro is not None and bool(getattr(args, "micro_rollout_enabled", False)):
+        improvement = max(0, -int(micro.best_delta_n))
+        adjustment -= float(getattr(args, "w_micro_delta_n", 0.05) or 0.0) * float(improvement)
+        if bool(micro.has_safe_continuation):
+            adjustment -= float(getattr(args, "w_micro_safe_continuation", 0.03) or 0.0)
+    if receiver is not None and bool(getattr(args, "receiver_safety_enabled", False)):
+        adjustment -= float(getattr(args, "w_receiver_safe_delta", 0.03) or 0.0) * float(receiver.safe_receiver_delta)
+        if bool(receiver.last_buffer_consumed):
+            adjustment += float(getattr(args, "w_last_buffer_consumed", 0.05) or 0.0)
+        adjustment += float(getattr(args, "w_height_pressure", 0.02) or 0.0) * float(receiver.height_pressure_after)
+    return float(adjustment)
 
 
 def _union_rollout_probe_sample(
@@ -4271,6 +4642,8 @@ def _union_diversity_qubo_features(
     rank: int,
     args: argparse.Namespace,
     rollout: UnionRolloutProbeResult | None = None,
+    *,
+    origin: str = "core",
 ) -> UnionDiversityQuboFeatures:
     n_value, depth, parent_code = data
     stack_count = int(getattr(args, "_stack_count", 0) or 0)
@@ -4313,7 +4686,25 @@ def _union_diversity_qubo_features(
         energy -= rollout_bonus
     if rollout is not None:
         energy += _union_rollout_probe_energy_adjustment(rollout, args, n_value=int(n_value))
-    return UnionDiversityQuboFeatures(
+    micro: MicroRolloutProbeResult | None = None
+    receiver: ReceiverSafetyScore | None = None
+    micro_window = max(0, int(getattr(args, "micro_rollout_window", 32) or 0))
+    micro_active = bool(getattr(args, "micro_rollout_enabled", False))
+    receiver_active = bool(getattr(args, "receiver_safety_enabled", False))
+    trace_only = bool(getattr(args, "micro_rollout_trace_only", False))
+    if stack_count > 0 and max_height > 0 and rank < micro_window and (micro_active or trace_only):
+        if hasattr(args, "_micro_rollout_candidates"):
+            args._micro_rollout_candidates += 1
+        micro = _micro_rollout_probe(code, int(n_value), args)
+    if stack_count > 0 and max_height > 0 and rank < micro_window and (receiver_active or trace_only):
+        if hasattr(args, "_receiver_safety_scored_total"):
+            args._receiver_safety_scored_total += 1
+        receiver = _receiver_safety_score(parent_code, code, args)
+    micro_linear_adjustment = 0.0
+    if micro is not None or receiver is not None:
+        micro_linear_adjustment = _micro_rollout_linear_adjustment(micro, receiver, args)
+        energy += micro_linear_adjustment
+    features = UnionDiversityQuboFeatures(
         energy=float(energy),
         n_value=int(n_value),
         depth=int(depth),
@@ -4321,11 +4712,45 @@ def _union_diversity_qubo_features(
         source_stack=source_stack,
         signature=signature,
         reduce_signature=reduce_signature,
+        origin=str(origin or "core"),
         rollout_feasible=bool(rollout.feasible) if rollout is not None else False,
         rollout_final_n=int(rollout.final_n) if rollout is not None else -1,
         rollout_moves=int(rollout.moves) if rollout is not None else 0,
         rollout_status=str(rollout.status) if rollout is not None else "",
+        micro_first_children_count=int(micro.first_children_count) if micro is not None else 0,
+        micro_second_children_count=int(micro.second_children_count) if micro is not None else 0,
+        micro_best_delta_n=int(micro.best_delta_n) if micro is not None else 0,
+        micro_best_n=int(micro.best_n) if micro is not None else -1,
+        micro_has_reduce=bool(micro.has_reduce) if micro is not None else False,
+        micro_has_safe_continuation=bool(micro.has_safe_continuation) if micro is not None else False,
+        receiver_safe_receivers_before=int(receiver.safe_receivers_before) if receiver is not None else 0,
+        receiver_safe_receivers_after=int(receiver.safe_receivers_after) if receiver is not None else 0,
+        receiver_safe_delta=int(receiver.safe_receiver_delta) if receiver is not None else 0,
+        receiver_free_slots_before=int(receiver.free_slots_before) if receiver is not None else 0,
+        receiver_free_slots_after=int(receiver.free_slots_after) if receiver is not None else 0,
+        receiver_height_pressure_after=float(receiver.height_pressure_after) if receiver is not None else 0.0,
+        receiver_last_buffer_consumed=bool(receiver.last_buffer_consumed) if receiver is not None else False,
+        micro_linear_adjustment=float(micro_linear_adjustment),
     )
+    if micro is not None or receiver is not None:
+        trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", None)
+        if trace_features is None:
+            trace_features = {}
+            args._micro_rollout_feature_trace_by_code = trace_features
+        trace_features[code] = features
+    return features
+
+
+def _union_diversity_candidate_origin(code: bytes, args: argparse.Namespace) -> str:
+    origin_by_code = getattr(args, "_candidate_origin_by_code", None) or {}
+    origin = origin_by_code.get(code)
+    if origin:
+        return str(origin)
+    if code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()):
+        return "wang_rollout"
+    if code in (getattr(args, "_frg_frontier_child_codes", set()) or set()):
+        return "frg_frontier_child"
+    return "core"
 
 
 def _union_diversity_objective(
@@ -4341,9 +4766,15 @@ def _union_diversity_objective(
     reduce_signature_penalty = float(getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12) or 0.0)
     n_band_penalty = float(getattr(args, "union_diversity_qubo_n_band_penalty", 0.08) or 0.0)
     n_band_size = max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
+    origin_similarity_penalty = float(getattr(args, "union_diversity_qubo_origin_similarity_penalty", 0.0) or 0.0)
+    same_origin_parent_n_band_penalty = float(
+        getattr(args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0) or 0.0
+    )
     ordered = sorted(selected)
     for pos, i in enumerate(ordered):
         for j in ordered[pos + 1 :]:
+            same_origin = bool(features[i].origin) and features[i].origin == features[j].origin
+            same_n_band = features[i].n_value // n_band_size == features[j].n_value // n_band_size
             if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
                 value += same_parent_penalty
             if same_source_penalty > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
@@ -4352,8 +4783,17 @@ def _union_diversity_objective(
                 value += signature_penalty
             if reduce_signature_penalty > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
                 value += reduce_signature_penalty
-            if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
+            if n_band_penalty > 0.0 and same_n_band:
                 value += n_band_penalty
+            if origin_similarity_penalty > 0.0 and same_origin:
+                value += origin_similarity_penalty
+            if (
+                same_origin_parent_n_band_penalty > 0.0
+                and same_origin
+                and same_n_band
+                and features[i].parent_code == features[j].parent_code
+            ):
+                value += same_origin_parent_n_band_penalty
     return float(value)
 
 
@@ -4429,7 +4869,14 @@ def _select_union_diversity_qubo_supplement(
         return [], 0, 0.0
     rollout_by_code = _union_rollout_probe_results(usable, args)
     features = [
-        _union_diversity_qubo_features(code, data, rank, args, rollout_by_code.get(code))
+        _union_diversity_qubo_features(
+            code,
+            data,
+            rank,
+            args,
+            rollout_by_code.get(code),
+            origin=_union_diversity_candidate_origin(code, args),
+        )
         for rank, (code, data) in enumerate(usable)
     ]
     linear = _normalize_values([feature.energy for feature in features])
@@ -4444,8 +4891,14 @@ def _select_union_diversity_qubo_supplement(
     reduce_signature_penalty = float(getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12) or 0.0)
     n_band_penalty = float(getattr(args, "union_diversity_qubo_n_band_penalty", 0.08) or 0.0)
     n_band_size = max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
+    origin_similarity_penalty = float(getattr(args, "union_diversity_qubo_origin_similarity_penalty", 0.0) or 0.0)
+    same_origin_parent_n_band_penalty = float(
+        getattr(args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0) or 0.0
+    )
     for i in range(len(usable)):
         for j in range(i + 1, len(usable)):
+            same_origin = bool(features[i].origin) and features[i].origin == features[j].origin
+            same_n_band = features[i].n_value // n_band_size == features[j].n_value // n_band_size
             if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
                 model.add_quadratic(vars_[i], vars_[j], same_parent_penalty)
             if same_source_penalty > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
@@ -4454,8 +4907,17 @@ def _select_union_diversity_qubo_supplement(
                 model.add_quadratic(vars_[i], vars_[j], signature_penalty)
             if reduce_signature_penalty > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
                 model.add_quadratic(vars_[i], vars_[j], reduce_signature_penalty)
-            if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
+            if n_band_penalty > 0.0 and same_n_band:
                 model.add_quadratic(vars_[i], vars_[j], n_band_penalty)
+            if origin_similarity_penalty > 0.0 and same_origin:
+                model.add_quadratic(vars_[i], vars_[j], origin_similarity_penalty)
+            if (
+                same_origin_parent_n_band_penalty > 0.0
+                and same_origin
+                and same_n_band
+                and features[i].parent_code == features[j].parent_code
+            ):
+                model.add_quadratic(vars_[i], vars_[j], same_origin_parent_n_band_penalty)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
@@ -4484,6 +4946,12 @@ def _select_union_diversity_qubo_supplement(
             usable[idx][0],
         ),
     )
+    if hasattr(args, "_micro_rollout_selected_total"):
+        args._micro_rollout_selected_total += sum(
+            1
+            for idx in picked
+            if features[idx].micro_best_n >= 0 or features[idx].receiver_safe_delta != 0
+        )
     return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
 
 
@@ -9461,6 +9929,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._union_rollout_probe_cache = {}
     args._union_rollout_probe_frg_cache = {}
     args._union_rollout_probe_current_results = {}
+    args._micro_rollout_calls = 0
+    args._micro_rollout_cache_hits = 0
+    args._micro_rollout_candidates = 0
+    args._micro_rollout_selected_total = 0
+    args._receiver_safety_scored_total = 0
+    args._micro_rollout_cache = {}
+    args._micro_rollout_feature_trace_by_code = {}
     args._feasibility_escape_calls_done = 0
     args._feasibility_escape_added_total = 0
     args._feasibility_escape_active_layers = 0
@@ -9478,6 +9953,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._wang2017_task_selected_tier_protection_total = 0
     args._wang2017_task_selected_stable_height_total = 0
     args._wang_rollout_candidate_codes = set()
+    args._frg_frontier_child_codes = set()
+    args._candidate_origin_by_code = {}
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
     args._best_n_history = []
@@ -9669,8 +10146,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         args._layer_index = layer_index
         args._best_n_history.append(layer_best_n)
         candidate_count_before_rollout = len(candidates)
+        candidate_origin_by_code: dict[bytes, str] = {}
+        args._candidate_origin_by_code = candidate_origin_by_code
         rollout_codes = _inject_wang_rollout_candidates(frontier, candidates, args, depth_cap, best_depth)
         args._wang_rollout_candidate_codes = set(rollout_codes)
+        for code in rollout_codes:
+            candidate_origin_by_code.setdefault(code, "wang_rollout")
         if rollout_codes:
             wang_rollout_added_total += max(0, len(candidates) - candidate_count_before_rollout)
             peak_candidates = max(peak_candidates, len(candidates))
@@ -9688,9 +10169,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 parent_chain=parent,
             )
             if frg_frontier_child_codes:
+                for code in frg_frontier_child_codes:
+                    candidate_origin_by_code.setdefault(code, "frg_frontier_child")
                 peak_candidates = max(peak_candidates, len(candidates))
                 if len(candidates) != candidate_count_before_frg_frontier:
                     _update_layer_candidate_metrics(candidates, args, cap)
+        args._frg_frontier_child_codes = set(frg_frontier_child_codes)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         qcalls += add_qcalls
         qvars += add_qvars
@@ -9735,6 +10219,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         appended_rollout_codes = _append_wang_rollout_frontier(selected_codes, candidates, args, depth_cap, best_depth)
         if appended_rollout_codes:
             rollout_codes |= appended_rollout_codes
+            for code in appended_rollout_codes:
+                candidate_origin_by_code.setdefault(code, "wang_rollout")
             wang_rollout_added_total += len(appended_rollout_codes)
         frg_compound_codes = _append_frg_compound_frontier(selected_codes, candidates, args, depth_cap, best_depth)
         if frg_compound_codes:
@@ -9750,6 +10236,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         )
         if appended_frg_frontier_child_codes:
             frg_frontier_child_codes |= appended_frg_frontier_child_codes
+            for code in appended_frg_frontier_child_codes:
+                candidate_origin_by_code.setdefault(code, "frg_frontier_child")
+            args._frg_frontier_child_codes = set(frg_frontier_child_codes)
             peak_candidates = max(peak_candidates, len(candidates))
         survivor_metrics: dict[str, int | float] | None = None
         if collect_survivor_metrics:
@@ -9794,9 +10283,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     selected_source_by_code=dict(getattr(args, "_frontier_trace_last_selected_sources", {})),
                     args=args,
                     top_k=frontier_trace_top_k,
-                    candidate_origin_by_code={
-                        code: "frg_frontier_child" for code in frg_frontier_child_codes if code in candidates
-                    },
+                    candidate_origin_by_code=dict(candidate_origin_by_code),
                 )
             )
         selected_set = set(selected_codes)
@@ -10036,6 +10523,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         union_rollout_probe_selected_total=args._union_rollout_probe_selected_total,
         union_rollout_terminal_grafted_total=args._union_rollout_terminal_grafted_total,
         union_rollout_terminal_graft_used=union_rollout_terminal_graft_used,
+        micro_rollout_calls=args._micro_rollout_calls,
+        micro_rollout_cache_hits=args._micro_rollout_cache_hits,
+        micro_rollout_candidates=args._micro_rollout_candidates,
+        micro_rollout_selected_total=args._micro_rollout_selected_total,
+        receiver_safety_scored_total=args._receiver_safety_scored_total,
         frg_frontier_child_calls=args._frg_frontier_child_calls,
         frg_frontier_child_generated=args._frg_frontier_child_generated,
         frg_frontier_child_added_total=args._frg_frontier_child_added_total,
@@ -10384,6 +10876,12 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_diversity_qubo_reduce_signature_penalty": getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12),
             "union_diversity_qubo_n_band_penalty": getattr(args, "union_diversity_qubo_n_band_penalty", 0.08),
             "union_diversity_qubo_n_band_size": getattr(args, "union_diversity_qubo_n_band_size", 1),
+            "union_diversity_qubo_origin_similarity_penalty": getattr(
+                args, "union_diversity_qubo_origin_similarity_penalty", 0.0
+            ),
+            "union_diversity_qubo_same_origin_parent_n_band_penalty": getattr(
+                args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0
+            ),
             "union_diversity_qubo_calls": result.union_diversity_qubo_calls,
             "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
             "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
@@ -10442,6 +10940,23 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             ),
             "union_rollout_terminal_grafted_total": result.union_rollout_terminal_grafted_total,
             "union_rollout_terminal_graft_used": result.union_rollout_terminal_graft_used,
+            "micro_rollout_enabled": getattr(args, "micro_rollout_enabled", False),
+            "micro_rollout_trace_only": getattr(args, "micro_rollout_trace_only", False),
+            "receiver_safety_enabled": getattr(args, "receiver_safety_enabled", False),
+            "micro_rollout_window": getattr(args, "micro_rollout_window", 0),
+            "micro_first_child_limit": getattr(args, "micro_first_child_limit", 0),
+            "micro_second_child_limit": getattr(args, "micro_second_child_limit", 0),
+            "micro_cache_enabled": getattr(args, "micro_cache_enabled", True),
+            "w_micro_delta_n": getattr(args, "w_micro_delta_n", 0.0),
+            "w_micro_safe_continuation": getattr(args, "w_micro_safe_continuation", 0.0),
+            "w_receiver_safe_delta": getattr(args, "w_receiver_safe_delta", 0.0),
+            "w_last_buffer_consumed": getattr(args, "w_last_buffer_consumed", 0.0),
+            "w_height_pressure": getattr(args, "w_height_pressure", 0.0),
+            "micro_rollout_calls": result.micro_rollout_calls,
+            "micro_rollout_cache_hits": result.micro_rollout_cache_hits,
+            "micro_rollout_candidates": result.micro_rollout_candidates,
+            "micro_rollout_selected_total": result.micro_rollout_selected_total,
+            "receiver_safety_scored_total": result.receiver_safety_scored_total,
             "frg_frontier_child_enabled": getattr(args, "frg_frontier_child_enabled", False),
             "frg_frontier_child_parent_width": getattr(args, "frg_frontier_child_parent_width", 0),
             "frg_frontier_child_limit": getattr(args, "frg_frontier_child_limit", 0),
@@ -11101,6 +11616,8 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-reduce-signature-penalty", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-n-band-penalty", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-n-band-size", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-origin-similarity-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-same-origin-parent-n-band-penalty", type=float, default=None)
     parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-rollout-probe-max-candidates", type=int, default=None)
     parser.add_argument("--union-rollout-probe-time-limit", type=float, default=None)
@@ -11115,6 +11632,18 @@ def main() -> int:
         action=argparse.BooleanOptionalAction,
         default=None,
     )
+    parser.add_argument("--micro-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-trace-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--receiver-safety-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-window", type=int, default=None)
+    parser.add_argument("--micro-first-child-limit", type=int, default=None)
+    parser.add_argument("--micro-second-child-limit", type=int, default=None)
+    parser.add_argument("--micro-cache-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--w-micro-delta-n", type=float, default=None)
+    parser.add_argument("--w-micro-safe-continuation", type=float, default=None)
+    parser.add_argument("--w-receiver-safe-delta", type=float, default=None)
+    parser.add_argument("--w-last-buffer-consumed", type=float, default=None)
+    parser.add_argument("--w-height-pressure", type=float, default=None)
     parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-parent-width", type=int, default=None)
     parser.add_argument("--frg-frontier-child-limit", type=int, default=None)

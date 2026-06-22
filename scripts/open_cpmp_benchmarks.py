@@ -302,6 +302,12 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
         "union_diversity_qubo_reduce_signature_penalty": getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12),
         "union_diversity_qubo_n_band_penalty": getattr(args, "union_diversity_qubo_n_band_penalty", 0.08),
         "union_diversity_qubo_n_band_size": getattr(args, "union_diversity_qubo_n_band_size", 1),
+        "union_diversity_qubo_origin_similarity_penalty": getattr(
+            args, "union_diversity_qubo_origin_similarity_penalty", 0.0
+        ),
+        "union_diversity_qubo_same_origin_parent_n_band_penalty": getattr(
+            args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0
+        ),
         "union_diversity_qubo_calls": getattr(result, "union_diversity_qubo_calls", 0),
         "union_diversity_qubo_vars": getattr(result, "union_diversity_qubo_vars", 0),
         "union_diversity_qubo_time_sec": getattr(result, "union_diversity_qubo_time_sec", 0.0),
@@ -324,6 +330,23 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
         "union_rollout_terminal_graft_respect_cap": getattr(args, "union_rollout_terminal_graft_respect_cap", True),
         "union_rollout_terminal_grafted_total": getattr(result, "union_rollout_terminal_grafted_total", 0),
         "union_rollout_terminal_graft_used": getattr(result, "union_rollout_terminal_graft_used", False),
+        "micro_rollout_enabled": getattr(args, "micro_rollout_enabled", False),
+        "micro_rollout_trace_only": getattr(args, "micro_rollout_trace_only", False),
+        "receiver_safety_enabled": getattr(args, "receiver_safety_enabled", False),
+        "micro_rollout_window": getattr(args, "micro_rollout_window", 0),
+        "micro_first_child_limit": getattr(args, "micro_first_child_limit", 0),
+        "micro_second_child_limit": getattr(args, "micro_second_child_limit", 0),
+        "micro_cache_enabled": getattr(args, "micro_cache_enabled", True),
+        "w_micro_delta_n": getattr(args, "w_micro_delta_n", 0.0),
+        "w_micro_safe_continuation": getattr(args, "w_micro_safe_continuation", 0.0),
+        "w_receiver_safe_delta": getattr(args, "w_receiver_safe_delta", 0.0),
+        "w_last_buffer_consumed": getattr(args, "w_last_buffer_consumed", 0.0),
+        "w_height_pressure": getattr(args, "w_height_pressure", 0.0),
+        "micro_rollout_calls": getattr(result, "micro_rollout_calls", 0),
+        "micro_rollout_cache_hits": getattr(result, "micro_rollout_cache_hits", 0),
+        "micro_rollout_candidates": getattr(result, "micro_rollout_candidates", 0),
+        "micro_rollout_selected_total": getattr(result, "micro_rollout_selected_total", 0),
+        "receiver_safety_scored_total": getattr(result, "receiver_safety_scored_total", 0),
     }
 
 
@@ -986,7 +1009,12 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_frg_seed_qubo_polish",
             "qubo_scheduler_state_v5_frg_seed_ledger_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
@@ -1240,6 +1268,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_diversity_qubo_reduce_signature_penalty",
         "union_diversity_qubo_n_band_penalty",
         "union_diversity_qubo_n_band_size",
+        "union_diversity_qubo_origin_similarity_penalty",
+        "union_diversity_qubo_same_origin_parent_n_band_penalty",
         "union_rollout_probe_enabled",
         "union_rollout_probe_max_candidates",
         "union_rollout_probe_time_limit",
@@ -1250,6 +1280,18 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_rollout_probe_dead_end_penalty",
         "union_rollout_terminal_graft",
         "union_rollout_terminal_graft_respect_cap",
+        "micro_rollout_enabled",
+        "micro_rollout_trace_only",
+        "receiver_safety_enabled",
+        "micro_rollout_window",
+        "micro_first_child_limit",
+        "micro_second_child_limit",
+        "micro_cache_enabled",
+        "w_micro_delta_n",
+        "w_micro_safe_continuation",
+        "w_receiver_safe_delta",
+        "w_last_buffer_consumed",
+        "w_height_pressure",
         "frg_frontier_child_enabled",
         "frg_frontier_child_parent_width",
         "frg_frontier_child_limit",
@@ -1439,8 +1481,18 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_frg_seed_ledger_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_origin_aware_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_trace_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_receiver_safety_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_only_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
@@ -1712,7 +1764,12 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_frg_seed_qubo_polish",
             "qubo_scheduler_state_v5_frg_seed_ledger_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
@@ -1936,6 +1993,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-diversity-qubo-reduce-signature-penalty", type=float)
     parser.add_argument("--union-diversity-qubo-n-band-penalty", type=float)
     parser.add_argument("--union-diversity-qubo-n-band-size", type=int)
+    parser.add_argument("--union-diversity-qubo-origin-similarity-penalty", type=float)
+    parser.add_argument("--union-diversity-qubo-same-origin-parent-n-band-penalty", type=float)
     parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-rollout-probe-max-candidates", type=int)
     parser.add_argument("--union-rollout-probe-time-limit", type=float)
@@ -1950,6 +2009,18 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=None,
     )
+    parser.add_argument("--micro-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-trace-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--receiver-safety-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-window", type=int)
+    parser.add_argument("--micro-first-child-limit", type=int)
+    parser.add_argument("--micro-second-child-limit", type=int)
+    parser.add_argument("--micro-cache-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--w-micro-delta-n", type=float)
+    parser.add_argument("--w-micro-safe-continuation", type=float)
+    parser.add_argument("--w-receiver-safe-delta", type=float)
+    parser.add_argument("--w-last-buffer-consumed", type=float)
+    parser.add_argument("--w-height-pressure", type=float)
     parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-parent-width", type=int)
     parser.add_argument("--frg-frontier-child-limit", type=int)
