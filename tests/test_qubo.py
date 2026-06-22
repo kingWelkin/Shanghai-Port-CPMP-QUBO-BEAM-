@@ -1513,6 +1513,74 @@ def test_bs_frg_qubo_selector_is_used_inside_enhanced_frontier(monkeypatch):
     assert args._bs_frg_qubo_selected_total == 1
 
 
+
+def _pareto_union_feature(
+    *,
+    rank: int,
+    parent: bytes,
+    source: int,
+    dest: int,
+    signature: tuple[int, ...],
+    n_value: int = 4,
+    space: float = 0.0,
+    repair: float = 0.0,
+    risk: float = 0.0,
+):
+    from benchmark_compact_beam_qubo_n0 import ParetoUnionFeatures
+
+    return ParetoUnionFeatures(
+        energy=float(n_value * 1000 + rank),
+        n_value=n_value,
+        depth=rank,
+        parent_code=parent,
+        source_stack=source,
+        dest_stack=dest,
+        source_dest=(source, dest),
+        signature=signature,
+        reduce_signature=(source, signature[0] if signature else 0, 0),
+        n_band=n_value // 2,
+        space_score=space,
+        repair_score=repair,
+        risk_score=risk,
+        quality_rank=rank,
+    )
+
+
+def test_pareto_union_seed_keeps_distinct_objective_winners():
+    from benchmark_compact_beam_qubo_n0 import _select_pareto_union_seed_indices
+
+    args = _compact_args(pareto_union_seed_width=4)
+    features = [
+        _pareto_union_feature(rank=0, parent=b"p0", source=0, dest=1, signature=(0, 0), space=0.1, repair=0.1, risk=0.8),
+        _pareto_union_feature(rank=1, parent=b"p0", source=0, dest=1, signature=(0, 0), space=0.9, repair=0.1, risk=0.7),
+        _pareto_union_feature(rank=2, parent=b"p1", source=1, dest=2, signature=(1, 0), space=0.2, repair=0.9, risk=0.6),
+        _pareto_union_feature(rank=3, parent=b"p2", source=2, dest=3, signature=(2, 0), space=0.3, repair=0.2, risk=0.1),
+        _pareto_union_feature(rank=4, parent=b"p3", source=3, dest=0, signature=(3, 0), space=0.2, repair=0.2, risk=0.5),
+    ]
+
+    picked = _select_pareto_union_seed_indices(features, args, target=4)
+
+    assert len(picked) == 4
+    assert 0 in picked
+    assert 1 in picked
+    assert 2 in picked
+    assert 3 in picked
+
+
+def test_pareto_union_seed_respects_target_and_rank_trim():
+    from benchmark_compact_beam_qubo_n0 import _select_pareto_union_seed_indices
+
+    args = _compact_args(pareto_union_seed_width=2)
+    features = [
+        _pareto_union_feature(rank=idx, parent=bytes([idx]), source=idx, dest=idx + 1, signature=(idx,))
+        for idx in range(5)
+    ]
+
+    picked = _select_pareto_union_seed_indices(features, args, target=2)
+
+    assert len(picked) == 2
+    assert picked == [0, 1]
+
 def test_enhanced_frontier_respects_generic_qubo_start_layer(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 
