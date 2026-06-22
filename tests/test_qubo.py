@@ -1644,10 +1644,13 @@ def test_solver_profile_scheduler_state_v5_pareto_union_polish_extends_union(mon
 
     assert args.solver_profile == "scheduler_state_v5_pareto_union_polish"
     assert args.pareto_union_enabled is True
-    assert args.pareto_union_seed_width == 32
-    assert args.pareto_union_qubo_width == 32
-    assert args.union_diversity_qubo_enabled is True
-    assert args.frg_seed_enabled is True
+    assert args.pareto_union_candidate_window == 16
+    assert args.pareto_union_seed_width == 2
+    assert args.pareto_union_qubo_width == 2
+    assert args.pareto_union_max_vars == 16
+    assert args.union_diversity_qubo_enabled is False
+    assert args.union_diversity_qubo_min_candidates == 64
+    assert args.frg_seed_enabled is False
 
 
 def test_enhanced_frontier_respects_generic_qubo_start_layer(monkeypatch):
