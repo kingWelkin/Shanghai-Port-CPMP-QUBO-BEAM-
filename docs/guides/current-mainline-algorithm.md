@@ -56,6 +56,37 @@ Use `qubo_scheduler_state_v5_wang_rescue_polish` when a paired baseline is neede
 
 Do not promote `scheduler_state_v5_pareto_union_polish`: the light version was neutral on samples, and the wide version damaged open sample quality.
 
+## Current Ablation Branches
+
+The current codebase also contains several opt-in ablation profiles derived from the diversity-union line:
+
+| profile | purpose | promotion status |
+|---|---|---|
+| `qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish` | add a bounded FRG-style rollout probe as a selection signal | ablation only |
+| `qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish` | splice a validated rollout-complete tail when the selected child reaches one | ablation only |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish` | append BS-FRG-generated child states after normal frontier selection | light frontier experiment; not default |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish` | merge FRG-generated children into the same candidate pool before selection | experimental; latest paired run did not beat light frontier |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish` | start with a smaller FRG frontier and expand on high-n plateau / small-stack pressure | ablation only |
+
+These profiles are useful for paper-set and residual-case diagnosis, but they should not replace `qubo_scheduler_state_v5_qubo_diversity_union_polish` without a paired full open120 and paper-set improvement. In particular, FRG frontier injection is candidate generation support, not a BS-FRG fallback solver.
+
+## Latest Engineering Commit
+
+Commit `c5062ef` records the current implementation state:
+
+- union rollout terminal graft telemetry and cap controls;
+- FRG frontier child generation, append-only mode, single-frontier mode, and adaptive expansion parameters;
+- `candidate_origin` frontier trace support;
+- open120 and paper-set runner wiring for the new profiles;
+- standalone BS-FRG benchmark runners for open CPMP and paper BF/CV reproduction;
+- focused tests for union rollout, FRG frontier child injection, BS-FRG QUBO selection, and runner variant mapping.
+
+Validation for that commit used:
+
+- `python -m py_compile` on the modified benchmark scripts;
+- `git diff --cached --check`;
+- `python -m pytest tests\test_qubo.py -k "union_rollout or frg_frontier_child or qubo_diversity_union or bs_frg_qubo" -q --basetemp .tmp_pytest_commit_union`, which reported `31 passed, 286 deselected`.
+
 ## Reproduction
 
 Open test-120 mainline:
