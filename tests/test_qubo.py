@@ -1570,7 +1570,7 @@ def test_pareto_union_seed_keeps_distinct_objective_winners():
 def test_pareto_union_seed_respects_target_and_rank_trim():
     from benchmark_compact_beam_qubo_n0 import _select_pareto_union_seed_indices
 
-    args = _compact_args(pareto_union_seed_width=2)
+    args = _compact_args(pareto_union_seed_width=4)
     features = [
         _pareto_union_feature(rank=idx, parent=bytes([idx]), source=idx, dest=idx + 1, signature=(idx,))
         for idx in range(5)
