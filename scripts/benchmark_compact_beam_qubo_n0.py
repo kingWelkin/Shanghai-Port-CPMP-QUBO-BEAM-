@@ -15,6 +15,7 @@ import heapq
 import math
 import sys
 import time
+from collections import deque
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -50,7 +51,12 @@ from container_reshuffle.solvers.feasibility_signals import (  # noqa: E402
     compute_feasibility_signals,
     feasibility_escape_score,
 )
+from container_reshuffle.solvers.bs_frg import (  # noqa: E402
+    _frg_completion_cached as _bs_frg_completion_cached,
+    _initial_layout as _bs_frg_initial_layout,
+)
 from container_reshuffle.solvers.frg_signals import (  # noqa: E402
+    compute_frg_layout_signals,
     compute_frg_transition_signals,
     frg_transition_score,
 )
@@ -181,12 +187,97 @@ COMPACT_EXTRA_FIELDS = [
     "pareto_union_distinct_source_count_last",
     "pareto_union_distinct_dest_count_last",
     "pareto_union_distinct_signature_count_last",
+    "candidate_ledger_score_enabled",
+    "candidate_ledger_wang_fixed_weight",
+    "candidate_ledger_wang_pair_weight",
+    "candidate_ledger_frg_fill_weight",
+    "candidate_ledger_frg_reduce_weight",
+    "candidate_ledger_frg_unblocked_weight",
+    "candidate_ledger_frg_assignment_weight",
+    "candidate_ledger_rollout_bonus",
+    "candidate_ledger_rank_window",
+    "union_diversity_qubo_enabled",
+    "union_diversity_qubo_supplement_width",
+    "union_diversity_qubo_focus_n",
+    "union_diversity_qubo_n_window",
+    "union_diversity_qubo_min_candidates",
+    "union_diversity_qubo_max_vars",
+    "union_diversity_qubo_select",
+    "union_diversity_qubo_rank_weight",
+    "union_diversity_qubo_wang_fixed_weight",
+    "union_diversity_qubo_wang_pair_weight",
+    "union_diversity_qubo_frg_weight",
+    "union_diversity_qubo_rollout_bonus",
+    "union_diversity_qubo_same_parent_penalty",
+    "union_diversity_qubo_same_source_penalty",
+    "union_diversity_qubo_signature_penalty",
+    "union_diversity_qubo_reduce_signature_penalty",
+    "union_diversity_qubo_n_band_penalty",
+    "union_diversity_qubo_n_band_size",
+    "union_diversity_qubo_calls",
+    "union_diversity_qubo_vars",
+    "union_diversity_qubo_time_sec",
+    "union_diversity_qubo_selected_total",
+    "union_rollout_probe_enabled",
+    "union_rollout_probe_max_candidates",
+    "union_rollout_probe_time_limit",
+    "union_rollout_probe_max_steps",
+    "union_rollout_probe_feasible_bonus",
+    "union_rollout_probe_final_n_weight",
+    "union_rollout_probe_moves_weight",
+    "union_rollout_probe_dead_end_penalty",
+    "union_rollout_probe_calls",
+    "union_rollout_probe_candidates",
+    "union_rollout_probe_feasible",
+    "union_rollout_probe_time_sec",
+    "union_rollout_probe_cache_hits",
+    "union_rollout_probe_selected_total",
+    "frg_seed_enabled",
+    "frg_seed_time_limit",
+    "frg_seed_min_max_steps",
+    "frg_seed_max_steps_multiplier",
+    "frg_seed_max_steps_cap",
+    "frg_seed_respect_cap",
+    "frg_seed_prune_to_incumbent",
+    "frg_seed_allow_large_over_cap",
+    "frg_seed_paper_pure",
+    "frg_seed_moves",
+    "frg_seed_runtime_sec",
+    "frg_seed_used",
+    "frg_seed_status",
+    "frg_seed_generated",
+    "frg_seed_cap_ok",
+    "frg_seed_large_layout_ok",
     "frg_candidate_supplement_enabled",
     "frg_candidate_supplement_width",
     "frg_candidate_focus_n",
     "frg_candidate_n_window",
     "frg_candidate_max_ranked",
+    "frg_candidate_scarcity_gate_enabled",
     "frg_candidate_selected_total",
+    "frg_linear_score_enabled",
+    "frg_linear_fill_weight",
+    "frg_linear_reduce_weight",
+    "frg_linear_unblocked_weight",
+    "frg_linear_assignment_weight",
+    "frg_linear_max_height_ordered_weight",
+    "frg_linear_height_pressure_weight",
+    "frg_rank_tiebreak_enabled",
+    "frg_rank_tiebreak_weight",
+    "frg_rank_tiebreak_focus_n",
+    "frg_scarcity_gate_enabled",
+    "frg_scarcity_gate_max_available_stacks",
+    "frg_scarcity_gate_min_avg_height_pressure",
+    "frg_scarcity_gate_max_reduction_receivers",
+    "frg_scarcity_gate_min_unblocked_bad",
+    "frg_scarcity_gate_min_candidates",
+    "frg_scarcity_gate_cap_slack",
+    "frg_layout_available_stack_count",
+    "frg_layout_avg_height_pressure",
+    "frg_layout_max_height_ordered_risk",
+    "frg_layout_unblocked_bad_containers",
+    "frg_layout_reduction_receiver_stack_count",
+    "frg_layout_reduction_receiver_pressure",
     "frg_compound_escape_enabled",
     "frg_compound_escape_width",
     "frg_compound_escape_focus_n",
@@ -212,9 +303,13 @@ COMPACT_EXTRA_FIELDS = [
     "bs_frg_qubo_n_window",
     "bs_frg_qubo_min_candidates",
     "bs_frg_qubo_max_vars",
+    "bs_frg_qubo_rank_weight",
     "bs_frg_qubo_same_parent_penalty",
+    "bs_frg_qubo_same_source_penalty",
     "bs_frg_qubo_signature_penalty",
+    "bs_frg_qubo_reduce_signature_penalty",
     "bs_frg_qubo_n_band_penalty",
+    "bs_frg_qubo_n_band_size",
     "bs_frg_qubo_calls",
     "bs_frg_qubo_vars",
     "bs_frg_qubo_time_sec",
@@ -343,6 +438,40 @@ COMPACT_EXTRA_FIELDS = [
     "scheduler_state_rescue_plateau_window",
     "scheduler_state_rescue_plateau_delta",
     "scheduler_state_rescue_cap_slack",
+    "scarcity_inner_rescue_enabled",
+    "scarcity_inner_rescue_risk_threshold",
+    "scarcity_inner_rescue_max_l0",
+    "scarcity_inner_rescue_min_one_safe_ratio",
+    "scarcity_inner_rescue_min_n",
+    "scarcity_inner_rescue_min_candidates",
+    "scarcity_inner_rescue_layers",
+    "scarcity_inner_rescue_gate_reasons",
+    "tail_lookahead_enabled",
+    "tail_lookahead_core_path_only",
+    "tail_lookahead_max_stack_count",
+    "tail_lookahead_focus_n",
+    "tail_lookahead_depth",
+    "tail_lookahead_max_seed_candidates",
+    "tail_lookahead_supplement_width",
+    "tail_lookahead_max_expanded",
+    "tail_lookahead_calls",
+    "tail_lookahead_selected_total",
+    "tail_lookahead_goal_reachable_total",
+    "tail_lookahead_best_delta_total",
+    "tail_lookahead_expanded_total",
+    "tail_risk_reserve_enabled",
+    "tail_risk_focus_n",
+    "tail_risk_n_window",
+    "tail_risk_reserve_width",
+    "tail_risk_max_scan",
+    "tail_risk_min_candidates",
+    "tail_risk_min_depth_slack",
+    "tail_risk_max_depth_slack",
+    "tail_risk_max_stack_count",
+    "tail_risk_reserve_calls",
+    "tail_risk_reserve_selected_total",
+    "tail_risk_reserve_scanned_total",
+    "tail_risk_reserve_one_step_improved_total",
     "scarcity_group_qubo_enabled",
     "scarcity_group_qubo_threshold",
     "scarcity_group_qubo_plateau_window",
@@ -472,6 +601,41 @@ DLTS_FEATURE_FIELDS = [
     "temporary_slack_moves",
     "low_tier_risk",
     "dead_end_risk",
+]
+FRONTIER_TRACE_FIELDS = [
+    "case",
+    "solver_profile",
+    "selection_policy",
+    "layer",
+    "selection_context",
+    "scheduler_action",
+    "scheduler_effective_action",
+    "rescue_layers_used",
+    "scarcity_inner_rescue_layers",
+    "wang_pair_qubo_calls",
+    "qubo_calls_done",
+    "frontier_best_n",
+    "layer_best_n",
+    "layer_has_improving_candidate",
+    "candidate_count",
+    "candidate_parent_count",
+    "selected_count",
+    "selected_qubo_count",
+    "candidate_rank",
+    "candidate_code",
+    "n_value",
+    "depth",
+    "n_delta_from_layer_best",
+    "candidate_improves_frontier_n",
+    "parent_code",
+    "parent_rank",
+    "parent_candidate_count",
+    "parent_selected_count",
+    "parent_qubo_selected_count",
+    "selected",
+    "selected_rank",
+    "selected_by_qubo",
+    "selected_source",
 ]
 
 
@@ -622,6 +786,110 @@ def _reset_dlts_feature_output(path: Path | None) -> None:
     output = path if path.is_absolute() else ROOT / path
     if output.exists():
         output.unlink()
+
+
+def _write_frontier_trace_rows(rows: list[dict[str, object]], path: Path) -> None:
+    output = path if path.is_absolute() else ROOT / path
+    output.parent.mkdir(parents=True, exist_ok=True)
+    append = output.exists() and output.stat().st_size > 0
+    with output.open("a", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=FRONTIER_TRACE_FIELDS, extrasaction="ignore")
+        if not append:
+            writer.writeheader()
+        writer.writerows(rows)
+
+
+def _reset_frontier_trace_output(path: Path | None) -> None:
+    if path is None:
+        return
+    output = path if path.is_absolute() else ROOT / path
+    if output.exists():
+        output.unlink()
+
+
+def _frontier_trace_candidate_rows(
+    *,
+    case: str,
+    layer: int,
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    frontier: list[tuple[bytes, int, int]],
+    selected_codes: list[bytes],
+    selected_by_qubo: set[bytes],
+    selected_source_by_code: dict[bytes, str],
+    args: argparse.Namespace,
+    top_k: int,
+) -> list[dict[str, object]]:
+    if not ranked or top_k <= 0:
+        return []
+    parent_rank_by_code = {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
+    selected_rank_by_code = {code: idx + 1 for idx, code in enumerate(selected_codes)}
+    selected_set = set(selected_codes)
+    selected_qubo_set = selected_by_qubo & selected_set
+    parent_candidate_counts: dict[bytes, int] = {}
+    parent_selected_counts: dict[bytes, int] = {}
+    parent_qubo_selected_counts: dict[bytes, int] = {}
+    for _code, data in ranked:
+        parent_code = data[2]
+        parent_candidate_counts[parent_code] = parent_candidate_counts.get(parent_code, 0) + 1
+    data_by_code = {code: data for code, data in ranked}
+    for code in selected_set:
+        data = data_by_code.get(code)
+        if data is None:
+            continue
+        parent_code = data[2]
+        parent_selected_counts[parent_code] = parent_selected_counts.get(parent_code, 0) + 1
+        if code in selected_qubo_set:
+            parent_qubo_selected_counts[parent_code] = parent_qubo_selected_counts.get(parent_code, 0) + 1
+
+    frontier_best_n = min((n_value for _code, n_value, _depth in frontier), default=0)
+    layer_best_n = int(ranked[0][1][0])
+    layer_has_improving_candidate = any(int(data[0]) < frontier_best_n for _code, data in ranked)
+    top = ranked[: max(0, min(int(top_k), len(ranked)))]
+    rows: list[dict[str, object]] = []
+    for rank, (code, data) in enumerate(top, start=1):
+        n_value, depth, parent_code = data
+        selected = code in selected_set
+        source = selected_source_by_code.get(code)
+        if source is None:
+            source = "qubo" if code in selected_qubo_set else ("selected" if selected else "not_selected")
+        rows.append(
+            {
+                "case": case,
+                "solver_profile": getattr(args, "solver_profile", ""),
+                "selection_policy": getattr(args, "selection_policy", ""),
+                "layer": int(layer),
+                "selection_context": getattr(args, "_frontier_trace_last_context", ""),
+                "scheduler_action": getattr(args, "_scheduler_state_last_action", ""),
+                "scheduler_effective_action": getattr(args, "_scheduler_state_last_effective_action", ""),
+                "rescue_layers_used": int(getattr(args, "_rescue_layers_used", 0)),
+                "scarcity_inner_rescue_layers": int(getattr(args, "_scarcity_inner_rescue_layers", 0)),
+                "wang_pair_qubo_calls": int(getattr(args, "_wang_pair_qubo_calls_done", 0)),
+                "qubo_calls_done": int(getattr(args, "_qubo_calls_done", 0)),
+                "frontier_best_n": int(frontier_best_n),
+                "layer_best_n": int(layer_best_n),
+                "layer_has_improving_candidate": int(layer_has_improving_candidate),
+                "candidate_count": len(ranked),
+                "candidate_parent_count": len(parent_candidate_counts),
+                "selected_count": len(selected_set),
+                "selected_qubo_count": len(selected_qubo_set),
+                "candidate_rank": rank,
+                "candidate_code": code.hex(),
+                "n_value": int(n_value),
+                "depth": int(depth),
+                "n_delta_from_layer_best": int(n_value) - int(layer_best_n),
+                "candidate_improves_frontier_n": int(int(n_value) < frontier_best_n),
+                "parent_code": parent_code.hex(),
+                "parent_rank": int(parent_rank_by_code.get(parent_code, 0)),
+                "parent_candidate_count": int(parent_candidate_counts.get(parent_code, 0)),
+                "parent_selected_count": int(parent_selected_counts.get(parent_code, 0)),
+                "parent_qubo_selected_count": int(parent_qubo_selected_counts.get(parent_code, 0)),
+                "selected": int(selected),
+                "selected_rank": int(selected_rank_by_code.get(code, 0)),
+                "selected_by_qubo": int(code in selected_qubo_set),
+                "selected_source": source,
+            }
+        )
+    return rows
 
 
 _DYNAMIC_QUBO_PRESETS: dict[str, dict[str, int | float | bool]] = {
@@ -777,11 +1045,73 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "pareto_union_reduce_signature_penalty": 0.15,
         "pareto_union_n_band_penalty": 0.08,
         "pareto_union_risk_bucket_penalty": 0.08,
+        "candidate_ledger_score_enabled": False,
+        "candidate_ledger_wang_fixed_weight": 0.0,
+        "candidate_ledger_wang_pair_weight": 0.0,
+        "candidate_ledger_frg_fill_weight": 0.0,
+        "candidate_ledger_frg_reduce_weight": 0.0,
+        "candidate_ledger_frg_unblocked_weight": 0.0,
+        "candidate_ledger_frg_assignment_weight": 0.0,
+        "candidate_ledger_rollout_bonus": 0.0,
+        "candidate_ledger_rank_window": 512,
+        "union_diversity_qubo_enabled": False,
+        "union_diversity_qubo_supplement_width": 0,
+        "union_diversity_qubo_focus_n": -1,
+        "union_diversity_qubo_n_window": 2,
+        "union_diversity_qubo_min_candidates": 64,
+        "union_diversity_qubo_max_vars": 64,
+        "union_diversity_qubo_select": 8,
+        "union_diversity_qubo_rank_weight": 0.02,
+        "union_diversity_qubo_wang_fixed_weight": 0.02,
+        "union_diversity_qubo_wang_pair_weight": 0.02,
+        "union_diversity_qubo_frg_weight": 0.05,
+        "union_diversity_qubo_rollout_bonus": 0.03,
+        "union_diversity_qubo_same_parent_penalty": 0.45,
+        "union_diversity_qubo_same_source_penalty": 0.20,
+        "union_diversity_qubo_signature_penalty": 0.18,
+        "union_diversity_qubo_reduce_signature_penalty": 0.12,
+        "union_diversity_qubo_n_band_penalty": 0.08,
+        "union_diversity_qubo_n_band_size": 1,
+        "union_rollout_probe_enabled": False,
+        "union_rollout_probe_max_candidates": 8,
+        "union_rollout_probe_time_limit": 0.001,
+        "union_rollout_probe_max_steps": 512,
+        "union_rollout_probe_feasible_bonus": 0.0,
+        "union_rollout_probe_final_n_weight": 0.08,
+        "union_rollout_probe_moves_weight": 0.0,
+        "union_rollout_probe_dead_end_penalty": 0.12,
+        "frg_seed_enabled": False,
+        "frg_seed_time_limit": 0.0,
+        "frg_seed_min_max_steps": 256,
+        "frg_seed_max_steps_multiplier": 10,
+        "frg_seed_max_steps_cap": 0,
+        "frg_seed_respect_cap": True,
+        "frg_seed_prune_to_incumbent": True,
+        "frg_seed_allow_large_over_cap": False,
+        "frg_seed_paper_pure": True,
         "frg_candidate_supplement_enabled": False,
         "frg_candidate_supplement_width": 0,
         "frg_candidate_focus_n": -1,
         "frg_candidate_n_window": 2,
         "frg_candidate_max_ranked": 96,
+        "frg_candidate_scarcity_gate_enabled": False,
+        "frg_linear_score_enabled": False,
+        "frg_linear_fill_weight": 0.0,
+        "frg_linear_reduce_weight": 0.0,
+        "frg_linear_unblocked_weight": 0.0,
+        "frg_linear_assignment_weight": 0.0,
+        "frg_linear_max_height_ordered_weight": 0.0,
+        "frg_linear_height_pressure_weight": 0.0,
+        "frg_rank_tiebreak_enabled": False,
+        "frg_rank_tiebreak_weight": 0.0,
+        "frg_rank_tiebreak_focus_n": -1,
+        "frg_scarcity_gate_enabled": False,
+        "frg_scarcity_gate_max_available_stacks": 1,
+        "frg_scarcity_gate_min_avg_height_pressure": 0.85,
+        "frg_scarcity_gate_max_reduction_receivers": -1,
+        "frg_scarcity_gate_min_unblocked_bad": 0,
+        "frg_scarcity_gate_min_candidates": 1000,
+        "frg_scarcity_gate_cap_slack": 24,
         "frg_compound_escape_enabled": False,
         "frg_compound_escape_width": 0,
         "frg_compound_escape_focus_n": -1,
@@ -807,7 +1137,9 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "bs_frg_qubo_max_vars": 64,
         "bs_frg_qubo_rank_weight": 0.05,
         "bs_frg_qubo_same_parent_penalty": 0.35,
+        "bs_frg_qubo_same_source_penalty": 0.0,
         "bs_frg_qubo_signature_penalty": 0.15,
+        "bs_frg_qubo_reduce_signature_penalty": 0.0,
         "bs_frg_qubo_n_band_penalty": 0.05,
         "bs_frg_qubo_n_band_size": 1,
         "wang2017_task_enabled": False,
@@ -905,6 +1237,29 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "scheduler_state_rescue_plateau_window": 3,
         "scheduler_state_rescue_plateau_delta": 0,
         "scheduler_state_rescue_cap_slack": 8,
+        "scarcity_inner_rescue_enabled": False,
+        "scarcity_inner_rescue_risk_threshold": 0.95,
+        "scarcity_inner_rescue_max_l0": 5,
+        "scarcity_inner_rescue_min_one_safe_ratio": 0.90,
+        "scarcity_inner_rescue_min_n": 12,
+        "scarcity_inner_rescue_min_candidates": 64,
+        "tail_lookahead_enabled": False,
+        "tail_lookahead_core_path_only": False,
+        "tail_lookahead_max_stack_count": 0,
+        "tail_lookahead_focus_n": 2,
+        "tail_lookahead_depth": 3,
+        "tail_lookahead_max_seed_candidates": 128,
+        "tail_lookahead_supplement_width": 0,
+        "tail_lookahead_max_expanded": 4096,
+        "tail_risk_reserve_enabled": False,
+        "tail_risk_focus_n": 2,
+        "tail_risk_n_window": 1,
+        "tail_risk_reserve_width": 0,
+        "tail_risk_max_scan": 4096,
+        "tail_risk_min_candidates": 1000,
+        "tail_risk_min_depth_slack": 2,
+        "tail_risk_max_depth_slack": 10,
+        "tail_risk_max_stack_count": 0,
         "scarcity_group_qubo_enabled": False,
         "scarcity_group_qubo_threshold": 0.95,
         "scarcity_group_qubo_plateau_window": 2,
@@ -1410,6 +1765,37 @@ _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_fast_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "rescue_max_qubo_vars": 64,
 }
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_scarcity_inner_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "scarcity_inner_rescue_enabled": True,
+    "scarcity_inner_rescue_risk_threshold": 0.95,
+    "scarcity_inner_rescue_max_l0": 5,
+    "scarcity_inner_rescue_min_one_safe_ratio": 0.90,
+    "scarcity_inner_rescue_min_n": 12,
+    "scarcity_inner_rescue_min_candidates": 64,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_tail_lookahead_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "tail_lookahead_enabled": True,
+    "tail_lookahead_focus_n": 2,
+    "tail_lookahead_depth": 3,
+    "tail_lookahead_max_seed_candidates": 128,
+    "tail_lookahead_supplement_width": 24,
+    "tail_lookahead_max_expanded": 4096,
+}
+_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_tail_risk_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "tail_risk_reserve_enabled": True,
+    "tail_risk_focus_n": 2,
+    "tail_risk_n_window": 1,
+    "tail_risk_reserve_width": 2,
+    "tail_risk_max_scan": 12000,
+    "tail_risk_min_candidates": 1000,
+    "tail_risk_min_depth_slack": 2,
+    "tail_risk_max_depth_slack": 8,
+    "tail_risk_max_stack_count": 5,
+    "tail_lookahead_enabled": False,
+}
 _SOLVER_PROFILES["scheduler_state_v5_wang_rescue_successor_cache_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "post_polish_successor_cache": True,
@@ -1451,6 +1837,103 @@ _SOLVER_PROFILES["scheduler_state_v5_frg_dlts_polish"] = {
     "dlts_value_supplement_enabled": True,
     "dlts_value_supplement_width": 4,
 }
+_SOLVER_PROFILES["scheduler_state_v5_frg_linear_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_linear_score_enabled": True,
+    "frg_linear_fill_weight": 0.18,
+    "frg_linear_reduce_weight": 0.12,
+    "frg_linear_unblocked_weight": 0.08,
+    "frg_linear_assignment_weight": 0.04,
+    "frg_linear_max_height_ordered_weight": 0.18,
+    "frg_linear_height_pressure_weight": 0.05,
+    "frg_candidate_supplement_enabled": False,
+    "frg_candidate_supplement_width": 0,
+    "bs_frg_qubo_enabled": False,
+    "bs_frg_qubo_supplement_width": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_safe_tiebreak_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_rank_tiebreak_enabled": True,
+    "frg_rank_tiebreak_weight": 1.0,
+    "frg_rank_tiebreak_focus_n": 0,
+    "frg_linear_score_enabled": False,
+    "frg_candidate_supplement_enabled": False,
+    "frg_candidate_supplement_width": 0,
+    "bs_frg_qubo_enabled": False,
+    "bs_frg_qubo_supplement_width": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_diverse_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "bs_frg_qubo_enabled": True,
+    "bs_frg_qubo_supplement_width": 4,
+    "bs_frg_qubo_focus_n": -1,
+    "bs_frg_qubo_n_window": 2,
+    "bs_frg_qubo_min_candidates": 64,
+    "bs_frg_qubo_max_vars": 64,
+    "bs_frg_qubo_rank_weight": 0.05,
+    "bs_frg_qubo_same_parent_penalty": 0.55,
+    "bs_frg_qubo_same_source_penalty": 0.35,
+    "bs_frg_qubo_signature_penalty": 0.25,
+    "bs_frg_qubo_reduce_signature_penalty": 0.20,
+    "bs_frg_qubo_n_band_penalty": 0.12,
+    "bs_frg_qubo_n_band_size": 1,
+    "frg_candidate_supplement_enabled": False,
+    "frg_candidate_supplement_width": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_candidate_pool_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_candidate_supplement_enabled": True,
+    "frg_candidate_supplement_width": 8,
+    "frg_candidate_focus_n": -1,
+    "frg_candidate_n_window": 2,
+    "frg_candidate_max_ranked": 96,
+    "frg_candidate_scarcity_gate_enabled": False,
+    "dlts_value_supplement_enabled": False,
+    "dlts_value_supplement_width": 0,
+    "bs_frg_qubo_enabled": False,
+    "bs_frg_qubo_supplement_width": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_scarcity_gate_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_candidate_supplement_enabled": True,
+    "frg_candidate_supplement_width": 4,
+    "frg_candidate_focus_n": -1,
+    "frg_candidate_n_window": 2,
+    "frg_candidate_max_ranked": 96,
+    "frg_candidate_scarcity_gate_enabled": True,
+    "frg_scarcity_gate_enabled": True,
+    "frg_scarcity_gate_max_available_stacks": 99,
+    "frg_scarcity_gate_min_avg_height_pressure": 0.0,
+    "frg_scarcity_gate_max_reduction_receivers": 2,
+    "frg_scarcity_gate_min_unblocked_bad": 1,
+    "frg_scarcity_gate_min_candidates": 1000,
+    "frg_scarcity_gate_cap_slack": 24,
+    "dlts_value_supplement_enabled": False,
+    "dlts_value_supplement_width": 0,
+    "bs_frg_qubo_enabled": False,
+    "bs_frg_qubo_supplement_width": 0,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_all_ablation_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_frg_scarcity_gate_polish"],
+    "frg_linear_score_enabled": True,
+    "frg_linear_fill_weight": 0.18,
+    "frg_linear_reduce_weight": 0.12,
+    "frg_linear_unblocked_weight": 0.08,
+    "frg_linear_assignment_weight": 0.04,
+    "frg_linear_max_height_ordered_weight": 0.18,
+    "frg_linear_height_pressure_weight": 0.05,
+    "bs_frg_qubo_enabled": True,
+    "bs_frg_qubo_supplement_width": 4,
+    "bs_frg_qubo_focus_n": -1,
+    "bs_frg_qubo_n_window": 2,
+    "bs_frg_qubo_min_candidates": 64,
+    "bs_frg_qubo_max_vars": 64,
+    "bs_frg_qubo_same_parent_penalty": 0.55,
+    "bs_frg_qubo_same_source_penalty": 0.35,
+    "bs_frg_qubo_signature_penalty": 0.25,
+    "bs_frg_qubo_reduce_signature_penalty": 0.20,
+    "bs_frg_qubo_n_band_penalty": 0.12,
+}
 _SOLVER_PROFILES["scheduler_state_v5_bs_frg_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
     "bs_frg_qubo_enabled": True,
@@ -1464,6 +1947,63 @@ _SOLVER_PROFILES["scheduler_state_v5_bs_frg_qubo_polish"] = {
     "bs_frg_qubo_signature_penalty": 0.15,
     "bs_frg_qubo_n_band_penalty": 0.05,
     "bs_frg_qubo_n_band_size": 1,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_seed_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
+    "frg_seed_enabled": True,
+    "frg_seed_time_limit": 0.75,
+    "frg_seed_min_max_steps": 2048,
+    "frg_seed_max_steps_multiplier": 12,
+    "frg_seed_max_steps_cap": 0,
+    "frg_seed_respect_cap": False,
+    "frg_seed_prune_to_incumbent": True,
+    "frg_seed_allow_large_over_cap": True,
+    "frg_seed_paper_pure": True,
+}
+_SOLVER_PROFILES["scheduler_state_v5_frg_seed_ledger_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_frg_seed_qubo_polish"],
+    "candidate_ledger_score_enabled": True,
+    "candidate_ledger_wang_fixed_weight": 0.04,
+    "candidate_ledger_wang_pair_weight": 0.03,
+    "candidate_ledger_frg_fill_weight": 0.08,
+    "candidate_ledger_frg_reduce_weight": 0.04,
+    "candidate_ledger_frg_unblocked_weight": 0.03,
+    "candidate_ledger_frg_assignment_weight": 0.02,
+    "candidate_ledger_rollout_bonus": 0.06,
+    "candidate_ledger_rank_window": 512,
+}
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_frg_seed_qubo_polish"],
+    "candidate_ledger_score_enabled": False,
+    "union_diversity_qubo_enabled": True,
+    "union_diversity_qubo_supplement_width": 4,
+    "union_diversity_qubo_focus_n": -1,
+    "union_diversity_qubo_n_window": 2,
+    "union_diversity_qubo_min_candidates": 64,
+    "union_diversity_qubo_max_vars": 48,
+    "union_diversity_qubo_select": 4,
+    "union_diversity_qubo_rank_weight": 0.02,
+    "union_diversity_qubo_wang_fixed_weight": 0.02,
+    "union_diversity_qubo_wang_pair_weight": 0.02,
+    "union_diversity_qubo_frg_weight": 0.04,
+    "union_diversity_qubo_rollout_bonus": 0.03,
+    "union_diversity_qubo_same_parent_penalty": 0.55,
+    "union_diversity_qubo_same_source_penalty": 0.25,
+    "union_diversity_qubo_signature_penalty": 0.20,
+    "union_diversity_qubo_reduce_signature_penalty": 0.15,
+    "union_diversity_qubo_n_band_penalty": 0.08,
+    "union_diversity_qubo_n_band_size": 1,
+}
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "union_rollout_probe_enabled": True,
+    "union_rollout_probe_max_candidates": 8,
+    "union_rollout_probe_time_limit": 0.001,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.0,
+    "union_rollout_probe_final_n_weight": 0.08,
+    "union_rollout_probe_moves_weight": 0.0,
+    "union_rollout_probe_dead_end_penalty": 0.12,
 }
 _SOLVER_PROFILES["scheduler_state_v5_pareto_union_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_wang_rescue_polish"],
@@ -1673,6 +2213,8 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "output": ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv",
         "beam_survivor_telemetry_output": None,
         "dlts_feature_output": None,
+        "frontier_trace_output": None,
+        "frontier_trace_top_k": 64,
         "target_final_n": 0,
         "alpha": 1.3,
         "max_moves": None,
@@ -1864,6 +2406,17 @@ class CompactBeamResult:
     stream_pruned_candidates: int = 0
     rank_pool_truncated_candidates: int = 0
     rescue_layers_used: int = 0
+    scarcity_inner_rescue_layers: int = 0
+    scarcity_inner_rescue_gate_reasons: str = ""
+    tail_lookahead_calls: int = 0
+    tail_lookahead_selected_total: int = 0
+    tail_lookahead_goal_reachable_total: int = 0
+    tail_lookahead_best_delta_total: int = 0
+    tail_lookahead_expanded_total: int = 0
+    tail_risk_reserve_calls: int = 0
+    tail_risk_reserve_selected_total: int = 0
+    tail_risk_reserve_scanned_total: int = 0
+    tail_risk_reserve_one_step_improved_total: int = 0
     wang_incumbent_moves: int = 0
     wang_incumbent_runtime_sec: float = 0.0
     wang_incumbent_used: bool = False
@@ -1876,17 +2429,10 @@ class CompactBeamResult:
     unified_wang_qubo_time_sec: float = 0.0
     unified_wang_fixed_prefix_selected: int = 0
     unified_wang_fix_pair_selected: int = 0
-    feasibility_escape_calls: int = 0
-    feasibility_escape_added_total: int = 0
-    feasibility_escape_active_layers: int = 0
-    feasibility_escape_gate_reasons: str = ""
-    frg_candidate_selected_total: int = 0
-    frg_compound_appended_total: int = 0
-    dlts_value_selected_total: int = 0
-    bs_frg_qubo_calls: int = 0
-    bs_frg_qubo_vars: int = 0
-    bs_frg_qubo_time_sec: float = 0.0
-    bs_frg_qubo_selected_total: int = 0
+    union_diversity_qubo_calls: int = 0
+    union_diversity_qubo_vars: int = 0
+    union_diversity_qubo_time_sec: float = 0.0
+    union_diversity_qubo_selected_total: int = 0
     pareto_union_layers: int = 0
     pareto_union_seed_selected_total: int = 0
     pareto_union_qubo_calls: int = 0
@@ -1901,11 +2447,54 @@ class CompactBeamResult:
     pareto_union_distinct_source_count_last: int = 0
     pareto_union_distinct_dest_count_last: int = 0
     pareto_union_distinct_signature_count_last: int = 0
+    union_rollout_probe_calls: int = 0
+    union_rollout_probe_candidates: int = 0
+    union_rollout_probe_feasible: int = 0
+    union_rollout_probe_time_sec: float = 0.0
+    union_rollout_probe_cache_hits: int = 0
+    union_rollout_probe_selected_total: int = 0
+    feasibility_escape_calls: int = 0
+    feasibility_escape_added_total: int = 0
+    feasibility_escape_active_layers: int = 0
+    feasibility_escape_gate_reasons: str = ""
+    frg_seed_moves: int = 0
+    frg_seed_runtime_sec: float = 0.0
+    frg_seed_used: bool = False
+    frg_seed_status: str = ""
+    frg_seed_generated: int = 0
+    frg_seed_cap_ok: bool = False
+    frg_seed_large_layout_ok: bool = False
+    frg_candidate_selected_total: int = 0
+    frg_compound_appended_total: int = 0
+    dlts_value_selected_total: int = 0
+    bs_frg_qubo_calls: int = 0
+    bs_frg_qubo_vars: int = 0
+    bs_frg_qubo_time_sec: float = 0.0
+    bs_frg_qubo_selected_total: int = 0
     wang2017_task_calls: int = 0
     wang2017_task_added_total: int = 0
     wang2017_task_active_layers: int = 0
     wang2017_task_selected_tier_protection_total: int = 0
     wang2017_task_selected_stable_height_total: int = 0
+
+
+@dataclass(frozen=True)
+class FrgSeedResult:
+    moves: tuple[Move, ...]
+    final_n: int
+    generated: int
+    runtime_sec: float
+    status: str
+    cap_ok: bool
+
+
+@dataclass(frozen=True)
+class UnionRolloutProbeResult:
+    feasible: bool
+    final_n: int
+    moves: int
+    status: str
+    runtime_sec: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -2216,6 +2805,41 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "feasibility_escape_n_window": "--feasibility-escape-n-window",
         "feasibility_escape_dead_end_threshold": "--feasibility-escape-dead-end-threshold",
         "feasibility_escape_min_temporary_slack": "--feasibility-escape-min-temporary-slack",
+        "candidate_ledger_score_enabled": (
+            "--candidate-ledger-score-enabled",
+            "--no-candidate-ledger-score-enabled",
+        ),
+        "candidate_ledger_wang_fixed_weight": "--candidate-ledger-wang-fixed-weight",
+        "candidate_ledger_wang_pair_weight": "--candidate-ledger-wang-pair-weight",
+        "candidate_ledger_frg_fill_weight": "--candidate-ledger-frg-fill-weight",
+        "candidate_ledger_frg_reduce_weight": "--candidate-ledger-frg-reduce-weight",
+        "candidate_ledger_frg_unblocked_weight": "--candidate-ledger-frg-unblocked-weight",
+        "candidate_ledger_frg_assignment_weight": "--candidate-ledger-frg-assignment-weight",
+        "candidate_ledger_rollout_bonus": "--candidate-ledger-rollout-bonus",
+        "candidate_ledger_rank_window": "--candidate-ledger-rank-window",
+        "union_rollout_probe_enabled": (
+            "--union-rollout-probe-enabled",
+            "--no-union-rollout-probe-enabled",
+        ),
+        "union_rollout_probe_max_candidates": "--union-rollout-probe-max-candidates",
+        "union_rollout_probe_time_limit": "--union-rollout-probe-time-limit",
+        "union_rollout_probe_max_steps": "--union-rollout-probe-max-steps",
+        "union_rollout_probe_feasible_bonus": "--union-rollout-probe-feasible-bonus",
+        "union_rollout_probe_final_n_weight": "--union-rollout-probe-final-n-weight",
+        "union_rollout_probe_moves_weight": "--union-rollout-probe-moves-weight",
+        "union_rollout_probe_dead_end_penalty": "--union-rollout-probe-dead-end-penalty",
+        "frg_seed_enabled": ("--frg-seed-enabled", "--no-frg-seed-enabled"),
+        "frg_seed_time_limit": "--frg-seed-time-limit",
+        "frg_seed_min_max_steps": "--frg-seed-min-max-steps",
+        "frg_seed_max_steps_multiplier": "--frg-seed-max-steps-multiplier",
+        "frg_seed_max_steps_cap": "--frg-seed-max-steps-cap",
+        "frg_seed_respect_cap": ("--frg-seed-respect-cap", "--no-frg-seed-respect-cap"),
+        "frg_seed_prune_to_incumbent": ("--frg-seed-prune-to-incumbent", "--no-frg-seed-prune-to-incumbent"),
+        "frg_seed_allow_large_over_cap": (
+            "--frg-seed-allow-large-over-cap",
+            "--no-frg-seed-allow-large-over-cap",
+        ),
+        "frg_seed_paper_pure": ("--frg-seed-paper-pure", "--no-frg-seed-paper-pure"),
         "frg_candidate_supplement_enabled": (
             "--frg-candidate-supplement-enabled",
             "--no-frg-candidate-supplement-enabled",
@@ -2224,6 +2848,36 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "frg_candidate_focus_n": "--frg-candidate-focus-n",
         "frg_candidate_n_window": "--frg-candidate-n-window",
         "frg_candidate_max_ranked": "--frg-candidate-max-ranked",
+        "frg_candidate_scarcity_gate_enabled": (
+            "--frg-candidate-scarcity-gate-enabled",
+            "--no-frg-candidate-scarcity-gate-enabled",
+        ),
+        "frg_linear_score_enabled": (
+            "--frg-linear-score-enabled",
+            "--no-frg-linear-score-enabled",
+        ),
+        "frg_linear_fill_weight": "--frg-linear-fill-weight",
+        "frg_linear_reduce_weight": "--frg-linear-reduce-weight",
+        "frg_linear_unblocked_weight": "--frg-linear-unblocked-weight",
+        "frg_linear_assignment_weight": "--frg-linear-assignment-weight",
+        "frg_linear_max_height_ordered_weight": "--frg-linear-max-height-ordered-weight",
+        "frg_linear_height_pressure_weight": "--frg-linear-height-pressure-weight",
+        "frg_rank_tiebreak_enabled": (
+            "--frg-rank-tiebreak-enabled",
+            "--no-frg-rank-tiebreak-enabled",
+        ),
+        "frg_rank_tiebreak_weight": "--frg-rank-tiebreak-weight",
+        "frg_rank_tiebreak_focus_n": "--frg-rank-tiebreak-focus-n",
+        "frg_scarcity_gate_enabled": (
+            "--frg-scarcity-gate-enabled",
+            "--no-frg-scarcity-gate-enabled",
+        ),
+        "frg_scarcity_gate_max_available_stacks": "--frg-scarcity-gate-max-available-stacks",
+        "frg_scarcity_gate_min_avg_height_pressure": "--frg-scarcity-gate-min-avg-height-pressure",
+        "frg_scarcity_gate_max_reduction_receivers": "--frg-scarcity-gate-max-reduction-receivers",
+        "frg_scarcity_gate_min_unblocked_bad": "--frg-scarcity-gate-min-unblocked-bad",
+        "frg_scarcity_gate_min_candidates": "--frg-scarcity-gate-min-candidates",
+        "frg_scarcity_gate_cap_slack": "--frg-scarcity-gate-cap-slack",
         "frg_compound_escape_enabled": (
             "--frg-compound-escape-enabled",
             "--no-frg-compound-escape-enabled",
@@ -2261,7 +2915,9 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "bs_frg_qubo_max_vars": "--bs-frg-qubo-max-vars",
         "bs_frg_qubo_rank_weight": "--bs-frg-qubo-rank-weight",
         "bs_frg_qubo_same_parent_penalty": "--bs-frg-qubo-same-parent-penalty",
+        "bs_frg_qubo_same_source_penalty": "--bs-frg-qubo-same-source-penalty",
         "bs_frg_qubo_signature_penalty": "--bs-frg-qubo-signature-penalty",
+        "bs_frg_qubo_reduce_signature_penalty": "--bs-frg-qubo-reduce-signature-penalty",
         "bs_frg_qubo_n_band_penalty": "--bs-frg-qubo-n-band-penalty",
         "bs_frg_qubo_n_band_size": "--bs-frg-qubo-n-band-size",
         "wang2017_task_enabled": (
@@ -2376,6 +3032,41 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "scheduler_state_rescue_plateau_window": "--scheduler-state-rescue-plateau-window",
         "scheduler_state_rescue_plateau_delta": "--scheduler-state-rescue-plateau-delta",
         "scheduler_state_rescue_cap_slack": "--scheduler-state-rescue-cap-slack",
+        "scarcity_inner_rescue_enabled": (
+            "--scarcity-inner-rescue-enabled",
+            "--no-scarcity-inner-rescue-enabled",
+        ),
+        "scarcity_inner_rescue_risk_threshold": "--scarcity-inner-rescue-risk-threshold",
+        "scarcity_inner_rescue_max_l0": "--scarcity-inner-rescue-max-l0",
+        "scarcity_inner_rescue_min_one_safe_ratio": "--scarcity-inner-rescue-min-one-safe-ratio",
+        "scarcity_inner_rescue_min_n": "--scarcity-inner-rescue-min-n",
+        "scarcity_inner_rescue_min_candidates": "--scarcity-inner-rescue-min-candidates",
+        "tail_lookahead_enabled": (
+            "--tail-lookahead-enabled",
+            "--no-tail-lookahead-enabled",
+        ),
+        "tail_lookahead_core_path_only": (
+            "--tail-lookahead-core-path-only",
+            "--no-tail-lookahead-core-path-only",
+        ),
+        "tail_lookahead_max_stack_count": "--tail-lookahead-max-stack-count",
+        "tail_lookahead_focus_n": "--tail-lookahead-focus-n",
+        "tail_lookahead_depth": "--tail-lookahead-depth",
+        "tail_lookahead_max_seed_candidates": "--tail-lookahead-max-seed-candidates",
+        "tail_lookahead_supplement_width": "--tail-lookahead-supplement-width",
+        "tail_lookahead_max_expanded": "--tail-lookahead-max-expanded",
+        "tail_risk_reserve_enabled": (
+            "--tail-risk-reserve-enabled",
+            "--no-tail-risk-reserve-enabled",
+        ),
+        "tail_risk_focus_n": "--tail-risk-focus-n",
+        "tail_risk_n_window": "--tail-risk-n-window",
+        "tail_risk_reserve_width": "--tail-risk-reserve-width",
+        "tail_risk_max_scan": "--tail-risk-max-scan",
+        "tail_risk_min_candidates": "--tail-risk-min-candidates",
+        "tail_risk_min_depth_slack": "--tail-risk-min-depth-slack",
+        "tail_risk_max_depth_slack": "--tail-risk-max-depth-slack",
+        "tail_risk_max_stack_count": "--tail-risk-max-stack-count",
         "scarcity_group_qubo_enabled": ("--scarcity-group-qubo-enabled", "--no-scarcity-group-qubo-enabled"),
         "scarcity_group_qubo_threshold": "--scarcity-group-qubo-threshold",
         "scarcity_group_qubo_plateau_window": "--scarcity-group-qubo-plateau-window",
@@ -2893,7 +3584,169 @@ class BsFrgQuboFeatures(NamedTuple):
     n_value: int
     depth: int
     parent_code: bytes
+    source_stack: int
     signature: tuple[int, int, int, int, int]
+    reduce_signature: tuple[int, int, int]
+
+
+class UnionDiversityQuboFeatures(NamedTuple):
+    energy: float
+    n_value: int
+    depth: int
+    parent_code: bytes
+    source_stack: int
+    signature: tuple[int, int, int, int, int]
+    reduce_signature: tuple[int, int, int]
+    rollout_feasible: bool = False
+    rollout_final_n: int = -1
+    rollout_moves: int = 0
+    rollout_status: str = ""
+
+
+def _union_rollout_probe_sample(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    limit = max(0, int(getattr(args, "union_rollout_probe_max_candidates", 16) or 0))
+    if limit <= 0 or not ranked:
+        return []
+    if len(ranked) <= limit:
+        return list(ranked)
+    top_count = max(1, min(len(ranked), limit // 2))
+    sampled = list(ranked[:top_count])
+    remaining = ranked[top_count:]
+    slots = limit - len(sampled)
+    if slots <= 0 or not remaining:
+        return sampled[:limit]
+    step = max(1, math.ceil(len(remaining) / slots))
+    for row in remaining[::step]:
+        sampled.append(row)
+        if len(sampled) >= limit:
+            break
+    return sampled[:limit]
+
+
+def _union_rollout_probe_energy_adjustment(
+    result: UnionRolloutProbeResult | None,
+    args: argparse.Namespace,
+    *,
+    n_value: int,
+) -> float:
+    if result is None:
+        return 0.0
+    adjustment = 0.0
+    if result.feasible or int(result.final_n) <= 0:
+        adjustment -= float(getattr(args, "union_rollout_probe_feasible_bonus", 0.30) or 0.0)
+    else:
+        denom = max(1.0, float(max(1, int(n_value))))
+        adjustment += float(getattr(args, "union_rollout_probe_final_n_weight", 0.08) or 0.0) * (
+            float(max(0, int(result.final_n))) / denom
+        )
+    max_steps = max(1, int(getattr(args, "union_rollout_probe_max_steps", 512) or 512))
+    adjustment += float(getattr(args, "union_rollout_probe_moves_weight", 0.002) or 0.0) * (
+        float(max(0, int(result.moves))) / float(max_steps)
+    )
+    if str(result.status) in {"FRG_CYCLE_OR_DEAD_END", "NO_SOLUTION", "ERROR"}:
+        adjustment += float(getattr(args, "union_rollout_probe_dead_end_penalty", 0.10) or 0.0)
+    return float(adjustment)
+
+
+def _union_rollout_probe_completion(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> UnionRolloutProbeResult:
+    start = time.perf_counter()
+    n_value, depth, _parent_code = data
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return UnionRolloutProbeResult(False, int(n_value), 0, "NO_LAYOUT", 0.0)
+
+    stacks = _code_to_stacks(code, stack_count, max_height)
+    group_count = max((int(box) for stack in stacks for box in stack), default=0)
+    instance = Instance(
+        "union_rollout_probe",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count,
+        max_height,
+        group_count,
+        stacks,
+    )
+    layout = _bs_frg_initial_layout(instance)
+    max_steps = max(1, int(getattr(args, "union_rollout_probe_max_steps", 512) or 512))
+    time_limit = max(0.0, float(getattr(args, "union_rollout_probe_time_limit", 0.003) or 0.0))
+    deadline = start + time_limit if time_limit > 0.0 else start
+    cache = getattr(args, "_union_rollout_probe_frg_cache", None)
+    if cache is None:
+        cache = {}
+        args._union_rollout_probe_frg_cache = cache
+    rollout = _bs_frg_completion_cached(
+        layout,
+        max_height,
+        start_step=int(depth),
+        max_steps=max_steps,
+        deadline=deadline,
+        cache=cache,
+        paper_pure=bool(getattr(args, "frg_seed_paper_pure", True)),
+    )
+    runtime_sec = time.perf_counter() - start
+    return UnionRolloutProbeResult(
+        feasible=bool(rollout.feasible),
+        final_n=int(rollout.final_n),
+        moves=len(rollout.moves),
+        status=str(rollout.status),
+        runtime_sec=runtime_sec,
+    )
+
+
+def _union_rollout_probe_results(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    *,
+    completion_fn=None,
+) -> dict[bytes, UnionRolloutProbeResult]:
+    if not getattr(args, "union_rollout_probe_enabled", False):
+        args._union_rollout_probe_current_results = {}
+        return {}
+    sampled = _union_rollout_probe_sample(ranked, args)
+    if not sampled:
+        args._union_rollout_probe_current_results = {}
+        return {}
+    if completion_fn is None:
+        completion_fn = _union_rollout_probe_completion
+    cache = getattr(args, "_union_rollout_probe_cache", None)
+    if cache is None:
+        cache = {}
+        args._union_rollout_probe_cache = cache
+    if not hasattr(args, "_union_rollout_probe_calls"):
+        args._union_rollout_probe_calls = 0
+    if not hasattr(args, "_union_rollout_probe_candidates"):
+        args._union_rollout_probe_candidates = 0
+    if not hasattr(args, "_union_rollout_probe_feasible"):
+        args._union_rollout_probe_feasible = 0
+    if not hasattr(args, "_union_rollout_probe_time"):
+        args._union_rollout_probe_time = 0.0
+    if not hasattr(args, "_union_rollout_probe_cache_hits"):
+        args._union_rollout_probe_cache_hits = 0
+
+    results: dict[bytes, UnionRolloutProbeResult] = {}
+    for code, data in sampled:
+        args._union_rollout_probe_candidates += 1
+        cached = cache.get(code)
+        if cached is not None:
+            args._union_rollout_probe_cache_hits += 1
+            results[code] = cached
+            continue
+        result = completion_fn(code, data, args)
+        cache[code] = result
+        results[code] = result
+        args._union_rollout_probe_calls += 1
+        args._union_rollout_probe_time += float(getattr(result, "runtime_sec", 0.0) or 0.0)
+        if bool(getattr(result, "feasible", False)):
+            args._union_rollout_probe_feasible += 1
+    args._union_rollout_probe_current_results = results
+    return results
 
 
 def _sign_bucket(value: int) -> int:
@@ -2902,6 +3755,15 @@ def _sign_bucket(value: int) -> int:
     if value > 0:
         return 1
     return 0
+
+
+def _transition_source_stack(parent_code: bytes, child_code: bytes, stack_count: int, max_height: int) -> int:
+    parent_chunks = _split(parent_code, stack_count, max_height)
+    child_chunks = _split(child_code, stack_count, max_height)
+    for idx, (before, after) in enumerate(zip(parent_chunks, child_chunks)):
+        if _chunk_height_raw(after) < _chunk_height_raw(before):
+            return idx
+    return -1
 
 
 def _bs_frg_qubo_features(
@@ -2915,18 +3777,26 @@ def _bs_frg_qubo_features(
     max_height = int(getattr(args, "_max_height", 0) or 0)
     if stack_count <= 0 or max_height <= 0:
         frg_energy = float(n_value) * 1000.0 + float(depth)
+        source_stack = -1
         signature = (int(n_value), 0, 0, 0, 0)
+        reduce_signature = (0, 0, 0)
     else:
         before = _code_to_stacks(parent_code, stack_count, max_height)
         after = _code_to_stacks(code, stack_count, max_height)
         signals = compute_frg_transition_signals(before, after, max_height)
         frg_energy = frg_transition_score(signals, n_value=int(n_value), depth=int(depth))
+        source_stack = _transition_source_stack(parent_code, code, stack_count, max_height)
         signature = (
             min(3, max(0, int(signals.fill_gain))),
             min(3, max(0, int(signals.reduce_gain))),
             _sign_bucket(int(signals.unblocked_bad_delta)),
             _sign_bucket(int(signals.stable_prefix_delta)),
             min(3, max(0, int(signals.low_tier_damage))),
+        )
+        reduce_signature = (
+            source_stack,
+            min(3, max(0, int(signals.reduce_gain))),
+            _sign_bucket(int(signals.unblocked_bad_delta)),
         )
     rank_weight = float(getattr(args, "bs_frg_qubo_rank_weight", 0.05) or 0.0)
     energy = frg_energy + rank_weight * float(rank)
@@ -2935,8 +3805,232 @@ def _bs_frg_qubo_features(
         n_value=int(n_value),
         depth=int(depth),
         parent_code=parent_code,
+        source_stack=source_stack,
         signature=signature,
+        reduce_signature=reduce_signature,
     )
+
+
+def _union_diversity_qubo_features(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    rank: int,
+    args: argparse.Namespace,
+    rollout: UnionRolloutProbeResult | None = None,
+) -> UnionDiversityQuboFeatures:
+    n_value, depth, parent_code = data
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    energy = float(int(n_value) * 1000 + int(depth))
+    energy += float(getattr(args, "union_diversity_qubo_rank_weight", 0.02) or 0.0) * float(rank)
+    source_stack = -1
+    signature = (int(n_value), 0, 0, 0, 0)
+    reduce_signature = (-1, 0, 0)
+    if stack_count > 0 and max_height > 0:
+        fixed_weight = float(getattr(args, "union_diversity_qubo_wang_fixed_weight", 0.0) or 0.0)
+        pair_weight = float(getattr(args, "union_diversity_qubo_wang_pair_weight", 0.0) or 0.0)
+        if fixed_weight:
+            energy -= fixed_weight * float(_compact_wang_fixed_prefix_score(code, stack_count, max_height))
+        if pair_weight:
+            energy -= pair_weight * float(_compact_wang_fix_pair_score(code, stack_count, max_height))
+
+        before = _code_to_stacks(parent_code, stack_count, max_height)
+        after = _code_to_stacks(code, stack_count, max_height)
+        signals = compute_frg_transition_signals(before, after, max_height)
+        frg_weight = float(getattr(args, "union_diversity_qubo_frg_weight", 0.0) or 0.0)
+        if frg_weight:
+            base = float(int(n_value) * 1000 + int(depth))
+            energy += frg_weight * float(frg_transition_score(signals, n_value=int(n_value), depth=int(depth)) - base)
+        source_stack = _transition_source_stack(parent_code, code, stack_count, max_height)
+        signature = (
+            min(3, max(0, int(signals.fill_gain))),
+            min(3, max(0, int(signals.reduce_gain))),
+            _sign_bucket(int(signals.unblocked_bad_delta)),
+            _sign_bucket(int(signals.stable_prefix_delta)),
+            min(3, max(0, int(signals.low_tier_damage))),
+        )
+        reduce_signature = (
+            source_stack,
+            min(3, max(0, int(signals.reduce_gain))),
+            _sign_bucket(int(signals.unblocked_bad_delta)),
+        )
+    rollout_bonus = float(getattr(args, "union_diversity_qubo_rollout_bonus", 0.0) or 0.0)
+    if rollout_bonus and code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()):
+        energy -= rollout_bonus
+    if rollout is not None:
+        energy += _union_rollout_probe_energy_adjustment(rollout, args, n_value=int(n_value))
+    return UnionDiversityQuboFeatures(
+        energy=float(energy),
+        n_value=int(n_value),
+        depth=int(depth),
+        parent_code=parent_code,
+        source_stack=source_stack,
+        signature=signature,
+        reduce_signature=reduce_signature,
+        rollout_feasible=bool(rollout.feasible) if rollout is not None else False,
+        rollout_final_n=int(rollout.final_n) if rollout is not None else -1,
+        rollout_moves=int(rollout.moves) if rollout is not None else 0,
+        rollout_status=str(rollout.status) if rollout is not None else "",
+    )
+
+
+def _union_diversity_objective(
+    selected: set[int],
+    linear: list[float],
+    features: list[UnionDiversityQuboFeatures],
+    args: argparse.Namespace,
+) -> float:
+    value = sum(linear[idx] for idx in selected)
+    same_parent_penalty = float(getattr(args, "union_diversity_qubo_same_parent_penalty", 0.45) or 0.0)
+    same_source_penalty = float(getattr(args, "union_diversity_qubo_same_source_penalty", 0.20) or 0.0)
+    signature_penalty = float(getattr(args, "union_diversity_qubo_signature_penalty", 0.18) or 0.0)
+    reduce_signature_penalty = float(getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12) or 0.0)
+    n_band_penalty = float(getattr(args, "union_diversity_qubo_n_band_penalty", 0.08) or 0.0)
+    n_band_size = max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
+    ordered = sorted(selected)
+    for pos, i in enumerate(ordered):
+        for j in ordered[pos + 1 :]:
+            if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
+                value += same_parent_penalty
+            if same_source_penalty > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
+                value += same_source_penalty
+            if signature_penalty > 0.0 and features[i].signature == features[j].signature:
+                value += signature_penalty
+            if reduce_signature_penalty > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
+                value += reduce_signature_penalty
+            if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
+                value += n_band_penalty
+    return float(value)
+
+
+def _repair_union_diversity_selection(
+    picked: set[int],
+    target: int,
+    linear: list[float],
+    features: list[UnionDiversityQuboFeatures],
+    args: argparse.Namespace,
+) -> set[int]:
+    picked = {idx for idx in picked if 0 <= idx < len(linear)}
+    target = max(0, min(target, len(linear)))
+    while len(picked) > target:
+        picked.remove(
+            min(
+                picked,
+                key=lambda idx: (
+                    _union_diversity_objective(picked - {idx}, linear, features, args),
+                    -linear[idx],
+                    idx,
+                ),
+            )
+        )
+    while len(picked) < target:
+        missing = [idx for idx in range(len(linear)) if idx not in picked]
+        if not missing:
+            break
+        picked.add(
+            min(
+                missing,
+                key=lambda idx: (
+                    _union_diversity_objective(picked | {idx}, linear, features, args),
+                    linear[idx],
+                    idx,
+                ),
+            )
+        )
+    improved = True
+    while improved and len(picked) == target:
+        improved = False
+        current = _union_diversity_objective(picked, linear, features, args)
+        best_swap: tuple[int, int, float] | None = None
+        for out_idx in sorted(picked):
+            base = picked - {out_idx}
+            for in_idx in range(len(linear)):
+                if in_idx in picked:
+                    continue
+                trial = base | {in_idx}
+                value = _union_diversity_objective(trial, linear, features, args)
+                if value + 1e-12 < current and (
+                    best_swap is None or value < best_swap[2] - 1e-12
+                ):
+                    best_swap = (out_idx, in_idx, value)
+        if best_swap is not None:
+            picked.remove(best_swap[0])
+            picked.add(best_swap[1])
+            improved = True
+    return picked
+
+
+def _select_union_diversity_qubo_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], int, float]:
+    target = max(0, int(target))
+    if target <= 0 or not ranked:
+        return [], 0, 0.0
+    max_vars = max(1, int(getattr(args, "union_diversity_qubo_max_vars", 64) or 64))
+    usable = list(ranked[:max_vars])
+    target = min(target, len(usable))
+    if target <= 0:
+        return [], 0, 0.0
+    rollout_by_code = _union_rollout_probe_results(usable, args)
+    features = [
+        _union_diversity_qubo_features(code, data, rank, args, rollout_by_code.get(code))
+        for rank, (code, data) in enumerate(usable)
+    ]
+    linear = _normalize_values([feature.energy for feature in features])
+    model = QuboModel()
+    vars_ = [model.add_binary_var(f"ud_{idx}") for idx in range(len(usable))]
+    for idx, value in enumerate(linear):
+        model.add_linear(vars_[idx], value)
+
+    same_parent_penalty = float(getattr(args, "union_diversity_qubo_same_parent_penalty", 0.45) or 0.0)
+    same_source_penalty = float(getattr(args, "union_diversity_qubo_same_source_penalty", 0.20) or 0.0)
+    signature_penalty = float(getattr(args, "union_diversity_qubo_signature_penalty", 0.18) or 0.0)
+    reduce_signature_penalty = float(getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12) or 0.0)
+    n_band_penalty = float(getattr(args, "union_diversity_qubo_n_band_penalty", 0.08) or 0.0)
+    n_band_size = max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
+    for i in range(len(usable)):
+        for j in range(i + 1, len(usable)):
+            if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
+                model.add_quadratic(vars_[i], vars_[j], same_parent_penalty)
+            if same_source_penalty > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
+                model.add_quadratic(vars_[i], vars_[j], same_source_penalty)
+            if signature_penalty > 0.0 and features[i].signature == features[j].signature:
+                model.add_quadratic(vars_[i], vars_[j], signature_penalty)
+            if reduce_signature_penalty > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
+                model.add_quadratic(vars_[i], vars_[j], reduce_signature_penalty)
+            if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
+                model.add_quadratic(vars_[i], vars_[j], n_band_penalty)
+    model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
+    sample_set = SimulatedAnnealingQuboSampler().sample(
+        model,
+        _qubo_sampler_config(
+            args,
+            num_reads=int(getattr(args, "qubo_reads", 2) or 2),
+            random_seed=int(getattr(args, "seed", 37)) + 13007 + int(getattr(args, "_union_diversity_qubo_calls_done", 0)),
+            time_limit_sec=float(getattr(args, "qubo_time_limit", 0.001) or 0.001),
+            sa_iterations=int(getattr(args, "qubo_iterations", 20) or 20),
+        ),
+    )
+    picked: set[int] = set()
+    if sample_set.samples:
+        picked = {
+            idx
+            for idx in range(len(usable))
+            if sample_set.samples[0].binary_values.get(idx, 0) == 1
+        }
+    picked = _repair_union_diversity_selection(picked, target, linear, features, args)
+    ordered = sorted(
+        picked,
+        key=lambda idx: (
+            _union_diversity_objective({idx}, linear, features, args),
+            features[idx].n_value,
+            features[idx].depth,
+            usable[idx][0],
+        ),
+    )
+    return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
 
 
 class ParetoUnionFeatures(NamedTuple):
@@ -3110,6 +4204,8 @@ def _select_pareto_union_seed_indices(
         if len(picked) >= target:
             break
     return picked
+
+
 def _risk_bucket(value: float) -> int:
     return max(0, min(4, int(float(value) * 5.0)))
 
@@ -3399,7 +4495,9 @@ def _bs_frg_selection_objective(
 ) -> float:
     value = sum(linear[idx] for idx in selected)
     same_parent_penalty = float(getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35) or 0.0)
+    same_source_penalty = float(getattr(args, "bs_frg_qubo_same_source_penalty", 0.0) or 0.0)
     signature_penalty = float(getattr(args, "bs_frg_qubo_signature_penalty", 0.15) or 0.0)
+    reduce_signature_penalty = float(getattr(args, "bs_frg_qubo_reduce_signature_penalty", 0.0) or 0.0)
     n_band_penalty = float(getattr(args, "bs_frg_qubo_n_band_penalty", 0.05) or 0.0)
     n_band_size = max(1, int(getattr(args, "bs_frg_qubo_n_band_size", 1) or 1))
     ordered = sorted(selected)
@@ -3407,8 +4505,12 @@ def _bs_frg_selection_objective(
         for j in ordered[pos + 1 :]:
             if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
                 value += same_parent_penalty
+            if same_source_penalty > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
+                value += same_source_penalty
             if signature_penalty > 0.0 and features[i].signature == features[j].signature:
                 value += signature_penalty
+            if reduce_signature_penalty > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
+                value += reduce_signature_penalty
             if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
                 value += n_band_penalty
     return float(value)
@@ -3495,15 +4597,21 @@ def _select_bs_frg_qubo_supplement(
         model.add_linear(vars_[idx], value)
 
     same_parent_penalty = float(getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35) or 0.0)
+    same_source_penalty = float(getattr(args, "bs_frg_qubo_same_source_penalty", 0.0) or 0.0)
     signature_penalty = float(getattr(args, "bs_frg_qubo_signature_penalty", 0.15) or 0.0)
+    reduce_signature_penalty = float(getattr(args, "bs_frg_qubo_reduce_signature_penalty", 0.0) or 0.0)
     n_band_penalty = float(getattr(args, "bs_frg_qubo_n_band_penalty", 0.05) or 0.0)
     n_band_size = max(1, int(getattr(args, "bs_frg_qubo_n_band_size", 1) or 1))
     for i in range(len(usable)):
         for j in range(i + 1, len(usable)):
             if same_parent_penalty > 0.0 and features[i].parent_code == features[j].parent_code:
                 model.add_quadratic(vars_[i], vars_[j], same_parent_penalty)
+            if same_source_penalty > 0.0 and features[i].source_stack >= 0 and features[i].source_stack == features[j].source_stack:
+                model.add_quadratic(vars_[i], vars_[j], same_source_penalty)
             if signature_penalty > 0.0 and features[i].signature == features[j].signature:
                 model.add_quadratic(vars_[i], vars_[j], signature_penalty)
+            if reduce_signature_penalty > 0.0 and features[i].reduce_signature == features[j].reduce_signature:
+                model.add_quadratic(vars_[i], vars_[j], reduce_signature_penalty)
             if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
                 model.add_quadratic(vars_[i], vars_[j], n_band_penalty)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
@@ -3535,6 +4643,39 @@ def _select_bs_frg_qubo_supplement(
         ),
     )
     return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
+
+
+def _frg_scarcity_gate_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "frg_scarcity_gate_enabled", False):
+        return False
+    focus_n = int(getattr(args, "frg_scarcity_gate_focus_n", -1))
+    if focus_n >= 0 and int(best_n) > focus_n:
+        return False
+    max_available = int(getattr(args, "frg_scarcity_gate_max_available_stacks", 1) or 1)
+    available = int(getattr(args, "_frg_layout_available_stack_count", 10**9) or 10**9)
+    if available > max_available:
+        return False
+    min_pressure = float(getattr(args, "frg_scarcity_gate_min_avg_height_pressure", 0.85) or 0.0)
+    pressure = float(getattr(args, "_frg_layout_avg_height_pressure", 0.0) or 0.0)
+    if pressure < min_pressure:
+        return False
+    max_receivers = int(getattr(args, "frg_scarcity_gate_max_reduction_receivers", -1) or -1)
+    if max_receivers >= 0:
+        receivers = int(getattr(args, "_frg_layout_reduction_receiver_stack_count", 10**9) or 10**9)
+        if receivers > max_receivers:
+            return False
+    min_unblocked_bad = int(getattr(args, "frg_scarcity_gate_min_unblocked_bad", 0) or 0)
+    if min_unblocked_bad > 0:
+        unblocked_bad = int(getattr(args, "_frg_layout_unblocked_bad_containers", 0) or 0)
+        if unblocked_bad < min_unblocked_bad:
+            return False
+    min_candidates = int(getattr(args, "frg_scarcity_gate_min_candidates", 1000) or 0)
+    if int(getattr(args, "_layer_candidate_count", 0) or 0) < min_candidates:
+        return False
+    cap_slack = int(getattr(args, "frg_scarcity_gate_cap_slack", 24) or 0)
+    if int(getattr(args, "_layer_depth_slack", 10**9) or 10**9) > cap_slack:
+        return False
+    return True
 
 
 def _frg_compound_escape_active(args: argparse.Namespace, best_n: int) -> bool:
@@ -3637,6 +4778,62 @@ def _moves_reach_n0_with_cap(instance: Instance, moves: list[Move], cap: int) ->
         return False
     _final_code, final_n = _encode(state.stacks, instance.stack_count, instance.max_height)
     return final_n == 0 and max_g <= cap
+
+
+def _frg_seed_large_layout_allowed(instance: Instance, args: argparse.Namespace) -> bool:
+    if not bool(getattr(args, "frg_seed_allow_large_over_cap", False)):
+        return False
+    return instance.stack_count >= 8 or instance.max_height >= 8
+
+
+def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: float) -> FrgSeedResult | None:
+    if not getattr(args, "frg_seed_enabled", False):
+        return None
+    remaining = deadline - time.perf_counter()
+    if remaining <= 0:
+        return None
+    configured_limit = float(getattr(args, "frg_seed_time_limit", 0.0) or 0.0)
+    if configured_limit <= 0:
+        return None
+    respect_cap = bool(getattr(args, "frg_seed_respect_cap", True))
+    if not respect_cap and not _frg_seed_large_layout_allowed(instance, args):
+        return None
+    seed_start = time.perf_counter()
+    seed_deadline = seed_start + min(remaining, configured_limit)
+    initial_n = future_disorder_count_stacks(instance.stacks)
+    multiplier = max(1, int(getattr(args, "frg_seed_max_steps_multiplier", 10) or 10))
+    min_steps = max(1, int(getattr(args, "frg_seed_min_max_steps", 256) or 256))
+    max_steps = max(min_steps, initial_n * multiplier)
+    cap = entropy_limit(instance, float(getattr(args, "alpha", 1.3) or 1.3))
+    if respect_cap:
+        max_steps = min(max_steps, max(1, int(cap)))
+    max_steps_cap = max(0, int(getattr(args, "frg_seed_max_steps_cap", 0) or 0))
+    if max_steps_cap > 0:
+        max_steps = min(max_steps, max_steps_cap)
+
+    rollout = _bs_frg_completion_cached(
+        _bs_frg_initial_layout(instance),
+        instance.max_height,
+        start_step=0,
+        max_steps=max_steps,
+        deadline=seed_deadline,
+        cache={},
+        paper_pure=bool(getattr(args, "frg_seed_paper_pure", True)),
+    )
+    runtime_sec = time.perf_counter() - seed_start
+    if not rollout.feasible or not rollout.moves:
+        return None
+    cap_ok = _moves_reach_n0_with_cap(instance, list(rollout.moves), int(cap))
+    if respect_cap and not cap_ok:
+        return None
+    return FrgSeedResult(
+        moves=tuple(rollout.moves),
+        final_n=int(rollout.final_n),
+        generated=int(rollout.generated),
+        runtime_sec=runtime_sec,
+        status=rollout.status,
+        cap_ok=cap_ok,
+    )
 
 
 def _validated_wang_incumbent(instance: Instance, args: argparse.Namespace, cap: int, deadline: float) -> Solution | None:
@@ -3977,6 +5174,22 @@ def _format_feasibility_escape_gate_reasons(counts: dict[str, int] | None) -> st
     if not counts:
         return ""
     return ";".join(f"{key}:{int(counts[key])}" for key in sorted(counts) if int(counts[key]) > 0)
+
+
+def _format_scarcity_inner_rescue_gate_reasons(counts: dict[str, int] | None) -> str:
+    if not counts:
+        return ""
+    return ";".join(f"{key}:{int(counts[key])}" for key in sorted(counts) if int(counts[key]) > 0)
+
+
+def _record_scarcity_inner_rescue_gate_reason(args: argparse.Namespace, reason: str) -> None:
+    if not getattr(args, "_scheduler_state_requested_rescue", False):
+        return
+    if not hasattr(args, "_scarcity_inner_rescue_gate_reasons"):
+        args._scarcity_inner_rescue_gate_reasons = {}
+    args._scarcity_inner_rescue_gate_reasons[reason] = (
+        int(args._scarcity_inner_rescue_gate_reasons.get(reason, 0)) + 1
+    )
 
 
 def _feasibility_escape_gate_reason(args: argparse.Namespace, best_n: int) -> str:
@@ -4336,6 +5549,26 @@ def _update_layer_candidate_metrics(
     args._layer_parent_count = len(parent_counts)
     args._layer_parent_top_share = (max(parent_counts.values()) / len(candidates)) if candidates else 0.0
     args._layer_depth_slack = cap - best_n_depth - layer_best_n
+    args._frg_layout_available_stack_count = 0
+    args._frg_layout_avg_height_pressure = 0.0
+    args._frg_layout_max_height_ordered_risk = 0
+    args._frg_layout_unblocked_bad_containers = 0
+    args._frg_layout_reduction_receiver_stack_count = 0
+    args._frg_layout_reduction_receiver_pressure = 0.0
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count > 0 and max_height > 0:
+        best_code, _best_data = min(
+            candidates.items(),
+            key=lambda item: (item[1][0], item[1][1], item[0]),
+        )
+        layout = compute_frg_layout_signals(_code_to_stacks(best_code, stack_count, max_height), max_height)
+        args._frg_layout_available_stack_count = layout.available_stack_count
+        args._frg_layout_avg_height_pressure = layout.avg_height_pressure
+        args._frg_layout_max_height_ordered_risk = layout.max_height_ordered_risk
+        args._frg_layout_unblocked_bad_containers = layout.unblocked_bad_containers
+        args._frg_layout_reduction_receiver_stack_count = layout.reduction_receiver_stack_count
+        args._frg_layout_reduction_receiver_pressure = layout.reduction_receiver_pressure
     return layer_best_n
 
 
@@ -4358,20 +5591,141 @@ def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.N
     return (primary, n_value, depth, parent_code, code)
 
 
+def _frg_rank_tiebreak_active(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> bool:
+    if not getattr(args, "frg_rank_tiebreak_enabled", False):
+        return False
+    focus_raw = getattr(args, "frg_rank_tiebreak_focus_n", -1)
+    focus_n = -1 if focus_raw is None else int(focus_raw)
+    layer_raw = getattr(args, "_layer_best_n", item[1][0])
+    layer_best_n = int(item[1][0] if layer_raw is None else layer_raw)
+    return focus_n < 0 or layer_best_n <= focus_n
+
+
+def _frg_rank_tiebreak_value(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> float:
+    if not _frg_rank_tiebreak_active(item, args):
+        return 0.0
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return 0.0
+    code, (n_value, depth, parent_code) = item
+    before = _code_to_stacks(parent_code, stack_count, max_height)
+    after = _code_to_stacks(code, stack_count, max_height)
+    signals = compute_frg_transition_signals(before, after, max_height)
+    base_score = frg_transition_score(signals, n_value=int(n_value), depth=int(depth))
+    transition_only = base_score - float(int(n_value) * 1000 + int(depth))
+    return float(getattr(args, "frg_rank_tiebreak_weight", 0.0) or 0.0) * transition_only
+
+
+def _candidate_feature_ledger_score(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> float:
+    if not bool(getattr(args, "candidate_ledger_score_enabled", False)):
+        return 0.0
+    active_codes = getattr(args, "_candidate_ledger_active_codes", None)
+    if active_codes is not None and code not in active_codes:
+        return 0.0
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return 0.0
+
+    _n_value, _depth, parent_code = data
+    fixed_weight = float(getattr(args, "candidate_ledger_wang_fixed_weight", 0.0) or 0.0)
+    pair_weight = float(getattr(args, "candidate_ledger_wang_pair_weight", 0.0) or 0.0)
+    fill_weight = float(getattr(args, "candidate_ledger_frg_fill_weight", 0.0) or 0.0)
+    reduce_weight = float(getattr(args, "candidate_ledger_frg_reduce_weight", 0.0) or 0.0)
+    unblocked_weight = float(getattr(args, "candidate_ledger_frg_unblocked_weight", 0.0) or 0.0)
+    assignment_weight = float(getattr(args, "candidate_ledger_frg_assignment_weight", 0.0) or 0.0)
+    rollout_bonus = float(getattr(args, "candidate_ledger_rollout_bonus", 0.0) or 0.0)
+
+    score = 0.0
+    if fixed_weight:
+        score -= fixed_weight * float(_compact_wang_fixed_prefix_score(code, stack_count, max_height))
+    if pair_weight:
+        score -= pair_weight * float(_compact_wang_fix_pair_score(code, stack_count, max_height))
+    if fill_weight or reduce_weight or unblocked_weight or assignment_weight:
+        before = _code_to_stacks(parent_code, stack_count, max_height)
+        after = _code_to_stacks(code, stack_count, max_height)
+        transition = compute_frg_transition_signals(before, after, max_height)
+        score -= fill_weight * float(transition.fill_gain)
+        score -= reduce_weight * float(transition.reduce_gain)
+        score -= unblocked_weight * float(max(0, transition.unblocked_bad_delta))
+        if assignment_weight:
+            layout = compute_frg_layout_signals(after, max_height)
+            score -= assignment_weight * float(layout.reduction_pop_order_assignment_score)
+    if rollout_bonus and code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()):
+        score -= rollout_bonus
+    return score
+
+
+def _candidate_feature_ledger_window_codes(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> set[bytes]:
+    window = int(getattr(args, "candidate_ledger_rank_window", 512) or 0)
+    if window <= 0 or len(candidates) <= window:
+        return set(candidates)
+    ranked = heapq.nsmallest(window, candidates.items(), key=_candidate_primary_key_func(args))
+    return {code for code, _data in ranked}
+
+
+def _candidate_primary_key_func(args: argparse.Namespace):
+    if args.priority == "target_guided":
+        return lambda item: _candidate_rank(item, args)
+    if args.priority == "n_then_depth":
+        if getattr(args, "frg_rank_tiebreak_enabled", False):
+            return lambda item: (
+                item[1][0],
+                item[1][1],
+                _frg_rank_tiebreak_value(item, args),
+                item[1][2],
+                item[0],
+            ) if _frg_rank_tiebreak_active(item, args) else (item[1][0], item[1][1], item[1][2], item[0])
+        return lambda item: (item[1][0], item[1][1], item[1][2], item[0])
+    return lambda item: _candidate_rank(item, args)
+
+
 def _candidate_sort_key(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
     if args.priority == "target_guided":
         return _candidate_rank(item, args)
     if args.priority != "n_then_depth":
         return _candidate_rank(item, args)
     code, (n_value, depth, parent_code) = item
-    return (n_value, depth, parent_code, code)
+    ledger_score = _candidate_feature_ledger_score(code, (n_value, depth, parent_code), args)
+    if _frg_rank_tiebreak_active(item, args):
+        return (n_value, depth, ledger_score, _frg_rank_tiebreak_value(item, args), parent_code, code)
+    return (n_value, depth, ledger_score, parent_code, code)
 
 
 def _candidate_key_func(args: argparse.Namespace):
     if args.priority == "target_guided":
         return lambda item: _candidate_rank(item, args)
     if args.priority == "n_then_depth":
-        return lambda item: (item[1][0], item[1][1], item[1][2], item[0])
+        if getattr(args, "frg_rank_tiebreak_enabled", False):
+            return lambda item: (
+                item[1][0],
+                item[1][1],
+                _candidate_feature_ledger_score(item[0], item[1], args),
+                _frg_rank_tiebreak_value(item, args),
+                item[1][2],
+                item[0],
+            ) if _frg_rank_tiebreak_active(item, args) else (
+                item[1][0],
+                item[1][1],
+                _candidate_feature_ledger_score(item[0], item[1], args),
+                item[1][2],
+                item[0],
+            )
+        return lambda item: (
+            item[1][0],
+            item[1][1],
+            _candidate_feature_ledger_score(item[0], item[1], args),
+            item[1][2],
+            item[0],
+        )
     return lambda item: _candidate_rank(item, args)
 
 
@@ -4952,7 +6306,9 @@ def _select_enhanced_qubo_frontier(
     qubo_supplement_width: int | None = None,
 ) -> tuple[list[bytes], set[bytes], int, int, float]:
     selected: dict[bytes, None] = {}
+    selected_source_by_code: dict[bytes, str] = {}
     selected_by_qubo: set[bytes] = set()
+    args._frontier_trace_last_context = getattr(args, "_frontier_trace_selection_context", "standard")
     effective_beam = max(1, min(beam_width if beam_width is not None else args.beam_width, len(ranked)))
     effective_core = core_width if core_width is not None else args.core_width
     effective_core = max(0, min(effective_core, effective_beam))
@@ -4964,7 +6320,7 @@ def _select_enhanced_qubo_frontier(
 
     core_target = effective_core
 
-    def add_deterministic_until(target_len: int) -> None:
+    def add_deterministic_until(target_len: int, source: str = "core") -> None:
         target_len = max(0, min(target_len, effective_beam))
         if len(selected) >= target_len:
             return
@@ -4976,17 +6332,42 @@ def _select_enhanced_qubo_frontier(
                 parent_code = data[2]
                 if parent_counts.get(parent_code, 0) >= effective_parent_core_cap:
                     continue
-                selected.setdefault(code, None)
+                selected[code] = None
+                selected_source_by_code.setdefault(code, source)
                 parent_counts[parent_code] = parent_counts.get(parent_code, 0) + 1
                 if len(selected) >= target_len:
                     break
         for code, _data in ranked:
-            selected.setdefault(code, None)
+            if code not in selected:
+                selected[code] = None
+                selected_source_by_code.setdefault(code, source)
             if len(selected) >= target_len:
                 break
 
     if not args.qubo_first:
         add_deterministic_until(core_target)
+    _add_tail_lookahead_path_supplement(
+        selected,
+        selected_source_by_code,
+        ranked,
+        args,
+        effective_beam,
+    )
+    _add_tail_risk_path_supplement(
+        selected,
+        selected_source_by_code,
+        ranked,
+        args,
+        effective_beam,
+    )
+    _add_tail_risk_reserve(
+        selected,
+        selected_source_by_code,
+        ranked,
+        args,
+        effective_beam,
+        int(best_n),
+    )
 
     qcalls = qvars = 0
     qtime = 0.0
@@ -5027,14 +6408,29 @@ def _select_enhanced_qubo_frontier(
             for code in boosted:
                 if code not in selected:
                     selected_by_qubo.add(code)
-                selected.setdefault(code, None)
+                    selected_source_by_code.setdefault(code, "wang_pair_qubo")
+                    selected[code] = None
+                else:
+                    selected.setdefault(code, None)
                 if len(selected) >= effective_beam:
                     break
+    _add_tail_lookahead_supplement(
+        selected,
+        selected_source_by_code,
+        ranked,
+        args,
+        effective_beam,
+        int(best_n),
+    )
     frg_width = max(0, int(getattr(args, "frg_candidate_supplement_width", 0) or 0))
     if (
         getattr(args, "frg_candidate_supplement_enabled", False)
         and frg_width > 0
         and len(selected) < effective_beam
+        and (
+            not getattr(args, "frg_candidate_scarcity_gate_enabled", False)
+            or _frg_scarcity_gate_active(args, int(best_n))
+        )
     ):
         target = min(frg_width, effective_beam - len(selected))
         remaining = [(code, data) for code, data in ranked if code not in selected]
@@ -5046,6 +6442,7 @@ def _select_enhanced_qubo_frontier(
                 before = len(selected)
                 selected.setdefault(code, None)
                 if len(selected) > before:
+                    selected_source_by_code.setdefault(code, "frg_candidate")
                     args._frg_candidate_selected_total += 1
                 if len(selected) >= effective_beam:
                     break
@@ -5065,6 +6462,7 @@ def _select_enhanced_qubo_frontier(
                 before = len(selected)
                 selected.setdefault(code, None)
                 if len(selected) > before:
+                    selected_source_by_code.setdefault(code, "dlts_value")
                     args._dlts_value_selected_total += 1
                 if len(selected) >= effective_beam:
                     break
@@ -5104,6 +6502,7 @@ def _select_enhanced_qubo_frontier(
             for code in boosted:
                 if code not in selected:
                     selected_by_qubo.add(code)
+                    selected_source_by_code.setdefault(code, "bs_frg_qubo")
                 before = len(selected)
                 selected.setdefault(code, None)
                 if len(selected) > before:
@@ -5200,6 +6599,59 @@ def _select_enhanced_qubo_frontier(
                     else:
                         selected_source_by_code.setdefault(code, "pareto_union_seed")
                 selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
+    union_width = max(0, int(getattr(args, "union_diversity_qubo_supplement_width", 0) or 0))
+    union_focus_n = int(getattr(args, "union_diversity_qubo_focus_n", -1) or -1)
+    if (
+        getattr(args, "union_diversity_qubo_enabled", False)
+        and args.use_qubo
+        and union_width > 0
+        and len(selected) < effective_beam
+        and candidate_count >= max(1, int(getattr(args, "union_diversity_qubo_min_candidates", 64) or 64))
+        and (union_focus_n < 0 or int(best_n) <= union_focus_n)
+    ):
+        n_window = max(0, int(getattr(args, "union_diversity_qubo_n_window", 2) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        target = min(
+            union_width,
+            effective_beam - len(selected),
+            int(getattr(args, "union_diversity_qubo_select", union_width) or union_width),
+            len(remaining),
+        )
+        boosted, add_qvars, add_qtime = _select_union_diversity_qubo_supplement(remaining, args, target)
+        if add_qvars:
+            if not hasattr(args, "_union_diversity_qubo_calls_done"):
+                args._union_diversity_qubo_calls_done = 0
+            if not hasattr(args, "_union_diversity_qubo_vars"):
+                args._union_diversity_qubo_vars = 0
+            if not hasattr(args, "_union_diversity_qubo_time"):
+                args._union_diversity_qubo_time = 0.0
+            if not hasattr(args, "_union_diversity_qubo_selected_total"):
+                args._union_diversity_qubo_selected_total = 0
+            if not hasattr(args, "_union_rollout_probe_selected_total"):
+                args._union_rollout_probe_selected_total = 0
+            qcalls += 1
+            qvars += add_qvars
+            qtime += add_qtime
+            args._union_diversity_qubo_calls_done += 1
+            args._union_diversity_qubo_vars += add_qvars
+            args._union_diversity_qubo_time += add_qtime
+            probe_results = getattr(args, "_union_rollout_probe_current_results", {}) or {}
+            for code in boosted:
+                if code not in selected:
+                    selected_by_qubo.add(code)
+                    selected_source_by_code.setdefault(code, "union_diversity_qubo")
+                before = len(selected)
+                selected.setdefault(code, None)
+                if len(selected) > before:
+                    args._union_diversity_qubo_selected_total += 1
+                    if code in probe_results:
+                        args._union_rollout_probe_selected_total += 1
                 if len(selected) >= effective_beam:
                     break
     feasibility_width = max(0, int(getattr(args, "feasibility_escape_supplement_width", 0) or 0))
@@ -5300,7 +6752,13 @@ def _select_enhanced_qubo_frontier(
             for code in boosted:
                 if code not in selected:
                     selected_by_qubo.add(code)
-                selected.setdefault(code, None)
+                    selected_source_by_code.setdefault(
+                        code,
+                        str(getattr(args, "_frontier_trace_qubo_source", "qubo")),
+                    )
+                    selected[code] = None
+                else:
+                    selected.setdefault(code, None)
                 if len(selected) >= effective_beam:
                     break
     elif qubo_enabled and args.qubo_mode in {"focused_multi", "majority_multi"}:
@@ -5340,7 +6798,13 @@ def _select_enhanced_qubo_frontier(
             for code in boosted:
                 if code not in selected:
                     selected_by_qubo.add(code)
-                selected.setdefault(code, None)
+                    selected_source_by_code.setdefault(
+                        code,
+                        str(getattr(args, "_frontier_trace_qubo_source", "qubo")),
+                    )
+                    selected[code] = None
+                else:
+                    selected.setdefault(code, None)
                 if len(selected) >= effective_beam:
                     break
 
@@ -5387,18 +6851,27 @@ def _select_enhanced_qubo_frontier(
                     break
 
     if args.qubo_first:
-        add_deterministic_until(len(selected) + core_target)
+        add_deterministic_until(len(selected) + core_target, source="qubo_first_core")
 
     for code, _data in ranked:
-        selected.setdefault(code, None)
+        if code not in selected:
+            selected[code] = None
+            selected_source_by_code.setdefault(code, "tail_fill")
         if len(selected) >= effective_beam:
             break
     selected_codes = list(selected.keys())[:effective_beam]
     selected_set = set(selected_codes)
+    args._frontier_trace_last_selected_sources = {
+        code: source for code, source in selected_source_by_code.items() if code in selected_set
+    }
     return selected_codes, selected_by_qubo & selected_set, qcalls, qvars, qtime
 
 
 def _rescue_layer_active(args: argparse.Namespace, best_n: int) -> bool:
+    return _standard_rescue_layer_active(args, best_n) or _scarcity_inner_rescue_active(args, best_n)
+
+
+def _standard_rescue_layer_active(args: argparse.Namespace, best_n: int) -> bool:
     if not getattr(args, "rescue_enabled", False):
         return False
     if best_n < int(getattr(args, "rescue_min_n", 0)):
@@ -5416,6 +6889,44 @@ def _rescue_layer_active(args: argparse.Namespace, best_n: int) -> bool:
         return False
     recent = history[-window:]
     return max(recent) - min(recent) <= int(getattr(args, "rescue_plateau_delta", 0))
+
+
+def _scarcity_inner_rescue_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "scarcity_inner_rescue_enabled", False):
+        return False
+    if not getattr(args, "rescue_enabled", False):
+        _record_scarcity_inner_rescue_gate_reason(args, "rescue_disabled")
+        return False
+    if not getattr(args, "_scheduler_state_requested_rescue", False):
+        return False
+    if int(getattr(args, "_rescue_layers_used", 0)) >= int(getattr(args, "rescue_max_layers", 0)):
+        _record_scarcity_inner_rescue_gate_reason(args, "max_layers")
+        return False
+    if int(getattr(args, "_initial_scarcity_n0", 0) or 0) < int(
+        getattr(args, "scarcity_inner_rescue_min_n", 0) or 0
+    ):
+        _record_scarcity_inner_rescue_gate_reason(args, "initial_n")
+        return False
+    if int(getattr(args, "_layer_candidate_count", 0) or 0) < int(
+        getattr(args, "scarcity_inner_rescue_min_candidates", 64) or 0
+    ):
+        _record_scarcity_inner_rescue_gate_reason(args, "candidates")
+        return False
+    if float(getattr(args, "_initial_scarcity_risk", 0.0) or 0.0) < float(
+        getattr(args, "scarcity_inner_rescue_risk_threshold", 0.95) or 0.95
+    ):
+        _record_scarcity_inner_rescue_gate_reason(args, "risk")
+        return False
+    max_l0 = int(getattr(args, "scarcity_inner_rescue_max_l0", -1) or -1)
+    if max_l0 >= 0 and int(getattr(args, "_initial_scarcity_l0", 10**9) or 10**9) > max_l0:
+        _record_scarcity_inner_rescue_gate_reason(args, "l0")
+        return False
+    if float(getattr(args, "_initial_scarcity_one_safe_ratio", 0.0) or 0.0) < float(
+        getattr(args, "scarcity_inner_rescue_min_one_safe_ratio", 0.90) or 0.90
+    ):
+        _record_scarcity_inner_rescue_gate_reason(args, "one_safe_ratio")
+        return False
+    return True
 
 
 def _with_temporary_args(
@@ -5456,7 +6967,9 @@ def _select_rescue_qubo_frontier(
     args: argparse.Namespace,
 ) -> tuple[list[bytes], set[bytes], int, int, float]:
     best_n = int(ranked[0][1][0]) if ranked else math.inf
-    if not _rescue_layer_active(args, best_n):
+    standard_rescue_active = _standard_rescue_layer_active(args, best_n)
+    scarcity_inner_active = not standard_rescue_active and _scarcity_inner_rescue_active(args, best_n)
+    if not standard_rescue_active and not scarcity_inner_active:
         return _select_enhanced_qubo_frontier(ranked, candidate_count, args)
 
     beam_width, core_width = _rescue_frontier_widths(args)
@@ -5477,6 +6990,8 @@ def _select_rescue_qubo_frontier(
             float(getattr(args, "qubo_next_n_weight", 0.0)),
             float(getattr(args, "rescue_next_n_weight", getattr(args, "qubo_next_n_weight", 0.0))),
         ),
+        "_frontier_trace_selection_context": "scarcity_inner_rescue" if scarcity_inner_active else "rescue",
+        "_frontier_trace_qubo_source": "rescue_qubo",
     }
 
     before_calls = args._qubo_calls_done
@@ -5493,6 +7008,8 @@ def _select_rescue_qubo_frontier(
 
     selected = _with_temporary_args(args, overrides, select)
     args._rescue_layers_used += 1
+    if scarcity_inner_active:
+        args._scarcity_inner_rescue_layers = int(getattr(args, "_scarcity_inner_rescue_layers", 0)) + 1
     args._rescue_qubo_calls += args._qubo_calls_done - before_calls
     args._rescue_qubo_vars += selected[3]
     args._rescue_qubo_time += selected[4]
@@ -5712,7 +7229,11 @@ def _select_scheduler_state_qubo_frontier(
     before_rescue_layers = int(getattr(args, "_rescue_layers_used", 0))
     if action == "rescue":
         args._scheduler_state_rescue_layers = int(getattr(args, "_scheduler_state_rescue_layers", 0)) + 1
-        selected = _select_rescue_qubo_frontier(ranked, candidate_count, args)
+        selected = _with_temporary_args(
+            args,
+            {"_scheduler_state_requested_rescue": True},
+            lambda: _select_rescue_qubo_frontier(ranked, candidate_count, args),
+        )
         after_rescue_layers = int(getattr(args, "_rescue_layers_used", 0))
         args._scheduler_state_last_effective_action = "rescue" if after_rescue_layers > before_rescue_layers else "protect"
         return selected
@@ -5848,6 +7369,10 @@ def _rank_next_frontier_candidates(
     candidates: dict[bytes, tuple[int, int, bytes]],
     args: argparse.Namespace,
 ) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    if bool(getattr(args, "candidate_ledger_score_enabled", False)):
+        args._candidate_ledger_active_codes = _candidate_feature_ledger_window_codes(candidates, args)
+    else:
+        args._candidate_ledger_active_codes = None
     bucket_topk = max(0, int(getattr(args, "rank_bucket_topk", 0) or 0))
     if bucket_topk > 0:
         best_n = min(data[0] for data in candidates.values()) if candidates else math.inf
@@ -5875,6 +7400,9 @@ def _select_next_frontier(
     args: argparse.Namespace,
 ) -> tuple[list[bytes], set[bytes], int, int, float]:
     ranked = _rank_next_frontier_candidates(candidates, args)
+    args._frontier_trace_last_ranked = ranked
+    args._frontier_trace_last_selected_sources = {}
+    args._frontier_trace_last_context = ""
     policy = getattr(args, "selection_policy", "enhanced")
     if policy == "classic":
         return [code for code, _data in ranked[: args.beam_width]], set(), 0, 0, 0.0
@@ -6001,6 +7529,409 @@ def _successors_with_n_cached(code: bytes, current_n: int, stack_count: int, max
 
 _successors_with_n_cached.cache_clear = _successor_tuple_cached.cache_clear
 _successors_with_n_cached.cache_info = _successor_tuple_cached.cache_info
+
+
+@dataclass(frozen=True)
+class TailLookaheadProbe:
+    goal_reachable: bool
+    best_n: int
+    best_depth: int
+    expanded: int
+    path: tuple[bytes, ...] = ()
+
+
+@lru_cache(maxsize=131072)
+def _tail_lookahead_probe(
+    code: bytes,
+    current_n: int,
+    stack_count: int,
+    max_height: int,
+    target_final_n: int,
+    max_depth: int,
+    max_expanded: int,
+    base_depth: int = 0,
+    business_cap: int = -1,
+) -> TailLookaheadProbe:
+    max_depth = max(0, int(max_depth))
+    max_expanded = max(0, int(max_expanded))
+    base_depth = max(0, int(base_depth))
+    business_cap = int(business_cap)
+    best_n = int(current_n)
+    best_depth = 0
+    if current_n <= target_final_n:
+        return TailLookaheadProbe(True, int(current_n), 0, 0)
+    if max_depth <= 0 or max_expanded <= 0:
+        return TailLookaheadProbe(False, best_n, best_depth, 0)
+
+    queue: deque[tuple[bytes, int, int]] = deque([(code, int(current_n), 0)])
+    seen: dict[bytes, int] = {code: 0}
+    predecessor: dict[bytes, bytes] = {}
+    expanded = 0
+
+    def build_path(goal_code: bytes) -> tuple[bytes, ...]:
+        path: list[bytes] = [goal_code]
+        cursor = goal_code
+        while cursor != code and cursor in predecessor:
+            cursor = predecessor[cursor]
+            if cursor != code:
+                path.append(cursor)
+        path.reverse()
+        return tuple(path)
+
+    while queue and expanded < max_expanded:
+        current_code, n_value, depth = queue.popleft()
+        if depth >= max_depth:
+            continue
+        expanded += 1
+        for nxt, nxt_n in _successors_with_n_uncached(current_code, n_value, stack_count, max_height):
+            next_depth = depth + 1
+            if business_cap >= 0 and base_depth + next_depth + int(nxt_n) > business_cap:
+                continue
+            old_depth = seen.get(nxt)
+            if old_depth is not None and old_depth <= next_depth:
+                continue
+            seen[nxt] = next_depth
+            predecessor[nxt] = current_code
+            if nxt_n < best_n or (nxt_n == best_n and (best_depth == 0 or next_depth < best_depth)):
+                best_n = int(nxt_n)
+                best_depth = next_depth
+            if nxt_n <= target_final_n:
+                return TailLookaheadProbe(True, int(nxt_n), next_depth, expanded, build_path(nxt))
+            if next_depth < max_depth:
+                queue.append((nxt, int(nxt_n), next_depth))
+    return TailLookaheadProbe(False, best_n, best_depth, expanded)
+
+
+def _ensure_tail_lookahead_counters(args: argparse.Namespace) -> None:
+    if not hasattr(args, "_tail_lookahead_calls_done"):
+        args._tail_lookahead_calls_done = 0
+    if not hasattr(args, "_tail_lookahead_selected_total"):
+        args._tail_lookahead_selected_total = 0
+    if not hasattr(args, "_tail_lookahead_goal_reachable_total"):
+        args._tail_lookahead_goal_reachable_total = 0
+    if not hasattr(args, "_tail_lookahead_best_delta_total"):
+        args._tail_lookahead_best_delta_total = 0
+    if not hasattr(args, "_tail_lookahead_expanded_total"):
+        args._tail_lookahead_expanded_total = 0
+
+
+def _ensure_tail_risk_reserve_counters(args: argparse.Namespace) -> None:
+    if not hasattr(args, "_tail_risk_reserve_calls_done"):
+        args._tail_risk_reserve_calls_done = 0
+    if not hasattr(args, "_tail_risk_reserve_selected_total"):
+        args._tail_risk_reserve_selected_total = 0
+    if not hasattr(args, "_tail_risk_reserve_scanned_total"):
+        args._tail_risk_reserve_scanned_total = 0
+    if not hasattr(args, "_tail_risk_reserve_one_step_improved_total"):
+        args._tail_risk_reserve_one_step_improved_total = 0
+    if not hasattr(args, "_tail_risk_priority_codes"):
+        args._tail_risk_priority_codes = set()
+
+
+def _tail_risk_one_step_best_n(code: bytes, n_value: int, args: argparse.Namespace) -> int:
+    cache: dict[bytes, int] = getattr(args, "_tail_risk_one_step_cache", {})
+    cached = cache.get(code)
+    if cached is not None:
+        return cached
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return int(n_value)
+    best = int(n_value)
+    for _nxt, nxt_n in _successors_with_n_cached(code, int(n_value), stack_count, max_height):
+        if int(nxt_n) < best:
+            best = int(nxt_n)
+            if best <= 0:
+                break
+    cache[code] = best
+    args._tail_risk_one_step_cache = cache
+    return best
+
+
+def _tail_risk_one_step_recovery_codes(
+    code: bytes,
+    n_value: int,
+    args: argparse.Namespace,
+    best_n: int,
+) -> tuple[bytes, ...]:
+    cache: dict[tuple[bytes, int], tuple[bytes, ...]] = getattr(args, "_tail_risk_recovery_cache", {})
+    key = (code, int(best_n))
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return ()
+    recovery = [
+        (int(nxt_n), nxt)
+        for nxt, nxt_n in _successors_with_n_cached(code, int(n_value), stack_count, max_height)
+        if int(nxt_n) <= int(best_n)
+    ]
+    recovery.sort()
+    codes = tuple(nxt for _nxt_n, nxt in recovery[:2])
+    cache[key] = codes
+    args._tail_risk_recovery_cache = cache
+    return codes
+
+
+def _tail_risk_reserve_active(args: argparse.Namespace, best_n: int) -> bool:
+    if not getattr(args, "tail_risk_reserve_enabled", False):
+        return False
+    if int(getattr(args, "tail_risk_reserve_width", 0) or 0) <= 0:
+        return False
+    focus_n = int(getattr(args, "tail_risk_focus_n", 2))
+    if focus_n >= 0 and int(best_n) > focus_n:
+        return False
+    min_candidates = int(getattr(args, "tail_risk_min_candidates", 0) or 0)
+    if int(getattr(args, "_layer_candidate_count", 0) or 0) < min_candidates:
+        return False
+    slack = int(getattr(args, "_layer_depth_slack", 10**9) or 0)
+    min_slack = int(getattr(args, "tail_risk_min_depth_slack", 0) or 0)
+    max_slack = int(getattr(args, "tail_risk_max_depth_slack", 0) or 0)
+    if slack < min_slack:
+        return False
+    if max_slack > 0 and slack > max_slack:
+        return False
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return False
+    max_stack_count = int(getattr(args, "tail_risk_max_stack_count", 0) or 0)
+    return max_stack_count <= 0 or stack_count <= max_stack_count
+
+
+def _add_tail_risk_path_supplement(
+    selected: dict[bytes, None],
+    selected_source_by_code: dict[bytes, str],
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    effective_beam: int,
+) -> None:
+    priority_codes = getattr(args, "_tail_risk_priority_codes", None)
+    if not priority_codes or len(selected) >= effective_beam:
+        return
+    advanced: list[bytes] = []
+    for code, _data in ranked:
+        if code not in priority_codes:
+            continue
+        if code not in selected and len(selected) < effective_beam:
+            selected[code] = None
+            selected_source_by_code.setdefault(code, "tail_risk_path")
+        advanced.append(code)
+        if len(selected) >= effective_beam:
+            break
+    for code in advanced:
+        priority_codes.discard(code)
+
+
+def _add_tail_risk_reserve(
+    selected: dict[bytes, None],
+    selected_source_by_code: dict[bytes, str],
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    effective_beam: int,
+    best_n: int,
+) -> None:
+    if len(selected) >= effective_beam:
+        return
+    if not _tail_risk_reserve_active(args, int(best_n)):
+        return
+    n_window = max(0, int(getattr(args, "tail_risk_n_window", 1) or 0))
+    reserve_width = max(0, int(getattr(args, "tail_risk_reserve_width", 0) or 0))
+    max_scan = max(1, int(getattr(args, "tail_risk_max_scan", 4096) or 4096))
+    target = min(effective_beam, len(selected) + reserve_width)
+    if target <= len(selected):
+        return
+
+    _ensure_tail_risk_reserve_counters(args)
+    args._tail_risk_reserve_calls_done += 1
+    scored: list[tuple[int, int, int, int, bytes]] = []
+    scanned = 0
+    improved_seen = 0
+    for code, data in ranked:
+        if scanned >= max_scan:
+            break
+        n_value, depth, _parent_code = data
+        n_value = int(n_value)
+        if n_value <= int(best_n):
+            continue
+        if n_value > int(best_n) + n_window:
+            continue
+        scanned += 1
+        if code in selected:
+            continue
+        one_step_best = _tail_risk_one_step_best_n(code, n_value, args)
+        if one_step_best > int(best_n):
+            continue
+        improved_seen += 1
+        scored.append((one_step_best, n_value, int(depth), scanned, code))
+    args._tail_risk_reserve_scanned_total += scanned
+    args._tail_risk_reserve_one_step_improved_total += improved_seen
+    if not scored:
+        return
+    for _best_after, _n_value, _depth, _scan_rank, code in sorted(scored):
+        before = len(selected)
+        selected.setdefault(code, None)
+        selected_source_by_code.setdefault(code, "tail_risk")
+        if len(selected) > before:
+            args._tail_risk_reserve_selected_total += 1
+            for recovery_code in _tail_risk_one_step_recovery_codes(code, _n_value, args, int(best_n)):
+                args._tail_risk_priority_codes.add(recovery_code)
+        if len(selected) >= target:
+            break
+
+
+def _add_tail_lookahead_path_supplement(
+    selected: dict[bytes, None],
+    selected_source_by_code: dict[bytes, str],
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    effective_beam: int,
+) -> None:
+    if not getattr(args, "tail_lookahead_enabled", False):
+        return
+    priority_codes = getattr(args, "_tail_lookahead_priority_codes", None)
+    if not priority_codes:
+        return
+    path_next_by_code = getattr(args, "_tail_lookahead_path_next_by_code", {})
+    advanced: list[bytes] = []
+    for code, _data in ranked:
+        if code not in priority_codes:
+            continue
+        if code in selected:
+            advanced.append(code)
+            continue
+        if len(selected) >= effective_beam:
+            continue
+        selected[code] = None
+        selected_source_by_code.setdefault(code, "tail_lookahead_path")
+        advanced.append(code)
+        if len(selected) >= effective_beam:
+            break
+    for code in advanced:
+        priority_codes.discard(code)
+        next_code = path_next_by_code.get(code)
+        if next_code is not None:
+            priority_codes.add(next_code)
+
+
+def _add_tail_lookahead_supplement(
+    selected: dict[bytes, None],
+    selected_source_by_code: dict[bytes, str],
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    effective_beam: int,
+    best_n: int,
+) -> None:
+    if not getattr(args, "tail_lookahead_enabled", False):
+        return
+    width = max(0, int(getattr(args, "tail_lookahead_supplement_width", 0) or 0))
+    if width <= 0:
+        return
+    focus_n = int(getattr(args, "tail_lookahead_focus_n", 2))
+    if focus_n >= 0 and int(best_n) > focus_n:
+        return
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return
+    max_stack_count = int(getattr(args, "tail_lookahead_max_stack_count", 0) or 0)
+    if max_stack_count > 0 and stack_count > max_stack_count:
+        return
+    max_seed = max(1, int(getattr(args, "tail_lookahead_max_seed_candidates", 128) or 128))
+    max_depth = max(1, int(getattr(args, "tail_lookahead_depth", 3) or 3))
+    expanded_budget = max(1, int(getattr(args, "tail_lookahead_max_expanded", 4096) or 4096))
+    target_final_n = int(getattr(args, "target_final_n", 0) or 0)
+    business_cap = int(getattr(args, "_business_cap", -1) or -1)
+    core_path_only = bool(getattr(args, "tail_lookahead_core_path_only", False))
+
+    seed_candidates: list[tuple[int, bytes, tuple[int, int, bytes], bool]] = []
+    for rank, (code, data) in enumerate(ranked):
+        n_value = int(data[0])
+        if focus_n >= 0 and n_value > focus_n:
+            continue
+        already_selected = code in selected
+        if core_path_only and not already_selected:
+            continue
+        if not already_selected and len(selected) >= effective_beam:
+            continue
+        seed_candidates.append((rank, code, data, already_selected))
+        if len(seed_candidates) >= max_seed:
+            break
+    if not seed_candidates:
+        return
+
+    _ensure_tail_lookahead_counters(args)
+    if not hasattr(args, "_tail_lookahead_priority_codes"):
+        args._tail_lookahead_priority_codes = set()
+    if not hasattr(args, "_tail_lookahead_path_next_by_code"):
+        args._tail_lookahead_path_next_by_code = {}
+    args._tail_lookahead_calls_done += 1
+    scored: list[tuple[int, int, int, int, bytes, TailLookaheadProbe, int, bool]] = []
+    expanded_used = 0
+    goal_reachable_seen = 0
+    for rank, code, data, already_selected in seed_candidates:
+        if expanded_used >= expanded_budget:
+            break
+        n_value = int(data[0])
+        probe = _tail_lookahead_probe(
+            code,
+            n_value,
+            stack_count,
+            max_height,
+            target_final_n,
+            max_depth,
+            expanded_budget - expanded_used,
+            base_depth=int(data[1]),
+            business_cap=business_cap,
+        )
+        expanded_used += probe.expanded
+        if probe.goal_reachable:
+            goal_reachable_seen += 1
+        if not probe.goal_reachable and probe.best_n >= n_value:
+            continue
+        scored.append(
+            (
+                0 if probe.goal_reachable else 1,
+                int(probe.best_n),
+                int(probe.best_depth),
+                rank,
+                code,
+                probe,
+                n_value,
+                already_selected,
+            )
+        )
+    args._tail_lookahead_goal_reachable_total += goal_reachable_seen
+    args._tail_lookahead_expanded_total += expanded_used
+    if not scored:
+        return
+
+    target = 0 if core_path_only else min(width, max(0, effective_beam - len(selected)), len(scored))
+    added = 0
+    for _goal_rank, _best_n, _best_depth, _rank, code, probe, n_value, already_selected in sorted(scored):
+        if already_selected:
+            if probe.goal_reachable and probe.path:
+                args._tail_lookahead_priority_codes.add(probe.path[0])
+                for idx in range(len(probe.path) - 1):
+                    args._tail_lookahead_path_next_by_code[probe.path[idx]] = probe.path[idx + 1]
+            continue
+        if added >= target:
+            continue
+        before = len(selected)
+        selected.setdefault(code, None)
+        if len(selected) > before:
+            added += 1
+            selected_source_by_code.setdefault(code, "tail_lookahead")
+            args._tail_lookahead_selected_total += 1
+            args._tail_lookahead_best_delta_total += max(0, n_value - int(probe.best_n))
+            if probe.goal_reachable and probe.path:
+                args._tail_lookahead_priority_codes.add(probe.path[0])
+                for idx in range(len(probe.path) - 1):
+                    args._tail_lookahead_path_next_by_code[probe.path[idx]] = probe.path[idx + 1]
+        if len(selected) >= effective_beam and added >= target:
+            break
 
 
 def _post_polish_successors(
@@ -6998,6 +8929,21 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     initial, n0 = _encode(instance.stacks, instance.stack_count, instance.max_height)
     cap = entropy_limit(instance, args.alpha)
     depth_cap = min(cap, args.max_moves) if args.max_moves is not None else cap
+    args._business_cap = cap
+    frg_seed = _frg_seed_incumbent(instance, args, deadline)
+    frg_seed_moves = len(frg_seed.moves) if frg_seed is not None else None
+    frg_seed_large_layout_ok = _frg_seed_large_layout_allowed(instance, args) if frg_seed is not None else False
+    frg_seed_accepted = (
+        frg_seed is not None
+        and (frg_seed.cap_ok or frg_seed_large_layout_ok)
+    )
+    if (
+        frg_seed_moves is not None
+        and frg_seed_moves > 0
+        and bool(getattr(args, "frg_seed_prune_to_incumbent", True))
+        and frg_seed_accepted
+    ):
+        depth_cap = min(depth_cap, max(0, frg_seed_moves - 1))
     wang_incumbent = _validated_wang_incumbent(instance, args, cap, deadline)
     wang_incumbent_moves = len(wang_incumbent.moves) if wang_incumbent is not None else None
     depth_cap = _wang_search_depth_cap(depth_cap, wang_incumbent_moves, args)
@@ -7022,17 +8968,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._unified_wang_qubo_time = 0.0
     args._unified_wang_fixed_prefix_selected = 0
     args._unified_wang_fix_pair_selected = 0
-    args._feasibility_escape_calls_done = 0
-    args._feasibility_escape_added_total = 0
-    args._feasibility_escape_active_layers = 0
-    args._feasibility_escape_gate_reasons = {}
-    args._frg_candidate_selected_total = 0
-    args._frg_compound_appended_total = 0
-    args._dlts_value_selected_total = 0
-    args._bs_frg_qubo_calls_done = 0
-    args._bs_frg_qubo_vars = 0
-    args._bs_frg_qubo_time = 0.0
-    args._bs_frg_qubo_selected_total = 0
+    args._union_diversity_qubo_calls_done = 0
+    args._union_diversity_qubo_vars = 0
+    args._union_diversity_qubo_time = 0.0
+    args._union_diversity_qubo_selected_total = 0
     args._pareto_union_layers = 0
     args._pareto_union_seed_selected_total = 0
     args._pareto_union_qubo_calls_done = 0
@@ -7047,6 +8986,26 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._pareto_union_distinct_source_count_last = 0
     args._pareto_union_distinct_dest_count_last = 0
     args._pareto_union_distinct_signature_count_last = 0
+    args._union_rollout_probe_calls = 0
+    args._union_rollout_probe_candidates = 0
+    args._union_rollout_probe_feasible = 0
+    args._union_rollout_probe_time = 0.0
+    args._union_rollout_probe_cache_hits = 0
+    args._union_rollout_probe_selected_total = 0
+    args._union_rollout_probe_cache = {}
+    args._union_rollout_probe_frg_cache = {}
+    args._union_rollout_probe_current_results = {}
+    args._feasibility_escape_calls_done = 0
+    args._feasibility_escape_added_total = 0
+    args._feasibility_escape_active_layers = 0
+    args._feasibility_escape_gate_reasons = {}
+    args._frg_candidate_selected_total = 0
+    args._frg_compound_appended_total = 0
+    args._dlts_value_selected_total = 0
+    args._bs_frg_qubo_calls_done = 0
+    args._bs_frg_qubo_vars = 0
+    args._bs_frg_qubo_time = 0.0
+    args._bs_frg_qubo_selected_total = 0
     args._wang2017_task_calls_done = 0
     args._wang2017_task_added_total = 0
     args._wang2017_task_active_layers = 0
@@ -7057,6 +9016,22 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._group_lookahead_cache = {}
     args._best_n_history = []
     args._rescue_layers_used = 0
+    args._scarcity_inner_rescue_layers = 0
+    args._scarcity_inner_rescue_gate_reasons = {}
+    args._tail_lookahead_calls_done = 0
+    args._tail_lookahead_selected_total = 0
+    args._tail_lookahead_goal_reachable_total = 0
+    args._tail_lookahead_best_delta_total = 0
+    args._tail_lookahead_expanded_total = 0
+    args._tail_lookahead_priority_codes = set()
+    args._tail_lookahead_path_next_by_code = {}
+    args._tail_risk_reserve_calls_done = 0
+    args._tail_risk_reserve_selected_total = 0
+    args._tail_risk_reserve_scanned_total = 0
+    args._tail_risk_reserve_one_step_improved_total = 0
+    args._tail_risk_priority_codes = set()
+    args._tail_risk_one_step_cache = {}
+    args._tail_risk_recovery_cache = {}
     args._rescue_qubo_calls = 0
     args._rescue_qubo_vars = 0
     args._rescue_qubo_time = 0.0
@@ -7128,6 +9103,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     beam_survivor_records: list[dict[str, object]] = []
     dlts_feature_rows: list[dict[str, object]] = []
     dlts_feature_output = getattr(args, "dlts_feature_output", None)
+    frontier_trace_rows: list[dict[str, object]] = []
+    frontier_trace_output = getattr(args, "frontier_trace_output", None)
+    frontier_trace_top_k = max(0, int(getattr(args, "frontier_trace_top_k", 64) or 0))
     layer_index = 0
 
     while target is None and frontier and time.perf_counter() < deadline:
@@ -7288,6 +9266,20 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     "parent_rank_by_code": parent_rank_by_code,
                 }
             )
+        if frontier_trace_output is not None and frontier_trace_top_k > 0:
+            frontier_trace_rows.extend(
+                _frontier_trace_candidate_rows(
+                    case=case,
+                    layer=layer_index,
+                    ranked=list(getattr(args, "_frontier_trace_last_ranked", [])),
+                    frontier=frontier,
+                    selected_codes=selected_codes,
+                    selected_by_qubo=selected_by_qubo,
+                    selected_source_by_code=dict(getattr(args, "_frontier_trace_last_selected_sources", {})),
+                    args=args,
+                    top_k=frontier_trace_top_k,
+                )
+            )
         selected_set = set(selected_codes)
         if getattr(args, "global_reservoir", False):
             max_add = max(0, getattr(args, "reservoir_add_per_layer", 0))
@@ -7337,6 +9329,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     tail_ordered_trace = ""
     tail_ordered_gain = 0
     wang_incumbent_used = False
+    frg_seed_used = False
     search_path_codes: list[bytes] = []
     if target is not None:
         codes = _backtrack(parent, target)
@@ -7386,6 +9379,14 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 f"post_polish_window_moves_saved={polish_stats.window_moves_saved}; "
                 f"post_polish_bridge_expanded={polish_stats.bridge_expanded}"
             )
+    if frg_seed is not None and frg_seed_accepted and (not moves or len(frg_seed.moves) < len(moves)):
+        moves = list(frg_seed.moves)
+        frg_seed_used = True
+        status += (
+            f"; frg_seed_used=True; frg_seed_moves={len(frg_seed.moves)}; "
+            f"frg_seed_runtime_sec={frg_seed.runtime_sec:.6f}; frg_seed_status={frg_seed.status}; "
+            f"frg_seed_cap_ok={frg_seed.cap_ok}; frg_seed_large_layout_ok={frg_seed_large_layout_ok}"
+        )
     if wang_incumbent is not None and (not moves or len(wang_incumbent.moves) < len(moves)):
         moves = wang_incumbent.moves
         wang_incumbent_used = True
@@ -7401,6 +9402,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     if dlts_feature_output is not None and dlts_feature_rows:
         _finalize_dlts_feature_rows(dlts_feature_rows, search_path_codes, status)
         _write_dlts_feature_rows(dlts_feature_rows, Path(dlts_feature_output))
+    if frontier_trace_output is not None and frontier_trace_rows:
+        _write_frontier_trace_rows(frontier_trace_rows, Path(frontier_trace_output))
     return CompactBeamResult(
         case=case,
         status=status,
@@ -7447,6 +9450,19 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         stream_pruned_candidates=stream_pruned_candidates,
         rank_pool_truncated_candidates=args._rank_pool_truncated_candidates,
         rescue_layers_used=args._rescue_layers_used,
+        scarcity_inner_rescue_layers=args._scarcity_inner_rescue_layers,
+        scarcity_inner_rescue_gate_reasons=_format_scarcity_inner_rescue_gate_reasons(
+            args._scarcity_inner_rescue_gate_reasons
+        ),
+        tail_lookahead_calls=args._tail_lookahead_calls_done,
+        tail_lookahead_selected_total=args._tail_lookahead_selected_total,
+        tail_lookahead_goal_reachable_total=args._tail_lookahead_goal_reachable_total,
+        tail_lookahead_best_delta_total=args._tail_lookahead_best_delta_total,
+        tail_lookahead_expanded_total=args._tail_lookahead_expanded_total,
+        tail_risk_reserve_calls=args._tail_risk_reserve_calls_done,
+        tail_risk_reserve_selected_total=args._tail_risk_reserve_selected_total,
+        tail_risk_reserve_scanned_total=args._tail_risk_reserve_scanned_total,
+        tail_risk_reserve_one_step_improved_total=args._tail_risk_reserve_one_step_improved_total,
         wang_incumbent_moves=len(wang_incumbent.moves) if wang_incumbent is not None else 0,
         wang_incumbent_runtime_sec=wang_incumbent.runtime_sec if wang_incumbent is not None else 0.0,
         wang_incumbent_used=wang_incumbent_used,
@@ -7459,17 +9475,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         unified_wang_qubo_time_sec=args._unified_wang_qubo_time,
         unified_wang_fixed_prefix_selected=args._unified_wang_fixed_prefix_selected,
         unified_wang_fix_pair_selected=args._unified_wang_fix_pair_selected,
-        feasibility_escape_calls=args._feasibility_escape_calls_done,
-        feasibility_escape_added_total=args._feasibility_escape_added_total,
-        feasibility_escape_active_layers=args._feasibility_escape_active_layers,
-        feasibility_escape_gate_reasons=_format_feasibility_escape_gate_reasons(args._feasibility_escape_gate_reasons),
-        frg_candidate_selected_total=args._frg_candidate_selected_total,
-        frg_compound_appended_total=args._frg_compound_appended_total,
-        dlts_value_selected_total=args._dlts_value_selected_total,
-        bs_frg_qubo_calls=args._bs_frg_qubo_calls_done,
-        bs_frg_qubo_vars=args._bs_frg_qubo_vars,
-        bs_frg_qubo_time_sec=args._bs_frg_qubo_time,
-        bs_frg_qubo_selected_total=args._bs_frg_qubo_selected_total,
+        union_diversity_qubo_calls=args._union_diversity_qubo_calls_done,
+        union_diversity_qubo_vars=args._union_diversity_qubo_vars,
+        union_diversity_qubo_time_sec=args._union_diversity_qubo_time,
+        union_diversity_qubo_selected_total=args._union_diversity_qubo_selected_total,
         pareto_union_layers=args._pareto_union_layers,
         pareto_union_seed_selected_total=args._pareto_union_seed_selected_total,
         pareto_union_qubo_calls=args._pareto_union_qubo_calls_done,
@@ -7484,6 +9493,30 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         pareto_union_distinct_source_count_last=args._pareto_union_distinct_source_count_last,
         pareto_union_distinct_dest_count_last=args._pareto_union_distinct_dest_count_last,
         pareto_union_distinct_signature_count_last=args._pareto_union_distinct_signature_count_last,
+        union_rollout_probe_calls=args._union_rollout_probe_calls,
+        union_rollout_probe_candidates=args._union_rollout_probe_candidates,
+        union_rollout_probe_feasible=args._union_rollout_probe_feasible,
+        union_rollout_probe_time_sec=args._union_rollout_probe_time,
+        union_rollout_probe_cache_hits=args._union_rollout_probe_cache_hits,
+        union_rollout_probe_selected_total=args._union_rollout_probe_selected_total,
+        feasibility_escape_calls=args._feasibility_escape_calls_done,
+        feasibility_escape_added_total=args._feasibility_escape_added_total,
+        feasibility_escape_active_layers=args._feasibility_escape_active_layers,
+        feasibility_escape_gate_reasons=_format_feasibility_escape_gate_reasons(args._feasibility_escape_gate_reasons),
+        frg_seed_moves=len(frg_seed.moves) if frg_seed is not None else 0,
+        frg_seed_runtime_sec=frg_seed.runtime_sec if frg_seed is not None else 0.0,
+        frg_seed_used=frg_seed_used,
+        frg_seed_status=frg_seed.status if frg_seed is not None else "",
+        frg_seed_generated=frg_seed.generated if frg_seed is not None else 0,
+        frg_seed_cap_ok=frg_seed.cap_ok if frg_seed is not None else False,
+        frg_seed_large_layout_ok=frg_seed_large_layout_ok,
+        frg_candidate_selected_total=args._frg_candidate_selected_total,
+        frg_compound_appended_total=args._frg_compound_appended_total,
+        dlts_value_selected_total=args._dlts_value_selected_total,
+        bs_frg_qubo_calls=args._bs_frg_qubo_calls_done,
+        bs_frg_qubo_vars=args._bs_frg_qubo_vars,
+        bs_frg_qubo_time_sec=args._bs_frg_qubo_time,
+        bs_frg_qubo_selected_total=args._bs_frg_qubo_selected_total,
         wang2017_task_calls=args._wang2017_task_calls_done,
         wang2017_task_added_total=args._wang2017_task_added_total,
         wang2017_task_active_layers=args._wang2017_task_active_layers,
@@ -7541,6 +9574,12 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"wang_incumbent_enabled={getattr(args, 'wang_incumbent_enabled', False)}; "
             f"wang_incumbent_used={result.wang_incumbent_used}; "
             f"wang_incumbent_moves={result.wang_incumbent_moves}; "
+            f"frg_seed_enabled={getattr(args, 'frg_seed_enabled', False)}; "
+            f"frg_seed_used={result.frg_seed_used}; "
+            f"frg_seed_moves={result.frg_seed_moves}; "
+            f"frg_seed_status={result.frg_seed_status}; "
+            f"frg_seed_cap_ok={result.frg_seed_cap_ok}; "
+            f"frg_seed_large_layout_ok={result.frg_seed_large_layout_ok}; "
             f"wang_cap_enabled={getattr(args, 'wang_cap_enabled', False)}; "
             f"wang_rollout_enabled={getattr(args, 'wang_rollout_enabled', False)}; "
             f"wang_rollout_strategy={getattr(args, 'wang_rollout_strategy', 'local')}; "
@@ -7640,6 +9679,9 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"scheduler_adaptive_max_parent_top_share={getattr(args, 'scheduler_adaptive_max_parent_top_share', 0.0)}; "
             f"scheduler_adaptive_plateau_window={getattr(args, 'scheduler_adaptive_plateau_window', 0)}; "
             f"scheduler_adaptive_cap_slack={getattr(args, 'scheduler_adaptive_cap_slack', 0)}; "
+            f"scarcity_inner_rescue_enabled={getattr(args, 'scarcity_inner_rescue_enabled', False)}; "
+            f"scarcity_inner_rescue_layers={getattr(args, '_scarcity_inner_rescue_layers', 0)}; "
+            f"scarcity_inner_rescue_gate_reasons={_format_scarcity_inner_rescue_gate_reasons(getattr(args, '_scarcity_inner_rescue_gate_reasons', {}))}; "
             f"scarcity_group_qubo_enabled={getattr(args, 'scarcity_group_qubo_enabled', False)}; "
             f"initial_scarcity_risk={getattr(args, '_initial_scarcity_risk', 0.0):.6f}; "
             f"initial_workload_hardness={getattr(args, '_initial_workload_hardness', 0.0):.6f}; "
@@ -7784,54 +9826,28 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "unified_wang_qubo_time_sec": result.unified_wang_qubo_time_sec,
             "unified_wang_fixed_prefix_selected": result.unified_wang_fixed_prefix_selected,
             "unified_wang_fix_pair_selected": result.unified_wang_fix_pair_selected,
-            "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
-            "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
-            "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
-            "feasibility_escape_n_window": getattr(args, "feasibility_escape_n_window", 1),
-            "feasibility_escape_dead_end_threshold": getattr(args, "feasibility_escape_dead_end_threshold", 0.45),
-            "feasibility_escape_min_temporary_slack": getattr(args, "feasibility_escape_min_temporary_slack", 1),
-            "feasibility_escape_calls": result.feasibility_escape_calls,
-            "feasibility_escape_added_total": result.feasibility_escape_added_total,
-            "feasibility_escape_active_layers": getattr(
-                result,
-                "feasibility_escape_active_layers",
-                getattr(args, "_feasibility_escape_active_layers", 0),
-            ),
-            "feasibility_escape_gate_reasons": getattr(
-                result,
-                "feasibility_escape_gate_reasons",
-                _format_feasibility_escape_gate_reasons(getattr(args, "_feasibility_escape_gate_reasons", {})),
-            ),
-            "frg_candidate_supplement_enabled": getattr(args, "frg_candidate_supplement_enabled", False),
-            "frg_candidate_supplement_width": getattr(args, "frg_candidate_supplement_width", 0),
-            "frg_candidate_focus_n": getattr(args, "frg_candidate_focus_n", -1),
-            "frg_candidate_n_window": getattr(args, "frg_candidate_n_window", 2),
-            "frg_candidate_max_ranked": getattr(args, "frg_candidate_max_ranked", 96),
-            "frg_candidate_selected_total": result.frg_candidate_selected_total,
-            "frg_compound_escape_enabled": getattr(args, "frg_compound_escape_enabled", False),
-            "frg_compound_escape_width": getattr(args, "frg_compound_escape_width", 0),
-            "frg_compound_escape_focus_n": getattr(args, "frg_compound_escape_focus_n", -1),
-            "frg_compound_escape_plateau_window": getattr(args, "frg_compound_escape_plateau_window", 5),
-            "frg_compound_escape_plateau_delta": getattr(args, "frg_compound_escape_plateau_delta", 0),
-            "frg_compound_escape_cap_slack": getattr(args, "frg_compound_escape_cap_slack", 24),
-            "frg_compound_escape_min_candidates": getattr(args, "frg_compound_escape_min_candidates", 7000),
-            "frg_compound_appended_total": result.frg_compound_appended_total,
-            "dlts_value_supplement_enabled": getattr(args, "dlts_value_supplement_enabled", False),
-            "dlts_value_supplement_width": getattr(args, "dlts_value_supplement_width", 0),
-            "dlts_value_selected_total": result.dlts_value_selected_total,
-            "bs_frg_qubo_enabled": getattr(args, "bs_frg_qubo_enabled", False),
-            "bs_frg_qubo_supplement_width": getattr(args, "bs_frg_qubo_supplement_width", 0),
-            "bs_frg_qubo_focus_n": getattr(args, "bs_frg_qubo_focus_n", -1),
-            "bs_frg_qubo_n_window": getattr(args, "bs_frg_qubo_n_window", 2),
-            "bs_frg_qubo_min_candidates": getattr(args, "bs_frg_qubo_min_candidates", 64),
-            "bs_frg_qubo_max_vars": getattr(args, "bs_frg_qubo_max_vars", 64),
-            "bs_frg_qubo_same_parent_penalty": getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35),
-            "bs_frg_qubo_signature_penalty": getattr(args, "bs_frg_qubo_signature_penalty", 0.15),
-            "bs_frg_qubo_n_band_penalty": getattr(args, "bs_frg_qubo_n_band_penalty", 0.05),
-            "bs_frg_qubo_calls": result.bs_frg_qubo_calls,
-            "bs_frg_qubo_vars": result.bs_frg_qubo_vars,
-            "bs_frg_qubo_time_sec": result.bs_frg_qubo_time_sec,
-            "bs_frg_qubo_selected_total": result.bs_frg_qubo_selected_total,
+            "union_diversity_qubo_enabled": getattr(args, "union_diversity_qubo_enabled", False),
+            "union_diversity_qubo_supplement_width": getattr(args, "union_diversity_qubo_supplement_width", 0),
+            "union_diversity_qubo_focus_n": getattr(args, "union_diversity_qubo_focus_n", -1),
+            "union_diversity_qubo_n_window": getattr(args, "union_diversity_qubo_n_window", 2),
+            "union_diversity_qubo_min_candidates": getattr(args, "union_diversity_qubo_min_candidates", 64),
+            "union_diversity_qubo_max_vars": getattr(args, "union_diversity_qubo_max_vars", 64),
+            "union_diversity_qubo_select": getattr(args, "union_diversity_qubo_select", 8),
+            "union_diversity_qubo_rank_weight": getattr(args, "union_diversity_qubo_rank_weight", 0.02),
+            "union_diversity_qubo_wang_fixed_weight": getattr(args, "union_diversity_qubo_wang_fixed_weight", 0.0),
+            "union_diversity_qubo_wang_pair_weight": getattr(args, "union_diversity_qubo_wang_pair_weight", 0.0),
+            "union_diversity_qubo_frg_weight": getattr(args, "union_diversity_qubo_frg_weight", 0.0),
+            "union_diversity_qubo_rollout_bonus": getattr(args, "union_diversity_qubo_rollout_bonus", 0.0),
+            "union_diversity_qubo_same_parent_penalty": getattr(args, "union_diversity_qubo_same_parent_penalty", 0.45),
+            "union_diversity_qubo_same_source_penalty": getattr(args, "union_diversity_qubo_same_source_penalty", 0.20),
+            "union_diversity_qubo_signature_penalty": getattr(args, "union_diversity_qubo_signature_penalty", 0.18),
+            "union_diversity_qubo_reduce_signature_penalty": getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12),
+            "union_diversity_qubo_n_band_penalty": getattr(args, "union_diversity_qubo_n_band_penalty", 0.08),
+            "union_diversity_qubo_n_band_size": getattr(args, "union_diversity_qubo_n_band_size", 1),
+            "union_diversity_qubo_calls": result.union_diversity_qubo_calls,
+            "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
+            "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
+            "union_diversity_qubo_selected_total": result.union_diversity_qubo_selected_total,
             "pareto_union_enabled": getattr(args, "pareto_union_enabled", False),
             "pareto_union_candidate_window": getattr(args, "pareto_union_candidate_window", 128),
             "pareto_union_seed_width": getattr(args, "pareto_union_seed_width", 0),
@@ -7864,6 +9880,121 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "pareto_union_distinct_source_count_last": result.pareto_union_distinct_source_count_last,
             "pareto_union_distinct_dest_count_last": result.pareto_union_distinct_dest_count_last,
             "pareto_union_distinct_signature_count_last": result.pareto_union_distinct_signature_count_last,
+            "union_rollout_probe_enabled": getattr(args, "union_rollout_probe_enabled", False),
+            "union_rollout_probe_max_candidates": getattr(args, "union_rollout_probe_max_candidates", 0),
+            "union_rollout_probe_time_limit": getattr(args, "union_rollout_probe_time_limit", 0.0),
+            "union_rollout_probe_max_steps": getattr(args, "union_rollout_probe_max_steps", 0),
+            "union_rollout_probe_feasible_bonus": getattr(args, "union_rollout_probe_feasible_bonus", 0.0),
+            "union_rollout_probe_final_n_weight": getattr(args, "union_rollout_probe_final_n_weight", 0.0),
+            "union_rollout_probe_moves_weight": getattr(args, "union_rollout_probe_moves_weight", 0.0),
+            "union_rollout_probe_dead_end_penalty": getattr(args, "union_rollout_probe_dead_end_penalty", 0.0),
+            "union_rollout_probe_calls": result.union_rollout_probe_calls,
+            "union_rollout_probe_candidates": result.union_rollout_probe_candidates,
+            "union_rollout_probe_feasible": result.union_rollout_probe_feasible,
+            "union_rollout_probe_time_sec": result.union_rollout_probe_time_sec,
+            "union_rollout_probe_cache_hits": result.union_rollout_probe_cache_hits,
+            "union_rollout_probe_selected_total": result.union_rollout_probe_selected_total,
+            "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
+            "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
+            "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
+            "feasibility_escape_n_window": getattr(args, "feasibility_escape_n_window", 1),
+            "feasibility_escape_dead_end_threshold": getattr(args, "feasibility_escape_dead_end_threshold", 0.45),
+            "feasibility_escape_min_temporary_slack": getattr(args, "feasibility_escape_min_temporary_slack", 1),
+            "feasibility_escape_calls": result.feasibility_escape_calls,
+            "feasibility_escape_added_total": result.feasibility_escape_added_total,
+            "feasibility_escape_active_layers": getattr(
+                result,
+                "feasibility_escape_active_layers",
+                getattr(args, "_feasibility_escape_active_layers", 0),
+            ),
+            "feasibility_escape_gate_reasons": getattr(
+                result,
+                "feasibility_escape_gate_reasons",
+                _format_feasibility_escape_gate_reasons(getattr(args, "_feasibility_escape_gate_reasons", {})),
+            ),
+            "candidate_ledger_score_enabled": getattr(args, "candidate_ledger_score_enabled", False),
+            "candidate_ledger_wang_fixed_weight": getattr(args, "candidate_ledger_wang_fixed_weight", 0.0),
+            "candidate_ledger_wang_pair_weight": getattr(args, "candidate_ledger_wang_pair_weight", 0.0),
+            "candidate_ledger_frg_fill_weight": getattr(args, "candidate_ledger_frg_fill_weight", 0.0),
+            "candidate_ledger_frg_reduce_weight": getattr(args, "candidate_ledger_frg_reduce_weight", 0.0),
+            "candidate_ledger_frg_unblocked_weight": getattr(args, "candidate_ledger_frg_unblocked_weight", 0.0),
+            "candidate_ledger_frg_assignment_weight": getattr(args, "candidate_ledger_frg_assignment_weight", 0.0),
+            "candidate_ledger_rollout_bonus": getattr(args, "candidate_ledger_rollout_bonus", 0.0),
+            "candidate_ledger_rank_window": getattr(args, "candidate_ledger_rank_window", 0),
+            "frg_seed_enabled": getattr(args, "frg_seed_enabled", False),
+            "frg_seed_time_limit": getattr(args, "frg_seed_time_limit", 0.0),
+            "frg_seed_min_max_steps": getattr(args, "frg_seed_min_max_steps", 0),
+            "frg_seed_max_steps_multiplier": getattr(args, "frg_seed_max_steps_multiplier", 0),
+            "frg_seed_max_steps_cap": getattr(args, "frg_seed_max_steps_cap", 0),
+            "frg_seed_respect_cap": getattr(args, "frg_seed_respect_cap", True),
+            "frg_seed_prune_to_incumbent": getattr(args, "frg_seed_prune_to_incumbent", True),
+            "frg_seed_allow_large_over_cap": getattr(args, "frg_seed_allow_large_over_cap", False),
+            "frg_seed_paper_pure": getattr(args, "frg_seed_paper_pure", True),
+            "frg_seed_moves": result.frg_seed_moves,
+            "frg_seed_runtime_sec": result.frg_seed_runtime_sec,
+            "frg_seed_used": result.frg_seed_used,
+            "frg_seed_status": result.frg_seed_status,
+            "frg_seed_generated": result.frg_seed_generated,
+            "frg_seed_cap_ok": result.frg_seed_cap_ok,
+            "frg_seed_large_layout_ok": result.frg_seed_large_layout_ok,
+            "frg_candidate_supplement_enabled": getattr(args, "frg_candidate_supplement_enabled", False),
+            "frg_candidate_supplement_width": getattr(args, "frg_candidate_supplement_width", 0),
+            "frg_candidate_focus_n": getattr(args, "frg_candidate_focus_n", -1),
+            "frg_candidate_n_window": getattr(args, "frg_candidate_n_window", 2),
+            "frg_candidate_max_ranked": getattr(args, "frg_candidate_max_ranked", 96),
+            "frg_candidate_scarcity_gate_enabled": getattr(args, "frg_candidate_scarcity_gate_enabled", False),
+            "frg_candidate_selected_total": result.frg_candidate_selected_total,
+            "frg_linear_score_enabled": getattr(args, "frg_linear_score_enabled", False),
+            "frg_linear_fill_weight": getattr(args, "frg_linear_fill_weight", 0.0),
+            "frg_linear_reduce_weight": getattr(args, "frg_linear_reduce_weight", 0.0),
+            "frg_linear_unblocked_weight": getattr(args, "frg_linear_unblocked_weight", 0.0),
+            "frg_linear_assignment_weight": getattr(args, "frg_linear_assignment_weight", 0.0),
+            "frg_linear_max_height_ordered_weight": getattr(args, "frg_linear_max_height_ordered_weight", 0.0),
+            "frg_linear_height_pressure_weight": getattr(args, "frg_linear_height_pressure_weight", 0.0),
+            "frg_rank_tiebreak_enabled": getattr(args, "frg_rank_tiebreak_enabled", False),
+            "frg_rank_tiebreak_weight": getattr(args, "frg_rank_tiebreak_weight", 0.0),
+            "frg_rank_tiebreak_focus_n": getattr(args, "frg_rank_tiebreak_focus_n", -1),
+            "frg_scarcity_gate_enabled": getattr(args, "frg_scarcity_gate_enabled", False),
+            "frg_scarcity_gate_max_available_stacks": getattr(args, "frg_scarcity_gate_max_available_stacks", 1),
+            "frg_scarcity_gate_min_avg_height_pressure": getattr(args, "frg_scarcity_gate_min_avg_height_pressure", 0.85),
+            "frg_scarcity_gate_max_reduction_receivers": getattr(args, "frg_scarcity_gate_max_reduction_receivers", -1),
+            "frg_scarcity_gate_min_unblocked_bad": getattr(args, "frg_scarcity_gate_min_unblocked_bad", 0),
+            "frg_scarcity_gate_min_candidates": getattr(args, "frg_scarcity_gate_min_candidates", 1000),
+            "frg_scarcity_gate_cap_slack": getattr(args, "frg_scarcity_gate_cap_slack", 24),
+            "frg_layout_available_stack_count": getattr(args, "_frg_layout_available_stack_count", 0),
+            "frg_layout_avg_height_pressure": getattr(args, "_frg_layout_avg_height_pressure", 0.0),
+            "frg_layout_max_height_ordered_risk": getattr(args, "_frg_layout_max_height_ordered_risk", 0),
+            "frg_layout_unblocked_bad_containers": getattr(args, "_frg_layout_unblocked_bad_containers", 0),
+            "frg_layout_reduction_receiver_stack_count": getattr(args, "_frg_layout_reduction_receiver_stack_count", 0),
+            "frg_layout_reduction_receiver_pressure": getattr(args, "_frg_layout_reduction_receiver_pressure", 0.0),
+            "frg_compound_escape_enabled": getattr(args, "frg_compound_escape_enabled", False),
+            "frg_compound_escape_width": getattr(args, "frg_compound_escape_width", 0),
+            "frg_compound_escape_focus_n": getattr(args, "frg_compound_escape_focus_n", -1),
+            "frg_compound_escape_plateau_window": getattr(args, "frg_compound_escape_plateau_window", 5),
+            "frg_compound_escape_plateau_delta": getattr(args, "frg_compound_escape_plateau_delta", 0),
+            "frg_compound_escape_cap_slack": getattr(args, "frg_compound_escape_cap_slack", 24),
+            "frg_compound_escape_min_candidates": getattr(args, "frg_compound_escape_min_candidates", 7000),
+            "frg_compound_appended_total": result.frg_compound_appended_total,
+            "dlts_value_supplement_enabled": getattr(args, "dlts_value_supplement_enabled", False),
+            "dlts_value_supplement_width": getattr(args, "dlts_value_supplement_width", 0),
+            "dlts_value_selected_total": result.dlts_value_selected_total,
+            "bs_frg_qubo_enabled": getattr(args, "bs_frg_qubo_enabled", False),
+            "bs_frg_qubo_supplement_width": getattr(args, "bs_frg_qubo_supplement_width", 0),
+            "bs_frg_qubo_focus_n": getattr(args, "bs_frg_qubo_focus_n", -1),
+            "bs_frg_qubo_n_window": getattr(args, "bs_frg_qubo_n_window", 2),
+            "bs_frg_qubo_min_candidates": getattr(args, "bs_frg_qubo_min_candidates", 64),
+            "bs_frg_qubo_max_vars": getattr(args, "bs_frg_qubo_max_vars", 64),
+            "bs_frg_qubo_rank_weight": getattr(args, "bs_frg_qubo_rank_weight", 0.05),
+            "bs_frg_qubo_same_parent_penalty": getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35),
+            "bs_frg_qubo_same_source_penalty": getattr(args, "bs_frg_qubo_same_source_penalty", 0.0),
+            "bs_frg_qubo_signature_penalty": getattr(args, "bs_frg_qubo_signature_penalty", 0.15),
+            "bs_frg_qubo_reduce_signature_penalty": getattr(args, "bs_frg_qubo_reduce_signature_penalty", 0.0),
+            "bs_frg_qubo_n_band_penalty": getattr(args, "bs_frg_qubo_n_band_penalty", 0.05),
+            "bs_frg_qubo_n_band_size": getattr(args, "bs_frg_qubo_n_band_size", 1),
+            "bs_frg_qubo_calls": result.bs_frg_qubo_calls,
+            "bs_frg_qubo_vars": result.bs_frg_qubo_vars,
+            "bs_frg_qubo_time_sec": result.bs_frg_qubo_time_sec,
+            "bs_frg_qubo_selected_total": result.bs_frg_qubo_selected_total,
             "wang2017_task_enabled": getattr(args, "wang2017_task_enabled", False),
             "wang2017_task_supplement_width": getattr(args, "wang2017_task_supplement_width", 0),
             "wang2017_task_focus_n": getattr(args, "wang2017_task_focus_n", 8),
@@ -8000,6 +10131,44 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "scheduler_state_rescue_plateau_window": getattr(args, "scheduler_state_rescue_plateau_window", 0),
             "scheduler_state_rescue_plateau_delta": getattr(args, "scheduler_state_rescue_plateau_delta", 0),
             "scheduler_state_rescue_cap_slack": getattr(args, "scheduler_state_rescue_cap_slack", 0),
+            "scarcity_inner_rescue_enabled": getattr(args, "scarcity_inner_rescue_enabled", False),
+            "scarcity_inner_rescue_risk_threshold": getattr(args, "scarcity_inner_rescue_risk_threshold", 0.0),
+            "scarcity_inner_rescue_max_l0": getattr(args, "scarcity_inner_rescue_max_l0", 0),
+            "scarcity_inner_rescue_min_one_safe_ratio": getattr(
+                args, "scarcity_inner_rescue_min_one_safe_ratio", 0.0
+            ),
+            "scarcity_inner_rescue_min_n": getattr(args, "scarcity_inner_rescue_min_n", 0),
+            "scarcity_inner_rescue_min_candidates": getattr(args, "scarcity_inner_rescue_min_candidates", 0),
+            "scarcity_inner_rescue_layers": getattr(args, "_scarcity_inner_rescue_layers", 0),
+            "scarcity_inner_rescue_gate_reasons": _format_scarcity_inner_rescue_gate_reasons(
+                getattr(args, "_scarcity_inner_rescue_gate_reasons", {})
+            ),
+            "tail_lookahead_enabled": getattr(args, "tail_lookahead_enabled", False),
+            "tail_lookahead_core_path_only": getattr(args, "tail_lookahead_core_path_only", False),
+            "tail_lookahead_max_stack_count": getattr(args, "tail_lookahead_max_stack_count", 0),
+            "tail_lookahead_focus_n": getattr(args, "tail_lookahead_focus_n", 2),
+            "tail_lookahead_depth": getattr(args, "tail_lookahead_depth", 3),
+            "tail_lookahead_max_seed_candidates": getattr(args, "tail_lookahead_max_seed_candidates", 0),
+            "tail_lookahead_supplement_width": getattr(args, "tail_lookahead_supplement_width", 0),
+            "tail_lookahead_max_expanded": getattr(args, "tail_lookahead_max_expanded", 0),
+            "tail_lookahead_calls": result.tail_lookahead_calls,
+            "tail_lookahead_selected_total": result.tail_lookahead_selected_total,
+            "tail_lookahead_goal_reachable_total": result.tail_lookahead_goal_reachable_total,
+            "tail_lookahead_best_delta_total": result.tail_lookahead_best_delta_total,
+            "tail_lookahead_expanded_total": result.tail_lookahead_expanded_total,
+            "tail_risk_reserve_enabled": getattr(args, "tail_risk_reserve_enabled", False),
+            "tail_risk_focus_n": getattr(args, "tail_risk_focus_n", 2),
+            "tail_risk_n_window": getattr(args, "tail_risk_n_window", 1),
+            "tail_risk_reserve_width": getattr(args, "tail_risk_reserve_width", 0),
+            "tail_risk_max_scan": getattr(args, "tail_risk_max_scan", 0),
+            "tail_risk_min_candidates": getattr(args, "tail_risk_min_candidates", 0),
+            "tail_risk_min_depth_slack": getattr(args, "tail_risk_min_depth_slack", 0),
+            "tail_risk_max_depth_slack": getattr(args, "tail_risk_max_depth_slack", 0),
+            "tail_risk_max_stack_count": getattr(args, "tail_risk_max_stack_count", 0),
+            "tail_risk_reserve_calls": result.tail_risk_reserve_calls,
+            "tail_risk_reserve_selected_total": result.tail_risk_reserve_selected_total,
+            "tail_risk_reserve_scanned_total": result.tail_risk_reserve_scanned_total,
+            "tail_risk_reserve_one_step_improved_total": result.tail_risk_reserve_one_step_improved_total,
             "scarcity_group_qubo_enabled": getattr(args, "scarcity_group_qubo_enabled", False),
             "scarcity_group_qubo_threshold": getattr(args, "scarcity_group_qubo_threshold", 0.0),
             "scarcity_group_qubo_plateau_window": getattr(args, "scarcity_group_qubo_plateau_window", 0),
@@ -8243,6 +10412,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "experiments" / "compact_beam_qubo_n0_v1.csv")
     parser.add_argument("--beam-survivor-telemetry-output", type=Path)
     parser.add_argument("--dlts-feature-output", type=Path)
+    parser.add_argument("--frontier-trace-output", type=Path)
+    parser.add_argument("--frontier-trace-top-k", type=int, default=64)
     parser.add_argument(
         "--solver-profile",
         "--profile",
@@ -8318,11 +10489,73 @@ def main() -> int:
     parser.add_argument("--feasibility-escape-n-window", type=int, default=None)
     parser.add_argument("--feasibility-escape-dead-end-threshold", type=float, default=None)
     parser.add_argument("--feasibility-escape-min-temporary-slack", type=int, default=None)
+    parser.add_argument("--candidate-ledger-score-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--candidate-ledger-wang-fixed-weight", type=float, default=None)
+    parser.add_argument("--candidate-ledger-wang-pair-weight", type=float, default=None)
+    parser.add_argument("--candidate-ledger-frg-fill-weight", type=float, default=None)
+    parser.add_argument("--candidate-ledger-frg-reduce-weight", type=float, default=None)
+    parser.add_argument("--candidate-ledger-frg-unblocked-weight", type=float, default=None)
+    parser.add_argument("--candidate-ledger-frg-assignment-weight", type=float, default=None)
+    parser.add_argument("--candidate-ledger-rollout-bonus", type=float, default=None)
+    parser.add_argument("--candidate-ledger-rank-window", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-diversity-qubo-supplement-width", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-focus-n", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-n-window", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-min-candidates", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-max-vars", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-select", type=int, default=None)
+    parser.add_argument("--union-diversity-qubo-rank-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-wang-fixed-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-wang-pair-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-frg-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-rollout-bonus", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-same-parent-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-same-source-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-signature-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-reduce-signature-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-n-band-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-n-band-size", type=int, default=None)
+    parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-rollout-probe-max-candidates", type=int, default=None)
+    parser.add_argument("--union-rollout-probe-time-limit", type=float, default=None)
+    parser.add_argument("--union-rollout-probe-max-steps", type=int, default=None)
+    parser.add_argument("--union-rollout-probe-feasible-bonus", type=float, default=None)
+    parser.add_argument("--union-rollout-probe-final-n-weight", type=float, default=None)
+    parser.add_argument("--union-rollout-probe-moves-weight", type=float, default=None)
+    parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float, default=None)
+    parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-time-limit", type=float, default=None)
+    parser.add_argument("--frg-seed-min-max-steps", type=int, default=None)
+    parser.add_argument("--frg-seed-max-steps-multiplier", type=int, default=None)
+    parser.add_argument("--frg-seed-max-steps-cap", type=int, default=None)
+    parser.add_argument("--frg-seed-respect-cap", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-prune-to-incumbent", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-allow-large-over-cap", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-paper-pure", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int, default=None)
     parser.add_argument("--frg-candidate-focus-n", type=int, default=None)
     parser.add_argument("--frg-candidate-n-window", type=int, default=None)
     parser.add_argument("--frg-candidate-max-ranked", type=int, default=None)
+    parser.add_argument("--frg-candidate-scarcity-gate-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-linear-score-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-linear-fill-weight", type=float, default=None)
+    parser.add_argument("--frg-linear-reduce-weight", type=float, default=None)
+    parser.add_argument("--frg-linear-unblocked-weight", type=float, default=None)
+    parser.add_argument("--frg-linear-assignment-weight", type=float, default=None)
+    parser.add_argument("--frg-linear-max-height-ordered-weight", type=float, default=None)
+    parser.add_argument("--frg-linear-height-pressure-weight", type=float, default=None)
+    parser.add_argument("--frg-rank-tiebreak-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-rank-tiebreak-weight", type=float, default=None)
+    parser.add_argument("--frg-rank-tiebreak-focus-n", type=int, default=None)
+    parser.add_argument("--frg-scarcity-gate-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-scarcity-gate-max-available-stacks", type=int, default=None)
+    parser.add_argument("--frg-scarcity-gate-min-avg-height-pressure", type=float, default=None)
+    parser.add_argument("--frg-scarcity-gate-max-reduction-receivers", type=int, default=None)
+    parser.add_argument("--frg-scarcity-gate-min-unblocked-bad", type=int, default=None)
+    parser.add_argument("--frg-scarcity-gate-min-candidates", type=int, default=None)
+    parser.add_argument("--frg-scarcity-gate-cap-slack", type=int, default=None)
     parser.add_argument("--frg-compound-escape-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-compound-escape-width", type=int, default=None)
     parser.add_argument("--frg-compound-escape-focus-n", type=int, default=None)
@@ -8340,7 +10573,9 @@ def main() -> int:
     parser.add_argument("--bs-frg-qubo-max-vars", type=int, default=None)
     parser.add_argument("--bs-frg-qubo-rank-weight", type=float, default=None)
     parser.add_argument("--bs-frg-qubo-same-parent-penalty", type=float, default=None)
+    parser.add_argument("--bs-frg-qubo-same-source-penalty", type=float, default=None)
     parser.add_argument("--bs-frg-qubo-signature-penalty", type=float, default=None)
+    parser.add_argument("--bs-frg-qubo-reduce-signature-penalty", type=float, default=None)
     parser.add_argument("--bs-frg-qubo-n-band-penalty", type=float, default=None)
     parser.add_argument("--bs-frg-qubo-n-band-size", type=int, default=None)
     parser.add_argument("--wang2017-task-enabled", action=argparse.BooleanOptionalAction, default=None)
@@ -8349,6 +10584,23 @@ def main() -> int:
     parser.add_argument("--wang2017-task-n-window", type=int, default=None)
     parser.add_argument("--wang2017-task-plateau-window", type=int, default=None)
     parser.add_argument("--wang2017-task-plateau-delta", type=int, default=None)
+    parser.add_argument("--tail-lookahead-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--tail-lookahead-core-path-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--tail-lookahead-max-stack-count", type=int, default=None)
+    parser.add_argument("--tail-lookahead-focus-n", type=int, default=None)
+    parser.add_argument("--tail-lookahead-depth", type=int, default=None)
+    parser.add_argument("--tail-lookahead-max-seed-candidates", type=int, default=None)
+    parser.add_argument("--tail-lookahead-supplement-width", type=int, default=None)
+    parser.add_argument("--tail-lookahead-max-expanded", type=int, default=None)
+    parser.add_argument("--tail-risk-reserve-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--tail-risk-focus-n", type=int, default=None)
+    parser.add_argument("--tail-risk-n-window", type=int, default=None)
+    parser.add_argument("--tail-risk-reserve-width", type=int, default=None)
+    parser.add_argument("--tail-risk-max-scan", type=int, default=None)
+    parser.add_argument("--tail-risk-min-candidates", type=int, default=None)
+    parser.add_argument("--tail-risk-min-depth-slack", type=int, default=None)
+    parser.add_argument("--tail-risk-max-depth-slack", type=int, default=None)
+    parser.add_argument("--tail-risk-max-stack-count", type=int, default=None)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
     parser.add_argument("--max-moves", type=int)
@@ -8490,6 +10742,12 @@ def main() -> int:
     parser.add_argument("--scheduler-state-rescue-plateau-window", type=int, default=3)
     parser.add_argument("--scheduler-state-rescue-plateau-delta", type=int, default=0)
     parser.add_argument("--scheduler-state-rescue-cap-slack", type=int, default=8)
+    parser.add_argument("--scarcity-inner-rescue-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--scarcity-inner-rescue-risk-threshold", type=float, default=0.95)
+    parser.add_argument("--scarcity-inner-rescue-max-l0", type=int, default=5)
+    parser.add_argument("--scarcity-inner-rescue-min-one-safe-ratio", type=float, default=0.90)
+    parser.add_argument("--scarcity-inner-rescue-min-n", type=int, default=12)
+    parser.add_argument("--scarcity-inner-rescue-min-candidates", type=int, default=64)
     parser.add_argument("--scarcity-group-qubo-enabled", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--scarcity-group-qubo-threshold", type=float, default=0.95)
     parser.add_argument("--scarcity-group-qubo-plateau-window", type=int, default=2)
@@ -8594,8 +10852,11 @@ def main() -> int:
         args.beam_survivor_telemetry_output = ROOT / args.beam_survivor_telemetry_output
     if args.dlts_feature_output is not None and not args.dlts_feature_output.is_absolute():
         args.dlts_feature_output = ROOT / args.dlts_feature_output
+    if args.frontier_trace_output is not None and not args.frontier_trace_output.is_absolute():
+        args.frontier_trace_output = ROOT / args.frontier_trace_output
     _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
     _reset_dlts_feature_output(args.dlts_feature_output)
+    _reset_frontier_trace_output(args.frontier_trace_output)
     acceptance = output.with_name(output.stem + "_acceptance.csv")
     moves_dir = output.with_name(output.stem + "_moves")
     report = output.with_suffix(".md")

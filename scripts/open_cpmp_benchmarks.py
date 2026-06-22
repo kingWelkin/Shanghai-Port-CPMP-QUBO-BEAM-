@@ -29,6 +29,7 @@ from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
     _initial_scarcity_metrics,
     _light_route_score,
     _reset_beam_survivor_output,
+    _reset_frontier_trace_output,
     _row_dict_from_instance_result,
     _validate_instance_result,
     make_compact_args,
@@ -281,6 +282,47 @@ def _unified_wang_row_fields(result, args: argparse.Namespace) -> dict[str, obje
     }
 
 
+def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "union_diversity_qubo_enabled": getattr(args, "union_diversity_qubo_enabled", False),
+        "union_diversity_qubo_supplement_width": getattr(args, "union_diversity_qubo_supplement_width", 0),
+        "union_diversity_qubo_focus_n": getattr(args, "union_diversity_qubo_focus_n", -1),
+        "union_diversity_qubo_n_window": getattr(args, "union_diversity_qubo_n_window", 2),
+        "union_diversity_qubo_min_candidates": getattr(args, "union_diversity_qubo_min_candidates", 64),
+        "union_diversity_qubo_max_vars": getattr(args, "union_diversity_qubo_max_vars", 64),
+        "union_diversity_qubo_select": getattr(args, "union_diversity_qubo_select", 8),
+        "union_diversity_qubo_rank_weight": getattr(args, "union_diversity_qubo_rank_weight", 0.02),
+        "union_diversity_qubo_wang_fixed_weight": getattr(args, "union_diversity_qubo_wang_fixed_weight", 0.0),
+        "union_diversity_qubo_wang_pair_weight": getattr(args, "union_diversity_qubo_wang_pair_weight", 0.0),
+        "union_diversity_qubo_frg_weight": getattr(args, "union_diversity_qubo_frg_weight", 0.0),
+        "union_diversity_qubo_rollout_bonus": getattr(args, "union_diversity_qubo_rollout_bonus", 0.0),
+        "union_diversity_qubo_same_parent_penalty": getattr(args, "union_diversity_qubo_same_parent_penalty", 0.45),
+        "union_diversity_qubo_same_source_penalty": getattr(args, "union_diversity_qubo_same_source_penalty", 0.20),
+        "union_diversity_qubo_signature_penalty": getattr(args, "union_diversity_qubo_signature_penalty", 0.18),
+        "union_diversity_qubo_reduce_signature_penalty": getattr(args, "union_diversity_qubo_reduce_signature_penalty", 0.12),
+        "union_diversity_qubo_n_band_penalty": getattr(args, "union_diversity_qubo_n_band_penalty", 0.08),
+        "union_diversity_qubo_n_band_size": getattr(args, "union_diversity_qubo_n_band_size", 1),
+        "union_diversity_qubo_calls": getattr(result, "union_diversity_qubo_calls", 0),
+        "union_diversity_qubo_vars": getattr(result, "union_diversity_qubo_vars", 0),
+        "union_diversity_qubo_time_sec": getattr(result, "union_diversity_qubo_time_sec", 0.0),
+        "union_diversity_qubo_selected_total": getattr(result, "union_diversity_qubo_selected_total", 0),
+        "union_rollout_probe_enabled": getattr(args, "union_rollout_probe_enabled", False),
+        "union_rollout_probe_max_candidates": getattr(args, "union_rollout_probe_max_candidates", 0),
+        "union_rollout_probe_time_limit": getattr(args, "union_rollout_probe_time_limit", 0.0),
+        "union_rollout_probe_max_steps": getattr(args, "union_rollout_probe_max_steps", 0),
+        "union_rollout_probe_feasible_bonus": getattr(args, "union_rollout_probe_feasible_bonus", 0.0),
+        "union_rollout_probe_final_n_weight": getattr(args, "union_rollout_probe_final_n_weight", 0.0),
+        "union_rollout_probe_moves_weight": getattr(args, "union_rollout_probe_moves_weight", 0.0),
+        "union_rollout_probe_dead_end_penalty": getattr(args, "union_rollout_probe_dead_end_penalty", 0.0),
+        "union_rollout_probe_calls": getattr(result, "union_rollout_probe_calls", 0),
+        "union_rollout_probe_candidates": getattr(result, "union_rollout_probe_candidates", 0),
+        "union_rollout_probe_feasible": getattr(result, "union_rollout_probe_feasible", 0),
+        "union_rollout_probe_time_sec": getattr(result, "union_rollout_probe_time_sec", 0.0),
+        "union_rollout_probe_cache_hits": getattr(result, "union_rollout_probe_cache_hits", 0),
+        "union_rollout_probe_selected_total": getattr(result, "union_rollout_probe_selected_total", 0),
+    }
+
+
 def _wang_pair_qubo_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
     return {
         "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
@@ -317,7 +359,31 @@ def _frg_dlts_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
         "frg_candidate_focus_n": getattr(args, "frg_candidate_focus_n", -1),
         "frg_candidate_n_window": getattr(args, "frg_candidate_n_window", 2),
         "frg_candidate_max_ranked": getattr(args, "frg_candidate_max_ranked", 96),
+        "frg_candidate_scarcity_gate_enabled": getattr(args, "frg_candidate_scarcity_gate_enabled", False),
         "frg_candidate_selected_total": getattr(result, "frg_candidate_selected_total", 0),
+        "frg_linear_score_enabled": getattr(args, "frg_linear_score_enabled", False),
+        "frg_linear_fill_weight": getattr(args, "frg_linear_fill_weight", 0.0),
+        "frg_linear_reduce_weight": getattr(args, "frg_linear_reduce_weight", 0.0),
+        "frg_linear_unblocked_weight": getattr(args, "frg_linear_unblocked_weight", 0.0),
+        "frg_linear_assignment_weight": getattr(args, "frg_linear_assignment_weight", 0.0),
+        "frg_linear_max_height_ordered_weight": getattr(args, "frg_linear_max_height_ordered_weight", 0.0),
+        "frg_linear_height_pressure_weight": getattr(args, "frg_linear_height_pressure_weight", 0.0),
+        "frg_rank_tiebreak_enabled": getattr(args, "frg_rank_tiebreak_enabled", False),
+        "frg_rank_tiebreak_weight": getattr(args, "frg_rank_tiebreak_weight", 0.0),
+        "frg_rank_tiebreak_focus_n": getattr(args, "frg_rank_tiebreak_focus_n", -1),
+        "frg_scarcity_gate_enabled": getattr(args, "frg_scarcity_gate_enabled", False),
+        "frg_scarcity_gate_max_available_stacks": getattr(args, "frg_scarcity_gate_max_available_stacks", 1),
+        "frg_scarcity_gate_min_avg_height_pressure": getattr(args, "frg_scarcity_gate_min_avg_height_pressure", 0.85),
+        "frg_scarcity_gate_max_reduction_receivers": getattr(args, "frg_scarcity_gate_max_reduction_receivers", -1),
+        "frg_scarcity_gate_min_unblocked_bad": getattr(args, "frg_scarcity_gate_min_unblocked_bad", 0),
+        "frg_scarcity_gate_min_candidates": getattr(args, "frg_scarcity_gate_min_candidates", 1000),
+        "frg_scarcity_gate_cap_slack": getattr(args, "frg_scarcity_gate_cap_slack", 24),
+        "frg_layout_available_stack_count": getattr(args, "_frg_layout_available_stack_count", 0),
+        "frg_layout_avg_height_pressure": getattr(args, "_frg_layout_avg_height_pressure", 0.0),
+        "frg_layout_max_height_ordered_risk": getattr(args, "_frg_layout_max_height_ordered_risk", 0),
+        "frg_layout_unblocked_bad_containers": getattr(args, "_frg_layout_unblocked_bad_containers", 0),
+        "frg_layout_reduction_receiver_stack_count": getattr(args, "_frg_layout_reduction_receiver_stack_count", 0),
+        "frg_layout_reduction_receiver_pressure": getattr(args, "_frg_layout_reduction_receiver_pressure", 0.0),
         "frg_compound_escape_enabled": getattr(args, "frg_compound_escape_enabled", False),
         "frg_compound_escape_width": getattr(args, "frg_compound_escape_width", 0),
         "frg_compound_escape_focus_n": getattr(args, "frg_compound_escape_focus_n", -1),
@@ -329,6 +395,28 @@ def _frg_dlts_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
         "dlts_value_supplement_enabled": getattr(args, "dlts_value_supplement_enabled", False),
         "dlts_value_supplement_width": getattr(args, "dlts_value_supplement_width", 0),
         "dlts_value_selected_total": getattr(result, "dlts_value_selected_total", 0),
+    }
+
+
+def _bs_frg_qubo_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "bs_frg_qubo_enabled": getattr(args, "bs_frg_qubo_enabled", False),
+        "bs_frg_qubo_supplement_width": getattr(args, "bs_frg_qubo_supplement_width", 0),
+        "bs_frg_qubo_focus_n": getattr(args, "bs_frg_qubo_focus_n", -1),
+        "bs_frg_qubo_n_window": getattr(args, "bs_frg_qubo_n_window", 2),
+        "bs_frg_qubo_min_candidates": getattr(args, "bs_frg_qubo_min_candidates", 64),
+        "bs_frg_qubo_max_vars": getattr(args, "bs_frg_qubo_max_vars", 64),
+        "bs_frg_qubo_rank_weight": getattr(args, "bs_frg_qubo_rank_weight", 0.05),
+        "bs_frg_qubo_same_parent_penalty": getattr(args, "bs_frg_qubo_same_parent_penalty", 0.35),
+        "bs_frg_qubo_same_source_penalty": getattr(args, "bs_frg_qubo_same_source_penalty", 0.0),
+        "bs_frg_qubo_signature_penalty": getattr(args, "bs_frg_qubo_signature_penalty", 0.15),
+        "bs_frg_qubo_reduce_signature_penalty": getattr(args, "bs_frg_qubo_reduce_signature_penalty", 0.0),
+        "bs_frg_qubo_n_band_penalty": getattr(args, "bs_frg_qubo_n_band_penalty", 0.05),
+        "bs_frg_qubo_n_band_size": getattr(args, "bs_frg_qubo_n_band_size", 1),
+        "bs_frg_qubo_calls": getattr(result, "bs_frg_qubo_calls", 0),
+        "bs_frg_qubo_vars": getattr(result, "bs_frg_qubo_vars", 0),
+        "bs_frg_qubo_time_sec": getattr(result, "bs_frg_qubo_time_sec", 0.0),
+        "bs_frg_qubo_selected_total": getattr(result, "bs_frg_qubo_selected_total", 0),
     }
 
 
@@ -546,6 +634,46 @@ def _priority_group_row_dict_from_instance_result(
         "bucket_qubo_select": getattr(args, "bucket_qubo_select", 0),
         "bucket_min_candidates": getattr(args, "bucket_min_candidates", 0),
         "rescue_layers_used": result.rescue_layers_used,
+        "scarcity_inner_rescue_layers": getattr(result, "scarcity_inner_rescue_layers", 0),
+        "scarcity_inner_rescue_gate_reasons": getattr(result, "scarcity_inner_rescue_gate_reasons", ""),
+        "scarcity_inner_rescue_enabled": getattr(args, "scarcity_inner_rescue_enabled", False),
+        "scarcity_inner_rescue_risk_threshold": getattr(args, "scarcity_inner_rescue_risk_threshold", 0.0),
+        "scarcity_inner_rescue_max_l0": getattr(args, "scarcity_inner_rescue_max_l0", 0),
+        "scarcity_inner_rescue_min_one_safe_ratio": getattr(
+            args, "scarcity_inner_rescue_min_one_safe_ratio", 0.0
+        ),
+        "scarcity_inner_rescue_min_n": getattr(args, "scarcity_inner_rescue_min_n", 0),
+        "scarcity_inner_rescue_min_candidates": getattr(args, "scarcity_inner_rescue_min_candidates", 0),
+        "tail_lookahead_enabled": getattr(args, "tail_lookahead_enabled", False),
+        "tail_lookahead_core_path_only": getattr(args, "tail_lookahead_core_path_only", False),
+        "tail_lookahead_max_stack_count": getattr(args, "tail_lookahead_max_stack_count", 0),
+        "tail_lookahead_focus_n": getattr(args, "tail_lookahead_focus_n", 2),
+        "tail_lookahead_depth": getattr(args, "tail_lookahead_depth", 3),
+        "tail_lookahead_max_seed_candidates": getattr(args, "tail_lookahead_max_seed_candidates", 0),
+        "tail_lookahead_supplement_width": getattr(args, "tail_lookahead_supplement_width", 0),
+        "tail_lookahead_max_expanded": getattr(args, "tail_lookahead_max_expanded", 0),
+        "tail_lookahead_calls": getattr(result, "tail_lookahead_calls", 0),
+        "tail_lookahead_selected_total": getattr(result, "tail_lookahead_selected_total", 0),
+        "tail_lookahead_goal_reachable_total": getattr(result, "tail_lookahead_goal_reachable_total", 0),
+        "tail_lookahead_best_delta_total": getattr(result, "tail_lookahead_best_delta_total", 0),
+        "tail_lookahead_expanded_total": getattr(result, "tail_lookahead_expanded_total", 0),
+        "tail_risk_reserve_enabled": getattr(args, "tail_risk_reserve_enabled", False),
+        "tail_risk_focus_n": getattr(args, "tail_risk_focus_n", 2),
+        "tail_risk_n_window": getattr(args, "tail_risk_n_window", 1),
+        "tail_risk_reserve_width": getattr(args, "tail_risk_reserve_width", 0),
+        "tail_risk_max_scan": getattr(args, "tail_risk_max_scan", 0),
+        "tail_risk_min_candidates": getattr(args, "tail_risk_min_candidates", 0),
+        "tail_risk_min_depth_slack": getattr(args, "tail_risk_min_depth_slack", 0),
+        "tail_risk_max_depth_slack": getattr(args, "tail_risk_max_depth_slack", 0),
+        "tail_risk_max_stack_count": getattr(args, "tail_risk_max_stack_count", 0),
+        "tail_risk_reserve_calls": getattr(result, "tail_risk_reserve_calls", 0),
+        "tail_risk_reserve_selected_total": getattr(result, "tail_risk_reserve_selected_total", 0),
+        "tail_risk_reserve_scanned_total": getattr(result, "tail_risk_reserve_scanned_total", 0),
+        "tail_risk_reserve_one_step_improved_total": getattr(
+            result,
+            "tail_risk_reserve_one_step_improved_total",
+            0,
+        ),
         "scarcity_group_qubo_enabled": getattr(args, "scarcity_group_qubo_enabled", False),
         "scarcity_group_qubo_threshold": getattr(args, "scarcity_group_qubo_threshold", 0.0),
         "scarcity_group_qubo_plateau_window": getattr(args, "scarcity_group_qubo_plateau_window", 0),
@@ -562,8 +690,10 @@ def _priority_group_row_dict_from_instance_result(
     }
     row.update(_wang_pair_qubo_row_fields(result, args))
     row.update(_unified_wang_row_fields(result, args))
+    row.update(_union_diversity_qubo_row_fields(result, args))
     row.update(_feasibility_escape_row_fields(result, args))
     row.update(_frg_dlts_row_fields(result, args))
+    row.update(_bs_frg_qubo_row_fields(result, args))
     row.update(_wang2017_task_row_fields(result, args))
     return row
 
@@ -824,6 +954,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
             "qubo_scheduler_state_v5_wang_rescue_fast_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
+            "qubo_scheduler_state_v5_wang_rescue_tail_risk_polish",
             "qubo_scheduler_state_v5_wang2017_task_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
             "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio",
@@ -836,9 +967,22 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
             "qubo_scheduler_state_v5_wang_rescue_fast_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
+            "qubo_scheduler_state_v5_wang_rescue_tail_lookahead_polish",
+            "qubo_scheduler_state_v5_wang_rescue_tail_risk_polish",
+            "qubo_scheduler_state_v5_wang_rescue_scarcity_inner_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
+            "qubo_scheduler_state_v5_frg_linear_polish",
+            "qubo_scheduler_state_v5_frg_safe_tiebreak_polish",
+            "qubo_scheduler_state_v5_frg_diverse_qubo_polish",
+            "qubo_scheduler_state_v5_frg_candidate_pool_polish",
+            "qubo_scheduler_state_v5_frg_scarcity_gate_polish",
+            "qubo_scheduler_state_v5_frg_all_ablation_polish",
             "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "qubo_scheduler_state_v5_frg_seed_qubo_polish",
+            "qubo_scheduler_state_v5_frg_seed_ledger_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
             "qubo_scheduler_state_v5_pareto_union_polish",
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
@@ -894,6 +1038,9 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
             overrides[field] = value
     if getattr(args, "beam_survivor_telemetry_output", None) is not None:
         overrides["beam_survivor_telemetry_output"] = args.beam_survivor_telemetry_output
+    if getattr(args, "frontier_trace_output", None) is not None:
+        overrides["frontier_trace_output"] = args.frontier_trace_output
+        overrides["frontier_trace_top_k"] = int(getattr(args, "frontier_trace_top_k", 64) or 64)
     value = getattr(args, "post_polish_qubo", None)
     if value is not None:
         overrides["post_polish_qubo"] = value
@@ -956,8 +1103,38 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "scheduler_state_rescue_plateau_window",
         "scheduler_state_rescue_plateau_delta",
         "scheduler_state_rescue_cap_slack",
+        "scarcity_inner_rescue_enabled",
+        "scarcity_inner_rescue_risk_threshold",
+        "scarcity_inner_rescue_max_l0",
+        "scarcity_inner_rescue_min_one_safe_ratio",
+        "scarcity_inner_rescue_min_n",
+        "scarcity_inner_rescue_min_candidates",
+        "tail_lookahead_enabled",
+        "tail_lookahead_core_path_only",
+        "tail_lookahead_max_stack_count",
+        "tail_lookahead_focus_n",
+        "tail_lookahead_depth",
+        "tail_lookahead_max_seed_candidates",
+        "tail_lookahead_supplement_width",
+        "tail_lookahead_max_expanded",
+        "tail_risk_reserve_enabled",
+        "tail_risk_focus_n",
+        "tail_risk_n_window",
+        "tail_risk_reserve_width",
+        "tail_risk_max_scan",
+        "tail_risk_min_candidates",
+        "tail_risk_min_depth_slack",
+        "tail_risk_max_depth_slack",
+        "tail_risk_max_stack_count",
         "rescue_qubo_supplement_width",
         "rescue_max_qubo_vars",
+        "qubo_rank_weight",
+        "qubo_n_weight",
+        "qubo_depth_weight",
+        "qubo_parent_weight",
+        "qubo_next_n_weight",
+        "qubo_diversity_weight",
+        "qubo_penalty_a",
     ):
         value = getattr(args, field, None)
         if value is not None:
@@ -1028,11 +1205,76 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "feasibility_escape_n_window",
         "feasibility_escape_dead_end_threshold",
         "feasibility_escape_min_temporary_slack",
+        "candidate_ledger_score_enabled",
+        "candidate_ledger_wang_fixed_weight",
+        "candidate_ledger_wang_pair_weight",
+        "candidate_ledger_frg_fill_weight",
+        "candidate_ledger_frg_reduce_weight",
+        "candidate_ledger_frg_unblocked_weight",
+        "candidate_ledger_frg_assignment_weight",
+        "candidate_ledger_rollout_bonus",
+        "candidate_ledger_rank_window",
+        "union_diversity_qubo_enabled",
+        "union_diversity_qubo_supplement_width",
+        "union_diversity_qubo_focus_n",
+        "union_diversity_qubo_n_window",
+        "union_diversity_qubo_min_candidates",
+        "union_diversity_qubo_max_vars",
+        "union_diversity_qubo_select",
+        "union_diversity_qubo_rank_weight",
+        "union_diversity_qubo_wang_fixed_weight",
+        "union_diversity_qubo_wang_pair_weight",
+        "union_diversity_qubo_frg_weight",
+        "union_diversity_qubo_rollout_bonus",
+        "union_diversity_qubo_same_parent_penalty",
+        "union_diversity_qubo_same_source_penalty",
+        "union_diversity_qubo_signature_penalty",
+        "union_diversity_qubo_reduce_signature_penalty",
+        "union_diversity_qubo_n_band_penalty",
+        "union_diversity_qubo_n_band_size",
+        "union_rollout_probe_enabled",
+        "union_rollout_probe_max_candidates",
+        "union_rollout_probe_time_limit",
+        "union_rollout_probe_max_steps",
+        "union_rollout_probe_feasible_bonus",
+        "union_rollout_probe_final_n_weight",
+        "union_rollout_probe_moves_weight",
+        "union_rollout_probe_dead_end_penalty",
+        "frg_seed_enabled",
+        "frg_seed_time_limit",
+        "frg_seed_min_max_steps",
+        "frg_seed_max_steps_multiplier",
+        "frg_seed_max_steps_cap",
+        "frg_seed_respect_cap",
+        "frg_seed_prune_to_incumbent",
+        "frg_seed_allow_large_over_cap",
+        "frg_seed_paper_pure",
         "frg_candidate_supplement_enabled",
         "frg_candidate_supplement_width",
         "frg_candidate_focus_n",
         "frg_candidate_n_window",
         "frg_candidate_max_ranked",
+        "frg_candidate_scarcity_gate_enabled",
+        "frg_linear_score_enabled",
+        "frg_linear_fill_weight",
+        "frg_linear_reduce_weight",
+        "frg_linear_unblocked_weight",
+        "frg_linear_assignment_weight",
+        "frg_linear_max_height_ordered_weight",
+        "frg_linear_height_pressure_weight",
+        "frg_rank_tiebreak_enabled",
+        "frg_rank_tiebreak_weight",
+        "frg_rank_tiebreak_focus_n",
+        "frg_scarcity_gate_enabled",
+        "frg_scarcity_gate_max_available_stacks",
+        "frg_scarcity_gate_min_avg_height_pressure",
+        "frg_scarcity_gate_max_reduction_receivers",
+        "frg_scarcity_gate_min_unblocked_bad",
+        "frg_scarcity_gate_min_candidates",
+        "frg_scarcity_gate_cap_slack",
+        "frg_layout_unblocked_bad_containers",
+        "frg_layout_reduction_receiver_stack_count",
+        "frg_layout_reduction_receiver_pressure",
         "frg_compound_escape_enabled",
         "frg_compound_escape_width",
         "frg_compound_escape_focus_n",
@@ -1058,7 +1300,9 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "bs_frg_qubo_max_vars",
         "bs_frg_qubo_rank_weight",
         "bs_frg_qubo_same_parent_penalty",
+        "bs_frg_qubo_same_source_penalty",
         "bs_frg_qubo_signature_penalty",
+        "bs_frg_qubo_reduce_signature_penalty",
         "bs_frg_qubo_n_band_penalty",
         "bs_frg_qubo_n_band_size",
         "post_polish_successor_cache",
@@ -1141,12 +1385,38 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_fast_polish"})
     if variant == "qubo_scheduler_state_v5_wang_rescue_light_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_light_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_tail_lookahead_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_tail_lookahead_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_tail_risk_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_tail_risk_polish"})
+    if variant == "qubo_scheduler_state_v5_wang_rescue_scarcity_inner_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_wang_rescue_scarcity_inner_polish"})
     if variant == "qubo_scheduler_state_v5_feasibility_escape_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_feasibility_escape_polish"})
     if variant == "qubo_scheduler_state_v5_frg_dlts_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_frg_dlts_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_linear_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_linear_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_safe_tiebreak_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_safe_tiebreak_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_diverse_qubo_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_diverse_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_candidate_pool_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_candidate_pool_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_scarcity_gate_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_scarcity_gate_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_all_ablation_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_all_ablation_polish"})
     if variant == "qubo_scheduler_state_v5_bs_frg_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_bs_frg_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_seed_qubo_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_seed_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_frg_seed_ledger_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_frg_seed_ledger_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_polish"})
     if variant == "qubo_scheduler_state_v5_pareto_union_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_pareto_union_polish"})
     if variant == "qubo_scheduler_state_v5_frg_compound_polish":
@@ -1395,9 +1665,22 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_wang_rescue_successor_cache_polish",
             "qubo_scheduler_state_v5_wang_rescue_fast_polish",
             "qubo_scheduler_state_v5_wang_rescue_light_polish",
+            "qubo_scheduler_state_v5_wang_rescue_tail_lookahead_polish",
+            "qubo_scheduler_state_v5_wang_rescue_tail_risk_polish",
+            "qubo_scheduler_state_v5_wang_rescue_scarcity_inner_polish",
             "qubo_scheduler_state_v5_feasibility_escape_polish",
             "qubo_scheduler_state_v5_frg_dlts_polish",
+            "qubo_scheduler_state_v5_frg_linear_polish",
+            "qubo_scheduler_state_v5_frg_safe_tiebreak_polish",
+            "qubo_scheduler_state_v5_frg_diverse_qubo_polish",
+            "qubo_scheduler_state_v5_frg_candidate_pool_polish",
+            "qubo_scheduler_state_v5_frg_scarcity_gate_polish",
+            "qubo_scheduler_state_v5_frg_all_ablation_polish",
             "qubo_scheduler_state_v5_bs_frg_qubo_polish",
+            "qubo_scheduler_state_v5_frg_seed_qubo_polish",
+            "qubo_scheduler_state_v5_frg_seed_ledger_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
             "qubo_scheduler_state_v5_pareto_union_polish",
             "qubo_scheduler_state_v5_frg_compound_polish",
             "qubo_scheduler_state_v5_frg_compound_loose_polish",
@@ -1422,7 +1705,7 @@ def build_parser() -> argparse.ArgumentParser:
             "wang_all",
             "wang_research_all",
         ],
-        default="qubo",
+        default="qubo_scheduler_state_v5_qubo_diversity_union_polish",
     )
     parser.add_argument("--skip-invalid", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--solver-profile", choices=sorted(_SOLVER_PROFILES.keys()), default="speed_v2")
@@ -1492,8 +1775,38 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler-state-rescue-plateau-window", type=int)
     parser.add_argument("--scheduler-state-rescue-plateau-delta", type=int)
     parser.add_argument("--scheduler-state-rescue-cap-slack", type=int)
+    parser.add_argument("--scarcity-inner-rescue-enabled", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--scarcity-inner-rescue-risk-threshold", type=float)
+    parser.add_argument("--scarcity-inner-rescue-max-l0", type=int)
+    parser.add_argument("--scarcity-inner-rescue-min-one-safe-ratio", type=float)
+    parser.add_argument("--scarcity-inner-rescue-min-n", type=int)
+    parser.add_argument("--scarcity-inner-rescue-min-candidates", type=int)
+    parser.add_argument("--tail-lookahead-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--tail-lookahead-core-path-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--tail-lookahead-max-stack-count", type=int)
+    parser.add_argument("--tail-lookahead-focus-n", type=int)
+    parser.add_argument("--tail-lookahead-depth", type=int)
+    parser.add_argument("--tail-lookahead-max-seed-candidates", type=int)
+    parser.add_argument("--tail-lookahead-supplement-width", type=int)
+    parser.add_argument("--tail-lookahead-max-expanded", type=int)
+    parser.add_argument("--tail-risk-reserve-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--tail-risk-focus-n", type=int)
+    parser.add_argument("--tail-risk-n-window", type=int)
+    parser.add_argument("--tail-risk-reserve-width", type=int)
+    parser.add_argument("--tail-risk-max-scan", type=int)
+    parser.add_argument("--tail-risk-min-candidates", type=int)
+    parser.add_argument("--tail-risk-min-depth-slack", type=int)
+    parser.add_argument("--tail-risk-max-depth-slack", type=int)
+    parser.add_argument("--tail-risk-max-stack-count", type=int)
     parser.add_argument("--rescue-qubo-supplement-width", type=int)
     parser.add_argument("--rescue-max-qubo-vars", type=int)
+    parser.add_argument("--qubo-rank-weight", type=float)
+    parser.add_argument("--qubo-n-weight", type=float)
+    parser.add_argument("--qubo-depth-weight", type=float)
+    parser.add_argument("--qubo-parent-weight", type=float)
+    parser.add_argument("--qubo-next-n-weight", type=float)
+    parser.add_argument("--qubo-diversity-weight", type=float)
+    parser.add_argument("--qubo-penalty-a", type=float)
     parser.add_argument("--rank-bucket-topk", type=int, default=0)
     parser.add_argument(
         "--rank-bucket-key",
@@ -1560,11 +1873,73 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--feasibility-escape-n-window", type=int)
     parser.add_argument("--feasibility-escape-dead-end-threshold", type=float)
     parser.add_argument("--feasibility-escape-min-temporary-slack", type=int)
+    parser.add_argument("--candidate-ledger-score-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--candidate-ledger-wang-fixed-weight", type=float)
+    parser.add_argument("--candidate-ledger-wang-pair-weight", type=float)
+    parser.add_argument("--candidate-ledger-frg-fill-weight", type=float)
+    parser.add_argument("--candidate-ledger-frg-reduce-weight", type=float)
+    parser.add_argument("--candidate-ledger-frg-unblocked-weight", type=float)
+    parser.add_argument("--candidate-ledger-frg-assignment-weight", type=float)
+    parser.add_argument("--candidate-ledger-rollout-bonus", type=float)
+    parser.add_argument("--candidate-ledger-rank-window", type=int)
+    parser.add_argument("--union-diversity-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-diversity-qubo-supplement-width", type=int)
+    parser.add_argument("--union-diversity-qubo-focus-n", type=int)
+    parser.add_argument("--union-diversity-qubo-n-window", type=int)
+    parser.add_argument("--union-diversity-qubo-min-candidates", type=int)
+    parser.add_argument("--union-diversity-qubo-max-vars", type=int)
+    parser.add_argument("--union-diversity-qubo-select", type=int)
+    parser.add_argument("--union-diversity-qubo-rank-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-wang-fixed-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-wang-pair-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-frg-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-rollout-bonus", type=float)
+    parser.add_argument("--union-diversity-qubo-same-parent-penalty", type=float)
+    parser.add_argument("--union-diversity-qubo-same-source-penalty", type=float)
+    parser.add_argument("--union-diversity-qubo-signature-penalty", type=float)
+    parser.add_argument("--union-diversity-qubo-reduce-signature-penalty", type=float)
+    parser.add_argument("--union-diversity-qubo-n-band-penalty", type=float)
+    parser.add_argument("--union-diversity-qubo-n-band-size", type=int)
+    parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-rollout-probe-max-candidates", type=int)
+    parser.add_argument("--union-rollout-probe-time-limit", type=float)
+    parser.add_argument("--union-rollout-probe-max-steps", type=int)
+    parser.add_argument("--union-rollout-probe-feasible-bonus", type=float)
+    parser.add_argument("--union-rollout-probe-final-n-weight", type=float)
+    parser.add_argument("--union-rollout-probe-moves-weight", type=float)
+    parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float)
+    parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-time-limit", type=float)
+    parser.add_argument("--frg-seed-min-max-steps", type=int)
+    parser.add_argument("--frg-seed-max-steps-multiplier", type=int)
+    parser.add_argument("--frg-seed-max-steps-cap", type=int)
+    parser.add_argument("--frg-seed-respect-cap", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-prune-to-incumbent", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-allow-large-over-cap", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-paper-pure", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int)
     parser.add_argument("--frg-candidate-focus-n", type=int)
     parser.add_argument("--frg-candidate-n-window", type=int)
     parser.add_argument("--frg-candidate-max-ranked", type=int)
+    parser.add_argument("--frg-candidate-scarcity-gate-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-linear-score-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-linear-fill-weight", type=float)
+    parser.add_argument("--frg-linear-reduce-weight", type=float)
+    parser.add_argument("--frg-linear-unblocked-weight", type=float)
+    parser.add_argument("--frg-linear-assignment-weight", type=float)
+    parser.add_argument("--frg-linear-max-height-ordered-weight", type=float)
+    parser.add_argument("--frg-linear-height-pressure-weight", type=float)
+    parser.add_argument("--frg-rank-tiebreak-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-rank-tiebreak-weight", type=float)
+    parser.add_argument("--frg-rank-tiebreak-focus-n", type=int)
+    parser.add_argument("--frg-scarcity-gate-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-scarcity-gate-max-available-stacks", type=int)
+    parser.add_argument("--frg-scarcity-gate-min-avg-height-pressure", type=float)
+    parser.add_argument("--frg-scarcity-gate-max-reduction-receivers", type=int)
+    parser.add_argument("--frg-scarcity-gate-min-unblocked-bad", type=int)
+    parser.add_argument("--frg-scarcity-gate-min-candidates", type=int)
+    parser.add_argument("--frg-scarcity-gate-cap-slack", type=int)
     parser.add_argument("--frg-compound-escape-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-compound-escape-width", type=int)
     parser.add_argument("--frg-compound-escape-focus-n", type=int)
@@ -1582,7 +1957,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--bs-frg-qubo-max-vars", type=int)
     parser.add_argument("--bs-frg-qubo-rank-weight", type=float)
     parser.add_argument("--bs-frg-qubo-same-parent-penalty", type=float)
+    parser.add_argument("--bs-frg-qubo-same-source-penalty", type=float)
     parser.add_argument("--bs-frg-qubo-signature-penalty", type=float)
+    parser.add_argument("--bs-frg-qubo-reduce-signature-penalty", type=float)
     parser.add_argument("--bs-frg-qubo-n-band-penalty", type=float)
     parser.add_argument("--bs-frg-qubo-n-band-size", type=int)
     parser.add_argument("--wang2017-task-enabled", action=argparse.BooleanOptionalAction, default=None)
@@ -1598,6 +1975,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=ROOT / "docs" / "experiments" / "open_cpmp_dlts_speed_v2.csv",
     )
     parser.add_argument("--beam-survivor-telemetry-output", type=Path)
+    parser.add_argument("--frontier-trace-output", type=Path)
+    parser.add_argument("--frontier-trace-top-k", type=int, default=64)
     return parser
 
 
@@ -1608,7 +1987,10 @@ def main() -> int:
     args.output = args.output if args.output.is_absolute() else ROOT / args.output
     if args.beam_survivor_telemetry_output is not None and not args.beam_survivor_telemetry_output.is_absolute():
         args.beam_survivor_telemetry_output = ROOT / args.beam_survivor_telemetry_output
+    if args.frontier_trace_output is not None and not args.frontier_trace_output.is_absolute():
+        args.frontier_trace_output = ROOT / args.frontier_trace_output
     _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
+    _reset_frontier_trace_output(args.frontier_trace_output)
     rows = run_open_benchmark(args)
     _write_open_csv(rows, args.output)
     summary = args.output.with_name(args.output.stem + "_summary.md")

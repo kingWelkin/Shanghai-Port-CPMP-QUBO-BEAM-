@@ -268,7 +268,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--datasets", nargs="+", choices=["BF", "CV", "CVS"], default=["BF", "CV"])
     parser.add_argument("--sample-per-family", type=int, default=10)
     parser.add_argument("--max-total", type=int)
-    parser.add_argument("--variant", default="qubo_scheduler_state_v5_wang_rescue_polish")
+    parser.add_argument("--variant", default="qubo_scheduler_state_v5_qubo_diversity_union_polish")
     parser.add_argument("--solver-profile", default="speed_v2")
     parser.add_argument("--time-limit", type=float, default=20.0)
     parser.add_argument("--alpha", type=float, default=10.0)
@@ -276,6 +276,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--beam-width", type=int)
     parser.add_argument("--core-width", type=int)
     parser.add_argument("--parent-core-cap", type=int)
+    parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-rollout-probe-max-candidates", type=int)
+    parser.add_argument("--union-rollout-probe-time-limit", type=float)
+    parser.add_argument("--union-rollout-probe-max-steps", type=int)
+    parser.add_argument("--union-rollout-probe-feasible-bonus", type=float)
+    parser.add_argument("--union-rollout-probe-final-n-weight", type=float)
+    parser.add_argument("--union-rollout-probe-moves-weight", type=float)
+    parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument(
         "--output",
