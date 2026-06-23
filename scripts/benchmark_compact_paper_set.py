@@ -295,6 +295,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--micro-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--micro-rollout-trace-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--receiver-safety-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-tiebreak-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-tiebreak-epsilon", type=float)
     parser.add_argument("--micro-rollout-window", type=int)
     parser.add_argument("--micro-first-child-limit", type=int)
     parser.add_argument("--micro-second-child-limit", type=int)

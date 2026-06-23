@@ -1201,6 +1201,8 @@ def _compact_args(**overrides):
         "micro_rollout_enabled": False,
         "micro_rollout_trace_only": False,
         "receiver_safety_enabled": False,
+        "micro_rollout_tiebreak_only": False,
+        "micro_rollout_tiebreak_epsilon": 0.12,
         "micro_rollout_window": 32,
         "micro_first_child_limit": 8,
         "micro_second_child_limit": 8,
@@ -2112,6 +2114,66 @@ def test_solver_profiles_for_micro_rollout_are_ablation_friendly():
     assert micro.receiver_safety_enabled is False
     assert combined.micro_rollout_enabled is True
     assert combined.receiver_safety_enabled is True
+
+
+def test_micro_rollout_tiebreak_only_applies_adjustment_only_to_near_equal_energy():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    def feature(energy: float, adjustment: float) -> bench.UnionDiversityQuboFeatures:
+        return bench.UnionDiversityQuboFeatures(
+            energy=energy,
+            n_value=5,
+            depth=4,
+            parent_code=b"p0",
+            source_stack=0,
+            signature=(0, 0, 0, 0, 0),
+            reduce_signature=(0, 0, 0),
+            micro_best_n=4,
+            micro_best_delta_n=-1,
+            micro_linear_adjustment=adjustment,
+        )
+
+    args = _compact_args(
+        micro_rollout_tiebreak_only=True,
+        micro_rollout_tiebreak_epsilon=0.10,
+    )
+
+    adjusted = bench._apply_union_diversity_micro_tiebreak(
+        [
+            feature(1.00, -0.20),
+            feature(1.05, -0.20),
+            feature(1.50, -0.20),
+        ],
+        args,
+    )
+
+    assert adjusted[0].energy == pytest.approx(0.80)
+    assert adjusted[0].micro_linear_adjustment == -0.20
+    assert adjusted[1].energy == pytest.approx(0.85)
+    assert adjusted[1].micro_linear_adjustment == -0.20
+    assert adjusted[2].energy == pytest.approx(1.50)
+    assert adjusted[2].micro_linear_adjustment == 0.0
+
+
+def test_solver_profile_for_micro_rollout_tiebreak_is_opt_in():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    mainline = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_polish")
+    tiebreak = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish")
+
+    bench._apply_solver_profile(mainline)
+    bench._apply_solver_profile(tiebreak)
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish"])
+    open_args = _args_for_variant(outer, outer.variant)
+
+    assert mainline.micro_rollout_tiebreak_only is False
+    assert tiebreak.micro_rollout_enabled is True
+    assert tiebreak.receiver_safety_enabled is True
+    assert tiebreak.micro_rollout_tiebreak_only is True
+    assert tiebreak.union_rollout_terminal_graft is False
+    assert open_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish"
+    assert "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish" in _variant_names("wang_research_all")
 
 
 def test_union_rollout_terminal_graft_combines_child_prefix_and_rollout_tail():
@@ -8497,6 +8559,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",

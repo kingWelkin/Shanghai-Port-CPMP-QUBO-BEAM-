@@ -333,6 +333,8 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
         "micro_rollout_enabled": getattr(args, "micro_rollout_enabled", False),
         "micro_rollout_trace_only": getattr(args, "micro_rollout_trace_only", False),
         "receiver_safety_enabled": getattr(args, "receiver_safety_enabled", False),
+        "micro_rollout_tiebreak_only": getattr(args, "micro_rollout_tiebreak_only", False),
+        "micro_rollout_tiebreak_epsilon": getattr(args, "micro_rollout_tiebreak_epsilon", 0.0),
         "micro_rollout_window": getattr(args, "micro_rollout_window", 0),
         "micro_first_child_limit": getattr(args, "micro_first_child_limit", 0),
         "micro_second_child_limit": getattr(args, "micro_second_child_limit", 0),
@@ -1015,6 +1017,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
@@ -1283,6 +1286,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "micro_rollout_enabled",
         "micro_rollout_trace_only",
         "receiver_safety_enabled",
+        "micro_rollout_tiebreak_only",
+        "micro_rollout_tiebreak_epsilon",
         "micro_rollout_window",
         "micro_first_child_limit",
         "micro_second_child_limit",
@@ -1493,6 +1498,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_only_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
@@ -1770,6 +1777,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
@@ -2012,6 +2020,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--micro-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--micro-rollout-trace-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--receiver-safety-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-tiebreak-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-tiebreak-epsilon", type=float)
     parser.add_argument("--micro-rollout-window", type=int)
     parser.add_argument("--micro-first-child-limit", type=int)
     parser.add_argument("--micro-second-child-limit", type=int)

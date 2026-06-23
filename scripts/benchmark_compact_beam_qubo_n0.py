@@ -242,6 +242,8 @@ COMPACT_EXTRA_FIELDS = [
     "micro_rollout_enabled",
     "micro_rollout_trace_only",
     "receiver_safety_enabled",
+    "micro_rollout_tiebreak_only",
+    "micro_rollout_tiebreak_epsilon",
     "micro_rollout_window",
     "micro_first_child_limit",
     "micro_second_child_limit",
@@ -1172,6 +1174,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "micro_rollout_enabled": False,
         "micro_rollout_trace_only": False,
         "receiver_safety_enabled": False,
+        "micro_rollout_tiebreak_only": False,
+        "micro_rollout_tiebreak_epsilon": 0.12,
         "micro_rollout_window": 32,
         "micro_first_child_limit": 8,
         "micro_second_child_limit": 8,
@@ -2151,6 +2155,14 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_rollout_polish"]
     "receiver_safety_enabled": True,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "micro_rollout_enabled": True,
+    "receiver_safety_enabled": True,
+    "micro_rollout_tiebreak_only": True,
+    "micro_rollout_tiebreak_epsilon": 0.10,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "union_rollout_probe_enabled": True,
@@ -3055,6 +3067,11 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--receiver-safety-enabled",
             "--no-receiver-safety-enabled",
         ),
+        "micro_rollout_tiebreak_only": (
+            "--micro-rollout-tiebreak-only",
+            "--no-micro-rollout-tiebreak-only",
+        ),
+        "micro_rollout_tiebreak_epsilon": "--micro-rollout-tiebreak-epsilon",
         "micro_rollout_window": "--micro-rollout-window",
         "micro_first_child_limit": "--micro-first-child-limit",
         "micro_second_child_limit": "--micro-second-child-limit",
@@ -4703,7 +4720,8 @@ def _union_diversity_qubo_features(
     micro_linear_adjustment = 0.0
     if micro is not None or receiver is not None:
         micro_linear_adjustment = _micro_rollout_linear_adjustment(micro, receiver, args)
-        energy += micro_linear_adjustment
+        if not bool(getattr(args, "micro_rollout_tiebreak_only", False)):
+            energy += micro_linear_adjustment
     features = UnionDiversityQuboFeatures(
         energy=float(energy),
         n_value=int(n_value),
@@ -4739,6 +4757,29 @@ def _union_diversity_qubo_features(
             args._micro_rollout_feature_trace_by_code = trace_features
         trace_features[code] = features
     return features
+
+
+def _apply_union_diversity_micro_tiebreak(
+    features: list[UnionDiversityQuboFeatures],
+    args: argparse.Namespace,
+) -> list[UnionDiversityQuboFeatures]:
+    if not bool(getattr(args, "micro_rollout_tiebreak_only", False)):
+        return list(features)
+    if not features:
+        return []
+    epsilon = max(0.0, float(getattr(args, "micro_rollout_tiebreak_epsilon", 0.12) or 0.0))
+    best_base_energy = min(float(feature.energy) for feature in features)
+    threshold = best_base_energy + epsilon
+    adjusted: list[UnionDiversityQuboFeatures] = []
+    for feature in features:
+        raw_adjustment = float(feature.micro_linear_adjustment)
+        if raw_adjustment != 0.0 and float(feature.energy) <= threshold:
+            adjusted.append(feature._replace(energy=float(feature.energy) + raw_adjustment))
+        elif raw_adjustment != 0.0:
+            adjusted.append(feature._replace(micro_linear_adjustment=0.0))
+        else:
+            adjusted.append(feature)
+    return adjusted
 
 
 def _union_diversity_candidate_origin(code: bytes, args: argparse.Namespace) -> str:
@@ -4879,6 +4920,12 @@ def _select_union_diversity_qubo_supplement(
         )
         for rank, (code, data) in enumerate(usable)
     ]
+    features = _apply_union_diversity_micro_tiebreak(features, args)
+    trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", None)
+    if isinstance(trace_features, dict):
+        for (code, _data), feature in zip(usable, features):
+            if feature.micro_best_n >= 0 or feature.receiver_safe_delta != 0:
+                trace_features[code] = feature
     linear = _normalize_values([feature.energy for feature in features])
     model = QuboModel()
     vars_ = [model.add_binary_var(f"ud_{idx}") for idx in range(len(usable))]
@@ -10943,6 +10990,8 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "micro_rollout_enabled": getattr(args, "micro_rollout_enabled", False),
             "micro_rollout_trace_only": getattr(args, "micro_rollout_trace_only", False),
             "receiver_safety_enabled": getattr(args, "receiver_safety_enabled", False),
+            "micro_rollout_tiebreak_only": getattr(args, "micro_rollout_tiebreak_only", False),
+            "micro_rollout_tiebreak_epsilon": getattr(args, "micro_rollout_tiebreak_epsilon", 0.0),
             "micro_rollout_window": getattr(args, "micro_rollout_window", 0),
             "micro_first_child_limit": getattr(args, "micro_first_child_limit", 0),
             "micro_second_child_limit": getattr(args, "micro_second_child_limit", 0),
@@ -11635,6 +11684,8 @@ def main() -> int:
     parser.add_argument("--micro-rollout-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--micro-rollout-trace-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--receiver-safety-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-tiebreak-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--micro-rollout-tiebreak-epsilon", type=float, default=None)
     parser.add_argument("--micro-rollout-window", type=int, default=None)
     parser.add_argument("--micro-first-child-limit", type=int, default=None)
     parser.add_argument("--micro-second-child-limit", type=int, default=None)
