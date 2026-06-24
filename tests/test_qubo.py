@@ -2801,6 +2801,29 @@ def test_solver_profile_scheduler_state_v5_qubo_diversity_union_terminal_bridge_
     assert args.frg_seed_enabled == baseline.frg_seed_enabled
 
 
+def test_solver_profile_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_is_opt_in(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    baseline = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish")
+    args = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish")
+    bench._apply_solver_profile(baseline)
+    bench._apply_solver_profile(args)
+
+    assert getattr(baseline, "tail_lookahead_enabled", False) is False
+    assert args.tail_lookahead_enabled is True
+    assert args.tail_lookahead_focus_n == 4
+    assert args.tail_lookahead_depth == 8
+    assert args.tail_lookahead_supplement_width == 120
+    assert args.tail_lookahead_max_seed_candidates == 5000
+    assert args.tail_lookahead_max_expanded == 300000
+    assert args.terminal_bridge_enabled is True
+    assert args.terminal_bridge_depth == 8
+    assert args.terminal_bridge_max_seed_candidates == 500
+    assert args.terminal_bridge_max_expanded == 50000
+    assert args.union_diversity_qubo_enabled is True
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+
+
 def test_solver_profile_scheduler_state_v5_pareto_union_polish_extends_union(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -2838,6 +2861,20 @@ def test_open_runner_accepts_qubo_diversity_union_terminal_bridge_variant():
 
     assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
     assert variant in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_qubo_diversity_union_tail_lookahead_wide_and_portfolio_variants():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    wide_variant = "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    portfolio_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio"
+    outer = build_parser().parse_args(["--variant", wide_variant])
+    args = _args_for_variant(outer, wide_variant)
+    build_parser().parse_args(["--variant", portfolio_variant])
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    assert wide_variant in _variant_names("wang_research_all")
+    assert portfolio_variant in _variant_names("wang_research_all")
 
 
 def test_open_runner_default_variant_is_diversity_union_mainline():
@@ -8403,6 +8440,54 @@ def test_open_runner_task_execution_returns_selected_portfolio_row(monkeypatch, 
     assert result.rows[0]["portfolio_selected_profile"] == "qubo_scheduler_state_v5_wang2017_task_guarded_polish"
 
 
+def test_open_runner_terminal_escape_portfolio_selects_valid_wide_fallback(monkeypatch, tmp_path):
+    import argparse
+
+    from open_cpmp_benchmarks import DltsReference, OpenCpmpCase, OpenRunTask, _run_open_task
+
+    bridge_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    wide_variant = "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    portfolio_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio"
+    case = OpenCpmpCase("fam", "fam_0", tmp_path / "0.dat", None, DltsReference(optimal_moves=28))
+    args = argparse.Namespace(alpha=10.0, skip_invalid=True)
+    calls = []
+
+    def fake_load(path, max_height=None):
+        return object()
+
+    def fake_run(case_arg, instance, args_arg, variant):
+        calls.append(variant)
+        valid = variant == wide_variant
+        return {
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+            if valid
+            else "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "moves": 27 if valid else "",
+            "final_n": 0 if valid else 15,
+            "runtime_sec": 5.0 if valid else 1.0,
+            "business_ok": valid,
+            "goal_validation_ok": valid,
+            "full_quality_penalty": 27 if valid else 88,
+        }
+
+    monkeypatch.setattr("open_cpmp_benchmarks.load_dlts_dat", fake_load)
+    monkeypatch.setattr("open_cpmp_benchmarks._run_open_variant_row", fake_run)
+
+    result = _run_open_task(OpenRunTask(0, case, portfolio_variant), vars(args))
+
+    assert calls == [bridge_variant, wide_variant]
+    assert result.rows[0]["variant"] == portfolio_variant
+    assert result.rows[0]["portfolio_profiles"] == f"{bridge_variant},{wide_variant}"
+    assert result.rows[0]["portfolio_selected_profile"] == (
+        "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    )
+    assert result.rows[0]["portfolio_runtime_sec"] == "6.000000"
+    assert result.rows[0]["full_quality_penalty"] == 27
+
+
 def test_open_runner_collects_parallel_results_in_task_order(monkeypatch, tmp_path):
     import argparse
 
@@ -8696,6 +8781,8 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",

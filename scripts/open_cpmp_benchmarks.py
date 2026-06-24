@@ -65,6 +65,10 @@ _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS = (
     "qubo_scheduler_state_v5_wang_rescue_polish",
     "qubo_scheduler_state_v5_wang2017_task_guarded_polish",
 )
+_TERMINAL_ESCAPE_PORTFOLIO_VARIANTS = (
+    "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+    "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
+)
 
 
 @dataclass(frozen=True)
@@ -1030,6 +1034,8 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
@@ -1522,6 +1528,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish":
@@ -1646,6 +1654,27 @@ def _print_open_task_result(result: OpenRunTaskResult) -> None:
         _print_open_case_done(result.variant, result.case_id, row)
 
 
+def _run_open_portfolio_task(
+    task: OpenRunTask,
+    instance: Instance,
+    args: argparse.Namespace,
+    child_variants: tuple[str, ...],
+) -> OpenRunTaskResult:
+    candidates: list[dict[str, object]] = []
+    portfolio_runtime_sec = 0.0
+    for child_variant in child_variants:
+        child_row = _run_open_variant_row(task.case, instance, args, child_variant)
+        portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
+        candidates.append(child_row)
+    selected = dict(_select_open_no_regret_row(candidates))
+    selected["variant"] = task.variant
+    selected["portfolio_profiles"] = ",".join(child_variants)
+    selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
+    selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+    selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
+    return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [selected])
+
+
 def _run_open_task(task: OpenRunTask, args_payload: dict[str, object]) -> OpenRunTaskResult:
     args = argparse.Namespace(**args_payload)
     try:
@@ -1656,19 +1685,9 @@ def _run_open_task(task: OpenRunTask, args_payload: dict[str, object]) -> OpenRu
         raise
 
     if task.variant == "qubo_scheduler_state_v5_wang2017_task_guarded_portfolio":
-        candidates: list[dict[str, object]] = []
-        portfolio_runtime_sec = 0.0
-        for child_variant in _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS:
-            child_row = _run_open_variant_row(task.case, instance, args, child_variant)
-            portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
-            candidates.append(child_row)
-        selected = dict(_select_open_no_regret_row(candidates))
-        selected["variant"] = task.variant
-        selected["portfolio_profiles"] = ",".join(_WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
-        selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
-        selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
-        selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
-        return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [selected])
+        return _run_open_portfolio_task(task, instance, args, _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
+    if task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio":
+        return _run_open_portfolio_task(task, instance, args, _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS)
 
     return OpenRunTaskResult(
         task.task_index,
@@ -1800,6 +1819,8 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",

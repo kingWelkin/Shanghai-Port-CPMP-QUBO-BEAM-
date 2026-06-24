@@ -183,3 +183,48 @@ It still produced `terminal_bridge_calls=2`, `terminal_bridge_successes=0`,
 and `terminal_bridge_expanded_total=2`. That residual is not simply a
 too-shallow terminal bridge. It needs an earlier basin escape or reserve policy
 before the frontier collapses to the final `N=1` parent set.
+
+## Follow-Up: Terminal Escape Portfolio
+
+The next focused probe showed that `5x5_cv2_test_10` is reachable when a wider
+near-tail lookahead is allowed before the final collapse:
+
+```text
+scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish
+```
+
+The wide child uses the same diversity-union base and terminal bridge, then
+adds `tail_lookahead_focus_n=4`, `tail_lookahead_depth=8`,
+`tail_lookahead_supplement_width=120`, `tail_lookahead_max_seed_candidates=5000`,
+and `tail_lookahead_max_expanded=300000`. As a standalone child it solves
+`5x5_cv2_test_10`, but it is too expensive to make the default profile for the
+other residual controls.
+
+The opt-in portfolio therefore runs the cheap terminal-bridge child and the
+wide lookahead child, then keeps the best valid row with the existing open
+benchmark no-regret selector:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio
+```
+
+Command:
+
+```powershell
+$env:PYTHONPATH='.'; python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test --case-ids 4,10 --variant qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio --time-limit 20 --alpha 10 --jobs 1 --output docs\experiments\terminal_escape_portfolio_residuals_20260624.csv
+```
+
+Result:
+
+| Case | Selected profile | Final N | Moves | Valid | Runtime sec | Portfolio runtime sec | Tail lookahead goals | Terminal bridge successes |
+|---|---|---:|---:|---|---:|---:|---:|---:|
+| `5x5_cv1_test_4` | `scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish` | 0 | 31 | yes | 3.801 | 24.944 | 0 | 1 |
+| `5x5_cv1_test_10` | `scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish` | 0 | 28 | yes | 4.129 | 9.256 | 0 | 0 |
+| `5x5_cv2_test_4` | `scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish` | 0 | 28 | yes | 2.655 | 25.869 | 0 | 0 |
+| `5x5_cv2_test_10` | `scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish` | 0 | 27 | yes | 5.404 | 7.093 | 33 | 0 |
+
+This closes the four-case residual probe as a quality no-regret portfolio:
+the cheap child is retained for the cases it already solves, while the wide
+lookahead child covers `5x5_cv2_test_10`. The `portfolio_runtime_sec` column
+records the full two-child cost; `runtime_sec` remains the selected child row's
+own runtime, matching the existing portfolio row convention.

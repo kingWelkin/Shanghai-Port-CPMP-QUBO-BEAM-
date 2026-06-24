@@ -2271,6 +2271,18 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish
     "terminal_bridge_max_seed_candidates": 64,
     "terminal_bridge_max_expanded": 4096,
 }
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"],
+    "tail_lookahead_enabled": True,
+    "tail_lookahead_focus_n": 4,
+    "tail_lookahead_depth": 8,
+    "tail_lookahead_max_seed_candidates": 5000,
+    "tail_lookahead_supplement_width": 120,
+    "tail_lookahead_max_expanded": 300000,
+    "terminal_bridge_depth": 8,
+    "terminal_bridge_max_seed_candidates": 500,
+    "terminal_bridge_max_expanded": 50000,
+}
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_frontier_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
