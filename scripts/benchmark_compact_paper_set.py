@@ -19,9 +19,13 @@ from benchmark_bs_frg_paper import PaperCase, discover_paper_cases, load_bf_bay,
 from benchmark_compact_beam_qubo_n0 import run_compact_beam_instance  # noqa: E402
 from open_cpmp_benchmarks import (  # noqa: E402
     OPEN_RESULT_FIELDS,
+    _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS,
+    _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS,
     _args_for_variant,
     _open_full_quality_penalty,
     _open_row_dict_from_instance_result,
+    _open_row_valid,
+    _select_open_no_regret_row,
     _open_validate_instance_result,
 )
 
@@ -112,8 +116,14 @@ def _numeric(row: dict[str, object], field: str, default: float = 0.0) -> float:
     return float(value)
 
 
-def _run_paper_variant_row(case: PaperCase, args: argparse.Namespace, variant: str) -> dict[str, object]:
-    instance = _load_paper_case(case)
+def _run_paper_variant_row(
+    case: PaperCase,
+    args: argparse.Namespace,
+    variant: str,
+    instance=None,
+) -> dict[str, object]:
+    if instance is None:
+        instance = _load_paper_case(case)
     compact_args = _args_for_variant(args, variant, instance)
     result = run_compact_beam_instance(case.case_id, instance, compact_args)
     row = _open_row_dict_from_instance_result(result, instance, compact_args)
@@ -138,10 +148,47 @@ def _run_paper_variant_row(case: PaperCase, args: argparse.Namespace, variant: s
     return row
 
 
+def _run_paper_portfolio_row(
+    case: PaperCase,
+    args: argparse.Namespace,
+    variant: str,
+    child_variants: tuple[str, ...],
+    *,
+    stop_on_first_valid: bool = False,
+) -> dict[str, object]:
+    instance = _load_paper_case(case)
+    candidates: list[dict[str, object]] = []
+    portfolio_runtime_sec = 0.0
+    for child_variant in child_variants:
+        child_row = _run_paper_variant_row(case, args, child_variant, instance=instance)
+        portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
+        candidates.append(child_row)
+        if stop_on_first_valid and _open_row_valid(child_row):
+            break
+    selected = dict(_select_open_no_regret_row(candidates))
+    selected["variant"] = variant
+    selected["portfolio_profiles"] = ",".join(child_variants)
+    selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
+    selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+    selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
+    return selected
+
+
 def _run_task(task: PaperRunTask, args_payload: dict[str, object]) -> PaperRunTaskResult:
     args = argparse.Namespace(**args_payload)
     try:
-        row = _run_paper_variant_row(task.case, args, task.variant)
+        if task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio":
+            row = _run_paper_portfolio_row(task.case, args, task.variant, _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS)
+        elif task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio":
+            row = _run_paper_portfolio_row(
+                task.case,
+                args,
+                task.variant,
+                _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS,
+                stop_on_first_valid=True,
+            )
+        else:
+            row = _run_paper_variant_row(task.case, args, task.variant)
     except Exception as exc:  # Keep long benchmark batches from losing completed rows.
         row = row_from_paper_exception(task.case, args, task.variant, exc)
     return PaperRunTaskResult(task.task_index, task.case.case_id, task.variant, row)

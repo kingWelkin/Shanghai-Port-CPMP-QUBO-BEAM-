@@ -129,3 +129,98 @@ def test_paper_exception_row_preserves_failed_case_metadata(tmp_path: Path):
     assert row["status"] == "ERROR"
     assert row["validation_msg"] == "RuntimeError: lift failed"
     assert row["full_quality_penalty"] == 1000000
+
+
+def test_paper_runner_terminal_escape_lazy_portfolio_stops_after_valid_bridge(monkeypatch, tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_bs_frg_paper import PaperCase
+    from benchmark_compact_paper_set import PaperRunTask, _run_task
+
+    bridge_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    wide_variant = "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    lazy_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio"
+    case = PaperCase("BF", "BFx", "case_1", tmp_path / "case_1.bay")
+    args = Namespace(alpha=10.0)
+    calls = []
+
+    def fake_load(case_arg):
+        return object()
+
+    def fake_run(case_arg, args_arg, variant, instance=None):
+        calls.append(variant)
+        return {
+            "dataset": case_arg.dataset,
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "moves": 31,
+            "final_n": 0,
+            "runtime_sec": 3.0,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "full_quality_penalty": 31,
+        }
+
+    monkeypatch.setattr("benchmark_compact_paper_set._load_paper_case", fake_load)
+    monkeypatch.setattr("benchmark_compact_paper_set._run_paper_variant_row", fake_run)
+
+    result = _run_task(PaperRunTask(0, case, lazy_variant), vars(args))
+
+    assert calls == [bridge_variant]
+    assert wide_variant in result.row["portfolio_profiles"]
+    assert result.row["variant"] == lazy_variant
+    assert result.row["portfolio_selected_profile"] == (
+        "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    )
+    assert result.row["portfolio_runtime_sec"] == "3.000000"
+
+
+def test_paper_runner_terminal_escape_lazy_portfolio_tries_wide_after_invalid_bridge(monkeypatch, tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_bs_frg_paper import PaperCase
+    from benchmark_compact_paper_set import PaperRunTask, _run_task
+
+    bridge_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    wide_variant = "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    lazy_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio"
+    case = PaperCase("BF", "BFx", "case_1", tmp_path / "case_1.bay")
+    args = Namespace(alpha=10.0)
+    calls = []
+
+    def fake_load(case_arg):
+        return object()
+
+    def fake_run(case_arg, args_arg, variant, instance=None):
+        calls.append(variant)
+        valid = variant == wide_variant
+        return {
+            "dataset": case_arg.dataset,
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+            if valid
+            else "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "moves": 27 if valid else "",
+            "final_n": 0 if valid else 15,
+            "runtime_sec": 5.0 if valid else 1.0,
+            "business_ok": valid,
+            "goal_validation_ok": valid,
+            "full_quality_penalty": 27 if valid else 88,
+        }
+
+    monkeypatch.setattr("benchmark_compact_paper_set._load_paper_case", fake_load)
+    monkeypatch.setattr("benchmark_compact_paper_set._run_paper_variant_row", fake_run)
+
+    result = _run_task(PaperRunTask(0, case, lazy_variant), vars(args))
+
+    assert calls == [bridge_variant, wide_variant]
+    assert result.row["variant"] == lazy_variant
+    assert result.row["portfolio_selected_profile"] == (
+        "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    )
+    assert result.row["portfolio_runtime_sec"] == "6.000000"
+    assert result.row["full_quality_penalty"] == 27
