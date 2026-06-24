@@ -695,6 +695,24 @@ FRONTIER_TRACE_FIELDS = [
     "receiver_last_buffer_consumed",
     "micro_linear_adjustment",
 ]
+TERMINAL_TRACE_FIELDS = [
+    "case",
+    "solver_profile",
+    "selection_policy",
+    "layer",
+    "parent_code",
+    "parent_n",
+    "parent_depth",
+    "frontier_rank",
+    "child_count",
+    "kept_child_count",
+    "goal_children_generated",
+    "goal_children_kept",
+    "goal_children_pruned_business",
+    "goal_children_dominated",
+    "best_child_n",
+    "best_kept_child_n",
+]
 
 
 def _beam_survivor_parent_metrics(
@@ -865,6 +883,25 @@ def _reset_frontier_trace_output(path: Path | None) -> None:
         output.unlink()
 
 
+def _write_terminal_trace_rows(rows: list[dict[str, object]], path: Path) -> None:
+    output = path if path.is_absolute() else ROOT / path
+    output.parent.mkdir(parents=True, exist_ok=True)
+    append = output.exists() and output.stat().st_size > 0
+    with output.open("a", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=TERMINAL_TRACE_FIELDS, extrasaction="ignore")
+        if not append:
+            writer.writeheader()
+        writer.writerows(rows)
+
+
+def _reset_terminal_trace_output(path: Path | None) -> None:
+    if path is None:
+        return
+    output = path if path.is_absolute() else ROOT / path
+    if output.exists():
+        output.unlink()
+
+
 def _frontier_trace_candidate_rows(
     *,
     case: str,
@@ -977,6 +1014,43 @@ def _frontier_trace_candidate_rows(
             }
         )
     return rows
+
+
+def _terminal_trace_expansion_row(
+    *,
+    case: str,
+    layer: int,
+    parent_code: bytes,
+    parent_n: int,
+    parent_depth: int,
+    frontier_rank: int,
+    child_n_values: list[int],
+    kept_child_n_values: list[int],
+    pruned_business_goal_count: int,
+    dominated_goal_count: int,
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    target_final_n = int(getattr(args, "target_final_n", 0))
+    goal_children_generated = sum(1 for n_value in child_n_values if int(n_value) <= target_final_n)
+    goal_children_kept = sum(1 for n_value in kept_child_n_values if int(n_value) <= target_final_n)
+    return {
+        "case": case,
+        "solver_profile": getattr(args, "solver_profile", ""),
+        "selection_policy": getattr(args, "selection_policy", ""),
+        "layer": int(layer),
+        "parent_code": parent_code.hex(),
+        "parent_n": int(parent_n),
+        "parent_depth": int(parent_depth),
+        "frontier_rank": int(frontier_rank),
+        "child_count": len(child_n_values),
+        "kept_child_count": len(kept_child_n_values),
+        "goal_children_generated": int(goal_children_generated),
+        "goal_children_kept": int(goal_children_kept),
+        "goal_children_pruned_business": int(pruned_business_goal_count),
+        "goal_children_dominated": int(dominated_goal_count),
+        "best_child_n": int(min(child_n_values)) if child_n_values else -1,
+        "best_kept_child_n": int(min(kept_child_n_values)) if kept_child_n_values else -1,
+    }
 
 
 _DYNAMIC_QUBO_PRESETS: dict[str, dict[str, int | float | bool]] = {
@@ -2423,6 +2497,7 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "dlts_feature_output": None,
         "frontier_trace_output": None,
         "frontier_trace_top_k": 64,
+        "terminal_trace_output": None,
         "target_final_n": 0,
         "alpha": 1.3,
         "max_moves": None,
@@ -10098,6 +10173,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     frontier_trace_rows: list[dict[str, object]] = []
     frontier_trace_output = getattr(args, "frontier_trace_output", None)
     frontier_trace_top_k = max(0, int(getattr(args, "frontier_trace_top_k", 64) or 0))
+    terminal_trace_rows: list[dict[str, object]] = []
+    terminal_trace_output = getattr(args, "terminal_trace_output", None)
     layer_index = 0
 
     while target is None and frontier and time.perf_counter() < deadline:
@@ -10106,6 +10183,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         candidate_bucket_heaps: dict[tuple, list[tuple[_ReverseRank, int, bytes, tuple[int, int, bytes]]]] = {}
         candidate_bucket_members: dict[tuple, set[bytes]] = {}
         goals: dict[bytes, tuple[int, int, bytes]] = {}
+        terminal_parent_rank_by_code = (
+            {code: idx + 1 for idx, (code, _n_value, _depth) in enumerate(frontier)}
+            if terminal_trace_output is not None
+            else {}
+        )
         for code, current_n, depth in frontier:
             if time.perf_counter() >= deadline:
                 break
@@ -10121,20 +10203,35 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 continue
             expanded += 1
             next_depth = depth + 1
+            trace_terminal_parent = terminal_trace_output is not None and int(current_n) == int(args.target_final_n) + 1
+            terminal_child_n_values: list[int] = []
+            terminal_kept_child_n_values: list[int] = []
+            terminal_pruned_business_goal_count = 0
+            terminal_dominated_goal_count = 0
             for nxt, nxt_n in _successors_with_n_uncached(code, current_n, instance.stack_count, instance.max_height):
                 generated += 1
+                if trace_terminal_parent:
+                    terminal_child_n_values.append(int(nxt_n))
                 if next_depth + nxt_n > cap:
                     pruned_business += 1
+                    if trace_terminal_parent and int(nxt_n) <= int(args.target_final_n):
+                        terminal_pruned_business_goal_count += 1
                     continue
                 old_depth = best_depth.get(nxt)
                 if old_depth is not None and next_depth >= old_depth:
                     dominated += 1
+                    if trace_terminal_parent and int(nxt_n) <= int(args.target_final_n):
+                        terminal_dominated_goal_count += 1
                     continue
                 old_candidate = candidates.get(nxt)
                 if old_candidate is not None and next_depth >= old_candidate[1]:
                     dominated += 1
+                    if trace_terminal_parent and int(nxt_n) <= int(args.target_final_n):
+                        terminal_dominated_goal_count += 1
                     continue
                 data = (nxt_n, next_depth, code)
+                if trace_terminal_parent:
+                    terminal_kept_child_n_values.append(int(nxt_n))
                 if nxt_n <= args.target_final_n:
                     goals[nxt] = data
                 if stream_bucket_enabled:
@@ -10158,6 +10255,22 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                         )
                 else:
                     candidates[nxt] = data
+            if trace_terminal_parent:
+                terminal_trace_rows.append(
+                    _terminal_trace_expansion_row(
+                        case=case,
+                        layer=layer_index,
+                        parent_code=code,
+                        parent_n=current_n,
+                        parent_depth=depth,
+                        frontier_rank=terminal_parent_rank_by_code.get(code, 0),
+                        child_n_values=terminal_child_n_values,
+                        kept_child_n_values=terminal_kept_child_n_values,
+                        pruned_business_goal_count=terminal_pruned_business_goal_count,
+                        dominated_goal_count=terminal_dominated_goal_count,
+                        args=args,
+                    )
+                )
         if target is not None:
             break
         if goals:
@@ -10473,6 +10586,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         _write_dlts_feature_rows(dlts_feature_rows, Path(dlts_feature_output))
     if frontier_trace_output is not None and frontier_trace_rows:
         _write_frontier_trace_rows(frontier_trace_rows, Path(frontier_trace_output))
+    if terminal_trace_output is not None and terminal_trace_rows:
+        _write_terminal_trace_rows(terminal_trace_rows, Path(terminal_trace_output))
     return CompactBeamResult(
         case=case,
         status=status,
@@ -11563,6 +11678,7 @@ def main() -> int:
     parser.add_argument("--dlts-feature-output", type=Path)
     parser.add_argument("--frontier-trace-output", type=Path)
     parser.add_argument("--frontier-trace-top-k", type=int, default=64)
+    parser.add_argument("--terminal-trace-output", type=Path)
     parser.add_argument(
         "--solver-profile",
         "--profile",
@@ -12039,9 +12155,12 @@ def main() -> int:
         args.dlts_feature_output = ROOT / args.dlts_feature_output
     if args.frontier_trace_output is not None and not args.frontier_trace_output.is_absolute():
         args.frontier_trace_output = ROOT / args.frontier_trace_output
+    if args.terminal_trace_output is not None and not args.terminal_trace_output.is_absolute():
+        args.terminal_trace_output = ROOT / args.terminal_trace_output
     _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
     _reset_dlts_feature_output(args.dlts_feature_output)
     _reset_frontier_trace_output(args.frontier_trace_output)
+    _reset_terminal_trace_output(args.terminal_trace_output)
     acceptance = output.with_name(output.stem + "_acceptance.csv")
     moves_dir = output.with_name(output.stem + "_moves")
     report = output.with_suffix(".md")

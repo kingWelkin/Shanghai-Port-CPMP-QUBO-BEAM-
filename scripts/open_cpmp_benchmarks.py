@@ -30,6 +30,7 @@ from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
     _light_route_score,
     _reset_beam_survivor_output,
     _reset_frontier_trace_output,
+    _reset_terminal_trace_output,
     _row_dict_from_instance_result,
     _validate_instance_result,
     make_compact_args,
@@ -1080,6 +1081,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
     if getattr(args, "frontier_trace_output", None) is not None:
         overrides["frontier_trace_output"] = args.frontier_trace_output
         overrides["frontier_trace_top_k"] = int(getattr(args, "frontier_trace_top_k", 64) or 64)
+    if getattr(args, "terminal_trace_output", None) is not None:
+        overrides["terminal_trace_output"] = args.terminal_trace_output
     value = getattr(args, "post_polish_qubo", None)
     if value is not None:
         overrides["post_polish_qubo"] = value
@@ -2114,6 +2117,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--beam-survivor-telemetry-output", type=Path)
     parser.add_argument("--frontier-trace-output", type=Path)
     parser.add_argument("--frontier-trace-top-k", type=int, default=64)
+    parser.add_argument("--terminal-trace-output", type=Path)
     return parser
 
 
@@ -2126,8 +2130,11 @@ def main() -> int:
         args.beam_survivor_telemetry_output = ROOT / args.beam_survivor_telemetry_output
     if args.frontier_trace_output is not None and not args.frontier_trace_output.is_absolute():
         args.frontier_trace_output = ROOT / args.frontier_trace_output
+    if args.terminal_trace_output is not None and not args.terminal_trace_output.is_absolute():
+        args.terminal_trace_output = ROOT / args.terminal_trace_output
     _reset_beam_survivor_output(args.beam_survivor_telemetry_output)
     _reset_frontier_trace_output(args.frontier_trace_output)
+    _reset_terminal_trace_output(args.terminal_trace_output)
     rows = run_open_benchmark(args)
     _write_open_csv(rows, args.output)
     summary = args.output.with_name(args.output.stem + "_summary.md")

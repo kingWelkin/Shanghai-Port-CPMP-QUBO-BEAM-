@@ -3862,6 +3862,23 @@ def test_open_runner_passes_frontier_trace_output():
     assert args.frontier_trace_top_k == 19
 
 
+def test_open_runner_passes_terminal_trace_output():
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+            "--terminal-trace-output",
+            "docs/experiments/terminal_trace.csv",
+        ]
+    )
+
+    args = _args_for_variant(outer, "qubo_scheduler_state_v5_qubo_diversity_union_polish")
+
+    assert Path(args.terminal_trace_output).as_posix().endswith("docs/experiments/terminal_trace.csv")
+
+
 def test_frontier_trace_candidate_rows_mark_sources_and_parent_reuse():
     from benchmark_compact_beam_qubo_n0 import _frontier_trace_candidate_rows
 
@@ -3916,6 +3933,43 @@ def test_frontier_trace_candidate_rows_mark_sources_and_parent_reuse():
     assert rows[2]["selected"] == 0
     assert rows[2]["selected_source"] == "not_selected"
     assert rows[2]["candidate_origin"] == "beam"
+
+
+def test_terminal_trace_expansion_row_counts_goal_children_and_prunes():
+    from benchmark_compact_beam_qubo_n0 import _terminal_trace_expansion_row
+
+    row = _terminal_trace_expansion_row(
+        case="toy",
+        layer=7,
+        parent_code=b"parent",
+        parent_n=1,
+        parent_depth=12,
+        frontier_rank=3,
+        child_n_values=[1, 0, 2, 0],
+        kept_child_n_values=[1, 0],
+        pruned_business_goal_count=1,
+        dominated_goal_count=1,
+        args=_compact_args(
+            solver_profile="scheduler_state_v5_qubo_diversity_union_polish",
+            selection_policy="scheduler_state_qubo",
+            target_final_n=0,
+        ),
+    )
+
+    assert row["case"] == "toy"
+    assert row["layer"] == 7
+    assert row["parent_code"] == b"parent".hex()
+    assert row["parent_n"] == 1
+    assert row["parent_depth"] == 12
+    assert row["frontier_rank"] == 3
+    assert row["child_count"] == 4
+    assert row["best_child_n"] == 0
+    assert row["kept_child_count"] == 2
+    assert row["best_kept_child_n"] == 0
+    assert row["goal_children_generated"] == 2
+    assert row["goal_children_kept"] == 1
+    assert row["goal_children_pruned_business"] == 1
+    assert row["goal_children_dominated"] == 1
 
 
 def test_frontier_trace_candidate_rows_include_micro_receiver_features():
