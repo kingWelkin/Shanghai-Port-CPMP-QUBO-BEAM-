@@ -69,6 +69,7 @@ _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS = (
     "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
     "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
 )
+_TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS = _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS
 
 
 @dataclass(frozen=True)
@@ -1036,6 +1037,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
+            "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
@@ -1659,6 +1661,7 @@ def _run_open_portfolio_task(
     instance: Instance,
     args: argparse.Namespace,
     child_variants: tuple[str, ...],
+    stop_on_first_valid: bool = False,
 ) -> OpenRunTaskResult:
     candidates: list[dict[str, object]] = []
     portfolio_runtime_sec = 0.0
@@ -1666,6 +1669,8 @@ def _run_open_portfolio_task(
         child_row = _run_open_variant_row(task.case, instance, args, child_variant)
         portfolio_runtime_sec += _numeric(child_row, "runtime_sec", 0.0)
         candidates.append(child_row)
+        if stop_on_first_valid and _open_row_valid(child_row):
+            break
     selected = dict(_select_open_no_regret_row(candidates))
     selected["variant"] = task.variant
     selected["portfolio_profiles"] = ",".join(child_variants)
@@ -1688,6 +1693,14 @@ def _run_open_task(task: OpenRunTask, args_payload: dict[str, object]) -> OpenRu
         return _run_open_portfolio_task(task, instance, args, _WANG2017_TASK_GUARDED_PORTFOLIO_VARIANTS)
     if task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio":
         return _run_open_portfolio_task(task, instance, args, _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS)
+    if task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio":
+        return _run_open_portfolio_task(
+            task,
+            instance,
+            args,
+            _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS,
+            stop_on_first_valid=True,
+        )
 
     return OpenRunTaskResult(
         task.task_index,
@@ -1821,6 +1834,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
+            "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",

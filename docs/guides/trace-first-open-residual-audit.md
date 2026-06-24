@@ -228,3 +228,35 @@ the cheap child is retained for the cases it already solves, while the wide
 lookahead child covers `5x5_cv2_test_10`. The `portfolio_runtime_sec` column
 records the full two-child cost; `runtime_sec` remains the selected child row's
 own runtime, matching the existing portfolio row convention.
+
+## Follow-Up: Lazy Terminal Escape Portfolio
+
+A second opt-in variant adds a cheap-valid-first gate:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio
+```
+
+It runs the same child list as the full terminal-escape portfolio, but stops as
+soon as the terminal-bridge child produces a valid `N=0` route. The wide
+lookahead child is only attempted after the cheap child fails.
+
+Command:
+
+```powershell
+$env:PYTHONPATH='.'; python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test --case-ids 4,10 --variant qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio --time-limit 20 --alpha 10 --jobs 1 --output docs\experiments\terminal_escape_lazy_portfolio_residuals_20260624.csv
+```
+
+Result:
+
+| Case | Selected profile | Final N | Moves | Valid | Runtime sec | Portfolio runtime sec | Tail lookahead goals | Terminal bridge successes |
+|---|---|---:|---:|---|---:|---:|---:|---:|
+| `5x5_cv1_test_4` | `scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish` | 0 | 31 | yes | 4.251 | 4.251 | 0 | 1 |
+| `5x5_cv1_test_10` | `scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish` | 0 | 28 | yes | 3.240 | 3.240 | 0 | 0 |
+| `5x5_cv2_test_4` | `scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish` | 0 | 28 | yes | 2.446 | 2.446 | 0 | 0 |
+| `5x5_cv2_test_10` | `scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish` | 0 | 27 | yes | 5.712 | 7.485 | 49 | 0 |
+
+This preserves the four-case validity result while removing the full
+two-child cost on cases already solved by the terminal-bridge child. It is a
+cost gate, not a strict quality no-regret selector: if the cheap child is valid,
+the wide child is not searched for a potentially shorter route.
