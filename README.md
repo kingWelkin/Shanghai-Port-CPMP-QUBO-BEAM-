@@ -89,6 +89,7 @@ Promotion requires paired improvement on both open120 and the paper-set gate.
 ## Documentation
 
 - [Current mainline algorithm](docs/guides/current-mainline-algorithm.md)
+- [Algorithm profile status](docs/guides/algorithm-profile-status.md)
 - [QUBO diversity union experiment](docs/experiments/qubo_diversity_union_experiment_20260621.md)
 - [Current QUBO beam algorithm details](docs/guides/current-qubo-beam-algorithm.md)
 - [QUBO mechanism attribution](docs/guides/qubo-mechanism-attribution.md)

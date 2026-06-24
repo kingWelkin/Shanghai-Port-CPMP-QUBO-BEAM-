@@ -70,6 +70,9 @@ The current codebase also contains several opt-in ablation profiles derived from
 
 These profiles are useful for paper-set and residual-case diagnosis, but they should not replace `qubo_scheduler_state_v5_qubo_diversity_union_polish` without a paired full open120 and paper-set improvement. In particular, FRG frontier injection is candidate generation support, not a BS-FRG fallback solver.
 
+For the consolidated status of current defaults, baselines, opt-in ablations,
+and reproduction assets, see `docs/guides/algorithm-profile-status.md`.
+
 ## Latest Engineering Commit
 
 Commit `c5062ef` records the current implementation state:
