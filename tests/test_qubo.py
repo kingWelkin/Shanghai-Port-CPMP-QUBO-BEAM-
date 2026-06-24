@@ -2783,6 +2783,24 @@ def test_solver_profile_scheduler_state_v5_qubo_diversity_union_polish_is_opt_in
     assert args.candidate_ledger_score_enabled is False
 
 
+def test_solver_profile_scheduler_state_v5_qubo_diversity_union_terminal_bridge_is_opt_in(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    baseline = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_polish")
+    args = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish")
+    bench._apply_solver_profile(baseline)
+    bench._apply_solver_profile(args)
+
+    assert getattr(baseline, "terminal_bridge_enabled", False) is False
+    assert args.terminal_bridge_enabled is True
+    assert args.terminal_bridge_focus_n == 1
+    assert args.terminal_bridge_depth == 3
+    assert args.terminal_bridge_max_seed_candidates == 64
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    assert args.union_diversity_qubo_enabled is True
+    assert args.frg_seed_enabled == baseline.frg_seed_enabled
+
+
 def test_solver_profile_scheduler_state_v5_pareto_union_polish_extends_union(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -2809,6 +2827,17 @@ def test_open_runner_accepts_qubo_diversity_union_variant():
 
     assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_polish"
     assert "qubo_scheduler_state_v5_qubo_diversity_union_polish" in _variant_names("wang_research_all")
+
+
+def test_open_runner_accepts_qubo_diversity_union_terminal_bridge_variant():
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    assert variant in _variant_names("wang_research_all")
 
 
 def test_open_runner_default_variant_is_diversity_union_mainline():
@@ -6441,6 +6470,57 @@ def test_tail_lookahead_probe_respects_business_cap():
     assert probe.path == ()
 
 
+def test_terminal_bridge_probe_finds_multistep_n0_path():
+    from benchmark_compact_beam_qubo_n0 import _code_n, _terminal_bridge_probe_for_parent
+
+    code = bytes.fromhex("010001000102")
+    args = _compact_args(
+        terminal_bridge_depth=3,
+        terminal_bridge_max_expanded=64,
+        target_final_n=0,
+    )
+
+    bridge, expanded = _terminal_bridge_probe_for_parent(
+        code,
+        current_n=1,
+        depth=4,
+        stack_count=3,
+        max_height=2,
+        cap=7,
+        deadline=float("inf"),
+        args=args,
+    )
+
+    assert bridge is not None
+    assert len(bridge) > 1
+    assert _code_n(bridge[-1], 3, 2) == 0
+    assert expanded > 0
+
+
+def test_terminal_bridge_probe_respects_business_cap():
+    from benchmark_compact_beam_qubo_n0 import _terminal_bridge_probe_for_parent
+
+    code = bytes.fromhex("010001000102")
+    args = _compact_args(
+        terminal_bridge_depth=3,
+        terminal_bridge_max_expanded=64,
+        target_final_n=0,
+    )
+
+    bridge, _expanded = _terminal_bridge_probe_for_parent(
+        code,
+        current_n=1,
+        depth=4,
+        stack_count=3,
+        max_height=2,
+        cap=4,
+        deadline=float("inf"),
+        args=args,
+    )
+
+    assert bridge is None
+
+
 def test_tail_lookahead_supplement_selects_reachable_tail_candidate():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -8615,6 +8695,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",

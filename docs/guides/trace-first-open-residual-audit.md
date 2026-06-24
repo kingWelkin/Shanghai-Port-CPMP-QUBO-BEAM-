@@ -145,3 +145,41 @@ Design a bounded terminal repair probe for selected `N=1` parents:
 
 The likely successor profile should be a near-terminal repair/escape operator,
 not stronger global QUBO selection.
+
+## Follow-Up: Terminal Bridge Probe
+
+An opt-in profile was added to test the repair direction:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish
+```
+
+Command:
+
+```powershell
+$env:PYTHONPATH='.'; python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test --case-ids 4,10 --variant qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish --time-limit 10 --alpha 10 --jobs 1 --output docs\experiments\terminal_bridge_open_residual_run_20260624.csv
+```
+
+Result:
+
+| Case | Final N | Moves | Valid | Runtime sec | Terminal bridge calls | Terminal bridge successes | Terminal bridge moves |
+|---|---:|---:|---|---:|---:|---:|---:|
+| `5x5_cv1_test_4` | 0 | 31 | yes | 4.012 | 100 | 1 | 3 |
+| `5x5_cv1_test_10` | 0 | 28 | yes | 4.196 | 0 | 0 | 0 |
+| `5x5_cv2_test_4` | 0 | 28 | yes | 2.349 | 0 | 0 | 0 |
+| `5x5_cv2_test_10` | 15 | none | no | 1.932 | 2 | 0 | 0 |
+
+The bridge probe converts the broad terminal plateau case
+`5x5_cv1_test_4` from unsolved to valid `N=0`, with a 3-move terminal bridge.
+The solved controls remain valid and do not need the bridge.
+
+A deeper single-case probe for `5x5_cv2_test_10` also failed:
+
+```powershell
+$env:PYTHONPATH='.'; python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv2_test --case-ids 10 --variant qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish --time-limit 10 --alpha 10 --jobs 1 --terminal-bridge-depth 6 --terminal-bridge-max-expanded 20000 --terminal-bridge-max-seed-candidates 256 --output docs\experiments\terminal_bridge_cv2_10_depth6_20260624.csv
+```
+
+It still produced `terminal_bridge_calls=2`, `terminal_bridge_successes=0`,
+and `terminal_bridge_expanded_total=2`. That residual is not simply a
+too-shallow terminal bridge. It needs an earlier basin escape or reserve policy
+before the frontier collapses to the final `N=1` parent set.

@@ -502,6 +502,15 @@ COMPACT_EXTRA_FIELDS = [
     "tail_lookahead_goal_reachable_total",
     "tail_lookahead_best_delta_total",
     "tail_lookahead_expanded_total",
+    "terminal_bridge_enabled",
+    "terminal_bridge_focus_n",
+    "terminal_bridge_depth",
+    "terminal_bridge_max_seed_candidates",
+    "terminal_bridge_max_expanded",
+    "terminal_bridge_calls",
+    "terminal_bridge_successes",
+    "terminal_bridge_expanded_total",
+    "terminal_bridge_moves",
     "tail_risk_reserve_enabled",
     "tail_risk_focus_n",
     "tail_risk_n_window",
@@ -1444,6 +1453,11 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "tail_lookahead_max_seed_candidates": 128,
         "tail_lookahead_supplement_width": 0,
         "tail_lookahead_max_expanded": 4096,
+        "terminal_bridge_enabled": False,
+        "terminal_bridge_focus_n": 1,
+        "terminal_bridge_depth": 3,
+        "terminal_bridge_max_seed_candidates": 64,
+        "terminal_bridge_max_expanded": 4096,
         "tail_risk_reserve_enabled": False,
         "tail_risk_focus_n": 2,
         "tail_risk_n_window": 1,
@@ -2249,6 +2263,14 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"]
     "union_rollout_probe_dead_end_penalty": 0.0,
     "union_rollout_terminal_graft": True,
 }
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "terminal_bridge_enabled": True,
+    "terminal_bridge_focus_n": 1,
+    "terminal_bridge_depth": 3,
+    "terminal_bridge_max_seed_candidates": 64,
+    "terminal_bridge_max_expanded": 4096,
+}
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_frontier_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
@@ -2696,6 +2718,10 @@ class CompactBeamResult:
     tail_lookahead_goal_reachable_total: int = 0
     tail_lookahead_best_delta_total: int = 0
     tail_lookahead_expanded_total: int = 0
+    terminal_bridge_calls: int = 0
+    terminal_bridge_successes: int = 0
+    terminal_bridge_expanded_total: int = 0
+    terminal_bridge_moves: int = 0
     tail_risk_reserve_calls: int = 0
     tail_risk_reserve_selected_total: int = 0
     tail_risk_reserve_scanned_total: int = 0
@@ -3409,6 +3435,14 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "tail_lookahead_max_seed_candidates": "--tail-lookahead-max-seed-candidates",
         "tail_lookahead_supplement_width": "--tail-lookahead-supplement-width",
         "tail_lookahead_max_expanded": "--tail-lookahead-max-expanded",
+        "terminal_bridge_enabled": (
+            "--terminal-bridge-enabled",
+            "--no-terminal-bridge-enabled",
+        ),
+        "terminal_bridge_focus_n": "--terminal-bridge-focus-n",
+        "terminal_bridge_depth": "--terminal-bridge-depth",
+        "terminal_bridge_max_seed_candidates": "--terminal-bridge-max-seed-candidates",
+        "terminal_bridge_max_expanded": "--terminal-bridge-max-expanded",
         "tail_risk_reserve_enabled": (
             "--tail-risk-reserve-enabled",
             "--no-tail-risk-reserve-enabled",
@@ -8654,6 +8688,39 @@ def _tail_lookahead_probe(
     return TailLookaheadProbe(False, best_n, best_depth, expanded)
 
 
+def _terminal_bridge_probe_for_parent(
+    code: bytes,
+    *,
+    current_n: int,
+    depth: int,
+    stack_count: int,
+    max_height: int,
+    cap: int,
+    deadline: float,
+    args: argparse.Namespace,
+    max_depth: int | None = None,
+) -> tuple[tuple[bytes, ...] | None, int]:
+    focus_n = int(getattr(args, "terminal_bridge_focus_n", 1))
+    if focus_n >= 0 and int(current_n) > focus_n:
+        return None, 0
+    if time.perf_counter() >= deadline:
+        return None, 0
+    probe = _tail_lookahead_probe(
+        code,
+        int(current_n),
+        int(stack_count),
+        int(max_height),
+        int(getattr(args, "target_final_n", 0)),
+        max(1, int(max_depth if max_depth is not None else getattr(args, "terminal_bridge_depth", 3) or 3)),
+        max(1, int(getattr(args, "terminal_bridge_max_expanded", 4096) or 4096)),
+        base_depth=int(depth),
+        business_cap=int(cap),
+    )
+    if not probe.goal_reachable or not probe.path:
+        return None, probe.expanded
+    return probe.path, probe.expanded
+
+
 def _ensure_tail_lookahead_counters(args: argparse.Namespace) -> None:
     if not hasattr(args, "_tail_lookahead_calls_done"):
         args._tail_lookahead_calls_done = 0
@@ -10090,6 +10157,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._tail_lookahead_expanded_total = 0
     args._tail_lookahead_priority_codes = set()
     args._tail_lookahead_path_next_by_code = {}
+    args._terminal_bridge_calls_done = 0
+    args._terminal_bridge_successes = 0
+    args._terminal_bridge_expanded_total = 0
+    args._terminal_bridge_moves = 0
     args._tail_risk_reserve_calls_done = 0
     args._tail_risk_reserve_selected_total = 0
     args._tail_risk_reserve_scanned_total = 0
@@ -10161,6 +10232,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     stream_pruned_candidates = 0
     wang_rollout_added_total = 0
     rollout_terminal_moves: list[Move] | None = None
+    terminal_bridge_used = False
+    terminal_bridge_moves = 0
     stream_seq = 0
     depth_reached = 0
     beam_survivor_output = getattr(args, "beam_survivor_telemetry_output", None)
@@ -10280,6 +10353,52 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             source_by_code[target] = "goal"
             qubo_ancestor_by_code[target] = qubo_ancestor_by_code.get(data[2], False)
             depth_reached = max(depth_reached, data[1])
+            break
+        if getattr(args, "terminal_bridge_enabled", False):
+            bridge_seed_limit = max(1, int(getattr(args, "terminal_bridge_max_seed_candidates", 64) or 64))
+            bridge_seed_count = 0
+            for code, current_n, depth in frontier:
+                if time.perf_counter() >= deadline or bridge_seed_count >= bridge_seed_limit:
+                    break
+                if int(current_n) > int(getattr(args, "terminal_bridge_focus_n", 1)):
+                    continue
+                remaining_depth = max(0, depth_cap - int(depth))
+                if remaining_depth <= 0:
+                    continue
+                bridge_seed_count += 1
+                args._terminal_bridge_calls_done += 1
+                bridge, expanded_bridge = _terminal_bridge_probe_for_parent(
+                    code,
+                    current_n=current_n,
+                    depth=depth,
+                    stack_count=instance.stack_count,
+                    max_height=instance.max_height,
+                    cap=cap,
+                    deadline=deadline,
+                    args=args,
+                    max_depth=min(int(getattr(args, "terminal_bridge_depth", 3) or 3), remaining_depth),
+                )
+                args._terminal_bridge_expanded_total += expanded_bridge
+                if bridge is None:
+                    continue
+                previous = code
+                bridge_depth = int(depth)
+                bridge_qubo_ancestor = qubo_ancestor_by_code.get(code, False)
+                for bridge_code in bridge:
+                    bridge_depth += 1
+                    parent[bridge_code] = previous
+                    best_depth[bridge_code] = bridge_depth
+                    source_by_code[bridge_code] = "terminal_bridge"
+                    qubo_ancestor_by_code[bridge_code] = bridge_qubo_ancestor
+                    previous = bridge_code
+                target = bridge[-1]
+                terminal_bridge_used = True
+                terminal_bridge_moves = len(bridge)
+                args._terminal_bridge_successes += 1
+                args._terminal_bridge_moves = len(bridge)
+                depth_reached = max(depth_reached, bridge_depth)
+                break
+        if target is not None:
             break
         if not candidates:
             break
@@ -10538,6 +10657,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         tail_n_trace = ">".join(str(value) for value in tail_n_values)
         tail_ordered_trace = ">".join(str(value) for value in tail_ordered_values)
         tail_ordered_gain = tail_ordered_values[-1] - tail_ordered_values[0] if tail_ordered_values else 0
+        if terminal_bridge_used:
+            status += f"; terminal_bridge_used=True; terminal_bridge_moves={terminal_bridge_moves}"
         if polish_stats.qcalls or polish_stats.attempts:
             status += (
                 f"; post_polish_qubo=True; post_polish_qcalls={polish_stats.qcalls}; "
@@ -10643,6 +10764,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         tail_lookahead_goal_reachable_total=args._tail_lookahead_goal_reachable_total,
         tail_lookahead_best_delta_total=args._tail_lookahead_best_delta_total,
         tail_lookahead_expanded_total=args._tail_lookahead_expanded_total,
+        terminal_bridge_calls=args._terminal_bridge_calls_done,
+        terminal_bridge_successes=args._terminal_bridge_successes,
+        terminal_bridge_expanded_total=args._terminal_bridge_expanded_total,
+        terminal_bridge_moves=args._terminal_bridge_moves,
         tail_risk_reserve_calls=args._tail_risk_reserve_calls_done,
         tail_risk_reserve_selected_total=args._tail_risk_reserve_selected_total,
         tail_risk_reserve_scanned_total=args._tail_risk_reserve_scanned_total,
@@ -11420,6 +11545,15 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "tail_lookahead_goal_reachable_total": result.tail_lookahead_goal_reachable_total,
             "tail_lookahead_best_delta_total": result.tail_lookahead_best_delta_total,
             "tail_lookahead_expanded_total": result.tail_lookahead_expanded_total,
+            "terminal_bridge_enabled": getattr(args, "terminal_bridge_enabled", False),
+            "terminal_bridge_focus_n": getattr(args, "terminal_bridge_focus_n", 1),
+            "terminal_bridge_depth": getattr(args, "terminal_bridge_depth", 3),
+            "terminal_bridge_max_seed_candidates": getattr(args, "terminal_bridge_max_seed_candidates", 0),
+            "terminal_bridge_max_expanded": getattr(args, "terminal_bridge_max_expanded", 0),
+            "terminal_bridge_calls": result.terminal_bridge_calls,
+            "terminal_bridge_successes": result.terminal_bridge_successes,
+            "terminal_bridge_expanded_total": result.terminal_bridge_expanded_total,
+            "terminal_bridge_moves": result.terminal_bridge_moves,
             "tail_risk_reserve_enabled": getattr(args, "tail_risk_reserve_enabled", False),
             "tail_risk_focus_n": getattr(args, "tail_risk_focus_n", 2),
             "tail_risk_n_window": getattr(args, "tail_risk_n_window", 1),
@@ -11893,6 +12027,11 @@ def main() -> int:
     parser.add_argument("--tail-lookahead-max-seed-candidates", type=int, default=None)
     parser.add_argument("--tail-lookahead-supplement-width", type=int, default=None)
     parser.add_argument("--tail-lookahead-max-expanded", type=int, default=None)
+    parser.add_argument("--terminal-bridge-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--terminal-bridge-focus-n", type=int, default=None)
+    parser.add_argument("--terminal-bridge-depth", type=int, default=None)
+    parser.add_argument("--terminal-bridge-max-seed-candidates", type=int, default=None)
+    parser.add_argument("--terminal-bridge-max-expanded", type=int, default=None)
     parser.add_argument("--tail-risk-reserve-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--tail-risk-focus-n", type=int, default=None)
     parser.add_argument("--tail-risk-n-window", type=int, default=None)

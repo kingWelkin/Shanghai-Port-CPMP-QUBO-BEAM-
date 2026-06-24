@@ -687,6 +687,15 @@ def _priority_group_row_dict_from_instance_result(
         "tail_lookahead_goal_reachable_total": getattr(result, "tail_lookahead_goal_reachable_total", 0),
         "tail_lookahead_best_delta_total": getattr(result, "tail_lookahead_best_delta_total", 0),
         "tail_lookahead_expanded_total": getattr(result, "tail_lookahead_expanded_total", 0),
+        "terminal_bridge_enabled": getattr(args, "terminal_bridge_enabled", False),
+        "terminal_bridge_focus_n": getattr(args, "terminal_bridge_focus_n", 1),
+        "terminal_bridge_depth": getattr(args, "terminal_bridge_depth", 3),
+        "terminal_bridge_max_seed_candidates": getattr(args, "terminal_bridge_max_seed_candidates", 0),
+        "terminal_bridge_max_expanded": getattr(args, "terminal_bridge_max_expanded", 0),
+        "terminal_bridge_calls": getattr(result, "terminal_bridge_calls", 0),
+        "terminal_bridge_successes": getattr(result, "terminal_bridge_successes", 0),
+        "terminal_bridge_expanded_total": getattr(result, "terminal_bridge_expanded_total", 0),
+        "terminal_bridge_moves": getattr(result, "terminal_bridge_moves", 0),
         "tail_risk_reserve_enabled": getattr(args, "tail_risk_reserve_enabled", False),
         "tail_risk_focus_n": getattr(args, "tail_risk_focus_n", 2),
         "tail_risk_n_window": getattr(args, "tail_risk_n_window", 1),
@@ -1020,6 +1029,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
@@ -1159,6 +1169,11 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "tail_lookahead_max_seed_candidates",
         "tail_lookahead_supplement_width",
         "tail_lookahead_max_expanded",
+        "terminal_bridge_enabled",
+        "terminal_bridge_focus_n",
+        "terminal_bridge_depth",
+        "terminal_bridge_max_seed_candidates",
+        "terminal_bridge_max_expanded",
         "tail_risk_reserve_enabled",
         "tail_risk_focus_n",
         "tail_risk_n_window",
@@ -1505,6 +1520,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish":
@@ -1782,6 +1799,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
@@ -1893,6 +1911,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--tail-lookahead-max-seed-candidates", type=int)
     parser.add_argument("--tail-lookahead-supplement-width", type=int)
     parser.add_argument("--tail-lookahead-max-expanded", type=int)
+    parser.add_argument("--terminal-bridge-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--terminal-bridge-focus-n", type=int)
+    parser.add_argument("--terminal-bridge-depth", type=int)
+    parser.add_argument("--terminal-bridge-max-seed-candidates", type=int)
+    parser.add_argument("--terminal-bridge-max-expanded", type=int)
     parser.add_argument("--tail-risk-reserve-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--tail-risk-focus-n", type=int)
     parser.add_argument("--tail-risk-n-window", type=int)
