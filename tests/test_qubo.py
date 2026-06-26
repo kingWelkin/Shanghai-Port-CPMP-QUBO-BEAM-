@@ -572,6 +572,60 @@ def test_open_row_serializes_post_polish_successor_cache_for_priority_group_inst
     assert row["post_polish_successor_cache"] is True
 
 
+def test_open_priority_group_row_serializes_frg_seed_cache_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_frg_seed_cache_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        frg_seed_cache_input="docs/experiments/cache.jsonl",
+        frg_seed_cache_key="case=tiny",
+        frg_seed_cache_hit=True,
+        frg_seed_cache_source="artifact",
+        frg_seed_moves=3,
+        frg_seed_runtime_sec=0.25,
+        frg_seed_used=True,
+        frg_seed_status="FRG_FEASIBLE",
+        frg_seed_generated=11,
+        frg_seed_cap_ok=True,
+        frg_seed_large_layout_ok=True,
+    )
+    args = _compact_args(frg_seed_enabled=True, frg_seed_cache_input="docs/experiments/cache.jsonl")
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert row["frg_seed_cache_input"] == "docs/experiments/cache.jsonl"
+    assert row["frg_seed_cache_key"] == "case=tiny"
+    assert row["frg_seed_cache_hit"] is True
+    assert row["frg_seed_cache_source"] == "artifact"
+    assert row["frg_seed_used"] is True
+    assert row["frg_seed_moves"] == 3
+    assert row["frg_seed_status"] == "FRG_FEASIBLE"
+
+
 def test_unified_wang_profile_initializes_target_layouts():
     from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
 
