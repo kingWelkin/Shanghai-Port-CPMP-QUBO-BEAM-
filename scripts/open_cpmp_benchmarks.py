@@ -848,8 +848,9 @@ def _optional_int(value: object) -> int | None:
 
 
 def _open_row_valid(row: dict[str, object]) -> bool:
-    if "primary_ok" in row:
-        return _is_true(row.get("primary_ok"))
+    primary_ok = row.get("primary_ok")
+    if primary_ok not in (None, ""):
+        return _is_true(primary_ok)
     return (
         _is_true(row.get("business_ok"))
         and _is_true(row.get("goal_validation_ok"))

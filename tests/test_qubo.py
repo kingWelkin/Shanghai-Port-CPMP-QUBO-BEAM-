@@ -8348,6 +8348,24 @@ def test_open_row_valid_uses_primary_ok_only_when_the_field_is_present():
     assert _open_row_valid(strict_row) is False
 
 
+def test_open_row_valid_treats_blank_primary_ok_as_legacy_row():
+    from open_cpmp_benchmarks import _open_row_valid
+
+    legacy_row = {
+        "moves": 10,
+        "final_n": 0,
+        "business_ok": True,
+        "goal_validation_ok": True,
+    }
+
+    assert _open_row_valid(legacy_row) is True
+    assert _open_row_valid({**legacy_row, "primary_ok": ""}) is True
+    assert _open_row_valid({**legacy_row, "primary_ok": None}) is True
+
+    for explicit_false in (False, "False", "0", 0):
+        assert _open_row_valid({**legacy_row, "primary_ok": explicit_false}) is False
+
+
 def test_open_runner_case_ids_filter_accepts_full_or_numeric_ids():
     from open_cpmp_benchmarks import _case_id_selected, build_parser
 
