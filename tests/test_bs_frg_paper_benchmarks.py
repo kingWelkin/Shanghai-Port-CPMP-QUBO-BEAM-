@@ -169,6 +169,67 @@ def test_paper_scorecard_distinguishes_feasibility_cap_and_time(row, time_limit,
     assert {key: scored[key] for key in expected} == expected
 
 
+def test_paper_summary_reports_primary_and_feasibility_counts(tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_compact_paper_set import _write_csv, _write_summary
+
+    rows = [
+        {
+            "dataset": "CV",
+            "family": "10-6",
+            "case": "strict",
+            "moves": 9,
+            "final_n": 0,
+            "runtime_sec": 1.0,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "feasibility_ok": True,
+            "time_limit_ok": True,
+            "primary_ok": True,
+            "full_quality_penalty": 9,
+        },
+        {
+            "dataset": "CV",
+            "family": "10-6",
+            "case": "over_cap",
+            "moves": 20,
+            "final_n": 0,
+            "runtime_sec": 1.0,
+            "business_ok": False,
+            "goal_validation_ok": True,
+            "feasibility_ok": True,
+            "time_limit_ok": True,
+            "primary_ok": False,
+            "full_quality_penalty": 99,
+        },
+        {
+            "dataset": "CV",
+            "family": "10-6",
+            "case": "over_time",
+            "moves": 21,
+            "final_n": 0,
+            "runtime_sec": 20.1,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "feasibility_ok": True,
+            "time_limit_ok": False,
+            "primary_ok": False,
+            "full_quality_penalty": 99,
+        },
+    ]
+    output = tmp_path / "paper.csv"
+    args = Namespace(variant="union", sample_per_family=10, time_limit=20.0)
+
+    _write_csv(rows, output)
+    summary = _write_summary(rows, output, tmp_path, args)
+
+    assert "| ALL | 3 | 1 | 9 |" in summary.read_text(encoding="utf-8")
+    assert "| feasibility-only over cap | 1 |" in summary.read_text(encoding="utf-8")
+    assert "| feasibility-only over time | 1 |" in summary.read_text(encoding="utf-8")
+    assert "primary_ok" in output.read_text(encoding="utf-8").splitlines()[0]
+
+
 def test_paper_runner_rejects_nonpositive_time_limit():
     from benchmark_compact_paper_set import build_parser
 

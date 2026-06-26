@@ -106,7 +106,19 @@ def _apply_paper_scorecard(row: dict[str, object], *, time_limit: float) -> dict
 
 
 def _is_solved_row(row: dict[str, object]) -> bool:
-    return _is_true(row.get("goal_validation_ok")) and row.get("final_n") == 0 and row.get("moves") not in ("", None)
+    return _is_true(row.get("primary_ok"))
+
+
+def _is_over_cap_row(row: dict[str, object]) -> bool:
+    return _is_true(row.get("feasibility_ok")) and not _is_true(row.get("business_ok"))
+
+
+def _is_over_time_row(row: dict[str, object]) -> bool:
+    return (
+        _is_true(row.get("feasibility_ok"))
+        and _is_true(row.get("business_ok"))
+        and not _is_true(row.get("time_limit_ok"))
+    )
 
 
 def row_from_paper_exception(
@@ -279,16 +291,25 @@ def _summary_groups(rows: list[dict[str, object]], key_fields: tuple[str, ...]) 
             key,
             {
                 "cases": 0,
-                "solved": 0,
+                "primary": 0,
+                "feasibility": 0,
+                "over_cap": 0,
+                "over_time": 0,
                 "moves": 0,
                 "penalty": 0,
                 "runtime": 0.0,
             },
         )
-        solved = _is_solved_row(row)
+        primary = _is_solved_row(row)
+        feasibility = _is_true(row.get("feasibility_ok"))
+        over_cap = _is_over_cap_row(row)
+        over_time = _is_over_time_row(row)
         item["cases"] = int(item["cases"]) + 1
-        item["solved"] = int(item["solved"]) + (1 if solved else 0)
-        item["moves"] = int(item["moves"]) + (int(_numeric(row, "moves", 0)) if solved else 0)
+        item["primary"] = int(item["primary"]) + (1 if primary else 0)
+        item["feasibility"] = int(item["feasibility"]) + (1 if feasibility else 0)
+        item["over_cap"] = int(item["over_cap"]) + (1 if over_cap else 0)
+        item["over_time"] = int(item["over_time"]) + (1 if over_time else 0)
+        item["moves"] = int(item["moves"]) + (int(_numeric(row, "moves", 0)) if primary else 0)
         item["penalty"] = int(item["penalty"]) + int(_numeric(row, "full_quality_penalty", 0))
         item["runtime"] = float(item["runtime"]) + _numeric(row, "runtime_sec", 0.0)
     return sorted(groups.items(), key=lambda item: item[0])
@@ -297,6 +318,9 @@ def _summary_groups(rows: list[dict[str, object]], key_fields: tuple[str, ...]) 
 def _write_summary(rows: list[dict[str, object]], output: Path, source: Path, args: argparse.Namespace) -> Path:
     summary = output.with_name(output.stem + "_summary.md")
     solved = [row for row in rows if _is_solved_row(row)]
+    feasibility = [row for row in rows if _is_true(row.get("feasibility_ok"))]
+    over_cap = [row for row in rows if _is_over_cap_row(row)]
+    over_time = [row for row in rows if _is_over_time_row(row)]
     moves = sum(int(_numeric(row, "moves", 0)) for row in solved)
     penalty = sum(int(_numeric(row, "full_quality_penalty", 0)) for row in rows)
     avg_runtime = sum(_numeric(row, "runtime_sec", 0.0) for row in rows) / max(1, len(rows))
@@ -309,31 +333,54 @@ def _write_summary(rows: list[dict[str, object]], output: Path, source: Path, ar
         f"sample_per_family: `{args.sample_per_family}`",
         f"time_limit: `{args.time_limit}`",
         "",
-        "| scope | cases | solved | moves | full penalty | avg runtime sec |",
-        "|---|---:|---:|---:|---:|---:|",
-        f"| ALL | {len(rows)} | {len(solved)} | {moves} | {penalty} | {avg_runtime:.3f} |",
+        "| scope | cases | primary solved | moves | feasibility | over cap | over time | full penalty | avg runtime sec |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        f"| ALL | {len(rows)} | {len(solved)} | {moves} | {len(feasibility)} | "
+        f"{len(over_cap)} | {len(over_time)} | {penalty} | {avg_runtime:.3f} |",
     ]
     for (dataset,), item in _summary_groups(rows, ("dataset",)):
         avg = float(item["runtime"]) / max(1, int(item["cases"]))
         lines.append(
-            f"| {dataset} | {int(item['cases'])} | {int(item['solved'])} | {int(item['moves'])} | "
+            f"| {dataset} | {int(item['cases'])} | {int(item['primary'])} | {int(item['moves'])} | "
+            f"{int(item['feasibility'])} | {int(item['over_cap'])} | {int(item['over_time'])} | "
             f"{int(item['penalty'])} | {avg:.3f} |"
         )
-    lines.extend(["", "## Family Breakdown", "", "| dataset | family | cases | solved | moves | full penalty | avg runtime sec |"])
-    lines.append("|---|---|---:|---:|---:|---:|---:|")
+    lines.extend(
+        [
+            "",
+            "## Family Breakdown",
+            "",
+            "| dataset | family | cases | primary solved | moves | feasibility | over cap | over time | full penalty | avg runtime sec |",
+        ]
+    )
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
     for (dataset, family), item in _summary_groups(rows, ("dataset", "family")):
         avg = float(item["runtime"]) / max(1, int(item["cases"]))
         lines.append(
-            f"| {dataset} | {family} | {int(item['cases'])} | {int(item['solved'])} | {int(item['moves'])} | "
+            f"| {dataset} | {family} | {int(item['cases'])} | {int(item['primary'])} | {int(item['moves'])} | "
+            f"{int(item['feasibility'])} | {int(item['over_cap'])} | {int(item['over_time'])} | "
             f"{int(item['penalty'])} | {avg:.3f} |"
         )
+    lines.extend(
+        [
+            "",
+            "## Feasibility-Only Breakdown",
+            "",
+            "| reason | cases |",
+            "|---|---:|",
+            f"| feasibility-only over cap | {len(over_cap)} |",
+            f"| feasibility-only over time | {len(over_time)} |",
+        ]
+    )
     failures = [row for row in rows if not _is_solved_row(row)]
     lines.extend(["", "## Failures", ""])
     if failures:
         for row in failures:
+            case_name = Path(str(row.get("source_file") or row.get("case", ""))).stem
+            status = "feasibility_only" if _is_true(row.get("feasibility_ok")) else row.get("status", "")
             lines.append(
-                f"- `{row['dataset']}/{row['family']}/{Path(str(row['source_file'])).stem}`: "
-                f"status={row.get('status', '')} final_n={row.get('final_n', '')} "
+                f"- `{row['dataset']}/{row['family']}/{case_name}`: "
+                f"status={status} final_n={row.get('final_n', '')} "
                 f"moves={row.get('moves', '')} runtime={float(_numeric(row, 'runtime_sec', 0.0)):.3f}s"
             )
     else:
