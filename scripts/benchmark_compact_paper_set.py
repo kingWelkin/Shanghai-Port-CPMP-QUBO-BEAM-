@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,7 +18,14 @@ for path in (ROOT, ROOT / "scripts"):
         sys.path.insert(0, str(path))
 
 from benchmark_bs_frg_paper import PaperCase, discover_paper_cases, load_bf_bay, load_cv_dat  # noqa: E402
-from benchmark_compact_beam_qubo_n0 import run_compact_beam_instance  # noqa: E402
+import benchmark_compact_beam_qubo_n0 as compact_bench  # noqa: E402
+from benchmark_compact_beam_qubo_n0 import (  # noqa: E402
+    _apply_dynamic_profile,
+    _apply_qubo_influence_profile,
+    _apply_solver_profile,
+    _frg_seed_record_from_result,
+    run_compact_beam_instance,
+)
 from open_cpmp_benchmarks import (  # noqa: E402
     OPEN_RESULT_FIELDS,
     _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS,
@@ -157,6 +166,65 @@ def row_from_paper_exception(
     }
 
 
+def _resolve_optional_path(path: Path | str | None) -> Path | None:
+    if path is None:
+        return None
+    resolved = Path(path)
+    return resolved if resolved.is_absolute() else ROOT / resolved
+
+
+def _args_with_paper_defaults(args: argparse.Namespace) -> argparse.Namespace:
+    values = dict(vars(args))
+    values.setdefault("max_moves", None)
+    values.setdefault("solver_profile", "speed_v2")
+    return argparse.Namespace(**values)
+
+
+def _materialization_variants_for_task(task: PaperRunTask) -> tuple[str, ...]:
+    if task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio":
+        return _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS
+    if task.variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio":
+        return _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS
+    return (task.variant,)
+
+
+def _materialize_frg_seed_cache(tasks: list[PaperRunTask], args: argparse.Namespace) -> dict[str, object]:
+    payload = dict(vars(args))
+    cache_input = _resolve_optional_path(getattr(args, "frg_seed_cache_input", None))
+    if cache_input is not None:
+        payload["frg_seed_cache_input"] = cache_input
+
+    output = _resolve_optional_path(getattr(args, "frg_seed_cache_output", None))
+    if output is None:
+        return payload
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    args_for_variant = _args_with_paper_defaults(args)
+    with output.open("w", encoding="utf-8") as handle:
+        for task in tasks:
+            try:
+                instance = _load_paper_case(task.case)
+            except Exception:
+                continue
+            for variant in _materialization_variants_for_task(task):
+                try:
+                    compact_args = _args_for_variant(args_for_variant, variant, instance)
+                    _apply_solver_profile(compact_args)
+                    _apply_qubo_influence_profile(compact_args)
+                    _apply_dynamic_profile(compact_args)
+                    configured_limit = float(getattr(compact_args, "frg_seed_time_limit", 0.0) or 0.0)
+                    deadline = time.perf_counter() + max(0.001, configured_limit)
+                    seed = compact_bench._frg_seed_incumbent(instance, compact_args, deadline)
+                    if seed is None:
+                        continue
+                    row = _frg_seed_record_from_result(task.case.case_id, instance, compact_args, seed)
+                    handle.write(json.dumps(row, sort_keys=True) + "\n")
+                except Exception:
+                    continue
+    payload["frg_seed_cache_input"] = output
+    return payload
+
+
 def _numeric(row: dict[str, object], field: str, default: float = 0.0) -> float:
     value = row.get(field)
     if value in (None, ""):
@@ -244,7 +312,7 @@ def _run_task(task: PaperRunTask, args_payload: dict[str, object]) -> PaperRunTa
 
 
 def _collect_rows(tasks: list[PaperRunTask], args: argparse.Namespace) -> list[dict[str, object]]:
-    payload = dict(vars(args))
+    payload = _materialize_frg_seed_cache(tasks, args)
     total = len(tasks)
     results: list[PaperRunTaskResult] = []
     if args.jobs <= 1:
@@ -462,6 +530,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-frontier-child-adaptive-min-n", type=int)
     parser.add_argument("--frg-frontier-child-adaptive-small-stack-max", type=int)
     parser.add_argument("--frg-frontier-child-adaptive-min-container-count", type=int)
+    parser.add_argument("--frg-seed-cache-input", type=Path)
+    parser.add_argument("--frg-seed-cache-output", type=Path)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument(
         "--output",
@@ -475,6 +545,8 @@ def main() -> int:
     args = build_parser().parse_args()
     source = args.source if args.source.is_absolute() else ROOT / args.source
     output = args.output if args.output.is_absolute() else ROOT / args.output
+    args.frg_seed_cache_input = _resolve_optional_path(args.frg_seed_cache_input)
+    args.frg_seed_cache_output = _resolve_optional_path(args.frg_seed_cache_output)
     cases = discover_sampled_paper_cases(
         source,
         datasets=args.datasets,

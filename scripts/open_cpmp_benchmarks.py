@@ -1352,6 +1352,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "frg_seed_prune_to_incumbent",
         "frg_seed_allow_large_over_cap",
         "frg_seed_paper_pure",
+        "frg_seed_cache_input",
         "frg_candidate_supplement_enabled",
         "frg_candidate_supplement_width",
         "frg_candidate_focus_n",

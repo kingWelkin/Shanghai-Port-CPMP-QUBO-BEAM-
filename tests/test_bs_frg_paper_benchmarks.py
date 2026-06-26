@@ -305,6 +305,217 @@ def test_paper_parser_accepts_family_filter():
     assert args.families == ["BF14", "10-6"]
 
 
+def test_paper_parser_accepts_frg_seed_cache_paths_and_open_runner_forwards_input(tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_compact_paper_set import build_parser
+    from container_reshuffle.core import Instance, ProblemVariant
+    from open_cpmp_benchmarks import _args_for_variant
+
+    parsed = build_parser().parse_args(
+        ["--frg-seed-cache-input", "cache.jsonl", "--frg-seed-cache-output", "out.jsonl"]
+    )
+
+    assert parsed.frg_seed_cache_input == Path("cache.jsonl")
+    assert parsed.frg_seed_cache_output == Path("out.jsonl")
+
+    instance = Instance(
+        "case_1",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    args = Namespace(
+        alpha=10.0,
+        max_moves=None,
+        solver_profile="speed_v2",
+        time_limit=20.0,
+        frg_seed_cache_input=tmp_path / "cache.jsonl",
+    )
+
+    compact_args = _args_for_variant(
+        args,
+        "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+        instance,
+    )
+
+    assert compact_args.frg_seed_cache_input == tmp_path / "cache.jsonl"
+
+
+def test_paper_runner_materializes_frg_seed_cache_before_collecting_rows(monkeypatch, tmp_path: Path):
+    from argparse import Namespace
+
+    import benchmark_compact_beam_qubo_n0 as bench
+    import benchmark_compact_paper_set as paper
+    from benchmark_bs_frg_paper import PaperCase
+    from container_reshuffle.core import Instance, Move, ProblemVariant
+
+    cache_path = tmp_path / "paper_seed_cache.jsonl"
+    case_path = tmp_path / "case.bay"
+    case_path.write_text("", encoding="utf-8")
+    task = paper.PaperRunTask(
+        task_index=0,
+        case=PaperCase("BF", "BF14", "case_1", case_path),
+        variant="qubo_scheduler_state_v5_qubo_diversity_union_polish",
+    )
+    instance = Instance(
+        "case_1",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    seed = bench.FrgSeedResult(
+        moves=(Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1),),
+        final_n=0,
+        generated=5,
+        runtime_sec=0.01,
+        status="FRG_FEASIBLE",
+        cap_ok=False,
+    )
+    monkeypatch.setattr(paper, "_load_paper_case", lambda case: instance)
+    monkeypatch.setattr(bench, "_frg_seed_incumbent", lambda instance, args, deadline: seed)
+    args = Namespace(
+        alpha=10.0,
+        time_limit=20.0,
+        frg_seed_cache_output=cache_path,
+        frg_seed_cache_input=None,
+    )
+
+    payload = paper._materialize_frg_seed_cache([task], args)
+
+    assert payload["frg_seed_cache_input"] == cache_path
+    text = cache_path.read_text(encoding="utf-8")
+    assert '"case": "case_1"' in text
+    assert '"status": "FRG_FEASIBLE"' in text
+
+
+def test_paper_runner_materializes_frg_seed_cache_for_portfolio_child_variants(monkeypatch, tmp_path: Path):
+    from argparse import Namespace
+
+    import benchmark_compact_beam_qubo_n0 as bench
+    import benchmark_compact_paper_set as paper
+    from benchmark_bs_frg_paper import PaperCase
+    from container_reshuffle.core import Instance, Move, ProblemVariant
+
+    cache_path = tmp_path / "paper_seed_cache.jsonl"
+    case_path = tmp_path / "case.bay"
+    case_path.write_text("", encoding="utf-8")
+    task = paper.PaperRunTask(
+        task_index=0,
+        case=PaperCase("BF", "BF14", "case_1", case_path),
+        variant="qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
+    )
+    instance = Instance(
+        "case_1",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    seed = bench.FrgSeedResult(
+        moves=(Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1),),
+        final_n=0,
+        generated=5,
+        runtime_sec=0.01,
+        status="FRG_FEASIBLE",
+        cap_ok=False,
+    )
+    solver_profiles = []
+
+    def fake_seed(instance_arg, args_arg, deadline):
+        solver_profiles.append(args_arg.solver_profile)
+        return seed
+
+    monkeypatch.setattr(paper, "_load_paper_case", lambda case: instance)
+    monkeypatch.setattr(bench, "_frg_seed_incumbent", fake_seed)
+    args = Namespace(
+        alpha=10.0,
+        time_limit=20.0,
+        frg_seed_cache_output=cache_path,
+        frg_seed_cache_input=None,
+    )
+
+    paper._materialize_frg_seed_cache([task], args)
+
+    assert solver_profiles == [
+        "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+        "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
+    ]
+    text = cache_path.read_text(encoding="utf-8")
+    assert "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish" in text
+    assert "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish" in text
+    assert "speed_v2" not in solver_profiles
+
+
+def test_paper_runner_materializes_frg_seed_cache_skips_failed_task_variant(monkeypatch, tmp_path: Path):
+    from argparse import Namespace
+
+    import benchmark_compact_beam_qubo_n0 as bench
+    import benchmark_compact_paper_set as paper
+    from benchmark_bs_frg_paper import PaperCase
+    from container_reshuffle.core import Instance, Move, ProblemVariant
+
+    cache_path = tmp_path / "paper_seed_cache.jsonl"
+    failed_path = tmp_path / "failed.bay"
+    ok_path = tmp_path / "ok.bay"
+    failed_path.write_text("", encoding="utf-8")
+    ok_path.write_text("", encoding="utf-8")
+    tasks = [
+        paper.PaperRunTask(
+            0,
+            PaperCase("BF", "BF14", "failed_case", failed_path),
+            "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+        ),
+        paper.PaperRunTask(
+            1,
+            PaperCase("BF", "BF14", "ok_case", ok_path),
+            "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+        ),
+    ]
+    instance = Instance(
+        "ok_case",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    seed = bench.FrgSeedResult(
+        moves=(Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1),),
+        final_n=0,
+        generated=5,
+        runtime_sec=0.01,
+        status="FRG_FEASIBLE",
+        cap_ok=False,
+    )
+
+    def fake_load(case):
+        if case.case_id == "failed_case":
+            raise RuntimeError("load failed")
+        return instance
+
+    monkeypatch.setattr(paper, "_load_paper_case", fake_load)
+    monkeypatch.setattr(bench, "_frg_seed_incumbent", lambda instance, args, deadline: seed)
+    args = Namespace(
+        alpha=10.0,
+        time_limit=20.0,
+        frg_seed_cache_output=cache_path,
+        frg_seed_cache_input=None,
+    )
+
+    payload = paper._materialize_frg_seed_cache(tasks, args)
+
+    assert payload["frg_seed_cache_input"] == cache_path
+    text = cache_path.read_text(encoding="utf-8")
+    assert '"case": "ok_case"' in text
+    assert "failed_case" not in text
+
+
 def test_paper_runner_terminal_escape_lazy_portfolio_stops_after_valid_bridge(monkeypatch, tmp_path: Path):
     from argparse import Namespace
 
