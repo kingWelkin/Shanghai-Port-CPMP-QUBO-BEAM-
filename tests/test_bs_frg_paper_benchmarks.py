@@ -111,6 +111,37 @@ def test_discover_sampled_paper_cases_groups_cv_by_height_and_stack(tmp_path: Pa
     ]
 
 
+def test_discover_sampled_paper_cases_filters_selected_families(tmp_path: Path):
+    from benchmark_compact_paper_set import discover_sampled_paper_cases
+
+    for family in ("BF14", "BF16"):
+        family_root = tmp_path / "BF" / "BF" / family
+        family_root.mkdir(parents=True)
+        for idx in [1, 10, 2]:
+            (family_root / f"case_{idx}.bay").write_text("", encoding="utf-8")
+
+    cv_root = tmp_path / "CV" / "CRPTestcases_Caserta"
+    cv_root.mkdir(parents=True)
+    for family in ("10-6", "10-10"):
+        height, stacks = family.split("-")
+        for idx in [1, 10, 2]:
+            (cv_root / f"data{height}-{stacks}-{idx}.dat").write_text("", encoding="utf-8")
+
+    cases = discover_sampled_paper_cases(
+        tmp_path,
+        datasets=("BF", "CV"),
+        sample_per_family=2,
+        families=("BF16", "10-6"),
+    )
+
+    assert [(case.family, case.case_id) for case in cases] == [
+        ("BF16", "case_1"),
+        ("BF16", "case_2"),
+        ("10-6", "data10-6-1"),
+        ("10-6", "data10-6-2"),
+    ]
+
+
 def test_paper_exception_row_preserves_failed_case_metadata(tmp_path: Path):
     from argparse import Namespace
 
@@ -230,11 +261,48 @@ def test_paper_summary_reports_primary_and_feasibility_counts(tmp_path: Path):
     assert "primary_ok" in output.read_text(encoding="utf-8").splitlines()[0]
 
 
+def test_paper_summary_records_family_filter(tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_compact_paper_set import _write_summary
+
+    rows = [
+        {
+            "dataset": "BF",
+            "family": "BF16",
+            "case": "case_1",
+            "moves": 4,
+            "final_n": 0,
+            "runtime_sec": 1.0,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "feasibility_ok": True,
+            "time_limit_ok": True,
+            "primary_ok": True,
+            "full_quality_penalty": 4,
+        }
+    ]
+    output = tmp_path / "paper.csv"
+    args = Namespace(variant="union", sample_per_family=2, time_limit=20.0, families=["BF16", "10-6"])
+
+    summary = _write_summary(rows, output, tmp_path, args)
+
+    assert "families: `BF16,10-6`" in summary.read_text(encoding="utf-8")
+
+
 def test_paper_runner_rejects_nonpositive_time_limit():
     from benchmark_compact_paper_set import build_parser
 
     with pytest.raises(SystemExit):
         build_parser().parse_args(["--time-limit", "0"])
+
+
+def test_paper_parser_accepts_family_filter():
+    from benchmark_compact_paper_set import build_parser
+
+    args = build_parser().parse_args(["--families", "BF14", "10-6"])
+
+    assert args.families == ["BF14", "10-6"]
 
 
 def test_paper_runner_terminal_escape_lazy_portfolio_stops_after_valid_bridge(monkeypatch, tmp_path: Path):

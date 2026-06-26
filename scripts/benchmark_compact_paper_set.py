@@ -50,8 +50,10 @@ def discover_sampled_paper_cases(
     *,
     datasets: Iterable[str] = ("BF", "CV"),
     sample_per_family: int = 10,
+    families: Iterable[str] | None = None,
     max_total: int | None = None,
 ) -> list[PaperCase]:
+    selected_families = set(families) if families is not None else None
     cases: list[PaperCase] = []
     for dataset in datasets:
         dataset_cases = discover_paper_cases(
@@ -60,6 +62,8 @@ def discover_sampled_paper_cases(
             limit_per_family=sample_per_family,
         )
         for case in dataset_cases:
+            if selected_families is not None and case.family not in selected_families:
+                continue
             cases.append(case)
             if max_total is not None and len(cases) >= max_total:
                 return cases
@@ -324,6 +328,8 @@ def _write_summary(rows: list[dict[str, object]], output: Path, source: Path, ar
     moves = sum(int(_numeric(row, "moves", 0)) for row in solved)
     penalty = sum(int(_numeric(row, "full_quality_penalty", 0)) for row in rows)
     avg_runtime = sum(_numeric(row, "runtime_sec", 0.0) for row in rows) / max(1, len(rows))
+    families = getattr(args, "families", None)
+    family_metadata = ",".join(families) if families else "all"
     lines = [
         "# Compact Paper Set Benchmark Summary",
         "",
@@ -331,6 +337,7 @@ def _write_summary(rows: list[dict[str, object]], output: Path, source: Path, ar
         f"result_csv: `{output}`",
         f"variant: `{args.variant}`",
         f"sample_per_family: `{args.sample_per_family}`",
+        f"families: `{family_metadata}`",
         f"time_limit: `{args.time_limit}`",
         "",
         "| scope | cases | primary solved | moves | feasibility | over cap | over time | full penalty | avg runtime sec |",
@@ -401,6 +408,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source", type=Path, default=ROOT / "external" / "paper_cpmp")
     parser.add_argument("--datasets", nargs="+", choices=["BF", "CV", "CVS"], default=["BF", "CV"])
     parser.add_argument("--sample-per-family", type=int, default=10)
+    parser.add_argument("--families", nargs="+")
     parser.add_argument("--max-total", type=int)
     parser.add_argument("--variant", default="qubo_scheduler_state_v5_qubo_diversity_union_polish")
     parser.add_argument("--solver-profile", default="speed_v2")
@@ -471,6 +479,7 @@ def main() -> int:
         source,
         datasets=args.datasets,
         sample_per_family=args.sample_per_family,
+        families=args.families,
         max_total=args.max_total,
     )
     tasks = [PaperRunTask(task_index=idx, case=case, variant=args.variant) for idx, case in enumerate(cases)]
