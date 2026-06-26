@@ -8333,6 +8333,21 @@ def test_open_no_regret_row_keeps_valid_baseline_and_selects_shorter_valid_guard
     assert _select_open_no_regret_row([baseline, shorter_guarded]) is shorter_guarded
 
 
+def test_open_row_valid_uses_primary_ok_only_when_the_field_is_present():
+    from open_cpmp_benchmarks import _open_row_valid
+
+    legacy_row = {
+        "moves": 10,
+        "final_n": 0,
+        "business_ok": True,
+        "goal_validation_ok": True,
+    }
+    strict_row = {**legacy_row, "primary_ok": False}
+
+    assert _open_row_valid(legacy_row) is True
+    assert _open_row_valid(strict_row) is False
+
+
 def test_open_runner_case_ids_filter_accepts_full_or_numeric_ids():
     from open_cpmp_benchmarks import _case_id_selected, build_parser
 

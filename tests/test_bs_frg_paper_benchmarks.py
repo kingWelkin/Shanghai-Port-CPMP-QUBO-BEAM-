@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 for path in (ROOT / "scripts",):
     if str(path) not in sys.path:
@@ -126,9 +128,52 @@ def test_paper_exception_row_preserves_failed_case_metadata(tmp_path: Path):
     assert row["variant"] == "candidate"
     assert row["goal_validation_ok"] is False
     assert row["business_ok"] is False
+    assert row["feasibility_ok"] is False
+    assert row["time_limit_ok"] is False
+    assert row["primary_ok"] is False
     assert row["status"] == "ERROR"
     assert row["validation_msg"] == "RuntimeError: lift failed"
     assert row["full_quality_penalty"] == 1000000
+
+
+@pytest.mark.parametrize(
+    ("row", "time_limit", "expected"),
+    [
+        (
+            {"moves": 17, "final_n": 0, "goal_validation_ok": True, "business_ok": False, "runtime_sec": 1.0},
+            20.0,
+            {"feasibility_ok": True, "time_limit_ok": True, "primary_ok": False},
+        ),
+        (
+            {"moves": 17, "final_n": 0, "goal_validation_ok": True, "business_ok": True, "runtime_sec": 20.01},
+            20.0,
+            {"feasibility_ok": True, "time_limit_ok": False, "primary_ok": False},
+        ),
+        (
+            {"moves": 17, "final_n": 0, "goal_validation_ok": True, "business_ok": True, "runtime_sec": 20.0},
+            20.0,
+            {"feasibility_ok": True, "time_limit_ok": True, "primary_ok": True},
+        ),
+        (
+            {"moves": 17, "final_n": 0, "goal_validation_ok": True, "business_ok": True, "runtime_sec": "bad"},
+            20.0,
+            {"feasibility_ok": True, "time_limit_ok": False, "primary_ok": False},
+        ),
+    ],
+)
+def test_paper_scorecard_distinguishes_feasibility_cap_and_time(row, time_limit, expected):
+    from benchmark_compact_paper_set import _apply_paper_scorecard
+
+    scored = _apply_paper_scorecard(dict(row), time_limit=time_limit)
+
+    assert {key: scored[key] for key in expected} == expected
+
+
+def test_paper_runner_rejects_nonpositive_time_limit():
+    from benchmark_compact_paper_set import build_parser
+
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["--time-limit", "0"])
 
 
 def test_paper_runner_terminal_escape_lazy_portfolio_stops_after_valid_bridge(monkeypatch, tmp_path: Path):
@@ -224,3 +269,50 @@ def test_paper_runner_terminal_escape_lazy_portfolio_tries_wide_after_invalid_br
     )
     assert result.row["portfolio_runtime_sec"] == "6.000000"
     assert result.row["full_quality_penalty"] == 27
+
+
+def test_paper_lazy_portfolio_skips_over_time_feasibility_child(monkeypatch, tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_bs_frg_paper import PaperCase
+    from benchmark_compact_paper_set import PaperRunTask, _run_task
+
+    bridge_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
+    wide_variant = "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
+    lazy_variant = "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio"
+    case = PaperCase("BF", "BFx", "case_1", tmp_path / "case_1.bay")
+    calls = []
+
+    def fake_load(_case_arg):
+        return object()
+
+    def fake_run(case_arg, _args_arg, variant, instance=None):
+        del instance
+        calls.append(variant)
+        primary = variant == wide_variant
+        return {
+            "dataset": case_arg.dataset,
+            "family": case_arg.family,
+            "case": case_arg.case_id,
+            "variant": variant,
+            "solver_profile": variant,
+            "moves": 9 if primary else 7,
+            "final_n": 0,
+            "runtime_sec": 1.0 if primary else 21.0,
+            "business_ok": True,
+            "goal_validation_ok": True,
+            "feasibility_ok": True,
+            "time_limit_ok": primary,
+            "primary_ok": primary,
+            "full_quality_penalty": 9 if primary else 99,
+        }
+
+    monkeypatch.setattr("benchmark_compact_paper_set._load_paper_case", fake_load)
+    monkeypatch.setattr("benchmark_compact_paper_set._run_paper_variant_row", fake_run)
+
+    result = _run_task(PaperRunTask(0, case, lazy_variant), vars(Namespace(alpha=10.0)))
+
+    assert calls == [bridge_variant, wide_variant]
+    assert result.row["portfolio_selected_profile"] == wide_variant
+    assert result.row["primary_ok"] is True
+    assert result.row["portfolio_runtime_sec"] == "22.000000"
