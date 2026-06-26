@@ -3479,6 +3479,224 @@ def test_run_compact_beam_uses_frg_seed_when_search_exhausts(monkeypatch):
     assert result.frg_seed_status == "FRG_FEASIBLE"
 
 
+def test_run_compact_beam_uses_materialized_frg_seed_before_live(monkeypatch, tmp_path):
+    import json
+
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    instance = Instance(
+        "seed_cached",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    cached_moves = (Move(step=0, box=2, from_stack=0, to_stack=2, from_level=2, to_level=1),)
+    args = bench.make_compact_args(
+        solver_profile="speed_v2",
+        frg_seed_enabled=True,
+        frg_seed_allow_large_over_cap=True,
+        frg_seed_cache_input=tmp_path / "frg_seed_cache.jsonl",
+        time_limit=0.000001,
+        alpha=10.0,
+    )
+    cache_key = bench._frg_seed_cache_key("seed_cached", instance, args)
+    record = bench._frg_seed_record_from_result(
+        "seed_cached",
+        instance,
+        args,
+        bench.FrgSeedResult(
+            moves=cached_moves,
+            final_n=0,
+            generated=11,
+            runtime_sec=0.123,
+            status="FRG_FEASIBLE",
+            cap_ok=False,
+        ),
+    )
+    args.frg_seed_cache_input.write_text(json.dumps(record) + "\n", encoding="utf-8")
+    monkeypatch.setattr(
+        bench,
+        "_frg_seed_incumbent",
+        lambda instance, args, deadline: (_ for _ in ()).throw(AssertionError("live seed should not run")),
+    )
+
+    result = bench.run_compact_beam_instance("seed_cached", instance, args)
+
+    assert result.moves == list(cached_moves)
+    assert result.frg_seed_used is True
+    assert result.frg_seed_moves == 1
+    assert result.frg_seed_status == "FRG_FEASIBLE"
+    assert result.frg_seed_generated == 11
+    assert result.frg_seed_cap_ok is True
+    assert result.frg_seed_cache_hit is True
+    assert result.frg_seed_cache_source == "artifact"
+    assert result.frg_seed_cache_key == cache_key
+
+
+def test_run_compact_beam_reports_materialized_frg_seed_cache_miss(monkeypatch, tmp_path):
+    import json
+
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    instance = Instance(
+        "seed_miss",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    cache_path = tmp_path / "frg_seed_cache.jsonl"
+    cache_path.write_text(json.dumps({"cache_key": "different-case", "moves": []}) + "\n", encoding="utf-8")
+    live_seed = bench.FrgSeedResult(
+        moves=(Move(step=0, box=2, from_stack=0, to_stack=2, from_level=2, to_level=1),),
+        final_n=0,
+        generated=3,
+        runtime_sec=0.004,
+        status="FRG_FEASIBLE",
+        cap_ok=False,
+    )
+    monkeypatch.setattr(bench, "_frg_seed_incumbent", lambda instance, args, deadline: live_seed)
+    args = bench.make_compact_args(
+        solver_profile="speed_v2",
+        frg_seed_enabled=True,
+        frg_seed_allow_large_over_cap=True,
+        frg_seed_cache_input=cache_path,
+        time_limit=0.000001,
+        alpha=10.0,
+    )
+
+    result = bench.run_compact_beam_instance("seed_miss", instance, args)
+
+    assert result.frg_seed_used is True
+    assert result.frg_seed_cache_hit is False
+    assert result.frg_seed_cache_source == "miss_live"
+    assert result.frg_seed_generated == 3
+
+
+def test_run_compact_beam_rejects_empty_materialized_frg_seed_and_uses_live(monkeypatch, tmp_path):
+    import json
+
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    instance = Instance(
+        "seed_empty_cache",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    cache_path = tmp_path / "frg_seed_cache.jsonl"
+    live_seed = bench.FrgSeedResult(
+        moves=(Move(step=0, box=2, from_stack=0, to_stack=2, from_level=2, to_level=1),),
+        final_n=0,
+        generated=13,
+        runtime_sec=0.005,
+        status="FRG_FEASIBLE_LIVE",
+        cap_ok=False,
+    )
+    args = bench.make_compact_args(
+        solver_profile="speed_v2",
+        frg_seed_enabled=True,
+        frg_seed_allow_large_over_cap=True,
+        frg_seed_cache_input=cache_path,
+        time_limit=0.000001,
+        alpha=10.0,
+    )
+    cache_path.write_text(
+        json.dumps(
+            {
+                "cache_key": bench._frg_seed_cache_key("seed_empty_cache", instance, args),
+                "moves": [],
+                "final_n": 0,
+                "generated": 99,
+                "runtime_sec": 0.123,
+                "status": "FRG_FEASIBLE_ARTIFACT",
+                "cap_ok": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(bench, "_frg_seed_incumbent", lambda instance, args, deadline: live_seed)
+
+    result = bench.run_compact_beam_instance("seed_empty_cache", instance, args)
+
+    assert result.frg_seed_used is True
+    assert result.frg_seed_cache_hit is False
+    assert result.frg_seed_cache_source == "miss_live"
+    assert result.frg_seed_generated == 13
+    assert result.frg_seed_status == "FRG_FEASIBLE_LIVE"
+
+
+def test_run_compact_beam_rejects_invalid_materialized_frg_seed_and_uses_live(monkeypatch, tmp_path):
+    import json
+
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    instance = Instance(
+        "seed_invalid_cache",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    cache_path = tmp_path / "frg_seed_cache.jsonl"
+    live_seed = bench.FrgSeedResult(
+        moves=(Move(step=0, box=2, from_stack=0, to_stack=2, from_level=2, to_level=1),),
+        final_n=0,
+        generated=17,
+        runtime_sec=0.006,
+        status="FRG_FEASIBLE_LIVE",
+        cap_ok=False,
+    )
+    args = bench.make_compact_args(
+        solver_profile="speed_v2",
+        frg_seed_enabled=True,
+        frg_seed_allow_large_over_cap=True,
+        frg_seed_cache_input=cache_path,
+        time_limit=0.000001,
+        alpha=10.0,
+    )
+    cache_path.write_text(
+        json.dumps(
+            {
+                "cache_key": bench._frg_seed_cache_key("seed_invalid_cache", instance, args),
+                "moves": [
+                    {
+                        "step": 0,
+                        "box": 99,
+                        "from_stack": 7,
+                        "to_stack": 1,
+                        "from_level": 1,
+                        "to_level": 1,
+                    }
+                ],
+                "final_n": 0,
+                "generated": 101,
+                "runtime_sec": 0.123,
+                "status": "FRG_FEASIBLE_ARTIFACT",
+                "cap_ok": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(bench, "_frg_seed_incumbent", lambda instance, args, deadline: live_seed)
+
+    result = bench.run_compact_beam_instance("seed_invalid_cache", instance, args)
+
+    assert result.frg_seed_used is True
+    assert result.frg_seed_cache_hit is False
+    assert result.frg_seed_cache_source == "miss_live"
+    assert result.frg_seed_generated == 17
+    assert result.frg_seed_status == "FRG_FEASIBLE_LIVE"
+
+
 def test_run_compact_beam_rejects_over_cap_frg_seed_on_small_layout(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 

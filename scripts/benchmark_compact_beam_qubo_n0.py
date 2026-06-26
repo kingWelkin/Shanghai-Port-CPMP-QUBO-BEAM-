@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import csv
 import heapq
+import json
 import math
 import sys
 import time
@@ -284,6 +285,10 @@ COMPACT_EXTRA_FIELDS = [
     "frg_seed_prune_to_incumbent",
     "frg_seed_allow_large_over_cap",
     "frg_seed_paper_pure",
+    "frg_seed_cache_input",
+    "frg_seed_cache_key",
+    "frg_seed_cache_hit",
+    "frg_seed_cache_source",
     "frg_seed_moves",
     "frg_seed_runtime_sec",
     "frg_seed_used",
@@ -1291,6 +1296,10 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_seed_prune_to_incumbent": True,
         "frg_seed_allow_large_over_cap": False,
         "frg_seed_paper_pure": True,
+        "frg_seed_cache_input": None,
+        "frg_seed_cache_key": "",
+        "frg_seed_cache_hit": False,
+        "frg_seed_cache_source": "",
         "frg_candidate_supplement_enabled": False,
         "frg_candidate_supplement_width": 0,
         "frg_candidate_focus_n": -1,
@@ -2795,6 +2804,10 @@ class CompactBeamResult:
     frg_seed_generated: int = 0
     frg_seed_cap_ok: bool = False
     frg_seed_large_layout_ok: bool = False
+    frg_seed_cache_input: str = ""
+    frg_seed_cache_key: str = ""
+    frg_seed_cache_hit: bool = False
+    frg_seed_cache_source: str = ""
     frg_candidate_selected_total: int = 0
     frg_compound_appended_total: int = 0
     dlts_value_selected_total: int = 0
@@ -5874,6 +5887,130 @@ def _frg_seed_large_layout_allowed(instance: Instance, args: argparse.Namespace)
     if not bool(getattr(args, "frg_seed_allow_large_over_cap", False)):
         return False
     return instance.stack_count >= 8 or instance.max_height >= 8
+
+
+def _frg_seed_move_to_record(move: Move) -> dict[str, int | None]:
+    return {
+        "step": move.step,
+        "box": move.box,
+        "from_stack": move.from_stack,
+        "to_stack": move.to_stack,
+        "from_level": move.from_level,
+        "to_level": move.to_level,
+    }
+
+
+def _frg_seed_move_from_record(record: dict[str, object]) -> Move:
+    return Move(
+        step=int(record["step"]),
+        box=int(record["box"]),
+        from_stack=int(record["from_stack"]),
+        to_stack=int(record["to_stack"]),
+        from_level=None if record.get("from_level") in (None, "") else int(record["from_level"]),
+        to_level=None if record.get("to_level") in (None, "") else int(record["to_level"]),
+    )
+
+
+def _frg_seed_cache_key(case: str, instance: Instance, args: argparse.Namespace) -> str:
+    parts = [
+        f"case={case}",
+        f"profile={getattr(args, 'solver_profile', '')}",
+        f"alpha={float(getattr(args, 'alpha', 0.0) or 0.0):.6g}",
+        f"stacks={instance.stack_count}",
+        f"height={instance.max_height}",
+        f"containers={instance.container_count}",
+        f"time={float(getattr(args, 'frg_seed_time_limit', 0.0) or 0.0):.6g}",
+        f"min_steps={int(getattr(args, 'frg_seed_min_max_steps', 0) or 0)}",
+        f"mult={int(getattr(args, 'frg_seed_max_steps_multiplier', 0) or 0)}",
+        f"cap={int(getattr(args, 'frg_seed_max_steps_cap', 0) or 0)}",
+        f"respect_cap={bool(getattr(args, 'frg_seed_respect_cap', True))}",
+        f"paper_pure={bool(getattr(args, 'frg_seed_paper_pure', True))}",
+    ]
+    return "|".join(parts)
+
+
+def _frg_seed_record_from_result(
+    case: str,
+    instance: Instance,
+    args: argparse.Namespace,
+    seed: FrgSeedResult,
+) -> dict[str, object]:
+    return {
+        "cache_key": _frg_seed_cache_key(case, instance, args),
+        "case": case,
+        "profile": str(getattr(args, "solver_profile", "")),
+        "alpha": float(getattr(args, "alpha", 0.0) or 0.0),
+        "frg_seed_time_limit": float(getattr(args, "frg_seed_time_limit", 0.0) or 0.0),
+        "frg_seed_min_max_steps": int(getattr(args, "frg_seed_min_max_steps", 0) or 0),
+        "frg_seed_max_steps_multiplier": int(getattr(args, "frg_seed_max_steps_multiplier", 0) or 0),
+        "frg_seed_max_steps_cap": int(getattr(args, "frg_seed_max_steps_cap", 0) or 0),
+        "frg_seed_respect_cap": bool(getattr(args, "frg_seed_respect_cap", True)),
+        "frg_seed_paper_pure": bool(getattr(args, "frg_seed_paper_pure", True)),
+        "stack_count": instance.stack_count,
+        "max_height": instance.max_height,
+        "container_count": instance.container_count,
+        "moves": [_frg_seed_move_to_record(move) for move in seed.moves],
+        "final_n": seed.final_n,
+        "generated": seed.generated,
+        "runtime_sec": seed.runtime_sec,
+        "status": seed.status,
+        "cap_ok": seed.cap_ok,
+    }
+
+
+def _frg_seed_from_cache(
+    case: str,
+    instance: Instance,
+    args: argparse.Namespace,
+    cache_key: str,
+) -> tuple[FrgSeedResult | None, bool, str]:
+    del case
+    cache_input = getattr(args, "frg_seed_cache_input", None)
+    if not cache_input:
+        return None, False, ""
+    cap = int(entropy_limit(instance, float(getattr(args, "alpha", 1.3) or 1.3)))
+    try:
+        cache_path = Path(cache_input)
+        with cache_path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                    if not isinstance(record, dict) or record.get("cache_key") != cache_key:
+                        continue
+                    moves_raw = record.get("moves", [])
+                    if not isinstance(moves_raw, list):
+                        continue
+                    moves: list[Move] = []
+                    for move_record in moves_raw:
+                        if not isinstance(move_record, dict):
+                            raise ValueError("malformed FRG seed move record")
+                        moves.append(_frg_seed_move_from_record(move_record))
+                    if not moves:
+                        continue
+                    reaches_n0 = _moves_reach_n0_with_cap(instance, moves, 10**12)
+                    if not reaches_n0:
+                        continue
+                    cap_ok = _moves_reach_n0_with_cap(instance, moves, cap)
+                    return (
+                        FrgSeedResult(
+                            moves=tuple(moves),
+                            final_n=int(record.get("final_n", 0) or 0),
+                            generated=int(record.get("generated", 0) or 0),
+                            runtime_sec=float(record.get("runtime_sec", 0.0) or 0.0),
+                            status=str(record.get("status", "")),
+                            cap_ok=cap_ok,
+                        ),
+                        True,
+                        "artifact",
+                    )
+                except (TypeError, ValueError, json.JSONDecodeError, KeyError):
+                    continue
+    except OSError:
+        return None, False, "miss"
+    return None, False, "miss"
 
 
 def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: float) -> FrgSeedResult | None:
@@ -10061,7 +10198,21 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     cap = entropy_limit(instance, args.alpha)
     depth_cap = min(cap, args.max_moves) if args.max_moves is not None else cap
     args._business_cap = cap
-    frg_seed = _frg_seed_incumbent(instance, args, deadline)
+    frg_seed_cache_input = getattr(args, "frg_seed_cache_input", None)
+    frg_seed_cache_input_text = str(frg_seed_cache_input) if frg_seed_cache_input else ""
+    frg_seed_cache_key = _frg_seed_cache_key(case, instance, args) if frg_seed_cache_input else ""
+    frg_seed, frg_seed_cache_hit, frg_seed_cache_source = _frg_seed_from_cache(
+        case,
+        instance,
+        args,
+        frg_seed_cache_key,
+    )
+    if frg_seed is None:
+        frg_seed = _frg_seed_incumbent(instance, args, deadline)
+        if frg_seed is not None:
+            frg_seed_cache_source = "miss_live" if frg_seed_cache_input else "live"
+        elif frg_seed_cache_input:
+            frg_seed_cache_source = "miss"
     frg_seed_moves = len(frg_seed.moves) if frg_seed is not None else None
     frg_seed_large_layout_ok = _frg_seed_large_layout_allowed(instance, args) if frg_seed is not None else False
     frg_seed_accepted = (
@@ -10841,6 +10992,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         frg_seed_generated=frg_seed.generated if frg_seed is not None else 0,
         frg_seed_cap_ok=frg_seed.cap_ok if frg_seed is not None else False,
         frg_seed_large_layout_ok=frg_seed_large_layout_ok,
+        frg_seed_cache_input=frg_seed_cache_input_text,
+        frg_seed_cache_key=frg_seed_cache_key,
+        frg_seed_cache_hit=frg_seed_cache_hit,
+        frg_seed_cache_source=frg_seed_cache_source,
         frg_candidate_selected_total=args._frg_candidate_selected_total,
         frg_compound_appended_total=args._frg_compound_appended_total,
         dlts_value_selected_total=args._dlts_value_selected_total,
@@ -11331,6 +11486,10 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_seed_prune_to_incumbent": getattr(args, "frg_seed_prune_to_incumbent", True),
             "frg_seed_allow_large_over_cap": getattr(args, "frg_seed_allow_large_over_cap", False),
             "frg_seed_paper_pure": getattr(args, "frg_seed_paper_pure", True),
+            "frg_seed_cache_input": result.frg_seed_cache_input,
+            "frg_seed_cache_key": result.frg_seed_cache_key,
+            "frg_seed_cache_hit": result.frg_seed_cache_hit,
+            "frg_seed_cache_source": result.frg_seed_cache_source,
             "frg_seed_moves": result.frg_seed_moves,
             "frg_seed_runtime_sec": result.frg_seed_runtime_sec,
             "frg_seed_used": result.frg_seed_used,
@@ -11980,6 +12139,7 @@ def main() -> int:
     parser.add_argument("--frg-seed-prune-to-incumbent", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-allow-large-over-cap", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-paper-pure", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-cache-input", type=Path, default=None)
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int, default=None)
     parser.add_argument("--frg-candidate-focus-n", type=int, default=None)
