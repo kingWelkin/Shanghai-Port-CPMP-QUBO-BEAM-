@@ -54,6 +54,9 @@ OPEN_EXTRA_FIELDS = [
     "business_alpha",
     "business_ok",
     "goal_validation_ok",
+    "feasibility_ok",
+    "time_limit_ok",
+    "primary_ok",
     "validation_msg",
     "portfolio_profiles",
     "portfolio_selected_profile",
@@ -845,6 +848,8 @@ def _optional_int(value: object) -> int | None:
 
 
 def _open_row_valid(row: dict[str, object]) -> bool:
+    if "primary_ok" in row:
+        return _is_true(row.get("primary_ok"))
     return (
         _is_true(row.get("business_ok"))
         and _is_true(row.get("goal_validation_ok"))

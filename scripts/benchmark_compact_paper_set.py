@@ -76,6 +76,35 @@ def _is_true(value: object) -> bool:
     return value in (True, "True", "true", "1", 1)
 
 
+def _paper_has_move_path(row: dict[str, object]) -> bool:
+    return row.get("moves") not in (None, "")
+
+
+def _paper_time_limit_ok(row: dict[str, object], *, time_limit: float) -> bool:
+    try:
+        runtime = float(row.get("runtime_sec"))
+    except (TypeError, ValueError):
+        return False
+    return runtime <= float(time_limit)
+
+
+def _apply_paper_scorecard(row: dict[str, object], *, time_limit: float) -> dict[str, object]:
+    feasibility_ok = (
+        _is_true(row.get("goal_validation_ok"))
+        and row.get("final_n") == 0
+        and _paper_has_move_path(row)
+    )
+    time_limit_ok = feasibility_ok and _paper_time_limit_ok(row, time_limit=time_limit)
+    row.update(
+        {
+            "feasibility_ok": feasibility_ok,
+            "time_limit_ok": time_limit_ok,
+            "primary_ok": feasibility_ok and _is_true(row.get("business_ok")) and time_limit_ok,
+        }
+    )
+    return row
+
+
 def _is_solved_row(row: dict[str, object]) -> bool:
     return _is_true(row.get("goal_validation_ok")) and row.get("final_n") == 0 and row.get("moves") not in ("", None)
 
@@ -100,6 +129,9 @@ def row_from_paper_exception(
         "business_alpha": args.alpha,
         "business_ok": False,
         "goal_validation_ok": False,
+        "feasibility_ok": False,
+        "time_limit_ok": False,
+        "primary_ok": False,
         "validation_msg": f"{type(exc).__name__}: {exc}",
         "status": "ERROR",
         "moves": "",
@@ -144,6 +176,7 @@ def _run_paper_variant_row(
             "validation_msg": msg,
         }
     )
+    row = _apply_paper_scorecard(row, time_limit=args.time_limit)
     row["full_quality_penalty"] = _open_full_quality_penalty(row)
     return row
 
@@ -309,6 +342,13 @@ def _write_summary(rows: list[dict[str, object]], output: Path, source: Path, ar
     return summary
 
 
+def _strict_positive_time_limit(value: str) -> float:
+    parsed = float(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("strict paper scorecard requires --time-limit > 0")
+    return parsed
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=ROOT / "external" / "paper_cpmp")
@@ -317,7 +357,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-total", type=int)
     parser.add_argument("--variant", default="qubo_scheduler_state_v5_qubo_diversity_union_polish")
     parser.add_argument("--solver-profile", default="speed_v2")
-    parser.add_argument("--time-limit", type=float, default=20.0)
+    parser.add_argument("--time-limit", type=_strict_positive_time_limit, default=20.0)
     parser.add_argument("--alpha", type=float, default=10.0)
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--beam-width", type=int)
