@@ -2831,6 +2831,58 @@ def test_frg_frontier_child_candidate_can_inject_short_compound_child(monkeypatc
     assert calls == 2
 
 
+def test_frg_frontier_child_records_reduction_chain_depth(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent_stacks = [[3, 2, 1], [], []]
+    one_step_stacks = [[3, 2], [1], []]
+    two_step_stacks = [[3], [1], [2]]
+    parent_code, parent_n = bench._encode(parent_stacks, stack_count, max_height)
+    one_step_code, one_step_n = bench._encode(one_step_stacks, stack_count, max_height)
+    two_step_code, two_step_n = bench._encode(two_step_stacks, stack_count, max_height)
+    one_step_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in one_step_stacks))
+    two_step_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in two_step_stacks))
+
+    def fake_rollout_children(layout, height, step, args, *, child_limit, max_steps):
+        del layout, height, step, args, child_limit
+        assert max_steps == 2
+        move1 = Move(4, 1, 0, 1, 3, 1)
+        move2 = Move(5, 2, 0, 2, 2, 1)
+        return [
+            (one_step_layout, (move1,), (one_step_layout,)),
+            (two_step_layout, (move1, move2), (one_step_layout, two_step_layout)),
+        ]
+
+    monkeypatch.setattr(bench, "_frg_frontier_child_rollout_children", fake_rollout_children)
+    args = _compact_args(
+        frg_frontier_child_enabled=True,
+        frg_frontier_child_parent_width=1,
+        frg_frontier_child_limit=4,
+        frg_frontier_child_max_steps=2,
+        debt_basin_reduction_chain_enabled=True,
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+    candidates = {one_step_code: (one_step_n, 5, parent_code)}
+    parent_chain = {parent_code: None}
+
+    added = bench._inject_frg_frontier_child_candidates(
+        [(parent_code, parent_n, 4)],
+        candidates,
+        args,
+        depth_cap=99,
+        best_depth={},
+        parent_chain=parent_chain,
+    )
+
+    assert two_step_code in added
+    assert candidates[two_step_code] == (two_step_n, 6, one_step_code)
+    assert args._reduction_chain_depth_by_code[two_step_code] == 2
+    assert args._reduction_chain_origin_by_code[two_step_code] == "frg_frontier_child"
+
+
 def test_frg_frontier_child_candidate_rejects_self_parent_compound(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 

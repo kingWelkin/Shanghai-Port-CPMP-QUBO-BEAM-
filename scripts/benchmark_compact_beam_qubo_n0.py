@@ -4818,6 +4818,11 @@ def _inject_frg_frontier_child_candidates(
         return set()
 
     _ensure_frg_frontier_child_counters(args)
+    if getattr(args, "debt_basin_reduction_chain_enabled", False):
+        if not hasattr(args, "_reduction_chain_depth_by_code"):
+            args._reduction_chain_depth_by_code = {}
+        if not hasattr(args, "_reduction_chain_origin_by_code"):
+            args._reduction_chain_origin_by_code = {}
     added: set[bytes] = set()
     origins = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))[:parent_width]
     for code, _n_value, depth in origins:
@@ -4881,6 +4886,9 @@ def _inject_frg_frontier_child_candidates(
                 continue
             candidates[child_code] = (int(child_n), child_depth, previous_code)
             added.add(child_code)
+            if getattr(args, "debt_basin_reduction_chain_enabled", False):
+                args._reduction_chain_depth_by_code[child_code] = len(moves)
+                args._reduction_chain_origin_by_code[child_code] = "frg_frontier_child"
     args._frg_frontier_child_added_total += len(added)
     return added
 
@@ -10562,6 +10570,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._wang_rollout_candidate_codes = set()
     args._frg_frontier_child_codes = set()
     args._candidate_origin_by_code = {}
+    args._reduction_chain_depth_by_code = {}
+    args._reduction_chain_origin_by_code = {}
     args._rank_pool_truncated_candidates = 0
     args._group_lookahead_cache = {}
     args._best_n_history = []
