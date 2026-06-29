@@ -626,6 +626,86 @@ def test_open_priority_group_row_serializes_frg_seed_cache_fields():
     assert row["frg_seed_status"] == "FRG_FEASIBLE"
 
 
+def test_debt_basin_fields_are_in_compact_and_open_result_fields():
+    import benchmark_compact_beam_qubo_n0 as bench
+    import open_cpmp_benchmarks as open_runner
+
+    expected = {
+        "debt_basin_enabled",
+        "w_receiver_debt",
+        "w_escape_potential",
+        "w_debt_basin_chain_cost",
+        "union_diversity_qubo_basin_similarity_penalty",
+        "debt_basin_trace_window",
+        "debt_basin_reduction_chain_enabled",
+        "receiver_debt_selected_total",
+        "receiver_debt_avg_selected",
+        "escape_potential_selected_total",
+        "escape_potential_avg_selected",
+        "basin_pair_penalty_total",
+        "basin_unique_selected_total",
+        "reduction_chain_generated_total",
+        "reduction_chain_selected_total",
+        "debt_basin_selected_on_path",
+    }
+
+    assert expected <= set(bench.COMPACT_RESULT_FIELDS)
+    assert expected <= set(open_runner.OPEN_RESULT_FIELDS)
+
+
+def test_compact_normal_row_serializes_debt_basin_metrics():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_instance_result
+
+    instance = Instance(
+        "tiny_debt_basin_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1], [2], [3]],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        receiver_debt_selected_total=3.0,
+        receiver_debt_avg_selected=1.5,
+        escape_potential_selected_total=2.0,
+        escape_potential_avg_selected=1.0,
+        basin_pair_penalty_total=0.14,
+        basin_unique_selected_total=4,
+        reduction_chain_generated_total=7,
+        reduction_chain_selected_total=2,
+        debt_basin_selected_on_path=1,
+    )
+    args = _compact_args(
+        debt_basin_enabled=True,
+        w_receiver_debt=0.18,
+        w_escape_potential=0.10,
+        w_debt_basin_chain_cost=0.02,
+        union_diversity_qubo_basin_similarity_penalty=0.14,
+        debt_basin_trace_window=96,
+        debt_basin_reduction_chain_enabled=True,
+    )
+
+    row = _row_dict_from_instance_result(result, instance, args)
+
+    assert row["debt_basin_enabled"] is True
+    assert row["receiver_debt_avg_selected"] == 1.5
+    assert row["reduction_chain_selected_total"] == 2
+
+
 def test_unified_wang_profile_initializes_target_layouts():
     from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
 
