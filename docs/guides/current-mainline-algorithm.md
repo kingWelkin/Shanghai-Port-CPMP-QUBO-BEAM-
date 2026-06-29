@@ -66,6 +66,7 @@ The current codebase also contains several opt-in ablation profiles derived from
 | `qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish` | splice a validated rollout-complete tail when the selected child reaches one | ablation only |
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish` | append BS-FRG-generated child states after normal frontier selection | light frontier experiment; not default |
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish` | merge FRG-generated children into the same candidate pool before selection | experimental; latest paired run did not beat light frontier |
+| `qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish` | adds receiver-debt, escape-potential, basin-diversity, and bounded reduction-chain selector signals | experimental; not default |
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish` | start with a smaller FRG frontier and expand on high-n plateau / small-stack pressure | ablation only |
 
 These profiles are useful for paper-set and residual-case diagnosis, but they should not replace `qubo_scheduler_state_v5_qubo_diversity_union_polish` without a paired full open120 and paper-set improvement. In particular, FRG frontier injection is candidate generation support, not a BS-FRG fallback solver.

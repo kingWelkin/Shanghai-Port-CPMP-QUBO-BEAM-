@@ -708,6 +708,13 @@ FRONTIER_TRACE_FIELDS = [
     "receiver_height_pressure_after",
     "receiver_last_buffer_consumed",
     "micro_linear_adjustment",
+    "receiver_debt",
+    "escape_potential",
+    "basin_label",
+    "basin_similarity_group",
+    "reduction_chain_origin",
+    "reduction_chain_depth",
+    "selected_by_debt_basin_qubo",
 ]
 TERMINAL_TRACE_FIELDS = [
     "case",
@@ -1025,6 +1032,15 @@ def _frontier_trace_candidate_rows(
                     bool(getattr(micro_feature, "receiver_last_buffer_consumed", False))
                 ),
                 "micro_linear_adjustment": float(getattr(micro_feature, "micro_linear_adjustment", 0.0)),
+                "receiver_debt": float(getattr(micro_feature, "receiver_debt", 0.0)),
+                "escape_potential": float(getattr(micro_feature, "escape_potential", 0.0)),
+                "basin_label": ":".join(str(part) for part in getattr(micro_feature, "basin_label", ()) or ()),
+                "basin_similarity_group": str(getattr(micro_feature, "basin_similarity_group", "")),
+                "reduction_chain_origin": str(getattr(micro_feature, "reduction_chain_origin", "")),
+                "reduction_chain_depth": int(getattr(micro_feature, "reduction_chain_depth", 0)),
+                "selected_by_debt_basin_qubo": int(
+                    code in selected_qubo_set and bool(getattr(micro_feature, "basin_label", ()))
+                ),
             }
         )
     return rows
@@ -2817,6 +2833,15 @@ class CompactBeamResult:
     micro_rollout_candidates: int = 0
     micro_rollout_selected_total: int = 0
     receiver_safety_scored_total: int = 0
+    receiver_debt_selected_total: float = 0.0
+    receiver_debt_avg_selected: float = 0.0
+    escape_potential_selected_total: float = 0.0
+    escape_potential_avg_selected: float = 0.0
+    basin_pair_penalty_total: float = 0.0
+    basin_unique_selected_total: int = 0
+    reduction_chain_generated_total: int = 0
+    reduction_chain_selected_total: int = 0
+    debt_basin_selected_on_path: int = 0
     frg_frontier_child_calls: int = 0
     frg_frontier_child_generated: int = 0
     frg_frontier_child_added_total: int = 0
@@ -11137,6 +11162,14 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         _write_frontier_trace_rows(frontier_trace_rows, Path(frontier_trace_output))
     if terminal_trace_output is not None and terminal_trace_rows:
         _write_terminal_trace_rows(terminal_trace_rows, Path(terminal_trace_output))
+    receiver_debt_count = max(1, int(getattr(args, "_receiver_debt_selected_count", 0) or 0))
+    escape_count = max(1, int(getattr(args, "_escape_potential_selected_count", 0) or 0))
+    reduction_chain_selected_total = sum(
+        1 for code in search_path_codes[1:] if code in (getattr(args, "_reduction_chain_depth_by_code", {}) or {})
+    )
+    debt_basin_selected_on_path = sum(
+        1 for code in search_path_codes[1:] if code in (getattr(args, "_micro_rollout_feature_trace_by_code", {}) or {})
+    )
     return CompactBeamResult(
         case=case,
         status=status,
@@ -11243,6 +11276,17 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         micro_rollout_candidates=args._micro_rollout_candidates,
         micro_rollout_selected_total=args._micro_rollout_selected_total,
         receiver_safety_scored_total=args._receiver_safety_scored_total,
+        receiver_debt_selected_total=float(getattr(args, "_receiver_debt_selected_total", 0.0) or 0.0),
+        receiver_debt_avg_selected=float(getattr(args, "_receiver_debt_selected_total", 0.0) or 0.0)
+        / receiver_debt_count,
+        escape_potential_selected_total=float(getattr(args, "_escape_potential_selected_total", 0.0) or 0.0),
+        escape_potential_avg_selected=float(getattr(args, "_escape_potential_selected_total", 0.0) or 0.0)
+        / escape_count,
+        basin_pair_penalty_total=float(getattr(args, "_basin_pair_penalty_total", 0.0) or 0.0),
+        basin_unique_selected_total=int(getattr(args, "_basin_unique_selected_total", 0) or 0),
+        reduction_chain_generated_total=int(getattr(args, "_frg_frontier_child_generated", 0) or 0),
+        reduction_chain_selected_total=int(reduction_chain_selected_total),
+        debt_basin_selected_on_path=int(debt_basin_selected_on_path),
         frg_frontier_child_calls=args._frg_frontier_child_calls,
         frg_frontier_child_generated=args._frg_frontier_child_generated,
         frg_frontier_child_added_total=args._frg_frontier_child_added_total,

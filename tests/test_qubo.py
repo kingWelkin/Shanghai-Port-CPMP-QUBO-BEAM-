@@ -4771,6 +4771,92 @@ def test_frontier_trace_candidate_rows_include_micro_receiver_features():
     assert rows[0]["micro_linear_adjustment"] == -0.11
 
 
+def test_frontier_trace_candidate_rows_include_debt_basin_features():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent = b"parent"
+    code = b"child"
+    args = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
+        selection_policy="scheduler_state_qubo",
+    )
+    feature = bench.UnionDiversityQuboFeatures(
+        energy=1.0,
+        n_value=4,
+        depth=3,
+        parent_code=parent,
+        source_stack=1,
+        signature=(0, 0, 0, 0, 0),
+        reduce_signature=(1, 0, 0),
+        origin="frg_frontier_child",
+        receiver_debt=1.25,
+        escape_potential=0.50,
+        basin_label=(4, 2, 1, 3, 1, 4),
+        basin_similarity_group="4:2:1:3:1:4",
+        reduction_chain_origin="frg_frontier_child",
+        reduction_chain_depth=2,
+        debt_basin_linear_adjustment=0.175,
+    )
+    args._micro_rollout_feature_trace_by_code = {code: feature}
+
+    rows = bench._frontier_trace_candidate_rows(
+        case="case_a",
+        layer=2,
+        ranked=[(code, (4, 3, parent))],
+        frontier=[(parent, 5, 2)],
+        selected_codes=[code],
+        selected_by_qubo={code},
+        selected_source_by_code={code: "union_diversity_qubo"},
+        args=args,
+        top_k=5,
+        candidate_origin_by_code={code: "frg_frontier_child"},
+    )
+
+    assert rows[0]["receiver_debt"] == 1.25
+    assert rows[0]["escape_potential"] == 0.50
+    assert rows[0]["basin_label"] == "4:2:1:3:1:4"
+    assert rows[0]["basin_similarity_group"] == "4:2:1:3:1:4"
+    assert rows[0]["reduction_chain_origin"] == "frg_frontier_child"
+    assert rows[0]["reduction_chain_depth"] == 2
+    assert rows[0]["selected_by_debt_basin_qubo"] == 1
+
+
+def test_open_runner_rows_include_debt_basin_metrics():
+    import argparse
+    from types import SimpleNamespace
+
+    from open_cpmp_benchmarks import _micro_rollout_row_fields
+
+    args = argparse.Namespace(
+        debt_basin_enabled=True,
+        w_receiver_debt=0.18,
+        w_escape_potential=0.10,
+        w_debt_basin_chain_cost=0.02,
+        union_diversity_qubo_basin_similarity_penalty=0.14,
+        debt_basin_trace_window=96,
+        debt_basin_reduction_chain_enabled=True,
+    )
+    result = SimpleNamespace(
+        receiver_debt_selected_total=3.0,
+        receiver_debt_avg_selected=1.5,
+        escape_potential_selected_total=2.0,
+        escape_potential_avg_selected=1.0,
+        basin_pair_penalty_total=0.14,
+        basin_unique_selected_total=4,
+        reduction_chain_generated_total=7,
+        reduction_chain_selected_total=2,
+        debt_basin_selected_on_path=1,
+    )
+
+    row = _micro_rollout_row_fields(result, args)
+
+    assert row["debt_basin_enabled"] is True
+    assert row["w_receiver_debt"] == 0.18
+    assert row["union_diversity_qubo_basin_similarity_penalty"] == 0.14
+    assert row["receiver_debt_avg_selected"] == 1.5
+    assert row["reduction_chain_selected_total"] == 2
+
+
 def test_open_runner_passes_deterministic_qubo_sampler_flag():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 

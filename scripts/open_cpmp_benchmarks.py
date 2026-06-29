@@ -361,6 +361,29 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
     }
 
 
+def _micro_rollout_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "debt_basin_enabled": getattr(args, "debt_basin_enabled", False),
+        "w_receiver_debt": getattr(args, "w_receiver_debt", 0.0),
+        "w_escape_potential": getattr(args, "w_escape_potential", 0.0),
+        "w_debt_basin_chain_cost": getattr(args, "w_debt_basin_chain_cost", 0.0),
+        "union_diversity_qubo_basin_similarity_penalty": getattr(
+            args, "union_diversity_qubo_basin_similarity_penalty", 0.0
+        ),
+        "debt_basin_trace_window": getattr(args, "debt_basin_trace_window", 0),
+        "debt_basin_reduction_chain_enabled": getattr(args, "debt_basin_reduction_chain_enabled", False),
+        "receiver_debt_selected_total": getattr(result, "receiver_debt_selected_total", 0.0),
+        "receiver_debt_avg_selected": getattr(result, "receiver_debt_avg_selected", 0.0),
+        "escape_potential_selected_total": getattr(result, "escape_potential_selected_total", 0.0),
+        "escape_potential_avg_selected": getattr(result, "escape_potential_avg_selected", 0.0),
+        "basin_pair_penalty_total": getattr(result, "basin_pair_penalty_total", 0.0),
+        "basin_unique_selected_total": getattr(result, "basin_unique_selected_total", 0),
+        "reduction_chain_generated_total": getattr(result, "reduction_chain_generated_total", 0),
+        "reduction_chain_selected_total": getattr(result, "reduction_chain_selected_total", 0),
+        "debt_basin_selected_on_path": getattr(result, "debt_basin_selected_on_path", 0),
+    }
+
+
 def _wang_pair_qubo_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
     return {
         "wang_pair_qubo_enabled": getattr(args, "wang_pair_qubo_enabled", False),
@@ -758,6 +781,7 @@ def _priority_group_row_dict_from_instance_result(
     row.update(_wang_pair_qubo_row_fields(result, args))
     row.update(_unified_wang_row_fields(result, args))
     row.update(_union_diversity_qubo_row_fields(result, args))
+    row.update(_micro_rollout_row_fields(result, args))
     row.update(_feasibility_escape_row_fields(result, args))
     row.update(_frg_dlts_row_fields(result, args))
     row.update(_bs_frg_qubo_row_fields(result, args))
