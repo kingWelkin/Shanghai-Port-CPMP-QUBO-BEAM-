@@ -4069,6 +4069,13 @@ class UnionDiversityQuboFeatures(NamedTuple):
     receiver_height_pressure_after: float = 0.0
     receiver_last_buffer_consumed: bool = False
     micro_linear_adjustment: float = 0.0
+    receiver_debt: float = 0.0
+    escape_potential: float = 0.0
+    basin_label: tuple[int, int, int, int, int, int] = ()
+    basin_similarity_group: str = ""
+    reduction_chain_origin: str = ""
+    reduction_chain_depth: int = 0
+    debt_basin_linear_adjustment: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -5038,6 +5045,19 @@ def _union_diversity_qubo_features(
         micro_linear_adjustment = _micro_rollout_linear_adjustment(micro, receiver, args)
         if not bool(getattr(args, "micro_rollout_tiebreak_only", False)):
             energy += micro_linear_adjustment
+    debt_basin: DebtBasinFeatures | None = None
+    debt_basin_linear_adjustment = 0.0
+    debt_basin_window = max(0, int(getattr(args, "debt_basin_trace_window", 96) or 0))
+    debt_basin_active = bool(getattr(args, "debt_basin_enabled", False))
+    if stack_count > 0 and max_height > 0 and rank < debt_basin_window and debt_basin_active:
+        parent_n = _code_n(parent_code, stack_count, max_height)
+        debt_basin = _debt_basin_features(parent_code, code, parent_n, int(n_value), int(depth), args, origin=origin)
+        debt_basin_linear_adjustment = (
+            float(getattr(args, "w_receiver_debt", 0.0) or 0.0) * float(debt_basin.receiver_debt)
+            - float(getattr(args, "w_escape_potential", 0.0) or 0.0) * float(debt_basin.escape_potential)
+            + float(getattr(args, "w_debt_basin_chain_cost", 0.0) or 0.0) * float(debt_basin.reduction_chain_depth)
+        )
+        energy += debt_basin_linear_adjustment
     features = UnionDiversityQuboFeatures(
         energy=float(energy),
         n_value=int(n_value),
@@ -5065,8 +5085,15 @@ def _union_diversity_qubo_features(
         receiver_height_pressure_after=float(receiver.height_pressure_after) if receiver is not None else 0.0,
         receiver_last_buffer_consumed=bool(receiver.last_buffer_consumed) if receiver is not None else False,
         micro_linear_adjustment=float(micro_linear_adjustment),
+        receiver_debt=float(debt_basin.receiver_debt) if debt_basin is not None else 0.0,
+        escape_potential=float(debt_basin.escape_potential) if debt_basin is not None else 0.0,
+        basin_label=debt_basin.basin_label if debt_basin is not None else (),
+        basin_similarity_group=str(debt_basin.basin_similarity_group) if debt_basin is not None else "",
+        reduction_chain_origin=str(debt_basin.reduction_chain_origin) if debt_basin is not None else "",
+        reduction_chain_depth=int(debt_basin.reduction_chain_depth) if debt_basin is not None else 0,
+        debt_basin_linear_adjustment=float(debt_basin_linear_adjustment),
     )
-    if micro is not None or receiver is not None:
+    if micro is not None or receiver is not None or debt_basin is not None:
         trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", None)
         if trace_features is None:
             trace_features = {}

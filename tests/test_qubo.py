@@ -2281,6 +2281,40 @@ def test_micro_rollout_trace_only_does_not_change_union_linear_energy(monkeypatc
     assert traced.micro_best_delta_n == -int(child_n)
 
 
+def test_debt_basin_linear_adjustment_is_opt_in():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent, parent_n = bench._encode([[5, 4], [3, 1], []], stack_count, max_height)
+    child, child_n = bench._encode([[5, 4], [3], [1]], stack_count, max_height)
+    off_args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        debt_basin_enabled=False,
+        w_receiver_debt=0.50,
+        w_escape_potential=0.25,
+    )
+    on_args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        debt_basin_enabled=True,
+        w_receiver_debt=0.50,
+        w_escape_potential=0.25,
+        w_debt_basin_chain_cost=0.02,
+    )
+
+    off = bench._union_diversity_qubo_features(child, (child_n, 4, parent), 0, off_args, origin="beam")
+    on = bench._union_diversity_qubo_features(child, (child_n, 4, parent), 0, on_args, origin="beam")
+
+    assert off.receiver_debt == 0.0
+    assert off.escape_potential == 0.0
+    assert off.debt_basin_linear_adjustment == 0.0
+    assert on.receiver_debt > 0.0
+    assert on.debt_basin_linear_adjustment > 0.0
+    assert on.energy > off.energy
+
+
 def test_solver_profiles_for_micro_rollout_are_ablation_friendly():
     import benchmark_compact_beam_qubo_n0 as bench
 
