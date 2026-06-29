@@ -532,6 +532,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-frontier-child-adaptive-min-container-count", type=int)
     parser.add_argument("--frg-seed-cache-input", type=Path)
     parser.add_argument("--frg-seed-cache-output", type=Path)
+    parser.add_argument("--frontier-trace-output", type=Path)
+    parser.add_argument("--frontier-trace-top-k", type=int, default=64)
+    parser.add_argument("--terminal-trace-output", type=Path)
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument(
         "--output",
@@ -547,6 +550,8 @@ def main() -> int:
     output = args.output if args.output.is_absolute() else ROOT / args.output
     args.frg_seed_cache_input = _resolve_optional_path(args.frg_seed_cache_input)
     args.frg_seed_cache_output = _resolve_optional_path(args.frg_seed_cache_output)
+    args.frontier_trace_output = _resolve_optional_path(args.frontier_trace_output)
+    args.terminal_trace_output = _resolve_optional_path(args.terminal_trace_output)
     cases = discover_sampled_paper_cases(
         source,
         datasets=args.datasets,

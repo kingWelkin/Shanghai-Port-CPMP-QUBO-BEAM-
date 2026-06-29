@@ -344,6 +344,52 @@ def test_paper_parser_accepts_frg_seed_cache_paths_and_open_runner_forwards_inpu
     assert compact_args.frg_seed_cache_input == tmp_path / "cache.jsonl"
 
 
+def test_paper_parser_accepts_frontier_trace_output_and_forwards_to_compact(tmp_path: Path):
+    from argparse import Namespace
+
+    from benchmark_compact_paper_set import build_parser
+    from container_reshuffle.core import Instance, ProblemVariant
+    from open_cpmp_benchmarks import _args_for_variant
+
+    parsed = build_parser().parse_args(
+        [
+            "--frontier-trace-output",
+            "docs/experiments/paper_frontier_trace.csv",
+            "--frontier-trace-top-k",
+            "23",
+        ]
+    )
+
+    assert parsed.frontier_trace_output == Path("docs/experiments/paper_frontier_trace.csv")
+    assert parsed.frontier_trace_top_k == 23
+
+    instance = Instance(
+        "case_1",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        8,
+        5,
+        4,
+        [[1, 2], [2, 1], [], [], [], [], [], []],
+    )
+    args = Namespace(
+        alpha=10.0,
+        max_moves=None,
+        solver_profile="speed_v2",
+        time_limit=20.0,
+        frontier_trace_output=tmp_path / "frontier_trace.csv",
+        frontier_trace_top_k=23,
+    )
+
+    compact_args = _args_for_variant(
+        args,
+        "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+        instance,
+    )
+
+    assert compact_args.frontier_trace_output == tmp_path / "frontier_trace.csv"
+    assert compact_args.frontier_trace_top_k == 23
+
+
 def test_paper_runner_materializes_frg_seed_cache_before_collecting_rows(monkeypatch, tmp_path: Path):
     from argparse import Namespace
 
