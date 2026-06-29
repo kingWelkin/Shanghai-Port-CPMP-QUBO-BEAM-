@@ -882,6 +882,17 @@ def _finalize_dlts_feature_rows(rows: list[dict[str, object]], search_path_codes
         row["final_status"] = status
 
 
+def _debt_basin_selected_on_path_count(search_path_codes: list[bytes], args: argparse.Namespace) -> int:
+    if not getattr(args, "debt_basin_enabled", False):
+        return 0
+    trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", {}) or {}
+    return sum(
+        1
+        for code in search_path_codes[1:]
+        if bool(getattr(trace_features.get(code), "basin_label", ()))
+    )
+
+
 def _write_dlts_feature_rows(rows: list[dict[str, object]], path: Path) -> None:
     output = path if path.is_absolute() else ROOT / path
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -11183,9 +11194,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     reduction_chain_selected_total = sum(
         1 for code in search_path_codes[1:] if code in (getattr(args, "_reduction_chain_depth_by_code", {}) or {})
     )
-    debt_basin_selected_on_path = sum(
-        1 for code in search_path_codes[1:] if code in (getattr(args, "_micro_rollout_feature_trace_by_code", {}) or {})
-    )
+    debt_basin_selected_on_path = _debt_basin_selected_on_path_count(search_path_codes, args)
     return CompactBeamResult(
         case=case,
         status=status,

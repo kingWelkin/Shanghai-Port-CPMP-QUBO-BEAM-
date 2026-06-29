@@ -706,6 +706,31 @@ def test_compact_normal_row_serializes_debt_basin_metrics():
     assert row["reduction_chain_selected_total"] == 2
 
 
+def test_debt_basin_selected_on_path_counts_only_basin_trace_features():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    receiver_only = b"receiver"
+    micro_only = b"micro"
+    basin_code = b"basin"
+    args = _compact_args(debt_basin_enabled=True)
+    args._micro_rollout_feature_trace_by_code = {
+        receiver_only: SimpleNamespace(receiver_safe_delta=-1),
+        micro_only: SimpleNamespace(micro_best_delta_n=-1, basin_label=()),
+        basin_code: SimpleNamespace(basin_label=(4, 2, 1, 3, 1, 4)),
+    }
+
+    count = bench._debt_basin_selected_on_path_count(
+        [b"root", receiver_only, micro_only, basin_code],
+        args,
+    )
+
+    assert count == 1
+
+    args.debt_basin_enabled = False
+
+    assert bench._debt_basin_selected_on_path_count([b"root", basin_code], args) == 0
+
+
 def test_unified_wang_profile_initializes_target_layouts():
     from benchmark_compact_beam_qubo_n0 import make_compact_args, run_compact_beam_instance
 
