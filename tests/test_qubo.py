@@ -2286,7 +2286,7 @@ def test_debt_basin_linear_adjustment_is_opt_in():
 
     stack_count = 3
     max_height = 3
-    parent, parent_n = bench._encode([[5, 4], [3, 1], []], stack_count, max_height)
+    parent, _ = bench._encode([[5, 4], [3, 1], []], stack_count, max_height)
     child, child_n = bench._encode([[5, 4], [3], [1]], stack_count, max_height)
     off_args = _compact_args(
         _stack_count=stack_count,
@@ -2294,6 +2294,7 @@ def test_debt_basin_linear_adjustment_is_opt_in():
         debt_basin_enabled=False,
         w_receiver_debt=0.50,
         w_escape_potential=0.25,
+        w_debt_basin_chain_cost=0.02,
     )
     on_args = _compact_args(
         _stack_count=stack_count,
@@ -2303,16 +2304,32 @@ def test_debt_basin_linear_adjustment_is_opt_in():
         w_escape_potential=0.25,
         w_debt_basin_chain_cost=0.02,
     )
+    window_args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        debt_basin_enabled=True,
+        debt_basin_trace_window=0,
+        w_receiver_debt=0.50,
+        w_escape_potential=0.25,
+        w_debt_basin_chain_cost=0.02,
+    )
 
     off = bench._union_diversity_qubo_features(child, (child_n, 4, parent), 0, off_args, origin="beam")
     on = bench._union_diversity_qubo_features(child, (child_n, 4, parent), 0, on_args, origin="beam")
+    windowed = bench._union_diversity_qubo_features(child, (child_n, 4, parent), 0, window_args, origin="beam")
 
     assert off.receiver_debt == 0.0
     assert off.escape_potential == 0.0
     assert off.debt_basin_linear_adjustment == 0.0
     assert on.receiver_debt > 0.0
-    assert on.debt_basin_linear_adjustment > 0.0
-    assert on.energy > off.energy
+    assert on.escape_potential >= 0.0
+    assert on.debt_basin_linear_adjustment == pytest.approx(
+        0.50 * on.receiver_debt - 0.25 * on.escape_potential + 0.02 * on.reduction_chain_depth
+    )
+    assert on.energy == pytest.approx(off.energy + on.debt_basin_linear_adjustment)
+    assert windowed.receiver_debt == 0.0
+    assert windowed.escape_potential == 0.0
+    assert windowed.debt_basin_linear_adjustment == 0.0
 
 
 def test_solver_profiles_for_micro_rollout_are_ablation_friendly():
