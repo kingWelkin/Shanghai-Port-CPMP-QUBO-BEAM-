@@ -2717,6 +2717,20 @@ def test_solver_profile_for_union_debt_basin_is_opt_in():
     assert open_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_debt_basin_polish"
     assert "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish" in _variant_names("wang_research_all")
 
+    overridden_outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
+            "--w-receiver-debt",
+            "0.5",
+            "--no-debt-basin-reduction-chain-enabled",
+        ]
+    )
+    overridden_args = _args_for_variant(overridden_outer, "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish")
+
+    assert overridden_args.w_receiver_debt == 0.5
+    assert overridden_args.debt_basin_reduction_chain_enabled is False
+
 
 def test_frg_frontier_child_adaptive_params_expand_only_on_high_n_plateau():
     import benchmark_compact_beam_qubo_n0 as bench
