@@ -4219,6 +4219,24 @@ def _blocked_stack_count(code: bytes, stack_count: int, max_height: int) -> int:
     return int(sum(1 for chunk in _split(code, stack_count, max_height) if _cached_stack_n(chunk, max_height) > 0))
 
 
+def _local_height_pressure(code: bytes, stack_count: int, max_height: int) -> float:
+    if stack_count <= 0 or max_height <= 0:
+        return 0.0
+    chunks = tuple(_split(code, stack_count, max_height))
+    heights = [_cached_height(chunk, max_height) for chunk in chunks]
+    if not heights:
+        return 0.0
+    near_full_threshold = max(1, max_height - 1)
+    max_fill = max(heights) / float(max_height)
+    near_full_ratio = sum(1 for height in heights if height >= near_full_threshold) / float(stack_count)
+    near_full_receiver_ratio = sum(
+        1
+        for chunk, height in zip(chunks, heights)
+        if height >= near_full_threshold and _stack_is_ordered_receiver(chunk, max_height)
+    ) / float(stack_count)
+    return float(min(1.0, 0.40 * max_fill + 0.45 * near_full_ratio + 0.15 * near_full_receiver_ratio))
+
+
 def _top_group_signature_bucket(code: bytes, stack_count: int, max_height: int) -> int:
     tops: list[int] = []
     for chunk in _split(code, stack_count, max_height):
@@ -4230,8 +4248,34 @@ def _top_group_signature_bucket(code: bytes, stack_count: int, max_height: int) 
     return int(sum(tops) // max(1, len(tops) * 3))
 
 
-def _height_pressure_bucket(code: bytes, stack_count: int, max_height: int) -> int:
-    return int(min(5, math.floor(_height_pressure(code, stack_count, max_height) * 6.0)))
+def _safe_receiver_top_bucket(code: bytes, stack_count: int, max_height: int) -> int:
+    tops: list[int] = []
+    for chunk in _split(code, stack_count, max_height):
+        height = _cached_height(chunk, max_height)
+        if height > 0 and _stack_is_ordered_receiver(chunk, max_height):
+            tops.append(int(chunk[height - 1]))
+    if not tops:
+        return 0
+    return int(sum(tops) // max(1, len(tops) * 3))
+
+
+def _free_slot_bucket(code: bytes, stack_count: int, max_height: int) -> int:
+    free_slots = _free_slot_count(code, stack_count, max_height)
+    if free_slots <= 0:
+        return 0
+    if free_slots == 1:
+        return 1
+    if free_slots == 2:
+        return 2
+    if free_slots <= 4:
+        return 3
+    if free_slots <= max(1, (stack_count * max_height) // 2):
+        return 4
+    return 5
+
+
+def _local_height_pressure_bucket(code: bytes, stack_count: int, max_height: int) -> int:
+    return int(min(5, math.floor(_local_height_pressure(code, stack_count, max_height) * 6.0)))
 
 
 def _safe_receiver_bucket(count: int) -> int:
@@ -4329,14 +4373,12 @@ def _debt_basin_features(
     n_delta = int(child_n) - int(parent_n)
     blocked_after = _blocked_stack_count(child_code, stack_count, max_height)
     blocked_before = _blocked_stack_count(parent_code, stack_count, max_height)
-    pressure_after = _height_pressure(child_code, stack_count, max_height)
-    pressure_before = _height_pressure(parent_code, stack_count, max_height)
-    top_bucket_after = _top_group_signature_bucket(child_code, stack_count, max_height)
-    top_bucket_before = _top_group_signature_bucket(parent_code, stack_count, max_height)
+    pressure_after = _local_height_pressure(child_code, stack_count, max_height)
+    pressure_before = _local_height_pressure(parent_code, stack_count, max_height)
 
     debt = 0.0
     debt += max(0, -int(receiver.safe_receiver_delta)) * 1.0
-    debt += max(0.0, float(receiver.height_pressure_after) - pressure_before) * 1.5
+    debt += max(0.0, pressure_after - pressure_before) * 1.5
     debt += 0.75 if receiver.last_buffer_consumed else 0.0
     debt += 0.25 if n_delta >= 0 else 0.0
     debt += 0.20 if blocked_after > blocked_before else 0.0
@@ -4346,19 +4388,18 @@ def _debt_basin_features(
     escape += max(0, -n_delta) * 0.5
     escape += max(0, blocked_before - blocked_after) * 0.35
     escape += max(0.0, pressure_before - pressure_after) * 1.0
-    escape += max(0, top_bucket_after - top_bucket_before) * 0.20
     if not receiver.last_buffer_consumed and receiver.safe_receivers_after > 0:
         escape += 0.15
 
     n_band = max(0, int(child_n)) // max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
-    source_stack = _transition_source_stack(parent_code, child_code, stack_count, max_height)
+    safe_receivers_after = _safe_receiver_count(child_code, stack_count, max_height)
     basin_label = (
         int(n_band),
         min(5, blocked_after),
-        _safe_receiver_bucket(int(receiver.safe_receivers_after)),
-        top_bucket_after,
-        source_stack if source_stack >= 0 else stack_count,
-        _height_pressure_bucket(child_code, stack_count, max_height),
+        _safe_receiver_bucket(int(safe_receivers_after)),
+        _safe_receiver_top_bucket(child_code, stack_count, max_height),
+        _free_slot_bucket(child_code, stack_count, max_height),
+        _local_height_pressure_bucket(child_code, stack_count, max_height),
     )
     chain_depth_by_code = getattr(args, "_reduction_chain_depth_by_code", {}) or {}
     chain_depth = int(chain_depth_by_code.get(child_code, 0) or 0)

@@ -2137,6 +2137,109 @@ def test_debt_basin_features_reward_escape_space():
     assert escape.escape_potential > 0.0
 
 
+def test_debt_basin_local_height_pressure_varies_for_normal_moves():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 3
+    parent, _ = bench._encode([[6, 2], [5, 1], [4], []], stack_count, max_height)
+    child, _ = bench._encode([[6], [5, 1], [4], [2]], stack_count, max_height)
+
+    assert bench._height_pressure(parent, stack_count, max_height) == bench._height_pressure(
+        child,
+        stack_count,
+        max_height,
+    )
+    assert bench._local_height_pressure(child, stack_count, max_height) < bench._local_height_pressure(
+        parent,
+        stack_count,
+        max_height,
+    )
+
+
+def test_debt_basin_escape_not_inflated_by_blocked_top_bucket_worsening():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent, parent_n = bench._encode([[1], [6], []], stack_count, max_height)
+    blocked_child, blocked_n = bench._encode([[1, 6], [], []], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    assert bench._blocked_stack_count(blocked_child, stack_count, max_height) > bench._blocked_stack_count(
+        parent,
+        stack_count,
+        max_height,
+    )
+    assert bench._top_group_signature_bucket(blocked_child, stack_count, max_height) > bench._top_group_signature_bucket(
+        parent,
+        stack_count,
+        max_height,
+    )
+
+    blocked = bench._debt_basin_features(parent, blocked_child, parent_n, blocked_n, 3, args, origin="beam")
+
+    assert blocked.escape_potential <= 0.150000001
+
+
+def test_debt_basin_debt_uses_local_pressure_increase():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent, parent_n = bench._encode([[6], [1], []], stack_count, max_height)
+    concentrated_child, concentrated_n = bench._encode([[6, 1], [], []], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    assert bench._height_pressure(parent, stack_count, max_height) == bench._height_pressure(
+        concentrated_child,
+        stack_count,
+        max_height,
+    )
+    local_delta = bench._local_height_pressure(concentrated_child, stack_count, max_height) - bench._local_height_pressure(
+        parent,
+        stack_count,
+        max_height,
+    )
+    assert local_delta > 0.0
+
+    concentrated = bench._debt_basin_features(
+        parent,
+        concentrated_child,
+        parent_n,
+        concentrated_n,
+        3,
+        args,
+        origin="beam",
+    )
+
+    assert concentrated.receiver_debt >= local_delta * 1.5
+
+
+def test_debt_basin_basin_label_is_child_structural_not_source_stack():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    child, child_n = bench._encode([[1, 2], [4, 3], []], stack_count, max_height)
+    parent_a, parent_a_n = bench._encode([[1, 2, 3], [4], []], stack_count, max_height)
+    parent_b, parent_b_n = bench._encode([[1, 2], [3], [4]], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    assert bench._transition_source_stack(parent_a, child, stack_count, max_height) != bench._transition_source_stack(
+        parent_b,
+        child,
+        stack_count,
+        max_height,
+    )
+
+    from_a = bench._debt_basin_features(parent_a, child, parent_a_n, child_n, 4, args, origin="beam")
+    from_b = bench._debt_basin_features(parent_b, child, parent_b_n, child_n, 4, args, origin="beam")
+
+    assert from_a.basin_label == from_b.basin_label
+    assert from_a.basin_similarity_group == from_b.basin_similarity_group
+
+
 def test_micro_rollout_trace_only_does_not_change_union_linear_energy(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 
