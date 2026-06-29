@@ -2101,6 +2101,42 @@ def test_receiver_safety_scores_ordered_receiver_and_last_buffer_consumed():
     assert 0.0 <= safer.height_pressure_after <= 1.0
 
 
+def test_debt_basin_features_penalize_slack_consuming_non_progress_move():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent, parent_n = bench._encode([[5, 4], [3, 1], []], stack_count, max_height)
+    risky_child, risky_n = bench._encode([[5, 4], [3], [1]], stack_count, max_height)
+    safer_child, safer_n = bench._encode([[5], [3, 1], [4]], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    risky = bench._debt_basin_features(parent, risky_child, parent_n, risky_n, 5, args, origin="beam")
+    safer = bench._debt_basin_features(parent, safer_child, parent_n, safer_n, 5, args, origin="beam")
+
+    assert risky.receiver_debt > safer.receiver_debt
+    assert risky.receiver_debt > 0.0
+    assert risky.basin_label != ()
+    assert risky.basin_similarity_group
+
+
+def test_debt_basin_features_reward_escape_space():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 3
+    parent, parent_n = bench._encode([[6, 2], [5, 1], [4], []], stack_count, max_height)
+    escape_child, escape_n = bench._encode([[6], [5, 1], [4], [2]], stack_count, max_height)
+    flat_child, flat_n = bench._encode([[6, 2], [5], [4, 1], []], stack_count, max_height)
+    args = _compact_args(_stack_count=stack_count, _max_height=max_height)
+
+    escape = bench._debt_basin_features(parent, escape_child, parent_n, escape_n, 6, args, origin="beam")
+    flat = bench._debt_basin_features(parent, flat_child, parent_n, flat_n, 6, args, origin="beam")
+
+    assert escape.escape_potential >= flat.escape_potential
+    assert escape.escape_potential > 0.0
+
+
 def test_micro_rollout_trace_only_does_not_change_union_linear_energy(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 

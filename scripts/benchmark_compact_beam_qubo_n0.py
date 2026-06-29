@@ -4092,6 +4092,15 @@ class ReceiverSafetyScore:
     last_buffer_consumed: bool
 
 
+class DebtBasinFeatures(NamedTuple):
+    receiver_debt: float
+    escape_potential: float
+    basin_label: tuple[int, int, int, int, int, int]
+    basin_similarity_group: str
+    reduction_chain_origin: str
+    reduction_chain_depth: int
+
+
 def _micro_rollout_successors(
     code: bytes,
     current_n: int,
@@ -4206,6 +4215,35 @@ def _height_pressure(code: bytes, stack_count: int, max_height: int) -> float:
     return float(occupied) / float(stack_count * max_height)
 
 
+def _blocked_stack_count(code: bytes, stack_count: int, max_height: int) -> int:
+    return int(sum(1 for chunk in _split(code, stack_count, max_height) if _cached_stack_n(chunk, max_height) > 0))
+
+
+def _top_group_signature_bucket(code: bytes, stack_count: int, max_height: int) -> int:
+    tops: list[int] = []
+    for chunk in _split(code, stack_count, max_height):
+        height = _cached_height(chunk, max_height)
+        if height > 0:
+            tops.append(int(chunk[height - 1]))
+    if not tops:
+        return 0
+    return int(sum(tops) // max(1, len(tops) * 3))
+
+
+def _height_pressure_bucket(code: bytes, stack_count: int, max_height: int) -> int:
+    return int(min(5, math.floor(_height_pressure(code, stack_count, max_height) * 6.0)))
+
+
+def _safe_receiver_bucket(count: int) -> int:
+    if count <= 0:
+        return 0
+    if count == 1:
+        return 1
+    if count == 2:
+        return 2
+    return 3
+
+
 def _empty_buffer_low_receiver_move(
     parent_code: bytes,
     child_code: bytes,
@@ -4269,6 +4307,69 @@ def _receiver_safety_score(parent_code: bytes, child_code: bytes, args: argparse
         free_slots_after=free_after,
         height_pressure_after=_height_pressure(child_code, stack_count, max_height),
         last_buffer_consumed=bool(empty_buffer_consumed_by_low_receiver or (before > 1 and after <= 1 and delta < 0)),
+    )
+
+
+def _debt_basin_features(
+    parent_code: bytes,
+    child_code: bytes,
+    parent_n: int,
+    child_n: int,
+    depth: int,
+    args: argparse.Namespace,
+    *,
+    origin: str = "beam",
+) -> DebtBasinFeatures:
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return DebtBasinFeatures(0.0, 0.0, (), "", str(origin or "beam"), 0)
+
+    receiver = _receiver_safety_score(parent_code, child_code, args)
+    n_delta = int(child_n) - int(parent_n)
+    blocked_after = _blocked_stack_count(child_code, stack_count, max_height)
+    blocked_before = _blocked_stack_count(parent_code, stack_count, max_height)
+    pressure_after = _height_pressure(child_code, stack_count, max_height)
+    pressure_before = _height_pressure(parent_code, stack_count, max_height)
+    top_bucket_after = _top_group_signature_bucket(child_code, stack_count, max_height)
+    top_bucket_before = _top_group_signature_bucket(parent_code, stack_count, max_height)
+
+    debt = 0.0
+    debt += max(0, -int(receiver.safe_receiver_delta)) * 1.0
+    debt += max(0.0, float(receiver.height_pressure_after) - pressure_before) * 1.5
+    debt += 0.75 if receiver.last_buffer_consumed else 0.0
+    debt += 0.25 if n_delta >= 0 else 0.0
+    debt += 0.20 if blocked_after > blocked_before else 0.0
+
+    escape = 0.0
+    escape += max(0, int(receiver.safe_receiver_delta)) * 1.0
+    escape += max(0, -n_delta) * 0.5
+    escape += max(0, blocked_before - blocked_after) * 0.35
+    escape += max(0.0, pressure_before - pressure_after) * 1.0
+    escape += max(0, top_bucket_after - top_bucket_before) * 0.20
+    if not receiver.last_buffer_consumed and receiver.safe_receivers_after > 0:
+        escape += 0.15
+
+    n_band = max(0, int(child_n)) // max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
+    source_stack = _transition_source_stack(parent_code, child_code, stack_count, max_height)
+    basin_label = (
+        int(n_band),
+        min(5, blocked_after),
+        _safe_receiver_bucket(int(receiver.safe_receivers_after)),
+        top_bucket_after,
+        source_stack if source_stack >= 0 else stack_count,
+        _height_pressure_bucket(child_code, stack_count, max_height),
+    )
+    chain_depth_by_code = getattr(args, "_reduction_chain_depth_by_code", {}) or {}
+    chain_depth = int(chain_depth_by_code.get(child_code, 0) or 0)
+    chain_origin = str(origin or "beam")
+    return DebtBasinFeatures(
+        receiver_debt=float(debt),
+        escape_potential=float(escape),
+        basin_label=basin_label,
+        basin_similarity_group=":".join(str(part) for part in basin_label),
+        reduction_chain_origin=chain_origin,
+        reduction_chain_depth=chain_depth,
     )
 
 
