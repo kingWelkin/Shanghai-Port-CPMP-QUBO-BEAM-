@@ -5154,6 +5154,7 @@ def _union_diversity_objective(
     same_origin_parent_n_band_penalty = float(
         getattr(args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0) or 0.0
     )
+    basin_similarity_penalty = float(getattr(args, "union_diversity_qubo_basin_similarity_penalty", 0.0) or 0.0)
     ordered = sorted(selected)
     for pos, i in enumerate(ordered):
         for j in ordered[pos + 1 :]:
@@ -5171,6 +5172,12 @@ def _union_diversity_objective(
                 value += n_band_penalty
             if origin_similarity_penalty > 0.0 and same_origin:
                 value += origin_similarity_penalty
+            if (
+                basin_similarity_penalty > 0.0
+                and features[i].basin_label
+                and features[i].basin_label == features[j].basin_label
+            ):
+                value += basin_similarity_penalty
             if (
                 same_origin_parent_n_band_penalty > 0.0
                 and same_origin
@@ -5285,6 +5292,7 @@ def _select_union_diversity_qubo_supplement(
     same_origin_parent_n_band_penalty = float(
         getattr(args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0) or 0.0
     )
+    basin_similarity_penalty = float(getattr(args, "union_diversity_qubo_basin_similarity_penalty", 0.0) or 0.0)
     for i in range(len(usable)):
         for j in range(i + 1, len(usable)):
             same_origin = bool(features[i].origin) and features[i].origin == features[j].origin
@@ -5301,6 +5309,12 @@ def _select_union_diversity_qubo_supplement(
                 model.add_quadratic(vars_[i], vars_[j], n_band_penalty)
             if origin_similarity_penalty > 0.0 and same_origin:
                 model.add_quadratic(vars_[i], vars_[j], origin_similarity_penalty)
+            if (
+                basin_similarity_penalty > 0.0
+                and features[i].basin_label
+                and features[i].basin_label == features[j].basin_label
+            ):
+                model.add_quadratic(vars_[i], vars_[j], basin_similarity_penalty)
             if (
                 same_origin_parent_n_band_penalty > 0.0
                 and same_origin
@@ -5327,6 +5341,32 @@ def _select_union_diversity_qubo_supplement(
             if sample_set.samples[0].binary_values.get(idx, 0) == 1
         }
     picked = _repair_union_diversity_selection(picked, target, linear, features, args)
+    if getattr(args, "debt_basin_enabled", False):
+        if not hasattr(args, "_receiver_debt_selected_total"):
+            args._receiver_debt_selected_total = 0.0
+        if not hasattr(args, "_receiver_debt_selected_count"):
+            args._receiver_debt_selected_count = 0
+        if not hasattr(args, "_escape_potential_selected_total"):
+            args._escape_potential_selected_total = 0.0
+        if not hasattr(args, "_escape_potential_selected_count"):
+            args._escape_potential_selected_count = 0
+        if not hasattr(args, "_basin_pair_penalty_total"):
+            args._basin_pair_penalty_total = 0.0
+        if not hasattr(args, "_basin_unique_selected_total"):
+            args._basin_unique_selected_total = 0
+        selected_basin_labels = {features[idx].basin_label for idx in picked if features[idx].basin_label}
+        args._basin_unique_selected_total += len(selected_basin_labels)
+        for idx in picked:
+            if features[idx].receiver_debt or features[idx].escape_potential:
+                args._receiver_debt_selected_total += float(features[idx].receiver_debt)
+                args._receiver_debt_selected_count += 1
+                args._escape_potential_selected_total += float(features[idx].escape_potential)
+                args._escape_potential_selected_count += 1
+        ordered_picked = sorted(picked)
+        for pos, i in enumerate(ordered_picked):
+            for j in ordered_picked[pos + 1 :]:
+                if features[i].basin_label and features[i].basin_label == features[j].basin_label:
+                    args._basin_pair_penalty_total += basin_similarity_penalty
     ordered = sorted(
         picked,
         key=lambda idx: (

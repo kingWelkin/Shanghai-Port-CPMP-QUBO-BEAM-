@@ -1878,6 +1878,54 @@ def test_union_diversity_qubo_penalizes_same_origin_parent_and_n_band():
     assert mixed_origin_value == 0.0
 
 
+def _union_feature_for_basin(
+    basin_label,
+    *,
+    energy=0.0,
+    parent=b"p",
+    source_stack=0,
+    n_value=5,
+):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    return bench.UnionDiversityQuboFeatures(
+        energy=energy,
+        n_value=n_value,
+        depth=1,
+        parent_code=parent,
+        source_stack=source_stack,
+        signature=(0, 0, 0, 0, 0),
+        reduce_signature=(source_stack, 0, 0),
+        origin="core",
+        basin_label=basin_label,
+        basin_similarity_group=":".join(str(part) for part in basin_label),
+    )
+
+
+def test_union_diversity_objective_penalizes_same_basin_pair():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        union_diversity_qubo_same_parent_penalty=0.0,
+        union_diversity_qubo_same_source_penalty=0.0,
+        union_diversity_qubo_signature_penalty=0.0,
+        union_diversity_qubo_reduce_signature_penalty=0.0,
+        union_diversity_qubo_n_band_penalty=0.0,
+        union_diversity_qubo_basin_similarity_penalty=0.7,
+    )
+    features = [
+        _union_feature_for_basin((5, 2, 1, 3, 0, 4), parent=b"a", source_stack=0),
+        _union_feature_for_basin((5, 2, 1, 3, 0, 4), parent=b"b", source_stack=1),
+        _union_feature_for_basin((5, 1, 3, 1, 2, 2), parent=b"c", source_stack=2),
+    ]
+    linear = [0.0, 0.0, 0.0]
+
+    same_basin = bench._union_diversity_objective({0, 1}, linear, features, args)
+    different_basin = bench._union_diversity_objective({0, 2}, linear, features, args)
+
+    assert same_basin > different_basin
+
+
 def test_union_diversity_qubo_origin_aware_profile_is_opt_in(monkeypatch):
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
