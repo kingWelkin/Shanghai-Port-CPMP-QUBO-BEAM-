@@ -1885,6 +1885,8 @@ def _union_feature_for_basin(
     parent=b"p",
     source_stack=0,
     n_value=5,
+    receiver_debt=0.0,
+    escape_potential=0.0,
 ):
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -1897,6 +1899,8 @@ def _union_feature_for_basin(
         signature=(0, 0, 0, 0, 0),
         reduce_signature=(source_stack, 0, 0),
         origin="core",
+        receiver_debt=receiver_debt,
+        escape_potential=escape_potential,
         basin_label=basin_label,
         basin_similarity_group=":".join(str(part) for part in basin_label),
     )
@@ -1924,6 +1928,65 @@ def test_union_diversity_objective_penalizes_same_basin_pair():
     different_basin = bench._union_diversity_objective({0, 2}, linear, features, args)
 
     assert same_basin > different_basin
+
+
+def test_union_diversity_selector_applies_basin_pair_penalty_and_telemetry(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+
+    args = _compact_args(
+        debt_basin_enabled=True,
+        union_diversity_qubo_max_vars=2,
+        union_diversity_qubo_same_parent_penalty=0.0,
+        union_diversity_qubo_same_source_penalty=0.0,
+        union_diversity_qubo_signature_penalty=0.0,
+        union_diversity_qubo_reduce_signature_penalty=0.0,
+        union_diversity_qubo_n_band_penalty=0.0,
+        union_diversity_qubo_basin_similarity_penalty=0.7,
+        union_diversity_qubo_rank_weight=0.0,
+        union_diversity_qubo_wang_fixed_weight=0.0,
+        union_diversity_qubo_wang_pair_weight=0.0,
+        union_diversity_qubo_frg_weight=0.0,
+        union_diversity_qubo_rollout_bonus=0.0,
+    )
+    ranked = [
+        (b"a", (5, 1, b"p0")),
+        (b"b", (5, 1, b"p1")),
+    ]
+    features = [
+        _union_feature_for_basin((5, 2, 1, 3, 0, 4), parent=b"p0", receiver_debt=1.25, escape_potential=0.5),
+        _union_feature_for_basin((5, 2, 1, 3, 0, 4), parent=b"p1", receiver_debt=0.75, escape_potential=0.25),
+    ]
+
+    def fake_features(code, data, rank, feature_args, rollout=None, *, origin="core"):
+        del code, data, feature_args, rollout, origin
+        return features[rank]
+
+    def fake_sample(self, model, config):
+        del self, config
+        selected_same_basin = {0: 1, 1: 1}
+        assert model.evaluate(selected_same_basin) == pytest.approx(0.7)
+        return QuboSampleSet(
+            samples=[QuboSample(selected_same_basin, model.evaluate(selected_same_basin))],
+            sampler_name="fake",
+            runtime_sec=0.0,
+        )
+
+    monkeypatch.setattr(bench, "_union_rollout_probe_results", lambda usable, probe_args: {})
+    monkeypatch.setattr(bench, "_union_diversity_qubo_features", fake_features)
+    monkeypatch.setattr(bench.SimulatedAnnealingQuboSampler, "sample", fake_sample)
+
+    selected, qvars, qtime = bench._select_union_diversity_qubo_supplement(ranked, args, target=2)
+
+    assert selected == [b"a", b"b"]
+    assert qvars == 2
+    assert qtime == 0.0
+    assert args._receiver_debt_selected_total == pytest.approx(2.0)
+    assert args._receiver_debt_selected_count == 2
+    assert args._escape_potential_selected_total == pytest.approx(0.75)
+    assert args._escape_potential_selected_count == 2
+    assert args._basin_pair_penalty_total == pytest.approx(0.7)
+    assert args._basin_unique_selected_total == 1
 
 
 def test_union_diversity_qubo_origin_aware_profile_is_opt_in(monkeypatch):

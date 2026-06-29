@@ -10503,6 +10503,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._union_diversity_qubo_vars = 0
     args._union_diversity_qubo_time = 0.0
     args._union_diversity_qubo_selected_total = 0
+    args._receiver_debt_selected_total = 0.0
+    args._receiver_debt_selected_count = 0
+    args._escape_potential_selected_total = 0.0
+    args._escape_potential_selected_count = 0
+    args._basin_pair_penalty_total = 0.0
+    args._basin_unique_selected_total = 0
     args._pareto_union_layers = 0
     args._pareto_union_seed_selected_total = 0
     args._pareto_union_qubo_calls_done = 0
