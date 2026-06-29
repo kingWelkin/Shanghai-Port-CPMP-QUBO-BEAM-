@@ -2686,6 +2686,38 @@ def test_solver_profile_scheduler_state_v5_qubo_diversity_union_frg_single_front
     assert args.frg_frontier_child_adaptive_enabled is False
 
 
+def test_solver_profile_for_union_debt_basin_is_opt_in():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    mainline = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_polish")
+    debt_basin = _compact_args(solver_profile="scheduler_state_v5_qubo_diversity_union_debt_basin_polish")
+
+    bench._apply_solver_profile(mainline)
+    bench._apply_solver_profile(debt_basin)
+
+    assert getattr(mainline, "debt_basin_enabled", False) is False
+    assert debt_basin.solver_profile == "scheduler_state_v5_qubo_diversity_union_debt_basin_polish"
+    assert debt_basin.debt_basin_enabled is True
+    assert debt_basin.union_diversity_qubo_enabled is True
+    assert debt_basin.receiver_safety_enabled is True
+    assert debt_basin.micro_rollout_enabled is False
+    assert debt_basin.frg_frontier_child_enabled is True
+    assert debt_basin.frg_frontier_child_append_only is False
+    assert debt_basin.frg_frontier_child_parent_width == 8
+    assert debt_basin.frg_frontier_child_limit == 1
+    assert debt_basin.frg_frontier_child_max_steps == 2
+    assert debt_basin.w_receiver_debt > 0.0
+    assert debt_basin.w_escape_potential > 0.0
+    assert debt_basin.union_diversity_qubo_basin_similarity_penalty > 0.0
+
+    outer = build_parser().parse_args(["--variant", "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish"])
+    open_args = _args_for_variant(outer, "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish")
+
+    assert open_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_debt_basin_polish"
+    assert "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish" in _variant_names("wang_research_all")
+
+
 def test_frg_frontier_child_adaptive_params_expand_only_on_high_n_plateau():
     import benchmark_compact_beam_qubo_n0 as bench
 

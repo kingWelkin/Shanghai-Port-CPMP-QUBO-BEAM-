@@ -1065,6 +1065,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
             "qubo_scheduler_state_v5_pareto_union_polish",
@@ -1325,6 +1326,13 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_diversity_qubo_n_band_size",
         "union_diversity_qubo_origin_similarity_penalty",
         "union_diversity_qubo_same_origin_parent_n_band_penalty",
+        "debt_basin_enabled",
+        "w_receiver_debt",
+        "w_escape_potential",
+        "w_debt_basin_chain_cost",
+        "union_diversity_qubo_basin_similarity_penalty",
+        "debt_basin_trace_window",
+        "debt_basin_reduction_chain_enabled",
         "union_rollout_probe_enabled",
         "union_rollout_probe_max_candidates",
         "union_rollout_probe_time_limit",
@@ -1561,6 +1569,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_debt_basin_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_frontier_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish":
@@ -1863,6 +1873,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
             "qubo_scheduler_state_v5_pareto_union_polish",

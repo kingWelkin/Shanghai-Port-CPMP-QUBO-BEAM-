@@ -1249,6 +1249,13 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_n_band_size": 1,
         "union_diversity_qubo_origin_similarity_penalty": 0.0,
         "union_diversity_qubo_same_origin_parent_n_band_penalty": 0.0,
+        "debt_basin_enabled": False,
+        "w_receiver_debt": 0.0,
+        "w_escape_potential": 0.0,
+        "w_debt_basin_chain_cost": 0.0,
+        "union_diversity_qubo_basin_similarity_penalty": 0.0,
+        "debt_basin_trace_window": 96,
+        "debt_basin_reduction_chain_enabled": False,
         "union_rollout_probe_enabled": False,
         "union_rollout_probe_max_candidates": 8,
         "union_rollout_probe_time_limit": 0.001,
@@ -2311,6 +2318,26 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_single_frontier_po
     "frg_frontier_child_append_only": False,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_debt_basin_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "debt_basin_enabled": True,
+    "receiver_safety_enabled": True,
+    "micro_rollout_enabled": False,
+    "micro_rollout_trace_only": False,
+    "w_receiver_debt": 0.18,
+    "w_escape_potential": 0.10,
+    "w_debt_basin_chain_cost": 0.02,
+    "union_diversity_qubo_basin_similarity_penalty": 0.14,
+    "debt_basin_trace_window": 96,
+    "debt_basin_reduction_chain_enabled": True,
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_parent_width": 8,
+    "frg_frontier_child_limit": 1,
+    "frg_frontier_child_max_steps": 2,
+    "frg_frontier_child_append_only": False,
+    "frg_frontier_child_adaptive_enabled": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
     "frg_frontier_child_enabled": True,
@@ -3162,6 +3189,19 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "candidate_ledger_frg_assignment_weight": "--candidate-ledger-frg-assignment-weight",
         "candidate_ledger_rollout_bonus": "--candidate-ledger-rollout-bonus",
         "candidate_ledger_rank_window": "--candidate-ledger-rank-window",
+        "debt_basin_enabled": (
+            "--debt-basin-enabled",
+            "--no-debt-basin-enabled",
+        ),
+        "w_receiver_debt": "--w-receiver-debt",
+        "w_escape_potential": "--w-escape-potential",
+        "w_debt_basin_chain_cost": "--w-debt-basin-chain-cost",
+        "union_diversity_qubo_basin_similarity_penalty": "--union-diversity-qubo-basin-similarity-penalty",
+        "debt_basin_trace_window": "--debt-basin-trace-window",
+        "debt_basin_reduction_chain_enabled": (
+            "--debt-basin-reduction-chain-enabled",
+            "--no-debt-basin-reduction-chain-enabled",
+        ),
         "union_rollout_probe_enabled": (
             "--union-rollout-probe-enabled",
             "--no-union-rollout-probe-enabled",
@@ -12088,6 +12128,13 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-n-band-size", type=int, default=None)
     parser.add_argument("--union-diversity-qubo-origin-similarity-penalty", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-same-origin-parent-n-band-penalty", type=float, default=None)
+    parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--w-receiver-debt", type=float, default=None)
+    parser.add_argument("--w-escape-potential", type=float, default=None)
+    parser.add_argument("--w-debt-basin-chain-cost", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-basin-similarity-penalty", type=float, default=None)
+    parser.add_argument("--debt-basin-trace-window", type=int, default=None)
+    parser.add_argument("--debt-basin-reduction-chain-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-rollout-probe-max-candidates", type=int, default=None)
     parser.add_argument("--union-rollout-probe-time-limit", type=float, default=None)
