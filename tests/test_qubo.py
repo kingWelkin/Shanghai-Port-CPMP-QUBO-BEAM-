@@ -2456,6 +2456,160 @@ def test_quality_reservoir_feature_defaults_are_neutral_for_core_candidate():
     assert feature.reservoir_quality == bench._quality_reservoir_score(feature, args)
 
 
+def test_quality_reservoir_feature_minimal_args_exact_score_is_neutral():
+    import argparse
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    feature = bench._quality_reservoir_feature(
+        b"child",
+        (2, 1, b"parent"),
+        argparse.Namespace(),
+    )
+
+    assert feature.reservoir_quality == 0.0
+
+
+def test_quality_reservoir_keeps_quality_and_origin_reserve():
+    import argparse
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent_code = b"parent"
+    features = [
+        bench.QualityReservoirCandidate(
+            b"core_low",
+            8,
+            1,
+            parent_code,
+            "core",
+            0,
+            0.0,
+            0.0,
+            0.3,
+            0.2,
+            0.0,
+            -1,
+            2,
+            (),
+            8,
+            -0.13,
+        ),
+        bench.QualityReservoirCandidate(
+            b"core_high",
+            7,
+            1,
+            parent_code,
+            "core",
+            1,
+            0.0,
+            0.0,
+            0.1,
+            0.1,
+            0.0,
+            -1,
+            1,
+            (),
+            7,
+            0.23,
+        ),
+        bench.QualityReservoirCandidate(
+            b"frg_high",
+            6,
+            2,
+            parent_code,
+            "frg_frontier_child",
+            2,
+            0.9,
+            0.7,
+            0.1,
+            0.2,
+            0.1,
+            0,
+            2,
+            (0, 2, 6, 1),
+            6,
+            0.91,
+        ),
+        bench.QualityReservoirCandidate(
+            b"wang_mid",
+            7,
+            1,
+            parent_code,
+            "wang_rollout",
+            1,
+            0.0,
+            0.0,
+            0.1,
+            0.2,
+            0.0,
+            1,
+            2,
+            (),
+            7,
+            0.20,
+        ),
+    ]
+    args = argparse.Namespace(
+        quality_reservoir_top_quality=1,
+        quality_reservoir_origin_reserve=1,
+        quality_reservoir_witness_reserve=1,
+        quality_reservoir_progress_reserve=1,
+        quality_reservoir_max_candidates=3,
+    )
+
+    kept = bench._quality_reservoir_keep_codes(features, args)
+
+    assert b"frg_high" in kept
+    assert b"core_high" in kept
+    assert len(kept) == 3
+    assert b"core_low" not in kept
+
+
+def test_apply_quality_reservoir_bounds_feature_enrichment(monkeypatch):
+    import argparse
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    candidates = {f"c{i}".encode(): (i, 1, b"parent") for i in range(6)}
+    calls = []
+
+    def fake_feature(code, data, args):
+        calls.append(code)
+        return bench.QualityReservoirCandidate(
+            code,
+            data[0],
+            data[1],
+            data[2],
+            "core",
+            0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1,
+            -1,
+            (),
+            data[0],
+            float(data[0]),
+        )
+
+    monkeypatch.setattr(bench, "_quality_reservoir_feature", fake_feature)
+    args = argparse.Namespace(
+        priority="n_then_depth",
+        quality_reservoir_enabled=True,
+        quality_reservoir_max_candidates=3,
+        quality_reservoir_top_quality=3,
+        quality_reservoir_origin_reserve=0,
+        quality_reservoir_witness_reserve=0,
+        quality_reservoir_progress_reserve=0,
+    )
+
+    kept = bench._apply_quality_reservoir_candidates(candidates, args)
+
+    assert len(calls) == 3
+    assert len(kept) == 3
+    assert set(candidates) == kept
+
+
 def test_union_diversity_rollout_evaluator_ignores_infeasible_probe_by_default():
     import benchmark_compact_beam_qubo_n0 as bench
 

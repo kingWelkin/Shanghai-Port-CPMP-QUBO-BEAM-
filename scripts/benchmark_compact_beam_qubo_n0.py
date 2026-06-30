@@ -5109,12 +5109,17 @@ def _quality_reservoir_feature(
     stack_count = int(getattr(args, "_stack_count", 0) or 0)
     max_height = int(getattr(args, "_max_height", 0) or 0)
     origin = _union_diversity_candidate_origin(code, args)
+    origin_str = str(origin)
     parent_n = _code_n(parent_code, stack_count, max_height) if parent_code and stack_count > 0 and max_height > 0 else int(n_value)
     n_delta = int(parent_n) - int(n_value)
     source_stack = _transition_source_stack(parent_code, code, stack_count, max_height) if stack_count > 0 and max_height > 0 else -1
     witness = (getattr(args, "_union_rollout_probe_current_results", {}) or {}).get(code)
     witness_quality = _union_diversity_completion_witness_quality(witness, args, n_value=int(n_value))
-    source_scarcity = _union_diversity_source_scarcity(parent_code, source_stack, args)
+    source_scarcity = (
+        _union_diversity_source_scarcity(parent_code, source_stack, args)
+        if origin_str == "frg_frontier_child"
+        else 0.0
+    )
     receiver_debt = 0.0
     height_risk = 0.0
     receiver_signature = -1
@@ -5133,17 +5138,17 @@ def _quality_reservoir_feature(
         min(15, max(-1, int(source_stack))),
         min(15, max(0, int(chain_depth))),
         min(15, max(0, int(n_value))),
-        1 if str(origin) == "frg_frontier_child" else 0,
+        1 if origin_str == "frg_frontier_child" else 0,
     )
     feature = QualityReservoirCandidate(
         code=code,
         n_value=int(n_value),
         depth=int(depth),
         parent_code=parent_code,
-        origin=str(origin),
+        origin=origin_str,
         n_delta=int(n_delta),
         witness_quality=float(witness_quality),
-        source_scarcity_gain=float(source_scarcity if str(origin) == "frg_frontier_child" else 0.0),
+        source_scarcity_gain=float(source_scarcity),
         receiver_debt=float(receiver_debt),
         height_risk=float(height_risk),
         chain_length_penalty=float(chain_penalty),
@@ -5153,6 +5158,102 @@ def _quality_reservoir_feature(
         n_band=int(n_value) // max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1)),
     )
     return feature._replace(reservoir_quality=_quality_reservoir_score(feature, args))
+
+
+def _quality_reservoir_keep_codes(
+    features: list[QualityReservoirCandidate],
+    args: argparse.Namespace,
+) -> set[bytes]:
+    if not features:
+        return set()
+    max_candidates = max(0, int(getattr(args, "quality_reservoir_max_candidates", 0) or 0))
+    if max_candidates <= 0 or len(features) <= max_candidates:
+        return {feature.code for feature in features}
+    keep: set[bytes] = set()
+
+    def add_ranked(rows: list[QualityReservoirCandidate], limit: int, key) -> None:
+        for feature in sorted(rows, key=key)[: max(0, int(limit))]:
+            keep.add(feature.code)
+
+    quality_key = lambda feature: (
+        -float(feature.reservoir_quality),
+        int(feature.n_value),
+        int(feature.depth),
+        feature.code,
+    )
+    add_ranked(features, int(getattr(args, "quality_reservoir_top_quality", 0) or 0), quality_key)
+    origin_reserve = max(0, int(getattr(args, "quality_reservoir_origin_reserve", 0) or 0))
+    if origin_reserve > 0:
+        origins = sorted({feature.origin for feature in features})
+        for origin in origins:
+            rows = [feature for feature in features if feature.origin == origin]
+            add_ranked(rows, origin_reserve, quality_key)
+    add_ranked(
+        features,
+        int(getattr(args, "quality_reservoir_witness_reserve", 0) or 0),
+        lambda feature: (-float(feature.witness_quality), int(feature.n_value), int(feature.depth), feature.code),
+    )
+    add_ranked(
+        features,
+        int(getattr(args, "quality_reservoir_progress_reserve", 0) or 0),
+        lambda feature: (-int(feature.n_delta), int(feature.n_value), int(feature.depth), feature.code),
+    )
+    if len(keep) > max_candidates:
+        ranked_keep = sorted(
+            (feature for feature in features if feature.code in keep),
+            key=quality_key,
+        )
+        keep = {feature.code for feature in ranked_keep[:max_candidates]}
+    if len(keep) < max_candidates:
+        add_ranked(
+            [feature for feature in features if feature.code not in keep],
+            max_candidates - len(keep),
+            quality_key,
+        )
+    return keep
+
+
+def _quality_reservoir_input_items(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> list[tuple[bytes, tuple[int, int, bytes]]]:
+    max_candidates = max(0, int(getattr(args, "quality_reservoir_max_candidates", 0) or 0))
+    if max_candidates <= 0 or len(candidates) <= max_candidates:
+        return list(candidates.items())
+    return _rank_next_frontier_candidates(candidates, args)[:max_candidates]
+
+
+def _apply_quality_reservoir_candidates(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> set[bytes]:
+    if not bool(getattr(args, "quality_reservoir_enabled", False)):
+        return set(candidates)
+    input_items = _quality_reservoir_input_items(candidates, args)
+    features = [_quality_reservoir_feature(code, data, args) for code, data in input_items]
+    keep = _quality_reservoir_keep_codes(features, args)
+    generated = len(candidates)
+    kept = len(keep)
+    if not hasattr(args, "_quality_reservoir_generated_total"):
+        args._quality_reservoir_generated_total = 0
+        args._quality_reservoir_kept_total = 0
+        args._quality_reservoir_witness_found_total = 0
+        args._quality_reservoir_witness_quality_total = 0.0
+        args._quality_reservoir_receiver_debt_total = 0.0
+        args._quality_reservoir_height_risk_total = 0.0
+    args._quality_reservoir_generated_total += generated
+    args._quality_reservoir_kept_total += kept
+    kept_features = [feature for feature in features if feature.code in keep]
+    args._quality_reservoir_witness_found_total += sum(1 for feature in kept_features if feature.witness_quality > 0.0)
+    args._quality_reservoir_witness_quality_total += sum(float(feature.witness_quality) for feature in kept_features)
+    args._quality_reservoir_receiver_debt_total += sum(float(feature.receiver_debt) for feature in kept_features)
+    args._quality_reservoir_height_risk_total += sum(float(feature.height_risk) for feature in kept_features)
+    if len(keep) < len(candidates):
+        for code in list(candidates):
+            if code not in keep:
+                candidates.pop(code, None)
+    args._quality_reservoir_last_features_by_code = {feature.code: feature for feature in kept_features}
+    return keep
 
 
 def _union_diversity_source_scarcity(parent_code: bytes, source_stack: int, args: argparse.Namespace) -> float:
@@ -12206,6 +12307,18 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 if len(candidates) != candidate_count_before_frg_frontier:
                     _update_layer_candidate_metrics(candidates, args, cap)
         args._frg_frontier_child_codes = set(frg_frontier_child_codes)
+        if getattr(args, "quality_reservoir_enabled", False):
+            kept_codes = _apply_quality_reservoir_candidates(candidates, args)
+            candidate_origin_by_code = {
+                code: origin
+                for code, origin in candidate_origin_by_code.items()
+                if code in kept_codes
+            }
+            args._candidate_origin_by_code = candidate_origin_by_code
+            frg_frontier_child_codes &= kept_codes
+            args._frg_frontier_child_codes = set(frg_frontier_child_codes)
+            peak_candidates = max(peak_candidates, len(candidates))
+            _update_layer_candidate_metrics(candidates, args, cap)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         qcalls += add_qcalls
         qvars += add_qvars
