@@ -4555,6 +4555,25 @@ class UnionDiversityQuboFeatures(NamedTuple):
     completion_witness_quality: float = 0.0
 
 
+class QualityReservoirCandidate(NamedTuple):
+    code: bytes
+    n_value: int
+    depth: int
+    parent_code: bytes
+    origin: str
+    n_delta: int
+    witness_quality: float
+    source_scarcity_gain: float
+    receiver_debt: float
+    height_risk: float
+    chain_length_penalty: float
+    source_signature: int
+    receiver_signature: int
+    macro_signature: tuple[int, ...]
+    n_band: int
+    reservoir_quality: float = 0.0
+
+
 @dataclass(frozen=True)
 class MicroRolloutProbeResult:
     first_children_count: int
@@ -5066,6 +5085,74 @@ def _union_diversity_completion_witness_quality(
         progress = 1.0 - min(1.0, float(max(0, int(result.final_n))) / start_n)
         return _clamp01(0.65 * progress - move_discount)
     return 0.0
+
+
+def _quality_reservoir_score(feature: QualityReservoirCandidate, args: argparse.Namespace) -> float:
+    return float(
+        float(getattr(args, "quality_reservoir_witness_weight", 0.0) or 0.0) * float(feature.witness_quality)
+        + float(getattr(args, "quality_reservoir_progress_weight", 0.0) or 0.0) * max(0.0, float(feature.n_delta))
+        + float(getattr(args, "quality_reservoir_source_scarcity_weight", 0.0) or 0.0)
+        * float(feature.source_scarcity_gain)
+        - float(getattr(args, "quality_reservoir_receiver_debt_weight", 0.0) or 0.0) * float(feature.receiver_debt)
+        - float(getattr(args, "quality_reservoir_height_risk_weight", 0.0) or 0.0) * float(feature.height_risk)
+        - float(getattr(args, "quality_reservoir_chain_cost_weight", 0.0) or 0.0)
+        * float(feature.chain_length_penalty)
+    )
+
+
+def _quality_reservoir_feature(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> QualityReservoirCandidate:
+    n_value, depth, parent_code = data
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    origin = _union_diversity_candidate_origin(code, args)
+    parent_n = _code_n(parent_code, stack_count, max_height) if parent_code and stack_count > 0 and max_height > 0 else int(n_value)
+    n_delta = int(parent_n) - int(n_value)
+    source_stack = _transition_source_stack(parent_code, code, stack_count, max_height) if stack_count > 0 and max_height > 0 else -1
+    witness = (getattr(args, "_union_rollout_probe_current_results", {}) or {}).get(code)
+    witness_quality = _union_diversity_completion_witness_quality(witness, args, n_value=int(n_value))
+    source_scarcity = _union_diversity_source_scarcity(parent_code, source_stack, args)
+    receiver_debt = 0.0
+    height_risk = 0.0
+    receiver_signature = -1
+    if stack_count > 0 and max_height > 0 and parent_code:
+        receiver = _receiver_safety_score(parent_code, code, args)
+        receiver_debt = _clamp01(
+            0.45 * max(0.0, -float(receiver.safe_receiver_delta))
+            + 0.35 * float(receiver.height_pressure_after)
+            + (0.20 if receiver.last_buffer_consumed else 0.0)
+        )
+        height_risk = _clamp01(float(receiver.height_pressure_after))
+        receiver_signature = min(15, max(0, int(round(float(receiver.height_pressure_after) * 10.0))))
+    chain_depth = int((getattr(args, "_reduction_chain_depth_by_code", {}) or {}).get(code, 1) or 1)
+    chain_penalty = _clamp01(float(max(0, chain_depth - 1)) / 8.0)
+    macro_signature = (
+        min(15, max(-1, int(source_stack))),
+        min(15, max(0, int(chain_depth))),
+        min(15, max(0, int(n_value))),
+        1 if str(origin) == "frg_frontier_child" else 0,
+    )
+    feature = QualityReservoirCandidate(
+        code=code,
+        n_value=int(n_value),
+        depth=int(depth),
+        parent_code=parent_code,
+        origin=str(origin),
+        n_delta=int(n_delta),
+        witness_quality=float(witness_quality),
+        source_scarcity_gain=float(source_scarcity if str(origin) == "frg_frontier_child" else 0.0),
+        receiver_debt=float(receiver_debt),
+        height_risk=float(height_risk),
+        chain_length_penalty=float(chain_penalty),
+        source_signature=int(source_stack),
+        receiver_signature=int(receiver_signature),
+        macro_signature=tuple(macro_signature),
+        n_band=int(n_value) // max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1)),
+    )
+    return feature._replace(reservoir_quality=_quality_reservoir_score(feature, args))
 
 
 def _union_diversity_source_scarcity(parent_code: bytes, source_stack: int, args: argparse.Namespace) -> float:

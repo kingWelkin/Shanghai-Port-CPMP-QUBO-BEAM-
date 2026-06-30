@@ -2420,6 +2420,42 @@ def test_union_diversity_rollout_evaluator_replaces_base_energy_when_enabled():
     assert feature.energy == pytest.approx(3030.0)
 
 
+def test_quality_reservoir_feature_defaults_are_neutral_for_core_candidate():
+    import argparse
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent_stacks = [[3, 1], [], []]
+    child_stacks = [[3], [1], []]
+    parent_code, parent_n = bench._encode(parent_stacks, 3, 3)
+    child_code, child_n = bench._encode(child_stacks, 3, 3)
+    args = argparse.Namespace(
+        _stack_count=3,
+        _max_height=3,
+        _candidate_origin_by_code={},
+        _union_rollout_probe_current_results={},
+        _reduction_chain_depth_by_code={},
+        quality_reservoir_witness_weight=0.42,
+        quality_reservoir_progress_weight=0.28,
+        quality_reservoir_source_scarcity_weight=0.18,
+        quality_reservoir_receiver_debt_weight=0.26,
+        quality_reservoir_height_risk_weight=0.18,
+        quality_reservoir_chain_cost_weight=0.10,
+    )
+
+    feature = bench._quality_reservoir_feature(
+        child_code,
+        (child_n, 1, parent_code),
+        args,
+    )
+
+    assert feature.origin == "core"
+    assert feature.n_delta == parent_n - child_n
+    assert feature.witness_quality == 0.0
+    assert 0.0 <= feature.receiver_debt <= 1.0
+    assert 0.0 <= feature.height_risk <= 1.0
+    assert feature.reservoir_quality == bench._quality_reservoir_score(feature, args)
+
+
 def test_union_diversity_rollout_evaluator_ignores_infeasible_probe_by_default():
     import benchmark_compact_beam_qubo_n0 as bench
 
