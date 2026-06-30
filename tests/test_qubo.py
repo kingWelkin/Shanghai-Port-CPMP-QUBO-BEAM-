@@ -722,7 +722,7 @@ def test_open_priority_group_row_serializes_frg_frontier_soft_supply_fields():
 
 def test_open_priority_group_row_serializes_quality_reservoir_fields():
     from benchmark_compact_beam_qubo_n0 import CompactBeamResult
-    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+    from open_cpmp_benchmarks import OPEN_RESULT_FIELDS, _open_row_dict_from_instance_result, requires_priority_group_semantics
 
     instance = Instance(
         "tiny_priority_group_quality_reservoir_row",
@@ -802,6 +802,7 @@ def test_open_priority_group_row_serializes_quality_reservoir_fields():
         "quality_reservoir_pair_penalty_total": 0.33,
     }
     for field, value in expected.items():
+        assert field in OPEN_RESULT_FIELDS
         assert row[field] == value
 
 
