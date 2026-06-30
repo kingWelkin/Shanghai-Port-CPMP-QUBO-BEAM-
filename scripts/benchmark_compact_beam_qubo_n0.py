@@ -5391,28 +5391,7 @@ def _quality_reservoir_qubo_linear_energy(
 ) -> float:
     if not bool(getattr(args, "quality_reservoir_enabled", False)):
         return float(feature.energy)
-    value = float(feature.energy)
-    value -= float(getattr(args, "quality_reservoir_witness_weight", 0.0) or 0.0) * float(
-        feature.quality_reservoir_witness_quality
-    )
-    value -= float(getattr(args, "quality_reservoir_progress_weight", 0.0) or 0.0) * max(
-        0.0,
-        float(feature.quality_reservoir_n_delta),
-    )
-    value -= float(getattr(args, "quality_reservoir_source_scarcity_weight", 0.0) or 0.0) * float(
-        feature.source_scarcity
-    )
-    value += float(getattr(args, "quality_reservoir_receiver_debt_weight", 0.0) or 0.0) * float(
-        feature.quality_reservoir_receiver_debt
-    )
-    value += float(getattr(args, "quality_reservoir_height_risk_weight", 0.0) or 0.0) * float(
-        feature.quality_reservoir_height_risk
-    )
-    value += float(getattr(args, "quality_reservoir_chain_cost_weight", 0.0) or 0.0) * float(
-        feature.quality_reservoir_chain_penalty
-    )
-    value -= float(feature.quality_reservoir_quality)
-    return float(value)
+    return float(feature.energy) - float(feature.quality_reservoir_quality)
 
 
 def _union_diversity_adaptive_macro_quota_target(

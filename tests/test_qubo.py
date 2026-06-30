@@ -2564,6 +2564,49 @@ def test_quality_reservoir_qubo_energy_rewards_quality_and_penalizes_debt():
     )
 
 
+def test_quality_reservoir_qubo_linear_energy_uses_composite_quality_once():
+    import argparse
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    feature = bench.UnionDiversityQuboFeatures(
+        energy=10.0,
+        n_value=5,
+        depth=3,
+        parent_code=b"parent",
+        source_stack=0,
+        signature=(1, 1, 1, 1, 0),
+        reduce_signature=(0, 1, 1),
+        source_scarcity=0.8,
+        quality_reservoir_quality=0.85,
+        quality_reservoir_witness_quality=0.9,
+        quality_reservoir_receiver_debt=0.1,
+        quality_reservoir_height_risk=0.1,
+        quality_reservoir_chain_penalty=0.1,
+        quality_reservoir_n_delta=2,
+    )
+    enabled_args = argparse.Namespace(
+        quality_reservoir_enabled=True,
+        quality_reservoir_witness_weight=0.42,
+        quality_reservoir_progress_weight=0.28,
+        quality_reservoir_source_scarcity_weight=0.18,
+        quality_reservoir_receiver_debt_weight=0.26,
+        quality_reservoir_height_risk_weight=0.18,
+        quality_reservoir_chain_cost_weight=0.10,
+    )
+    disabled_args = argparse.Namespace(
+        quality_reservoir_enabled=False,
+        quality_reservoir_witness_weight=0.42,
+        quality_reservoir_progress_weight=0.28,
+        quality_reservoir_source_scarcity_weight=0.18,
+        quality_reservoir_receiver_debt_weight=0.26,
+        quality_reservoir_height_risk_weight=0.18,
+        quality_reservoir_chain_cost_weight=0.10,
+    )
+
+    assert bench._quality_reservoir_qubo_linear_energy(feature, enabled_args) == pytest.approx(9.15)
+    assert bench._quality_reservoir_qubo_linear_energy(feature, disabled_args) == pytest.approx(10.0)
+
+
 def test_quality_reservoir_qubo_energy_does_not_reward_higher_n_value_without_progress():
     import argparse
     import benchmark_compact_beam_qubo_n0 as bench
