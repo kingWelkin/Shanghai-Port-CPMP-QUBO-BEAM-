@@ -30,13 +30,34 @@ from open_cpmp_benchmarks import (  # noqa: E402
     OPEN_RESULT_FIELDS,
     _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS,
     _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS,
-    _args_for_variant,
+    _args_for_variant as _open_args_for_variant,
     _open_full_quality_penalty,
     _open_row_dict_from_instance_result,
     _open_row_valid,
     _select_open_no_regret_row,
     _open_validate_instance_result,
 )
+
+
+def _args_for_variant(
+    args_or_variant: argparse.Namespace | str,
+    variant: str | None = None,
+    instance: compact_bench.Instance | None = None,
+    *,
+    alpha: float | None = None,
+    time_limit: float | None = None,
+) -> argparse.Namespace:
+    if isinstance(args_or_variant, str):
+        variant = args_or_variant
+        args = build_parser().parse_args(["--variant", variant])
+        if alpha is not None:
+            args.alpha = alpha
+        if time_limit is not None:
+            args.time_limit = time_limit
+        return _open_args_for_variant(args, variant, instance)
+    if variant is None:
+        raise TypeError("variant is required when passing an argparse namespace")
+    return _open_args_for_variant(args_or_variant, variant, instance)
 
 
 @dataclass(frozen=True)

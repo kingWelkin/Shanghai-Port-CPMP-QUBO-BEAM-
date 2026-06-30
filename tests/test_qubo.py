@@ -4799,6 +4799,27 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_frg_soft_supply_qubo
     assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
 
 
+def test_open_and_paper_runners_accept_qubo_diversity_union_quality_reservoir_variant():
+    from benchmark_compact_beam_qubo_n0 import build_parser as compact_build_parser
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = paper_args_for_variant(variant, alpha=10, time_limit=10)
+    compact_args = compact_build_parser().parse_args(["--solver-profile", args.solver_profile])
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"
+    assert compact_args.quality_reservoir_enabled is True
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.frg_frontier_child_append_only is False
+    assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
+    assert compact_args.quality_reservoir_max_candidates > compact_args.beam_width
+    assert variant in _variant_names("wang_research_all")
+
+
 def test_open_runner_default_variant_is_diversity_union_mainline():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
@@ -11244,6 +11265,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",

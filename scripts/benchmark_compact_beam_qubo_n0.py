@@ -235,6 +235,28 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_vars",
     "union_diversity_qubo_time_sec",
     "union_diversity_qubo_selected_total",
+    "quality_reservoir_enabled",
+    "quality_reservoir_max_candidates",
+    "quality_reservoir_top_quality",
+    "quality_reservoir_origin_reserve",
+    "quality_reservoir_witness_reserve",
+    "quality_reservoir_progress_reserve",
+    "quality_reservoir_witness_weight",
+    "quality_reservoir_progress_weight",
+    "quality_reservoir_source_scarcity_weight",
+    "quality_reservoir_receiver_debt_weight",
+    "quality_reservoir_height_risk_weight",
+    "quality_reservoir_chain_cost_weight",
+    "quality_reservoir_pair_receiver_debt_penalty",
+    "quality_reservoir_pair_macro_signature_penalty",
+    "quality_reservoir_generated_total",
+    "quality_reservoir_kept_total",
+    "quality_reservoir_selected_total",
+    "quality_reservoir_witness_found_total",
+    "quality_reservoir_avg_witness_quality",
+    "quality_reservoir_avg_receiver_debt",
+    "quality_reservoir_avg_height_risk",
+    "quality_reservoir_pair_penalty_total",
     "union_rollout_probe_enabled",
     "union_rollout_probe_max_candidates",
     "union_rollout_probe_time_limit",
@@ -1342,6 +1364,20 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_quota_scarcity_weight": 0.35,
         "union_diversity_qubo_macro_quota_witness_weight": 0.30,
         "union_diversity_qubo_macro_quality_bonus": 0.0,
+        "quality_reservoir_enabled": False,
+        "quality_reservoir_max_candidates": 0,
+        "quality_reservoir_top_quality": 0,
+        "quality_reservoir_origin_reserve": 0,
+        "quality_reservoir_witness_reserve": 0,
+        "quality_reservoir_progress_reserve": 0,
+        "quality_reservoir_witness_weight": 0.0,
+        "quality_reservoir_progress_weight": 0.0,
+        "quality_reservoir_source_scarcity_weight": 0.0,
+        "quality_reservoir_receiver_debt_weight": 0.0,
+        "quality_reservoir_height_risk_weight": 0.0,
+        "quality_reservoir_chain_cost_weight": 0.0,
+        "quality_reservoir_pair_receiver_debt_penalty": 0.0,
+        "quality_reservoir_pair_macro_signature_penalty": 0.0,
         "debt_basin_enabled": False,
         "w_receiver_debt": 0.0,
         "w_escape_potential": 0.0,
@@ -2619,6 +2655,26 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_p
     "union_diversity_qubo_macro_quota_max_share": 0.45,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"],
+    "quality_reservoir_enabled": True,
+    "quality_reservoir_max_candidates": 1600,
+    "quality_reservoir_top_quality": 900,
+    "quality_reservoir_origin_reserve": 48,
+    "quality_reservoir_witness_reserve": 96,
+    "quality_reservoir_progress_reserve": 96,
+    "quality_reservoir_witness_weight": 0.42,
+    "quality_reservoir_progress_weight": 0.28,
+    "quality_reservoir_source_scarcity_weight": 0.18,
+    "quality_reservoir_receiver_debt_weight": 0.26,
+    "quality_reservoir_height_risk_weight": 0.18,
+    "quality_reservoir_chain_cost_weight": 0.10,
+    "quality_reservoir_pair_receiver_debt_penalty": 0.12,
+    "quality_reservoir_pair_macro_signature_penalty": 0.10,
+    "union_diversity_qubo_macro_quality_bonus": 0.18,
+    "union_diversity_qubo_frg_witness_signature_penalty": 0.10,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish"],
     "frg_seed_time_limit": 10.0,
@@ -3543,6 +3599,20 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_diversity_qubo_macro_quota_scarcity_weight": "--union-diversity-qubo-macro-quota-scarcity-weight",
         "union_diversity_qubo_macro_quota_witness_weight": "--union-diversity-qubo-macro-quota-witness-weight",
         "union_diversity_qubo_macro_quality_bonus": "--union-diversity-qubo-macro-quality-bonus",
+        "quality_reservoir_enabled": "--quality-reservoir-enabled",
+        "quality_reservoir_max_candidates": "--quality-reservoir-max-candidates",
+        "quality_reservoir_top_quality": "--quality-reservoir-top-quality",
+        "quality_reservoir_origin_reserve": "--quality-reservoir-origin-reserve",
+        "quality_reservoir_witness_reserve": "--quality-reservoir-witness-reserve",
+        "quality_reservoir_progress_reserve": "--quality-reservoir-progress-reserve",
+        "quality_reservoir_witness_weight": "--quality-reservoir-witness-weight",
+        "quality_reservoir_progress_weight": "--quality-reservoir-progress-weight",
+        "quality_reservoir_source_scarcity_weight": "--quality-reservoir-source-scarcity-weight",
+        "quality_reservoir_receiver_debt_weight": "--quality-reservoir-receiver-debt-weight",
+        "quality_reservoir_height_risk_weight": "--quality-reservoir-height-risk-weight",
+        "quality_reservoir_chain_cost_weight": "--quality-reservoir-chain-cost-weight",
+        "quality_reservoir_pair_receiver_debt_penalty": "--quality-reservoir-pair-receiver-debt-penalty",
+        "quality_reservoir_pair_macro_signature_penalty": "--quality-reservoir-pair-macro-signature-penalty",
         "debt_basin_enabled": (
             "--debt-basin-enabled",
             "--no-debt-basin-enabled",
@@ -12841,6 +12911,40 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
             "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
             "union_diversity_qubo_selected_total": result.union_diversity_qubo_selected_total,
+            "quality_reservoir_enabled": getattr(args, "quality_reservoir_enabled", False),
+            "quality_reservoir_max_candidates": getattr(args, "quality_reservoir_max_candidates", 0),
+            "quality_reservoir_top_quality": getattr(args, "quality_reservoir_top_quality", 0),
+            "quality_reservoir_origin_reserve": getattr(args, "quality_reservoir_origin_reserve", 0),
+            "quality_reservoir_witness_reserve": getattr(args, "quality_reservoir_witness_reserve", 0),
+            "quality_reservoir_progress_reserve": getattr(args, "quality_reservoir_progress_reserve", 0),
+            "quality_reservoir_witness_weight": getattr(args, "quality_reservoir_witness_weight", 0.0),
+            "quality_reservoir_progress_weight": getattr(args, "quality_reservoir_progress_weight", 0.0),
+            "quality_reservoir_source_scarcity_weight": getattr(
+                args,
+                "quality_reservoir_source_scarcity_weight",
+                0.0,
+            ),
+            "quality_reservoir_receiver_debt_weight": getattr(args, "quality_reservoir_receiver_debt_weight", 0.0),
+            "quality_reservoir_height_risk_weight": getattr(args, "quality_reservoir_height_risk_weight", 0.0),
+            "quality_reservoir_chain_cost_weight": getattr(args, "quality_reservoir_chain_cost_weight", 0.0),
+            "quality_reservoir_pair_receiver_debt_penalty": getattr(
+                args,
+                "quality_reservoir_pair_receiver_debt_penalty",
+                0.0,
+            ),
+            "quality_reservoir_pair_macro_signature_penalty": getattr(
+                args,
+                "quality_reservoir_pair_macro_signature_penalty",
+                0.0,
+            ),
+            "quality_reservoir_generated_total": getattr(result, "quality_reservoir_generated_total", 0),
+            "quality_reservoir_kept_total": getattr(result, "quality_reservoir_kept_total", 0),
+            "quality_reservoir_selected_total": getattr(result, "quality_reservoir_selected_total", 0),
+            "quality_reservoir_witness_found_total": getattr(result, "quality_reservoir_witness_found_total", 0),
+            "quality_reservoir_avg_witness_quality": getattr(result, "quality_reservoir_avg_witness_quality", 0.0),
+            "quality_reservoir_avg_receiver_debt": getattr(result, "quality_reservoir_avg_receiver_debt", 0.0),
+            "quality_reservoir_avg_height_risk": getattr(result, "quality_reservoir_avg_height_risk", 0.0),
+            "quality_reservoir_pair_penalty_total": getattr(result, "quality_reservoir_pair_penalty_total", 0.0),
             "pareto_union_enabled": getattr(args, "pareto_union_enabled", False),
             "pareto_union_candidate_window": getattr(args, "pareto_union_candidate_window", 128),
             "pareto_union_seed_width": getattr(args, "pareto_union_seed_width", 0),
@@ -13580,6 +13684,50 @@ def _write_report(rows: list[TrajectoryResult], output: Path, acceptance: Path, 
     report.write_text("\n".join(lines), encoding="utf-8")
 
 
+def _add_quality_reservoir_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--quality-reservoir-enabled", action="store_true")
+    parser.add_argument("--quality-reservoir-max-candidates", type=int, default=0)
+    parser.add_argument("--quality-reservoir-top-quality", type=int, default=0)
+    parser.add_argument("--quality-reservoir-origin-reserve", type=int, default=0)
+    parser.add_argument("--quality-reservoir-witness-reserve", type=int, default=0)
+    parser.add_argument("--quality-reservoir-progress-reserve", type=int, default=0)
+    parser.add_argument("--quality-reservoir-witness-weight", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-progress-weight", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-source-scarcity-weight", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-receiver-debt-weight", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-height-risk-weight", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-chain-cost-weight", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-pair-receiver-debt-penalty", type=float, default=0.0)
+    parser.add_argument("--quality-reservoir-pair-macro-signature-penalty", type=float, default=0.0)
+
+
+class _CompactProfileArgumentParser(argparse.ArgumentParser):
+    def parse_args(self, args: list[str] | None = None, namespace: argparse.Namespace | None = None) -> argparse.Namespace:
+        parsed = super().parse_args(args, namespace)
+        tokens = list(sys.argv[1:] if args is None else args)
+        explicit_keys: set[str] = set()
+        for action in self._actions:
+            for option in action.option_strings:
+                if any(token == option or token.startswith(f"{option}=") for token in tokens):
+                    explicit_keys.add(action.dest)
+        parsed._profile_explicit_keys = explicit_keys
+        _apply_solver_profile(parsed)
+        return parsed
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = _CompactProfileArgumentParser()
+    parser.add_argument(
+        "--solver-profile",
+        "--profile",
+        dest="solver_profile",
+        choices=sorted(_SOLVER_PROFILES.keys()),
+        default="speed_v2",
+    )
+    _add_quality_reservoir_arguments(parser)
+    return parser
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", nargs="+")
@@ -13708,6 +13856,7 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-macro-quota-scarcity-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-quota-witness-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-quality-bonus", type=float, default=None)
+    _add_quality_reservoir_arguments(parser)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
     parser.add_argument("--w-escape-potential", type=float, default=None)
