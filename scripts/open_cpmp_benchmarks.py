@@ -408,6 +408,45 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
     }
 
 
+def _quality_reservoir_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "quality_reservoir_enabled": getattr(args, "quality_reservoir_enabled", False),
+        "quality_reservoir_max_candidates": getattr(args, "quality_reservoir_max_candidates", 0),
+        "quality_reservoir_top_quality": getattr(args, "quality_reservoir_top_quality", 0),
+        "quality_reservoir_origin_reserve": getattr(args, "quality_reservoir_origin_reserve", 0),
+        "quality_reservoir_witness_reserve": getattr(args, "quality_reservoir_witness_reserve", 0),
+        "quality_reservoir_progress_reserve": getattr(args, "quality_reservoir_progress_reserve", 0),
+        "quality_reservoir_witness_weight": getattr(args, "quality_reservoir_witness_weight", 0.0),
+        "quality_reservoir_progress_weight": getattr(args, "quality_reservoir_progress_weight", 0.0),
+        "quality_reservoir_source_scarcity_weight": getattr(
+            args,
+            "quality_reservoir_source_scarcity_weight",
+            0.0,
+        ),
+        "quality_reservoir_receiver_debt_weight": getattr(args, "quality_reservoir_receiver_debt_weight", 0.0),
+        "quality_reservoir_height_risk_weight": getattr(args, "quality_reservoir_height_risk_weight", 0.0),
+        "quality_reservoir_chain_cost_weight": getattr(args, "quality_reservoir_chain_cost_weight", 0.0),
+        "quality_reservoir_pair_receiver_debt_penalty": getattr(
+            args,
+            "quality_reservoir_pair_receiver_debt_penalty",
+            0.0,
+        ),
+        "quality_reservoir_pair_macro_signature_penalty": getattr(
+            args,
+            "quality_reservoir_pair_macro_signature_penalty",
+            0.0,
+        ),
+        "quality_reservoir_generated_total": getattr(result, "quality_reservoir_generated_total", 0),
+        "quality_reservoir_kept_total": getattr(result, "quality_reservoir_kept_total", 0),
+        "quality_reservoir_selected_total": getattr(result, "quality_reservoir_selected_total", 0),
+        "quality_reservoir_witness_found_total": getattr(result, "quality_reservoir_witness_found_total", 0),
+        "quality_reservoir_avg_witness_quality": getattr(result, "quality_reservoir_avg_witness_quality", 0.0),
+        "quality_reservoir_avg_receiver_debt": getattr(result, "quality_reservoir_avg_receiver_debt", 0.0),
+        "quality_reservoir_avg_height_risk": getattr(result, "quality_reservoir_avg_height_risk", 0.0),
+        "quality_reservoir_pair_penalty_total": getattr(result, "quality_reservoir_pair_penalty_total", 0.0),
+    }
+
+
 def _micro_rollout_row_fields(result, args: argparse.Namespace) -> dict[str, object]:
     return {
         "debt_basin_enabled": getattr(args, "debt_basin_enabled", False),
@@ -924,6 +963,7 @@ def _priority_group_row_dict_from_instance_result(
     row.update(_wang_pair_qubo_row_fields(result, args))
     row.update(_unified_wang_row_fields(result, args))
     row.update(_union_diversity_qubo_row_fields(result, args))
+    row.update(_quality_reservoir_row_fields(result, args))
     row.update(_micro_rollout_row_fields(result, args))
     row.update(_feasibility_escape_row_fields(result, args))
     row.update(_frg_dlts_row_fields(result, args))

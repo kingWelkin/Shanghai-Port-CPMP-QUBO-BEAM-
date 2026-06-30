@@ -720,6 +720,91 @@ def test_open_priority_group_row_serializes_frg_frontier_soft_supply_fields():
     assert row["frg_frontier_child_added_total"] == 7
 
 
+def test_open_priority_group_row_serializes_quality_reservoir_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_quality_reservoir_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        quality_reservoir_generated_total=41,
+        quality_reservoir_kept_total=17,
+        quality_reservoir_selected_total=9,
+        quality_reservoir_witness_found_total=5,
+        quality_reservoir_avg_witness_quality=0.42,
+        quality_reservoir_avg_receiver_debt=0.18,
+        quality_reservoir_avg_height_risk=0.07,
+        quality_reservoir_pair_penalty_total=0.33,
+    )
+    args = _compact_args(
+        quality_reservoir_enabled=True,
+        quality_reservoir_max_candidates=1600,
+        quality_reservoir_top_quality=900,
+        quality_reservoir_origin_reserve=48,
+        quality_reservoir_witness_reserve=96,
+        quality_reservoir_progress_reserve=96,
+        quality_reservoir_witness_weight=0.42,
+        quality_reservoir_progress_weight=0.28,
+        quality_reservoir_source_scarcity_weight=0.18,
+        quality_reservoir_receiver_debt_weight=0.26,
+        quality_reservoir_height_risk_weight=0.18,
+        quality_reservoir_chain_cost_weight=0.10,
+        quality_reservoir_pair_receiver_debt_penalty=0.12,
+        quality_reservoir_pair_macro_signature_penalty=0.10,
+    )
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    expected = {
+        "quality_reservoir_enabled": True,
+        "quality_reservoir_max_candidates": 1600,
+        "quality_reservoir_top_quality": 900,
+        "quality_reservoir_origin_reserve": 48,
+        "quality_reservoir_witness_reserve": 96,
+        "quality_reservoir_progress_reserve": 96,
+        "quality_reservoir_witness_weight": 0.42,
+        "quality_reservoir_progress_weight": 0.28,
+        "quality_reservoir_source_scarcity_weight": 0.18,
+        "quality_reservoir_receiver_debt_weight": 0.26,
+        "quality_reservoir_height_risk_weight": 0.18,
+        "quality_reservoir_chain_cost_weight": 0.10,
+        "quality_reservoir_pair_receiver_debt_penalty": 0.12,
+        "quality_reservoir_pair_macro_signature_penalty": 0.10,
+        "quality_reservoir_generated_total": 41,
+        "quality_reservoir_kept_total": 17,
+        "quality_reservoir_selected_total": 9,
+        "quality_reservoir_witness_found_total": 5,
+        "quality_reservoir_avg_witness_quality": 0.42,
+        "quality_reservoir_avg_receiver_debt": 0.18,
+        "quality_reservoir_avg_height_risk": 0.07,
+        "quality_reservoir_pair_penalty_total": 0.33,
+    }
+    for field, value in expected.items():
+        assert row[field] == value
+
+
 def test_debt_basin_fields_are_in_compact_and_open_result_fields():
     import benchmark_compact_beam_qubo_n0 as bench
     import open_cpmp_benchmarks as open_runner
