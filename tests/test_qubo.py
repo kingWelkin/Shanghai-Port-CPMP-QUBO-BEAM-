@@ -667,6 +667,59 @@ def test_open_priority_group_row_serializes_frg_seed_cache_fields():
     assert row["frg_seed_status"] == "FRG_FEASIBLE"
 
 
+def test_open_priority_group_row_serializes_frg_frontier_soft_supply_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_frg_soft_supply_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        frg_frontier_child_calls=2,
+        frg_frontier_child_generated=33,
+        frg_frontier_child_added_total=7,
+    )
+    args = _compact_args(
+        frg_frontier_child_soft_supply_enabled=True,
+        frg_frontier_child_soft_supply_parent_width=8,
+        frg_frontier_child_soft_supply_limit=24,
+        _frg_frontier_child_soft_supply_active_layers=3,
+        _frg_frontier_child_soft_supply_last_pressure=0.72,
+    )
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert row["frg_frontier_child_soft_supply_enabled"] is True
+    assert row["frg_frontier_child_soft_supply_parent_width"] == 8
+    assert row["frg_frontier_child_soft_supply_limit"] == 24
+    assert row["frg_frontier_child_soft_supply_active_layers"] == 3
+    assert row["frg_frontier_child_soft_supply_last_pressure"] == 0.72
+    assert row["frg_frontier_child_calls"] == 2
+    assert row["frg_frontier_child_generated"] == 33
+    assert row["frg_frontier_child_added_total"] == 7
+
+
 def test_debt_basin_fields_are_in_compact_and_open_result_fields():
     import benchmark_compact_beam_qubo_n0 as bench
     import open_cpmp_benchmarks as open_runner
@@ -2509,6 +2562,192 @@ def test_union_diversity_qubo_rollout_evaluator_can_select_higher_n_shorter_comp
     assert selected == [b"rollout-best"]
 
 
+def test_union_diversity_qubo_penalizes_duplicate_frg_witness_signatures():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(union_diversity_qubo_frg_witness_signature_penalty=0.75)
+    linear = [0.0, 0.0, 0.0]
+    features = [
+        bench.UnionDiversityQuboFeatures(
+            energy=0.0,
+            n_value=2,
+            depth=1,
+            parent_code=b"p0",
+            source_stack=0,
+            signature=(0, 0, 0, 0, 0),
+            reduce_signature=(0, 0, 0),
+            frg_witness_signature=(0, 0, 1, 2),
+        ),
+        bench.UnionDiversityQuboFeatures(
+            energy=0.0,
+            n_value=2,
+            depth=1,
+            parent_code=b"p1",
+            source_stack=1,
+            signature=(1, 0, 0, 0, 0),
+            reduce_signature=(1, 0, 0),
+            frg_witness_signature=(0, 0, 1, 2),
+        ),
+        bench.UnionDiversityQuboFeatures(
+            energy=0.0,
+            n_value=2,
+            depth=1,
+            parent_code=b"p2",
+            source_stack=2,
+            signature=(2, 0, 0, 0, 0),
+            reduce_signature=(2, 0, 0),
+            frg_witness_signature=(0, 0, 2, 1),
+        ),
+    ]
+
+    duplicate_value = bench._union_diversity_objective({0, 1}, linear, features, args)
+    diverse_value = bench._union_diversity_objective({0, 2}, linear, features, args)
+
+    assert duplicate_value == pytest.approx(diverse_value + 0.75)
+
+
+def _union_feature_for_macro_quota(
+    *,
+    origin="core",
+    energy=0.0,
+    parent=b"p",
+    source_stack=0,
+    n_value=5,
+    receiver_debt=0.0,
+    source_scarcity=0.0,
+    completion_witness_quality=0.0,
+    frg_witness_signature=(),
+):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    return bench.UnionDiversityQuboFeatures(
+        energy=energy,
+        n_value=n_value,
+        depth=1,
+        parent_code=parent,
+        source_stack=source_stack,
+        signature=(0, 0, 0, 0, 0),
+        reduce_signature=(source_stack, 0, 0),
+        origin=origin,
+        receiver_debt=receiver_debt,
+        source_scarcity=source_scarcity,
+        completion_witness_quality=completion_witness_quality,
+        frg_witness_signature=frg_witness_signature,
+    )
+
+
+def test_union_diversity_adaptive_macro_quota_rises_with_pressure():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        union_diversity_qubo_adaptive_macro_quota_enabled=True,
+        union_diversity_qubo_macro_quota_min_share=0.0,
+        union_diversity_qubo_macro_quota_max_share=0.75,
+        union_diversity_qubo_macro_quota_base_share=0.0,
+        union_diversity_qubo_macro_quota_debt_weight=0.35,
+        union_diversity_qubo_macro_quota_scarcity_weight=0.35,
+        union_diversity_qubo_macro_quota_witness_weight=0.30,
+    )
+    high_pressure = [
+        _union_feature_for_macro_quota(origin="core"),
+        _union_feature_for_macro_quota(origin="core"),
+        _union_feature_for_macro_quota(
+            origin="frg_frontier_child",
+            receiver_debt=2.0,
+            source_scarcity=0.9,
+            completion_witness_quality=0.8,
+        ),
+        _union_feature_for_macro_quota(
+            origin="frg_frontier_child",
+            receiver_debt=1.4,
+            source_scarcity=0.7,
+            completion_witness_quality=1.0,
+        ),
+    ]
+    low_pressure = [
+        _union_feature_for_macro_quota(origin="core"),
+        _union_feature_for_macro_quota(origin="core"),
+        _union_feature_for_macro_quota(origin="frg_frontier_child"),
+        _union_feature_for_macro_quota(origin="frg_frontier_child"),
+    ]
+
+    high_target = bench._union_diversity_adaptive_macro_quota_target(high_pressure, 4, args)
+    low_target = bench._union_diversity_adaptive_macro_quota_target(low_pressure, 4, args)
+
+    assert high_target >= 2
+    assert low_target <= 1
+
+
+def test_union_diversity_qubo_soft_macro_quota_repairs_core_only_pick(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+
+    args = _compact_args(
+        union_diversity_qubo_max_vars=4,
+        union_diversity_qubo_same_parent_penalty=0.0,
+        union_diversity_qubo_same_source_penalty=0.0,
+        union_diversity_qubo_signature_penalty=0.0,
+        union_diversity_qubo_reduce_signature_penalty=0.0,
+        union_diversity_qubo_n_band_penalty=0.0,
+        union_diversity_qubo_adaptive_macro_quota_enabled=True,
+        union_diversity_qubo_macro_quota_penalty=4.0,
+        union_diversity_qubo_macro_quota_min_share=0.0,
+        union_diversity_qubo_macro_quota_max_share=0.5,
+        union_diversity_qubo_macro_quota_base_share=0.0,
+        union_diversity_qubo_macro_quota_debt_weight=0.4,
+        union_diversity_qubo_macro_quota_scarcity_weight=0.3,
+        union_diversity_qubo_macro_quota_witness_weight=0.3,
+    )
+    ranked = [
+        (b"core-a", (5, 1, b"p0")),
+        (b"core-b", (5, 1, b"p1")),
+        (b"macro-a", (5, 1, b"p2")),
+        (b"macro-b", (5, 1, b"p3")),
+    ]
+    features = [
+        _union_feature_for_macro_quota(origin="core", energy=0.0, parent=b"p0"),
+        _union_feature_for_macro_quota(origin="core", energy=0.1, parent=b"p1"),
+        _union_feature_for_macro_quota(
+            origin="frg_frontier_child",
+            energy=0.2,
+            parent=b"p2",
+            receiver_debt=1.8,
+            source_scarcity=0.9,
+            completion_witness_quality=0.8,
+        ),
+        _union_feature_for_macro_quota(
+            origin="frg_frontier_child",
+            energy=0.3,
+            parent=b"p3",
+            receiver_debt=1.4,
+            source_scarcity=0.8,
+            completion_witness_quality=0.7,
+        ),
+    ]
+
+    def fake_features(code, data, rank, feature_args, rollout=None, *, origin="core"):
+        del code, data, feature_args, rollout, origin
+        return features[rank]
+
+    def fake_sample(self, model, config):
+        del self, config
+        core_only = {0: 1, 1: 1, 2: 0, 3: 0}
+        return QuboSampleSet(
+            samples=[QuboSample(core_only, model.evaluate(core_only))],
+            sampler_name="fake",
+            runtime_sec=0.0,
+        )
+
+    monkeypatch.setattr(bench, "_union_rollout_probe_results", lambda usable, probe_args: {})
+    monkeypatch.setattr(bench, "_union_diversity_qubo_features", fake_features)
+    monkeypatch.setattr(bench.SimulatedAnnealingQuboSampler, "sample", fake_sample)
+
+    selected, qvars, _qtime = bench._select_union_diversity_qubo_supplement(ranked, args, target=2)
+
+    assert qvars == 4
+    assert sum(code.startswith(b"macro") for code in selected) == 1
+
+
 def test_micro_rollout_probe_obeys_two_step_limits_without_frontier_injection():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -4062,6 +4301,51 @@ def test_frg_frontier_child_adaptive_params_require_min_container_count_for_plat
     assert bench._frg_frontier_child_effective_params(args) == (12, 2, 3)
 
 
+def test_frg_frontier_child_hybrid_macro_combines_completion_and_compound(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(frg_frontier_child_mode="hybrid_macro")
+    source_layout = SimpleNamespace(stacks=((2, 1), (), (3,)))
+    completion_layout = SimpleNamespace(stacks=((2,), (1,), (3,)))
+    compound_layout = SimpleNamespace(stacks=((2,), (), (3, 1)))
+    completion_move = Move(4, 1, 0, 1, 2, 1)
+    compound_move = Move(4, 1, 0, 2, 2, 2)
+
+    def fake_completion(layout, max_height, step, args_arg, *, max_steps):
+        assert layout is source_layout
+        assert max_height == 3
+        assert step == 4
+        assert args_arg is args
+        assert max_steps == 9
+        return [(completion_layout, (completion_move,), (completion_layout,))]
+
+    def fake_compound(layout, max_height, step, args_arg, *, child_limit, max_steps):
+        assert layout is source_layout
+        assert child_limit == 5
+        return [
+            (completion_layout, (completion_move,), (completion_layout,)),
+            (compound_layout, (compound_move,), (compound_layout,)),
+        ]
+
+    monkeypatch.setattr(bench, "_frg_frontier_completion_prefix_children", fake_completion)
+    monkeypatch.setattr(bench, "_frg_frontier_compound_source_children", fake_compound)
+
+    rows = bench._frg_frontier_child_rows_for_mode(
+        source_layout,
+        max_height=3,
+        step=4,
+        args=args,
+        child_limit=5,
+        max_steps=9,
+        completion_prefix_enabled=True,
+    )
+
+    assert [(row[0].stacks, row[1]) for row in rows] == [
+        (completion_layout.stacks, (completion_move,)),
+        (compound_layout.stacks, (compound_move,)),
+    ]
+
+
 def test_open_runner_accepts_qubo_diversity_union_frg_frontier_variant():
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
 
@@ -4315,6 +4599,204 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_frg_rollout_score_va
     assert compact_args.union_rollout_probe_enabled is True
     assert compact_args.union_rollout_terminal_graft is False
     assert compact_args.frg_frontier_child_enabled is False
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_witness_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_witness_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_witness_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_witness_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.union_diversity_qubo_enabled is True
+    assert compact_args.union_rollout_probe_enabled is True
+    assert compact_args.union_rollout_probe_evaluator_enabled is False
+    assert compact_args.union_rollout_terminal_graft is False
+    assert compact_args.frg_frontier_child_enabled is False
+    assert compact_args.frg_seed_enabled is False
+    assert compact_args.union_diversity_qubo_frg_witness_signature_penalty > 0.0
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_macro_witness_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_witness_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_macro_witness_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_macro_witness_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.frg_frontier_child_certify_enabled is True
+    assert compact_args.union_rollout_probe_enabled is True
+    assert compact_args.union_rollout_probe_evaluator_enabled is False
+    assert compact_args.union_rollout_terminal_graft is False
+    assert compact_args.frg_seed_enabled is False
+    assert compact_args.union_diversity_qubo_frg_witness_signature_penalty > 0.0
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_completion_macro_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_completion_macro_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_completion_macro_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_completion_macro_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.frg_frontier_child_completion_prefix_enabled is True
+    assert compact_args.frg_frontier_child_completion_max_stack_count == 0
+    assert compact_args.frg_frontier_child_parent_width == 1
+    assert compact_args.frg_frontier_child_limit == 1
+    assert compact_args.frg_frontier_child_max_steps >= 512
+    assert compact_args.union_rollout_terminal_graft is False
+    assert compact_args.frg_seed_enabled is False
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_hybrid_macro_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.frg_frontier_child_mode == "hybrid_macro"
+    assert compact_args.frg_frontier_child_completion_prefix_enabled is True
+    assert compact_args.frg_frontier_child_completion_max_stack_count == 0
+    assert compact_args.frg_frontier_child_parent_width == 1
+    assert compact_args.frg_frontier_child_limit == 3
+    assert compact_args.union_rollout_terminal_graft is False
+    assert compact_args.frg_seed_enabled is False
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_adaptive_macro_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_mode == "hybrid_macro"
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.union_rollout_probe_enabled is True
+    assert compact_args.debt_basin_enabled is False
+    assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
+    assert compact_args.union_diversity_qubo_macro_quota_penalty > 0.0
+    assert compact_args.union_diversity_qubo_macro_quota_max_share <= 0.5
+
+
+def test_frg_frontier_child_soft_supply_scales_only_under_layer_pressure():
+    from benchmark_compact_beam_qubo_n0 import _frg_frontier_child_effective_params
+
+    args = _compact_args(
+        beam_width=64,
+        frg_frontier_child_parent_width=1,
+        frg_frontier_child_limit=3,
+        frg_frontier_child_max_steps=8,
+        frg_frontier_child_soft_supply_enabled=True,
+        frg_frontier_child_soft_supply_parent_width=8,
+        frg_frontier_child_soft_supply_limit=24,
+        frg_frontier_child_soft_supply_max_steps=16,
+        frg_frontier_child_soft_supply_pressure_threshold=0.45,
+        frg_frontier_child_soft_supply_min_n=8,
+        frg_frontier_child_soft_supply_plateau_window=2,
+        frg_frontier_child_soft_supply_plateau_delta=0,
+        _stack_count=5,
+        _container_count=25,
+        _layer_best_n=14,
+        _initial_n=18,
+        _layer_candidate_count=384,
+        _layer_depth_slack=1,
+        _frg_layout_available_stack_count=1,
+        _frg_layout_avg_height_pressure=0.95,
+        _frg_layout_max_height_ordered_risk=1,
+        _best_n_history=[14, 14],
+    )
+
+    assert _frg_frontier_child_effective_params(args) == (8, 24, 16)
+
+    args._layer_best_n = 6
+    args._layer_candidate_count = 48
+    args._layer_depth_slack = 8
+    args._frg_layout_available_stack_count = 4
+    args._frg_layout_avg_height_pressure = 0.20
+    args._frg_layout_max_height_ordered_risk = 0
+    args._best_n_history = [8, 6]
+
+    assert _frg_frontier_child_effective_params(args) == (1, 3, 8)
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_soft_supply_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_mode == "hybrid_macro"
+    assert compact_args.frg_frontier_child_append_only is False
+    assert compact_args.frg_frontier_child_soft_supply_enabled is True
+    assert compact_args.frg_frontier_child_parent_width < compact_args.frg_frontier_child_soft_supply_parent_width
+    assert compact_args.frg_frontier_child_limit < compact_args.frg_frontier_child_soft_supply_limit
+    assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
 
 
 def test_open_runner_default_variant_is_diversity_union_mainline():
@@ -10756,6 +11238,12 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_rollout_score_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_witness_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_witness_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_completion_macro_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
@@ -10769,6 +11257,9 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_deep_chain_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
