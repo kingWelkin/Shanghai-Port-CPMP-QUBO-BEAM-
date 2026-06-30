@@ -89,8 +89,15 @@ def _is_true(value: object) -> bool:
     return value in (True, "True", "true", "1", 1)
 
 
+def _paper_zero_move_initial_goal(row: dict[str, object]) -> bool:
+    try:
+        return int(row.get("n0", -1)) == 0 and int(row.get("final_n", -1)) == 0
+    except (TypeError, ValueError):
+        return False
+
+
 def _paper_has_move_path(row: dict[str, object]) -> bool:
-    return row.get("moves") not in (None, "")
+    return row.get("moves") not in (None, "") or _paper_zero_move_initial_goal(row)
 
 
 def _paper_time_limit_ok(row: dict[str, object], *, time_limit: float) -> bool:
@@ -287,6 +294,8 @@ def _run_paper_portfolio_row(
     selected["portfolio_profiles"] = ",".join(child_variants)
     selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
     selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+    selected["runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+    selected = _apply_paper_scorecard(selected, time_limit=float(getattr(args, "time_limit", float("inf"))))
     selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
     return selected
 
@@ -521,6 +530,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-frontier-child-limit", type=int)
     parser.add_argument("--frg-frontier-child-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-completion-prefix-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-completion-max-stack-count", type=int)
+    parser.add_argument("--frg-frontier-child-completion-time-limit", type=float)
     parser.add_argument("--frg-frontier-child-adaptive-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-parent-width", type=int)
     parser.add_argument("--frg-frontier-child-adaptive-limit", type=int)

@@ -53,6 +53,9 @@ from container_reshuffle.solvers.feasibility_signals import (  # noqa: E402
     feasibility_escape_score,
 )
 from container_reshuffle.solvers.bs_frg import (  # noqa: E402
+    BsFrgSolver,
+    _FrgLayout as _BsFrgLayout,
+    _compound_reduction_child as _bs_frg_compound_reduction_child,
     _frg_completion_cached as _bs_frg_completion_cached,
     _frg_step_children as _bs_frg_step_children,
     _initial_layout as _bs_frg_initial_layout,
@@ -230,6 +233,11 @@ COMPACT_EXTRA_FIELDS = [
     "union_rollout_probe_final_n_weight",
     "union_rollout_probe_moves_weight",
     "union_rollout_probe_dead_end_penalty",
+    "union_rollout_probe_evaluator_enabled",
+    "union_rollout_probe_evaluator_weight",
+    "union_rollout_probe_evaluator_final_n_penalty",
+    "union_rollout_probe_evaluator_require_feasible",
+    "union_rollout_probe_evaluator_min_stack_count",
     "union_rollout_probe_calls",
     "union_rollout_probe_candidates",
     "union_rollout_probe_feasible",
@@ -276,10 +284,15 @@ COMPACT_EXTRA_FIELDS = [
     "reduction_chain_selected_total",
     "debt_basin_selected_on_path",
     "frg_frontier_child_enabled",
+    "frg_frontier_child_mode",
+    "frg_frontier_child_min_stack_count",
     "frg_frontier_child_parent_width",
     "frg_frontier_child_limit",
     "frg_frontier_child_max_steps",
     "frg_frontier_child_append_only",
+    "frg_frontier_child_certify_enabled",
+    "frg_frontier_child_certify_max_steps",
+    "frg_frontier_child_certify_time_limit",
     "frg_frontier_child_adaptive_enabled",
     "frg_frontier_child_adaptive_parent_width",
     "frg_frontier_child_adaptive_limit",
@@ -301,6 +314,13 @@ COMPACT_EXTRA_FIELDS = [
     "frg_seed_prune_to_incumbent",
     "frg_seed_allow_large_over_cap",
     "frg_seed_paper_pure",
+    "frg_seed_beam_enabled",
+    "frg_seed_beam_width",
+    "frg_seed_candidate_limit_per_state",
+    "frg_seed_beam_large_only",
+    "frg_seed_beam_min_stack_count",
+    "frg_seed_beam_min_height",
+    "frg_seed_small_time_limit",
     "frg_seed_cache_input",
     "frg_seed_cache_key",
     "frg_seed_cache_hit",
@@ -1307,6 +1327,11 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_rollout_probe_final_n_weight": 0.08,
         "union_rollout_probe_moves_weight": 0.0,
         "union_rollout_probe_dead_end_penalty": 0.12,
+        "union_rollout_probe_evaluator_enabled": False,
+        "union_rollout_probe_evaluator_weight": 0.0,
+        "union_rollout_probe_evaluator_final_n_penalty": 1000.0,
+        "union_rollout_probe_evaluator_require_feasible": True,
+        "union_rollout_probe_evaluator_min_stack_count": 0,
         "union_rollout_terminal_graft": False,
         "union_rollout_terminal_graft_respect_cap": True,
         "micro_rollout_enabled": False,
@@ -1324,10 +1349,18 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "w_last_buffer_consumed": 0.05,
         "w_height_pressure": 0.02,
         "frg_frontier_child_enabled": False,
+        "frg_frontier_child_mode": "rollout",
+        "frg_frontier_child_min_stack_count": 0,
         "frg_frontier_child_parent_width": 0,
         "frg_frontier_child_limit": 0,
         "frg_frontier_child_max_steps": 1,
         "frg_frontier_child_append_only": False,
+        "frg_frontier_child_completion_prefix_enabled": False,
+        "frg_frontier_child_completion_max_stack_count": 0,
+        "frg_frontier_child_completion_time_limit": 0.003,
+        "frg_frontier_child_certify_enabled": False,
+        "frg_frontier_child_certify_max_steps": 512,
+        "frg_frontier_child_certify_time_limit": 0.003,
         "frg_frontier_child_adaptive_enabled": False,
         "frg_frontier_child_adaptive_parent_width": 0,
         "frg_frontier_child_adaptive_limit": 0,
@@ -1346,6 +1379,13 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_seed_prune_to_incumbent": True,
         "frg_seed_allow_large_over_cap": False,
         "frg_seed_paper_pure": True,
+        "frg_seed_beam_enabled": False,
+        "frg_seed_beam_width": 1000,
+        "frg_seed_candidate_limit_per_state": 3,
+        "frg_seed_beam_large_only": False,
+        "frg_seed_beam_min_stack_count": 0,
+        "frg_seed_beam_min_height": 0,
+        "frg_seed_small_time_limit": 0.0,
         "frg_seed_cache_input": None,
         "frg_seed_cache_key": "",
         "frg_seed_cache_hit": False,
@@ -2279,6 +2319,29 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_polish"] = {
     "union_rollout_probe_dead_end_penalty": 0.12,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_rollout_score_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "candidate_ledger_score_enabled": False,
+    "candidate_ledger_wang_fixed_weight": 0.0,
+    "candidate_ledger_wang_pair_weight": 0.0,
+    "candidate_ledger_frg_fill_weight": 0.0,
+    "candidate_ledger_frg_reduce_weight": 0.0,
+    "candidate_ledger_frg_unblocked_weight": 0.0,
+    "candidate_ledger_frg_assignment_weight": 0.0,
+    "candidate_ledger_rollout_bonus": 0.0,
+    "candidate_ledger_rank_window": 256,
+    "union_rollout_probe_enabled": True,
+    "union_rollout_probe_max_candidates": 24,
+    "union_rollout_probe_time_limit": 0.002,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.08,
+    "union_rollout_probe_final_n_weight": 0.12,
+    "union_rollout_probe_moves_weight": 0.004,
+    "union_rollout_probe_dead_end_penalty": 0.08,
+    "union_rollout_terminal_graft": False,
+    "frg_frontier_child_enabled": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_trace_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "micro_rollout_enabled": True,
@@ -2342,6 +2405,15 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_po
     "terminal_bridge_max_seed_candidates": 500,
     "terminal_bridge_max_expanded": 50000,
 }
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_tail_lookahead_lite_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "tail_lookahead_enabled": True,
+    "tail_lookahead_focus_n": 4,
+    "tail_lookahead_depth": 8,
+    "tail_lookahead_max_seed_candidates": 256,
+    "tail_lookahead_supplement_width": 24,
+    "tail_lookahead_max_expanded": 30000,
+}
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_frontier_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"],
@@ -2359,6 +2431,90 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_single_frontier_po
     "frg_frontier_child_limit": 2,
     "frg_frontier_child_max_steps": 3,
     "frg_frontier_child_append_only": False,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_deep_chain_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_parent_width": 2,
+    "frg_frontier_child_limit": 1,
+    "frg_frontier_child_max_steps": 12,
+    "frg_frontier_child_append_only": True,
+    "frg_frontier_child_completion_prefix_enabled": True,
+    "frg_frontier_child_completion_max_stack_count": 5,
+    "frg_frontier_child_completion_time_limit": 0.003,
+    "frg_frontier_child_adaptive_enabled": False,
+    "debt_basin_reduction_chain_enabled": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_mode": "compound_sources",
+    "frg_frontier_child_parent_width": 4,
+    "frg_frontier_child_limit": 32,
+    "frg_frontier_child_max_steps": 18,
+    "frg_frontier_child_append_only": False,
+    "frg_frontier_child_completion_prefix_enabled": False,
+    "frg_frontier_child_adaptive_enabled": False,
+    "debt_basin_reduction_chain_enabled": True,
+    "bs_frg_qubo_enabled": False,
+    "bs_frg_qubo_supplement_width": 0,
+    "bs_frg_qubo_focus_n": -1,
+    "bs_frg_qubo_n_window": 3,
+    "bs_frg_qubo_min_candidates": 64,
+    "bs_frg_qubo_max_vars": 96,
+    "bs_frg_qubo_same_parent_penalty": 0.55,
+    "bs_frg_qubo_same_source_penalty": 0.35,
+    "bs_frg_qubo_signature_penalty": 0.25,
+    "bs_frg_qubo_reduce_signature_penalty": 0.20,
+    "bs_frg_qubo_n_band_penalty": 0.12,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish"],
+    "frg_frontier_child_certify_enabled": True,
+    "frg_frontier_child_certify_max_steps": 512,
+    "frg_frontier_child_certify_time_limit": 0.003,
+    "union_rollout_probe_enabled": True,
+    "union_rollout_probe_max_candidates": 32,
+    "union_rollout_probe_time_limit": 0.002,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.08,
+    "union_rollout_probe_final_n_weight": 0.12,
+    "union_rollout_probe_moves_weight": 0.006,
+    "union_rollout_probe_dead_end_penalty": 0.10,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish"],
+    "frg_seed_time_limit": 10.0,
+    "frg_seed_beam_enabled": True,
+    "frg_seed_beam_width": 1000,
+    "frg_seed_candidate_limit_per_state": 3,
+    "frg_seed_beam_large_only": True,
+    "frg_seed_beam_min_stack_count": 7,
+    "frg_seed_beam_min_height": 8,
+    "frg_seed_small_time_limit": 0.75,
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_min_stack_count": 7,
+    "frg_frontier_child_certify_enabled": True,
+    "union_diversity_qubo_max_vars": 48,
+    "union_diversity_qubo_select": 4,
+    "union_rollout_probe_max_candidates": 32,
+    "union_rollout_probe_time_limit": 0.002,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.0,
+    "union_rollout_probe_final_n_weight": 0.0,
+    "union_rollout_probe_moves_weight": 0.0,
+    "union_rollout_probe_dead_end_penalty": 0.0,
+    "union_rollout_probe_evaluator_enabled": True,
+    "union_rollout_probe_evaluator_weight": 1.0,
+    "union_rollout_probe_evaluator_final_n_penalty": 1000.0,
+    "union_rollout_probe_evaluator_require_feasible": True,
+    "union_rollout_probe_evaluator_min_stack_count": 7,
+    "union_rollout_terminal_graft": True,
+    "union_rollout_terminal_graft_respect_cap": True,
 }
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_debt_basin_polish"] = {
@@ -3265,6 +3421,17 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_rollout_probe_final_n_weight": "--union-rollout-probe-final-n-weight",
         "union_rollout_probe_moves_weight": "--union-rollout-probe-moves-weight",
         "union_rollout_probe_dead_end_penalty": "--union-rollout-probe-dead-end-penalty",
+        "union_rollout_probe_evaluator_enabled": (
+            "--union-rollout-probe-evaluator-enabled",
+            "--no-union-rollout-probe-evaluator-enabled",
+        ),
+        "union_rollout_probe_evaluator_weight": "--union-rollout-probe-evaluator-weight",
+        "union_rollout_probe_evaluator_final_n_penalty": "--union-rollout-probe-evaluator-final-n-penalty",
+        "union_rollout_probe_evaluator_require_feasible": (
+            "--union-rollout-probe-evaluator-require-feasible",
+            "--no-union-rollout-probe-evaluator-require-feasible",
+        ),
+        "union_rollout_probe_evaluator_min_stack_count": "--union-rollout-probe-evaluator-min-stack-count",
         "union_rollout_terminal_graft": (
             "--union-rollout-terminal-graft",
             "--no-union-rollout-terminal-graft",
@@ -3306,6 +3473,8 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--frg-frontier-child-enabled",
             "--no-frg-frontier-child-enabled",
         ),
+        "frg_frontier_child_mode": "--frg-frontier-child-mode",
+        "frg_frontier_child_min_stack_count": "--frg-frontier-child-min-stack-count",
         "frg_frontier_child_parent_width": "--frg-frontier-child-parent-width",
         "frg_frontier_child_limit": "--frg-frontier-child-limit",
         "frg_frontier_child_max_steps": "--frg-frontier-child-max-steps",
@@ -3313,6 +3482,18 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--frg-frontier-child-append-only",
             "--no-frg-frontier-child-append-only",
         ),
+        "frg_frontier_child_certify_enabled": (
+            "--frg-frontier-child-certify-enabled",
+            "--no-frg-frontier-child-certify-enabled",
+        ),
+        "frg_frontier_child_certify_max_steps": "--frg-frontier-child-certify-max-steps",
+        "frg_frontier_child_certify_time_limit": "--frg-frontier-child-certify-time-limit",
+        "frg_frontier_child_completion_prefix_enabled": (
+            "--frg-frontier-child-completion-prefix-enabled",
+            "--no-frg-frontier-child-completion-prefix-enabled",
+        ),
+        "frg_frontier_child_completion_max_stack_count": "--frg-frontier-child-completion-max-stack-count",
+        "frg_frontier_child_completion_time_limit": "--frg-frontier-child-completion-time-limit",
         "frg_frontier_child_adaptive_enabled": (
             "--frg-frontier-child-adaptive-enabled",
             "--no-frg-frontier-child-adaptive-enabled",
@@ -3337,6 +3518,13 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--no-frg-seed-allow-large-over-cap",
         ),
         "frg_seed_paper_pure": ("--frg-seed-paper-pure", "--no-frg-seed-paper-pure"),
+        "frg_seed_beam_enabled": ("--frg-seed-beam-enabled", "--no-frg-seed-beam-enabled"),
+        "frg_seed_beam_width": "--frg-seed-beam-width",
+        "frg_seed_candidate_limit_per_state": "--frg-seed-candidate-limit-per-state",
+        "frg_seed_beam_large_only": ("--frg-seed-beam-large-only", "--no-frg-seed-beam-large-only"),
+        "frg_seed_beam_min_stack_count": "--frg-seed-beam-min-stack-count",
+        "frg_seed_beam_min_height": "--frg-seed-beam-min-height",
+        "frg_seed_small_time_limit": "--frg-seed-small-time-limit",
         "frg_candidate_supplement_enabled": (
             "--frg-candidate-supplement-enabled",
             "--no-frg-candidate-supplement-enabled",
@@ -4542,6 +4730,46 @@ def _union_rollout_probe_energy_adjustment(
     return float(adjustment)
 
 
+def _union_rollout_probe_evaluator_energy(
+    result: UnionRolloutProbeResult,
+    args: argparse.Namespace,
+    *,
+    depth: int,
+) -> float:
+    final_n_penalty = float(getattr(args, "union_rollout_probe_evaluator_final_n_penalty", 1000.0) or 1000.0)
+    return float(int(depth)) + float(max(0, int(result.moves))) + final_n_penalty * float(
+        max(0, int(result.final_n))
+    )
+
+
+def _union_rollout_probe_evaluator_allowed(args: argparse.Namespace) -> bool:
+    min_stack_count = max(0, int(getattr(args, "union_rollout_probe_evaluator_min_stack_count", 0) or 0))
+    stack_count = max(0, int(getattr(args, "_stack_count", 0) or 0))
+    return min_stack_count <= 0 or stack_count <= 0 or stack_count >= min_stack_count
+
+
+def _union_rollout_probe_evaluator_blend(
+    base_energy: float,
+    result: UnionRolloutProbeResult | None,
+    args: argparse.Namespace,
+    *,
+    depth: int,
+) -> float:
+    if result is None or not bool(getattr(args, "union_rollout_probe_evaluator_enabled", False)):
+        return float(base_energy)
+    if not _union_rollout_probe_evaluator_allowed(args):
+        return float(base_energy)
+    if bool(getattr(args, "union_rollout_probe_evaluator_require_feasible", True)) and (
+        not bool(result.feasible) or int(result.final_n) > 0
+    ):
+        return float(base_energy)
+    weight = min(1.0, max(0.0, float(getattr(args, "union_rollout_probe_evaluator_weight", 0.0) or 0.0)))
+    if weight <= 0.0:
+        return float(base_energy)
+    evaluator_energy = _union_rollout_probe_evaluator_energy(result, args, depth=int(depth))
+    return float((1.0 - weight) * float(base_energy) + weight * evaluator_energy)
+
+
 def _union_rollout_probe_completion(
     code: bytes,
     data: tuple[int, int, bytes],
@@ -4796,7 +5024,7 @@ def _frg_frontier_child_rollout_children(
     max_steps = max(1, int(max_steps))
     paper_pure = bool(getattr(args, "frg_seed_paper_pure", True))
     nodes: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = [(layout, (), ())]
-    outputs: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
+    outputs: list[tuple[tuple[float, ...], object, tuple[Move, ...], tuple[object, ...]]] = []
     seen_layouts = {getattr(layout, "stacks", ())}
     while nodes:
         next_nodes: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
@@ -4828,6 +5056,213 @@ def _frg_frontier_child_rollout_children(
     return outputs
 
 
+def _layout_path_from_moves(layout, moves: tuple[Move, ...], max_height: int) -> list[object]:
+    stacks = [list(stack) for stack in getattr(layout, "stacks", ()) or ()]
+    layout_path: list[object] = []
+    for move in moves:
+        source = int(move.from_stack)
+        target = int(move.to_stack)
+        if source < 0 or target < 0 or source >= len(stacks) or target >= len(stacks):
+            return []
+        if source == target or not stacks[source] or len(stacks[target]) >= max_height:
+            return []
+        box = int(stacks[source][-1])
+        if int(move.box) != box:
+            return []
+        stacks[target].append(stacks[source].pop())
+        layout_path.append(SimpleNamespace(stacks=tuple(tuple(stack) for stack in stacks)))
+    return layout_path
+
+
+def _frg_frontier_completion_prefix_children(
+    layout,
+    max_height: int,
+    step: int,
+    args: argparse.Namespace,
+    *,
+    max_steps: int,
+) -> list[tuple[object, tuple[Move, ...], tuple[object, ...]]]:
+    prefix_steps = max(1, int(max_steps))
+    time_limit = max(0.0, float(getattr(args, "frg_frontier_child_completion_time_limit", 0.003) or 0.0))
+    start = time.perf_counter()
+    deadline = start + time_limit if time_limit > 0.0 else math.inf
+    cache = getattr(args, "_frg_frontier_completion_cache", None)
+    if cache is None:
+        cache = {}
+        args._frg_frontier_completion_cache = cache
+
+    args._frg_frontier_child_calls += 1
+    rollout = _bs_frg_completion_cached(
+        layout,
+        max_height,
+        start_step=int(step),
+        max_steps=prefix_steps,
+        deadline=deadline,
+        cache=cache,
+        paper_pure=bool(getattr(args, "frg_seed_paper_pure", True)),
+    )
+    args._frg_frontier_child_generated += int(getattr(rollout, "generated", 0) or 0)
+    moves = tuple(getattr(rollout, "moves", ()) or ())[:prefix_steps]
+    if not moves:
+        return []
+    layout_path = _layout_path_from_moves(layout, moves, max_height)
+    if not layout_path:
+        return []
+    return [(layout_path[-1], moves[: len(layout_path)], tuple(layout_path))]
+
+
+def _frg_frontier_compound_source_children(
+    layout,
+    max_height: int,
+    step: int,
+    args: argparse.Namespace,
+    *,
+    child_limit: int,
+    max_steps: int,
+) -> list[tuple[object, tuple[Move, ...], tuple[object, ...]]]:
+    max_steps = max(1, int(max_steps))
+    child_limit = max(1, int(child_limit))
+    time_limit = max(0.0, float(getattr(args, "frg_frontier_child_completion_time_limit", 0.003) or 0.0))
+    start = time.perf_counter()
+    deadline = start + time_limit if time_limit > 0.0 else math.inf
+    paper_pure = bool(getattr(args, "frg_seed_paper_pure", True))
+    stack_count = len(getattr(layout, "stacks", ()) or ())
+    rank_outputs = child_limit < stack_count
+    outputs: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
+    scored_outputs: list[tuple[tuple[float, ...], object, tuple[Move, ...], tuple[object, ...]]] = []
+    for source in range(stack_count):
+        args._frg_frontier_child_calls += 1
+        child = _bs_frg_compound_reduction_child(
+            layout,
+            max_height,
+            int(step),
+            source,
+            max_steps,
+            deadline,
+            paper_pure=paper_pure,
+        )
+        if child is None:
+            continue
+        args._frg_frontier_child_generated += int(getattr(child, "generated", 0) or 0)
+        moves = tuple(getattr(child, "moves", ()) or ())
+        if not moves:
+            continue
+        layout_path = _layout_path_from_moves(layout, moves, max_height)
+        if not layout_path:
+            continue
+        row = (layout_path[-1], moves[: len(layout_path)], tuple(layout_path))
+        if not rank_outputs:
+            outputs.append(row)
+            continue
+        score_hint = tuple(float(value) for value in (getattr(child, "score_hint", ()) or ()))
+        if not score_hint:
+            score_hint = (2.0, float(len(moves)), float(source))
+        scored_outputs.append((score_hint, *row))
+    if not rank_outputs:
+        return outputs
+    scored_outputs.sort(key=lambda item: (item[0], getattr(item[1], "stacks", ())))
+    return [(layout, moves, layout_path) for _score, layout, moves, layout_path in scored_outputs[:child_limit]]
+
+
+def _as_bs_frg_layout(layout) -> _BsFrgLayout:
+    if isinstance(layout, _BsFrgLayout):
+        return layout
+    stacks = tuple(tuple(int(box) for box in stack) for stack in (getattr(layout, "stacks", ()) or ()))
+    selected_counts_raw = tuple(int(value) for value in (getattr(layout, "selected_counts", ()) or ()))
+    if len(selected_counts_raw) != len(stacks):
+        selected_counts_raw = tuple(0 for _ in stacks)
+    reduction_assignments = tuple(
+        int(value) if value is not None else None
+        for value in (getattr(layout, "reduction_assignments", ()) or ())
+    )
+    reduction_destinations = tuple(int(value) for value in (getattr(layout, "reduction_destinations", ()) or ()))
+    active_reduce_stack = getattr(layout, "active_reduce_stack", None)
+    if active_reduce_stack is not None:
+        active_reduce_stack = int(active_reduce_stack)
+    return _BsFrgLayout(
+        stacks=stacks,
+        active_reduce_stack=active_reduce_stack,
+        selected_counts=selected_counts_raw,
+        reduction_assignments=reduction_assignments,
+        reduction_destinations=reduction_destinations,
+    )
+
+
+def _frg_frontier_child_certification_rollout(
+    child_layout,
+    max_height: int,
+    start_step: int,
+    args: argparse.Namespace,
+) -> UnionRolloutProbeResult | None:
+    if not getattr(args, "frg_frontier_child_certify_enabled", False):
+        return None
+    started = time.perf_counter()
+    time_limit = max(
+        0.0,
+        float(getattr(args, "frg_frontier_child_certify_time_limit", 0.003) or 0.0),
+    )
+    deadline = started + time_limit if time_limit > 0.0 else math.inf
+    max_steps = max(
+        1,
+        int(
+            getattr(
+                args,
+                "frg_frontier_child_certify_max_steps",
+                getattr(args, "union_rollout_probe_max_steps", 512),
+            )
+            or 512
+        ),
+    )
+    cache = getattr(args, "_frg_frontier_certification_cache", None)
+    if cache is None:
+        cache = {}
+        args._frg_frontier_certification_cache = cache
+    rollout = _bs_frg_completion_cached(
+        _as_bs_frg_layout(child_layout),
+        max_height,
+        start_step=int(start_step),
+        max_steps=max_steps,
+        deadline=deadline,
+        cache=cache,
+        paper_pure=bool(getattr(args, "frg_seed_paper_pure", True)),
+    )
+    moves = tuple(getattr(rollout, "moves", ()) or ())
+    return UnionRolloutProbeResult(
+        feasible=bool(getattr(rollout, "feasible", False)),
+        final_n=int(getattr(rollout, "final_n", 0) or 0),
+        moves=len(moves),
+        status=str(getattr(rollout, "status", "")),
+        runtime_sec=time.perf_counter() - started,
+        move_path=moves,
+    )
+
+
+def _frg_frontier_child_certification_accepts(
+    rollout: UnionRolloutProbeResult | None,
+    *,
+    child_n: int,
+) -> bool:
+    if rollout is None:
+        return True
+    if rollout.feasible or int(rollout.final_n) <= 0:
+        return True
+    return int(rollout.final_n) < int(child_n)
+
+
+def _cache_frg_frontier_child_certification(
+    args: argparse.Namespace,
+    child_code: bytes,
+    rollout: UnionRolloutProbeResult | None,
+) -> None:
+    if rollout is None:
+        return
+    cache = getattr(args, "_union_rollout_probe_cache", None)
+    if cache is None:
+        cache = {}
+        args._union_rollout_probe_cache = cache
+    cache[child_code] = rollout
+
+
 def _parent_chain_would_cycle(
     parent_chain: dict[bytes, bytes | None] | None,
     child_code: bytes,
@@ -4849,6 +5284,13 @@ def _parent_chain_would_cycle(
     return False
 
 
+def _assign_parent_link(parent_chain: dict[bytes, bytes | None], child_code: bytes, parent_code: bytes | None) -> bool:
+    if parent_code is not None and _parent_chain_would_cycle(parent_chain, child_code, parent_code):
+        return False
+    parent_chain[child_code] = parent_code
+    return True
+
+
 def _inject_frg_frontier_child_candidates(
     frontier: list[tuple[bytes, int, int]],
     candidates: dict[bytes, tuple[int, int, bytes]],
@@ -4867,6 +5309,16 @@ def _inject_frg_frontier_child_candidates(
     stack_count = int(getattr(args, "_stack_count", 0) or 0)
     max_height = int(getattr(args, "_max_height", 0) or 0)
     if stack_count <= 0 or max_height <= 0:
+        return set()
+    min_stack_count = max(0, int(getattr(args, "frg_frontier_child_min_stack_count", 0) or 0))
+    if min_stack_count > 0 and stack_count < min_stack_count:
+        return set()
+    completion_prefix_enabled = bool(getattr(args, "frg_frontier_child_completion_prefix_enabled", False))
+    completion_max_stack_count = max(
+        0,
+        int(getattr(args, "frg_frontier_child_completion_max_stack_count", 0) or 0),
+    )
+    if completion_prefix_enabled and completion_max_stack_count > 0 and stack_count > completion_max_stack_count:
         return set()
 
     _ensure_frg_frontier_child_counters(args)
@@ -4891,14 +5343,33 @@ def _inject_frg_frontier_child_candidates(
             stacks,
         )
         layout = _bs_frg_initial_layout(instance)
-        children = _frg_frontier_child_rollout_children(
-            layout,
-            max_height,
-            int(depth),
-            args,
-            child_limit=child_limit,
-            max_steps=max_steps,
-        )
+        mode = str(getattr(args, "frg_frontier_child_mode", "rollout") or "rollout")
+        if completion_prefix_enabled:
+            children = _frg_frontier_completion_prefix_children(
+                layout,
+                max_height,
+                int(depth),
+                args,
+                max_steps=max_steps,
+            )
+        elif mode == "compound_sources":
+            children = _frg_frontier_compound_source_children(
+                layout,
+                max_height,
+                int(depth),
+                args,
+                child_limit=child_limit,
+                max_steps=max_steps,
+            )
+        else:
+            children = _frg_frontier_child_rollout_children(
+                layout,
+                max_height,
+                int(depth),
+                args,
+                child_limit=child_limit,
+                max_steps=max_steps,
+            )
         for child_layout, moves, layout_path in children:
             if not moves:
                 continue
@@ -4936,6 +5407,20 @@ def _inject_frg_frontier_child_candidates(
             old = candidates.get(child_code)
             if old is not None and old[1] <= child_depth:
                 continue
+            certification_rollout = None
+            if mode == "compound_sources":
+                certification_rollout = _frg_frontier_child_certification_rollout(
+                    child_layout,
+                    max_height,
+                    child_depth,
+                    args,
+                )
+                if not _frg_frontier_child_certification_accepts(
+                    certification_rollout,
+                    child_n=int(child_n),
+                ):
+                    continue
+                _cache_frg_frontier_child_certification(args, child_code, certification_rollout)
             candidates[child_code] = (int(child_n), child_depth, previous_code)
             added.add(child_code)
             if getattr(args, "debt_basin_reduction_chain_enabled", False):
@@ -5085,7 +5570,19 @@ def _union_diversity_qubo_features(
     if rollout_bonus and code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()):
         energy -= rollout_bonus
     if rollout is not None:
-        energy += _union_rollout_probe_energy_adjustment(rollout, args, n_value=int(n_value))
+        rollout_evaluator_active = (
+            bool(getattr(args, "union_rollout_probe_evaluator_enabled", False))
+            and float(getattr(args, "union_rollout_probe_evaluator_weight", 0.0) or 0.0) > 0.0
+            and _union_rollout_probe_evaluator_allowed(args)
+            and (
+                not bool(getattr(args, "union_rollout_probe_evaluator_require_feasible", True))
+                or (bool(rollout.feasible) and int(rollout.final_n) <= 0)
+            )
+        )
+        if rollout_evaluator_active:
+            energy = _union_rollout_probe_evaluator_blend(energy, rollout, args, depth=int(depth))
+        else:
+            energy += _union_rollout_probe_energy_adjustment(rollout, args, n_value=int(n_value))
     micro: MicroRolloutProbeResult | None = None
     receiver: ReceiverSafetyScore | None = None
     micro_window = max(0, int(getattr(args, "micro_rollout_window", 32) or 0))
@@ -6198,6 +6695,17 @@ def _frg_seed_large_layout_allowed(instance: Instance, args: argparse.Namespace)
     return instance.stack_count >= 8 or instance.max_height >= 8
 
 
+def _frg_seed_beam_allowed(instance: Instance, args: argparse.Namespace) -> bool:
+    min_stack_count = max(0, int(getattr(args, "frg_seed_beam_min_stack_count", 0) or 0))
+    min_height = max(0, int(getattr(args, "frg_seed_beam_min_height", 0) or 0))
+    if min_stack_count <= 0 and min_height <= 0:
+        return _frg_seed_large_layout_allowed(instance, args)
+    return (
+        (min_stack_count > 0 and instance.stack_count >= min_stack_count)
+        or (min_height > 0 and instance.max_height >= min_height)
+    )
+
+
 def _frg_seed_move_to_record(move: Move) -> dict[str, int | None]:
     return {
         "step": move.step,
@@ -6234,6 +6742,13 @@ def _frg_seed_cache_key(case: str, instance: Instance, args: argparse.Namespace)
         f"cap={int(getattr(args, 'frg_seed_max_steps_cap', 0) or 0)}",
         f"respect_cap={bool(getattr(args, 'frg_seed_respect_cap', True))}",
         f"paper_pure={bool(getattr(args, 'frg_seed_paper_pure', True))}",
+        f"beam={bool(getattr(args, 'frg_seed_beam_enabled', False))}",
+        f"beam_width={int(getattr(args, 'frg_seed_beam_width', 1000) or 1000)}",
+        f"k={int(getattr(args, 'frg_seed_candidate_limit_per_state', 3) or 3)}",
+        f"beam_large_only={bool(getattr(args, 'frg_seed_beam_large_only', False))}",
+        f"beam_min_stacks={int(getattr(args, 'frg_seed_beam_min_stack_count', 0) or 0)}",
+        f"beam_min_height={int(getattr(args, 'frg_seed_beam_min_height', 0) or 0)}",
+        f"small_time={float(getattr(args, 'frg_seed_small_time_limit', 0.0) or 0.0):.6g}",
     ]
     return "|".join(parts)
 
@@ -6255,6 +6770,13 @@ def _frg_seed_record_from_result(
         "frg_seed_max_steps_cap": int(getattr(args, "frg_seed_max_steps_cap", 0) or 0),
         "frg_seed_respect_cap": bool(getattr(args, "frg_seed_respect_cap", True)),
         "frg_seed_paper_pure": bool(getattr(args, "frg_seed_paper_pure", True)),
+        "frg_seed_beam_enabled": bool(getattr(args, "frg_seed_beam_enabled", False)),
+        "frg_seed_beam_width": int(getattr(args, "frg_seed_beam_width", 1000) or 1000),
+        "frg_seed_candidate_limit_per_state": int(getattr(args, "frg_seed_candidate_limit_per_state", 3) or 3),
+        "frg_seed_beam_large_only": bool(getattr(args, "frg_seed_beam_large_only", False)),
+        "frg_seed_beam_min_stack_count": int(getattr(args, "frg_seed_beam_min_stack_count", 0) or 0),
+        "frg_seed_beam_min_height": int(getattr(args, "frg_seed_beam_min_height", 0) or 0),
+        "frg_seed_small_time_limit": float(getattr(args, "frg_seed_small_time_limit", 0.0) or 0.0),
         "stack_count": instance.stack_count,
         "max_height": instance.max_height,
         "container_count": instance.container_count,
@@ -6329,6 +6851,14 @@ def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: 
     if remaining <= 0:
         return None
     configured_limit = float(getattr(args, "frg_seed_time_limit", 0.0) or 0.0)
+    beam_seed_enabled = bool(getattr(args, "frg_seed_beam_enabled", False))
+    if beam_seed_enabled and bool(getattr(args, "frg_seed_beam_large_only", False)) and not _frg_seed_beam_allowed(
+        instance,
+        args,
+    ):
+        beam_seed_enabled = False
+        small_limit = float(getattr(args, "frg_seed_small_time_limit", 0.0) or 0.0)
+        configured_limit = min(configured_limit, small_limit) if small_limit > 0.0 else 0.0
     if configured_limit <= 0:
         return None
     respect_cap = bool(getattr(args, "frg_seed_respect_cap", True))
@@ -6346,6 +6876,34 @@ def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: 
     max_steps_cap = max(0, int(getattr(args, "frg_seed_max_steps_cap", 0) or 0))
     if max_steps_cap > 0:
         max_steps = min(max_steps, max_steps_cap)
+
+    if beam_seed_enabled:
+        solver = BsFrgSolver(paper_pure=bool(getattr(args, "frg_seed_paper_pure", True)))
+        solution = solver.solve(
+            instance,
+            SolverConfig(
+                max_depth=max_steps,
+                beam_width=max(1, int(getattr(args, "frg_seed_beam_width", 1000) or 1000)),
+                candidate_limit_per_state=max(
+                    1,
+                    int(getattr(args, "frg_seed_candidate_limit_per_state", 3) or 3),
+                ),
+                enable_visited_pruning=True,
+                time_limit_sec=max(0.001, seed_deadline - time.perf_counter()),
+            ),
+        )
+        runtime_sec = time.perf_counter() - seed_start
+        if solution.feasible and solution.moves:
+            cap_ok = _moves_reach_n0_with_cap(instance, list(solution.moves), int(cap))
+            if not respect_cap or cap_ok:
+                return FrgSeedResult(
+                    moves=tuple(solution.moves),
+                    final_n=0,
+                    generated=int(getattr(solution, "generated_states", 0) or 0),
+                    runtime_sec=runtime_sec,
+                    status=str(getattr(solution, "status", "BS_FRG_BEAM_FEASIBLE")),
+                    cap_ok=cap_ok,
+                )
 
     rollout = _bs_frg_completion_cached(
         _bs_frg_initial_layout(instance),
@@ -7195,6 +7753,10 @@ def _candidate_feature_ledger_score(
             score -= assignment_weight * float(layout.reduction_pop_order_assignment_score)
     if rollout_bonus and code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()):
         score -= rollout_bonus
+    probe_results = getattr(args, "_union_rollout_probe_current_results", {}) or {}
+    rollout = probe_results.get(code)
+    if rollout is not None:
+        score += _union_rollout_probe_energy_adjustment(rollout, args, n_value=int(_n_value))
     return score
 
 
@@ -7207,6 +7769,32 @@ def _candidate_feature_ledger_window_codes(
         return set(candidates)
     ranked = heapq.nsmallest(window, candidates.items(), key=_candidate_primary_key_func(args))
     return {code for code, _data in ranked}
+
+
+def _prepare_candidate_ledger_rollout_probe_results(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> None:
+    if not bool(getattr(args, "candidate_ledger_score_enabled", False)):
+        return
+    if not bool(getattr(args, "union_rollout_probe_enabled", False)):
+        return
+    active_codes = getattr(args, "_candidate_ledger_active_codes", None)
+    rows = [
+        (code, data)
+        for code, data in candidates.items()
+        if active_codes is None or code in active_codes
+    ]
+    if not rows:
+        args._union_rollout_probe_current_results = {}
+        return
+    window = int(getattr(args, "candidate_ledger_rank_window", 512) or 0)
+    base_key = _candidate_primary_key_func(args)
+    if window > 0 and len(rows) > window:
+        rows = heapq.nsmallest(window, rows, key=base_key)
+    else:
+        rows = sorted(rows, key=base_key)
+    _union_rollout_probe_results(rows, args)
 
 
 def _candidate_primary_key_func(args: argparse.Namespace):
@@ -7856,6 +8444,11 @@ def _select_enhanced_qubo_frontier(
     effective_parent_core_cap, _parent_cap_reason = _survivor_parent_core_cap(args, best_n)
 
     core_target = effective_core
+    candidate_origin_by_code = getattr(args, "_candidate_origin_by_code", None) or {}
+    exclude_compound_source_core = str(getattr(args, "frg_frontier_child_mode", "rollout") or "rollout") == "compound_sources"
+
+    def is_compound_source_candidate(code: bytes) -> bool:
+        return exclude_compound_source_core and candidate_origin_by_code.get(code) == "frg_frontier_child"
 
     def add_deterministic_until(target_len: int, source: str = "core") -> None:
         target_len = max(0, min(target_len, effective_beam))
@@ -7866,6 +8459,8 @@ def _select_enhanced_qubo_frontier(
             for code, data in ranked:
                 if code in selected:
                     continue
+                if is_compound_source_candidate(code):
+                    continue
                 parent_code = data[2]
                 if parent_counts.get(parent_code, 0) >= effective_parent_core_cap:
                     continue
@@ -7875,6 +8470,8 @@ def _select_enhanced_qubo_frontier(
                 if len(selected) >= target_len:
                     break
         for code, _data in ranked:
+            if is_compound_source_candidate(code):
+                continue
             if code not in selected:
                 selected[code] = None
                 selected_source_by_code.setdefault(code, source)
@@ -8390,10 +8987,15 @@ def _select_enhanced_qubo_frontier(
     if args.qubo_first:
         add_deterministic_until(len(selected) + core_target, source="qubo_first_core")
 
-    for code, _data in ranked:
-        if code not in selected:
-            selected[code] = None
-            selected_source_by_code.setdefault(code, "tail_fill")
+    for allow_compound_source in (False, True):
+        for code, _data in ranked:
+            if not allow_compound_source and is_compound_source_candidate(code):
+                continue
+            if code not in selected:
+                selected[code] = None
+                selected_source_by_code.setdefault(code, "tail_fill")
+            if len(selected) >= effective_beam:
+                break
         if len(selected) >= effective_beam:
             break
     selected_codes = list(selected.keys())[:effective_beam]
@@ -8908,6 +9510,7 @@ def _rank_next_frontier_candidates(
 ) -> list[tuple[bytes, tuple[int, int, bytes]]]:
     if bool(getattr(args, "candidate_ledger_score_enabled", False)):
         args._candidate_ledger_active_codes = _candidate_feature_ledger_window_codes(candidates, args)
+        _prepare_candidate_ledger_rollout_probe_results(candidates, args)
     else:
         args._candidate_ledger_active_codes = None
     bucket_topk = max(0, int(getattr(args, "rank_bucket_topk", 0) or 0))
@@ -10827,13 +11430,17 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if target is not None:
             break
         if goals:
-            target, data = min(goals.items(), key=_candidate_key_func(args))
-            parent[target] = data[2]
-            best_depth[target] = data[1]
-            source_by_code[target] = "goal"
-            qubo_ancestor_by_code[target] = qubo_ancestor_by_code.get(data[2], False)
-            depth_reached = max(depth_reached, data[1])
-            break
+            for goal_code, data in sorted(goals.items(), key=_candidate_key_func(args)):
+                if not _assign_parent_link(parent, goal_code, data[2]):
+                    continue
+                target = goal_code
+                best_depth[target] = data[1]
+                source_by_code[target] = "goal"
+                qubo_ancestor_by_code[target] = qubo_ancestor_by_code.get(data[2], False)
+                depth_reached = max(depth_reached, data[1])
+                break
+            if target is not None:
+                break
         if getattr(args, "terminal_bridge_enabled", False):
             bridge_seed_limit = max(1, int(getattr(args, "terminal_bridge_max_seed_candidates", 64) or 64))
             bridge_seed_count = 0
@@ -11056,7 +11663,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 old_depth = best_depth.get(code)
                 if old_depth is not None and depth >= old_depth:
                     continue
-                parent[code] = parent_code
+                if not _assign_parent_link(parent, code, parent_code):
+                    continue
                 best_depth[code] = depth
                 source_by_code.setdefault(code, "reservoir")
                 qubo_ancestor_by_code.setdefault(code, qubo_ancestor_by_code.get(parent_code, False))
@@ -11070,7 +11678,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         next_frontier: list[tuple[bytes, int, int]] = []
         for code in selected_codes:
             n_value, depth, parent_code = candidates[code]
-            parent[code] = parent_code
+            if not _assign_parent_link(parent, code, parent_code):
+                continue
             best_depth[code] = depth
             source_by_code[code] = (
                 "qubo"
@@ -11361,7 +11970,7 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
         max_g = max_entropy_along_moves(instance, result.moves)
     else:
         final_n = n0
-        moves_count = None
+        moves_count = 0 if n0 == 0 else None
         max_g = n0
     cap13 = entropy_limit(instance, 1.3)
     cap15 = entropy_limit(instance, 1.5)
@@ -11714,6 +12323,23 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_rollout_probe_final_n_weight": getattr(args, "union_rollout_probe_final_n_weight", 0.0),
             "union_rollout_probe_moves_weight": getattr(args, "union_rollout_probe_moves_weight", 0.0),
             "union_rollout_probe_dead_end_penalty": getattr(args, "union_rollout_probe_dead_end_penalty", 0.0),
+            "union_rollout_probe_evaluator_enabled": getattr(args, "union_rollout_probe_evaluator_enabled", False),
+            "union_rollout_probe_evaluator_weight": getattr(args, "union_rollout_probe_evaluator_weight", 0.0),
+            "union_rollout_probe_evaluator_final_n_penalty": getattr(
+                args,
+                "union_rollout_probe_evaluator_final_n_penalty",
+                1000.0,
+            ),
+            "union_rollout_probe_evaluator_require_feasible": getattr(
+                args,
+                "union_rollout_probe_evaluator_require_feasible",
+                True,
+            ),
+            "union_rollout_probe_evaluator_min_stack_count": getattr(
+                args,
+                "union_rollout_probe_evaluator_min_stack_count",
+                0,
+            ),
             "union_rollout_probe_calls": result.union_rollout_probe_calls,
             "union_rollout_probe_candidates": result.union_rollout_probe_candidates,
             "union_rollout_probe_feasible": result.union_rollout_probe_feasible,
@@ -11768,10 +12394,15 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "reduction_chain_selected_total": getattr(result, "reduction_chain_selected_total", 0),
             "debt_basin_selected_on_path": getattr(result, "debt_basin_selected_on_path", 0),
             "frg_frontier_child_enabled": getattr(args, "frg_frontier_child_enabled", False),
+            "frg_frontier_child_mode": getattr(args, "frg_frontier_child_mode", "rollout"),
+            "frg_frontier_child_min_stack_count": getattr(args, "frg_frontier_child_min_stack_count", 0),
             "frg_frontier_child_parent_width": getattr(args, "frg_frontier_child_parent_width", 0),
             "frg_frontier_child_limit": getattr(args, "frg_frontier_child_limit", 0),
             "frg_frontier_child_max_steps": getattr(args, "frg_frontier_child_max_steps", 1),
             "frg_frontier_child_append_only": getattr(args, "frg_frontier_child_append_only", False),
+            "frg_frontier_child_certify_enabled": getattr(args, "frg_frontier_child_certify_enabled", False),
+            "frg_frontier_child_certify_max_steps": getattr(args, "frg_frontier_child_certify_max_steps", 512),
+            "frg_frontier_child_certify_time_limit": getattr(args, "frg_frontier_child_certify_time_limit", 0.003),
             "frg_frontier_child_adaptive_enabled": getattr(args, "frg_frontier_child_adaptive_enabled", False),
             "frg_frontier_child_adaptive_parent_width": getattr(
                 args,
@@ -11840,6 +12471,13 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_seed_prune_to_incumbent": getattr(args, "frg_seed_prune_to_incumbent", True),
             "frg_seed_allow_large_over_cap": getattr(args, "frg_seed_allow_large_over_cap", False),
             "frg_seed_paper_pure": getattr(args, "frg_seed_paper_pure", True),
+            "frg_seed_beam_enabled": getattr(args, "frg_seed_beam_enabled", False),
+            "frg_seed_beam_width": getattr(args, "frg_seed_beam_width", 1000),
+            "frg_seed_candidate_limit_per_state": getattr(args, "frg_seed_candidate_limit_per_state", 3),
+            "frg_seed_beam_large_only": getattr(args, "frg_seed_beam_large_only", False),
+            "frg_seed_beam_min_stack_count": getattr(args, "frg_seed_beam_min_stack_count", 0),
+            "frg_seed_beam_min_height": getattr(args, "frg_seed_beam_min_height", 0),
+            "frg_seed_small_time_limit": getattr(args, "frg_seed_small_time_limit", 0.0),
             "frg_seed_cache_input": result.frg_seed_cache_input,
             "frg_seed_cache_key": result.frg_seed_cache_key,
             "frg_seed_cache_hit": result.frg_seed_cache_hit,
@@ -12162,7 +12800,21 @@ def _validate_instance_result(
     business_alpha: float = 1.3,
 ) -> tuple[bool, bool, str]:
     if not result.moves:
-        return False, False, result.status
+        initial = create_initial_state(instance)
+        if disorder_box_count(instance, initial) != 0:
+            return False, False, result.status
+        solution = Solution(
+            solver_name=SOLVER_NAME,
+            feasible=True,
+            optimal=False,
+            objective=0.0,
+            runtime_sec=result.runtime_sec,
+            moves=[],
+            status=result.status,
+        )
+        goal_ok, goal_msg, _ = validate_solution(instance, solution)
+        business_ok = 0 <= entropy_limit(instance, business_alpha)
+        return business_ok, goal_ok, goal_msg
     solution = Solution(
         solver_name=SOLVER_NAME,
         feasible=True,
@@ -12457,6 +13109,14 @@ def main() -> int:
     parser.add_argument("--union-rollout-probe-final-n-weight", type=float, default=None)
     parser.add_argument("--union-rollout-probe-moves-weight", type=float, default=None)
     parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float, default=None)
+    parser.add_argument("--union-rollout-probe-evaluator-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-rollout-probe-evaluator-weight", type=float, default=None)
+    parser.add_argument("--union-rollout-probe-evaluator-final-n-penalty", type=float, default=None)
+    parser.add_argument(
+        "--union-rollout-probe-evaluator-require-feasible",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     parser.add_argument("--union-rollout-terminal-graft", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument(
         "--union-rollout-terminal-graft-respect-cap",
@@ -12478,10 +13138,26 @@ def main() -> int:
     parser.add_argument("--w-last-buffer-consumed", type=float, default=None)
     parser.add_argument("--w-height-pressure", type=float, default=None)
     parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--frg-frontier-child-mode",
+        choices=["rollout", "compound_sources"],
+        default=None,
+    )
+    parser.add_argument("--frg-frontier-child-min-stack-count", type=int, default=None)
     parser.add_argument("--frg-frontier-child-parent-width", type=int, default=None)
     parser.add_argument("--frg-frontier-child-limit", type=int, default=None)
     parser.add_argument("--frg-frontier-child-max-steps", type=int, default=None)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-certify-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-certify-max-steps", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-certify-time-limit", type=float, default=None)
+    parser.add_argument(
+        "--frg-frontier-child-completion-prefix-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--frg-frontier-child-completion-max-stack-count", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-completion-time-limit", type=float, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-parent-width", type=int, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-limit", type=int, default=None)
@@ -12500,6 +13176,13 @@ def main() -> int:
     parser.add_argument("--frg-seed-prune-to-incumbent", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-allow-large-over-cap", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-paper-pure", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-beam-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-beam-width", type=int, default=None)
+    parser.add_argument("--frg-seed-candidate-limit-per-state", type=int, default=None)
+    parser.add_argument("--frg-seed-beam-large-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-beam-min-stack-count", type=int, default=None)
+    parser.add_argument("--frg-seed-beam-min-height", type=int, default=None)
+    parser.add_argument("--frg-seed-small-time-limit", type=float, default=None)
     parser.add_argument("--frg-seed-cache-input", type=Path, default=None)
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int, default=None)

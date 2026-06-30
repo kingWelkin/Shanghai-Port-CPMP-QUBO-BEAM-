@@ -85,6 +85,10 @@ def load_bf_bay(path: Path) -> Instance:
     container_count = containers if containers is not None else observed
     if observed != container_count:
         raise ValueError(f"{path} declares {container_count} containers but contains {observed}")
+    min_priority = min((box for stack in stacks for box in stack), default=1)
+    if min_priority <= 0:
+        offset = 1 - min_priority
+        stacks = [[box + offset for box in stack] for stack in stacks]
     return Instance(
         label,
         ProblemVariant.PREMARSHALLING_CPMP,

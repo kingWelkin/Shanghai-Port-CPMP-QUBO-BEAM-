@@ -40,6 +40,32 @@ def test_load_bf_bay_parses_bortfeldt_forster_format(tmp_path: Path):
     assert instance.stacks == [[5, 3], [], [4, 2, 1]]
 
 
+def test_load_bf_bay_offsets_zero_priority_groups_from_padding_sentinel(tmp_path: Path):
+    from benchmark_bs_frg_paper import load_bf_bay
+
+    path = tmp_path / "lc1_like.bay"
+    path.write_text(
+        "\n".join(
+            [
+                "Label : lc1_like",
+                "Width : 2",
+                "Height : 3",
+                "Containers : 4",
+                "Stack 1 : 2 0",
+                "Stack 2 : 1 0",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    instance = load_bf_bay(path)
+
+    assert instance.container_count == 4
+    assert instance.stacks == [[3, 1], [2, 1]]
+    assert all(box > 0 for stack in instance.stacks for box in stack)
+
+
 def test_load_cv_dat_uses_filename_height_plus_two_for_relocation_buffer(tmp_path: Path):
     from benchmark_bs_frg_paper import load_cv_dat
 
@@ -167,6 +193,67 @@ def test_paper_exception_row_preserves_failed_case_metadata(tmp_path: Path):
     assert row["full_quality_penalty"] == 1000000
 
 
+def test_paper_runner_validates_zero_move_unique_id_cv_as_n0_goal(monkeypatch, tmp_path: Path):
+    from benchmark_bs_frg_paper import PaperCase
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from benchmark_compact_paper_set import _run_paper_variant_row, build_parser
+    from container_reshuffle.core import Instance, ProblemVariant
+
+    instance = Instance(
+        "cv_unique_initial_goal",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=5,
+        container_count=9,
+        stacks=[[9, 8, 4], [5, 3, 2], [7, 6, 1]],
+    )
+    result = CompactBeamResult(
+        case="data3-3-39",
+        status="TARGET_REACHABLE",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=1,
+        open_count=1,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=1,
+        peak_candidates=0,
+        depth_reached=0,
+        qubo_calls=0,
+        qubo_vars=0,
+        qubo_time_sec=0.0,
+    )
+
+    monkeypatch.setattr("benchmark_compact_paper_set.run_compact_beam_instance", lambda *_args: result)
+
+    args = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_qubo_diversity_union_polish",
+            "--time-limit",
+            "10",
+            "--alpha",
+            "10",
+        ]
+    )
+
+    row = _run_paper_variant_row(
+        PaperCase("CV", "3-3", "data3-3-39", tmp_path / "data3-3-39.dat"),
+        args,
+        args.variant,
+        instance=instance,
+    )
+
+    assert row["n0"] == 0
+    assert row["moves"] == 0
+    assert row["business_ok"] is True
+    assert row["goal_validation_ok"] is True
+    assert row["primary_ok"] is True
+
+
 @pytest.mark.parametrize(
     ("row", "time_limit", "expected"),
     [
@@ -189,6 +276,16 @@ def test_paper_exception_row_preserves_failed_case_metadata(tmp_path: Path):
             {"moves": 17, "final_n": 0, "goal_validation_ok": True, "business_ok": True, "runtime_sec": "bad"},
             20.0,
             {"feasibility_ok": True, "time_limit_ok": False, "primary_ok": False},
+        ),
+        (
+            {"moves": "", "n0": 0, "final_n": 0, "goal_validation_ok": True, "business_ok": True, "runtime_sec": 0.0},
+            20.0,
+            {"feasibility_ok": True, "time_limit_ok": True, "primary_ok": True},
+        ),
+        (
+            {"moves": "", "n0": 1, "final_n": 0, "goal_validation_ok": True, "business_ok": True, "runtime_sec": 0.0},
+            20.0,
+            {"feasibility_ok": False, "time_limit_ok": False, "primary_ok": False},
         ),
     ],
 )
@@ -606,6 +703,7 @@ def test_paper_runner_terminal_escape_lazy_portfolio_stops_after_valid_bridge(mo
         "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"
     )
     assert result.row["portfolio_runtime_sec"] == "3.000000"
+    assert result.row["runtime_sec"] == "3.000000"
 
 
 def test_paper_runner_terminal_escape_lazy_portfolio_tries_wide_after_invalid_bridge(monkeypatch, tmp_path: Path):
@@ -654,6 +752,7 @@ def test_paper_runner_terminal_escape_lazy_portfolio_tries_wide_after_invalid_br
         "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"
     )
     assert result.row["portfolio_runtime_sec"] == "6.000000"
+    assert result.row["runtime_sec"] == "6.000000"
     assert result.row["full_quality_penalty"] == 27
 
 
@@ -696,9 +795,11 @@ def test_paper_lazy_portfolio_skips_over_time_feasibility_child(monkeypatch, tmp
     monkeypatch.setattr("benchmark_compact_paper_set._load_paper_case", fake_load)
     monkeypatch.setattr("benchmark_compact_paper_set._run_paper_variant_row", fake_run)
 
-    result = _run_task(PaperRunTask(0, case, lazy_variant), vars(Namespace(alpha=10.0)))
+    result = _run_task(PaperRunTask(0, case, lazy_variant), vars(Namespace(alpha=10.0, time_limit=20.0)))
 
     assert calls == [bridge_variant, wide_variant]
     assert result.row["portfolio_selected_profile"] == wide_variant
-    assert result.row["primary_ok"] is True
     assert result.row["portfolio_runtime_sec"] == "22.000000"
+    assert result.row["runtime_sec"] == "22.000000"
+    assert result.row["time_limit_ok"] is False
+    assert result.row["primary_ok"] is False

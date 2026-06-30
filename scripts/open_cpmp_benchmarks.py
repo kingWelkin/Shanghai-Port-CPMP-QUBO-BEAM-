@@ -329,6 +329,23 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
         "union_rollout_probe_final_n_weight": getattr(args, "union_rollout_probe_final_n_weight", 0.0),
         "union_rollout_probe_moves_weight": getattr(args, "union_rollout_probe_moves_weight", 0.0),
         "union_rollout_probe_dead_end_penalty": getattr(args, "union_rollout_probe_dead_end_penalty", 0.0),
+        "union_rollout_probe_evaluator_enabled": getattr(args, "union_rollout_probe_evaluator_enabled", False),
+        "union_rollout_probe_evaluator_weight": getattr(args, "union_rollout_probe_evaluator_weight", 0.0),
+        "union_rollout_probe_evaluator_final_n_penalty": getattr(
+            args,
+            "union_rollout_probe_evaluator_final_n_penalty",
+            1000.0,
+        ),
+        "union_rollout_probe_evaluator_require_feasible": getattr(
+            args,
+            "union_rollout_probe_evaluator_require_feasible",
+            True,
+        ),
+        "union_rollout_probe_evaluator_min_stack_count": getattr(
+            args,
+            "union_rollout_probe_evaluator_min_stack_count",
+            0,
+        ),
         "union_rollout_probe_calls": getattr(result, "union_rollout_probe_calls", 0),
         "union_rollout_probe_candidates": getattr(result, "union_rollout_probe_candidates", 0),
         "union_rollout_probe_feasible": getattr(result, "union_rollout_probe_feasible", 0),
@@ -518,9 +535,9 @@ def _priority_group_row_dict_from_instance_result(
         final_n = n_trace[-1]
         moves_count = len(result.moves)
     else:
-        final_n = n0
-        moves_count = None
-        max_g = n0
+        initial_ok, _msg, _stacks, n_trace, max_g = _simulate_priority_group_moves(instance, [])
+        final_n = n_trace[-1]
+        moves_count = 0 if initial_ok and final_n == 0 else None
     row = {
         "case": result.case,
         "solver": SOLVER_NAME,
@@ -753,6 +770,13 @@ def _priority_group_row_dict_from_instance_result(
         "frg_seed_prune_to_incumbent": getattr(args, "frg_seed_prune_to_incumbent", True),
         "frg_seed_allow_large_over_cap": getattr(args, "frg_seed_allow_large_over_cap", False),
         "frg_seed_paper_pure": getattr(args, "frg_seed_paper_pure", True),
+        "frg_seed_beam_enabled": getattr(args, "frg_seed_beam_enabled", False),
+        "frg_seed_beam_width": getattr(args, "frg_seed_beam_width", 1000),
+        "frg_seed_candidate_limit_per_state": getattr(args, "frg_seed_candidate_limit_per_state", 3),
+        "frg_seed_beam_large_only": getattr(args, "frg_seed_beam_large_only", False),
+        "frg_seed_beam_min_stack_count": getattr(args, "frg_seed_beam_min_stack_count", 0),
+        "frg_seed_beam_min_height": getattr(args, "frg_seed_beam_min_height", 0),
+        "frg_seed_small_time_limit": getattr(args, "frg_seed_small_time_limit", 0.0),
         "frg_seed_cache_input": getattr(result, "frg_seed_cache_input", ""),
         "frg_seed_cache_key": getattr(result, "frg_seed_cache_key", ""),
         "frg_seed_cache_hit": getattr(result, "frg_seed_cache_hit", False),
@@ -801,7 +825,9 @@ def _validate_priority_group_result(
     business_alpha: float,
 ) -> tuple[bool, bool, str]:
     if not result.moves:
-        return False, False, result.status
+        goal_ok, goal_msg, _stacks, _n_trace, max_g = _simulate_priority_group_moves(instance, [])
+        cap = int(math.floor(min(float(business_alpha), 2.0) * future_disorder_count_stacks(instance.stacks) + 1e-9))
+        return max_g <= cap, goal_ok, goal_msg if goal_ok else result.status
     goal_ok, goal_msg, _stacks, _n_trace, max_g = _simulate_priority_group_moves(instance, result.moves)
     cap = int(math.floor(min(float(business_alpha), 2.0) * future_disorder_count_stacks(instance.stacks) + 1e-9))
     business_ok = max_g <= cap
@@ -1078,6 +1104,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_rollout_score_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
@@ -1085,10 +1112,15 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_lite_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_deep_chain_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
@@ -1365,6 +1397,11 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_rollout_probe_final_n_weight",
         "union_rollout_probe_moves_weight",
         "union_rollout_probe_dead_end_penalty",
+        "union_rollout_probe_evaluator_enabled",
+        "union_rollout_probe_evaluator_weight",
+        "union_rollout_probe_evaluator_final_n_penalty",
+        "union_rollout_probe_evaluator_require_feasible",
+        "union_rollout_probe_evaluator_min_stack_count",
         "union_rollout_terminal_graft",
         "union_rollout_terminal_graft_respect_cap",
         "micro_rollout_enabled",
@@ -1382,10 +1419,18 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "w_last_buffer_consumed",
         "w_height_pressure",
         "frg_frontier_child_enabled",
+        "frg_frontier_child_mode",
+        "frg_frontier_child_min_stack_count",
         "frg_frontier_child_parent_width",
         "frg_frontier_child_limit",
         "frg_frontier_child_max_steps",
         "frg_frontier_child_append_only",
+        "frg_frontier_child_certify_enabled",
+        "frg_frontier_child_certify_max_steps",
+        "frg_frontier_child_certify_time_limit",
+        "frg_frontier_child_completion_prefix_enabled",
+        "frg_frontier_child_completion_max_stack_count",
+        "frg_frontier_child_completion_time_limit",
         "frg_frontier_child_adaptive_enabled",
         "frg_frontier_child_adaptive_parent_width",
         "frg_frontier_child_adaptive_limit",
@@ -1404,6 +1449,13 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "frg_seed_prune_to_incumbent",
         "frg_seed_allow_large_over_cap",
         "frg_seed_paper_pure",
+        "frg_seed_beam_enabled",
+        "frg_seed_beam_width",
+        "frg_seed_candidate_limit_per_state",
+        "frg_seed_beam_large_only",
+        "frg_seed_beam_min_stack_count",
+        "frg_seed_beam_min_height",
+        "frg_seed_small_time_limit",
         "frg_seed_cache_input",
         "frg_candidate_supplement_enabled",
         "frg_candidate_supplement_width",
@@ -1575,6 +1627,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_origin_aware_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_rollout_score_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_rollout_score_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_micro_trace_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish":
@@ -1589,10 +1643,20 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_rollout_graft_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_lite_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_tail_lookahead_lite_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_deep_chain_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_deep_chain_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_debt_basin_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish":
@@ -1737,6 +1801,7 @@ def _run_open_portfolio_task(
     selected["portfolio_profiles"] = ",".join(child_variants)
     selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
     selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
+    selected["runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
     selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
     return OpenRunTaskResult(task.task_index, task.case.case_id, task.variant, [selected])
 
@@ -1886,6 +1951,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_rollout_score_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish",
@@ -1893,10 +1959,15 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_bridge_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_lite_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_tail_lookahead_wide_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_terminal_escape_lazy_portfolio",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_deep_chain_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_sources_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish",
@@ -2141,6 +2212,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-rollout-probe-final-n-weight", type=float)
     parser.add_argument("--union-rollout-probe-moves-weight", type=float)
     parser.add_argument("--union-rollout-probe-dead-end-penalty", type=float)
+    parser.add_argument("--union-rollout-probe-evaluator-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--union-rollout-probe-evaluator-weight", type=float)
+    parser.add_argument("--union-rollout-probe-evaluator-final-n-penalty", type=float)
+    parser.add_argument(
+        "--union-rollout-probe-evaluator-require-feasible",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     parser.add_argument("--union-rollout-terminal-graft", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument(
         "--union-rollout-terminal-graft-respect-cap",
@@ -2162,10 +2241,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--w-last-buffer-consumed", type=float)
     parser.add_argument("--w-height-pressure", type=float)
     parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-mode", choices=["rollout", "compound_sources"])
+    parser.add_argument("--frg-frontier-child-min-stack-count", type=int)
     parser.add_argument("--frg-frontier-child-parent-width", type=int)
     parser.add_argument("--frg-frontier-child-limit", type=int)
     parser.add_argument("--frg-frontier-child-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-certify-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-certify-max-steps", type=int)
+    parser.add_argument("--frg-frontier-child-certify-time-limit", type=float)
+    parser.add_argument("--frg-frontier-child-completion-prefix-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-completion-max-stack-count", type=int)
+    parser.add_argument("--frg-frontier-child-completion-time-limit", type=float)
     parser.add_argument("--frg-frontier-child-adaptive-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-parent-width", type=int)
     parser.add_argument("--frg-frontier-child-adaptive-limit", type=int)
@@ -2184,6 +2271,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-seed-prune-to-incumbent", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-allow-large-over-cap", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-paper-pure", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-beam-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-beam-width", type=int)
+    parser.add_argument("--frg-seed-candidate-limit-per-state", type=int)
+    parser.add_argument("--frg-seed-beam-large-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-seed-beam-min-stack-count", type=int)
+    parser.add_argument("--frg-seed-beam-min-height", type=int)
+    parser.add_argument("--frg-seed-small-time-limit", type=float)
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int)
     parser.add_argument("--frg-candidate-focus-n", type=int)
