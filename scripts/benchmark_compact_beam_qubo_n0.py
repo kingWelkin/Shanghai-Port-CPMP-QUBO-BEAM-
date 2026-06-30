@@ -3599,7 +3599,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_diversity_qubo_macro_quota_scarcity_weight": "--union-diversity-qubo-macro-quota-scarcity-weight",
         "union_diversity_qubo_macro_quota_witness_weight": "--union-diversity-qubo-macro-quota-witness-weight",
         "union_diversity_qubo_macro_quality_bonus": "--union-diversity-qubo-macro-quality-bonus",
-        "quality_reservoir_enabled": "--quality-reservoir-enabled",
+        "quality_reservoir_enabled": ("--quality-reservoir-enabled", "--no-quality-reservoir-enabled"),
         "quality_reservoir_max_candidates": "--quality-reservoir-max-candidates",
         "quality_reservoir_top_quality": "--quality-reservoir-top-quality",
         "quality_reservoir_origin_reserve": "--quality-reservoir-origin-reserve",
@@ -13685,7 +13685,7 @@ def _write_report(rows: list[TrajectoryResult], output: Path, acceptance: Path, 
 
 
 def _add_quality_reservoir_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--quality-reservoir-enabled", action="store_true")
+    parser.add_argument("--quality-reservoir-enabled", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--quality-reservoir-max-candidates", type=int, default=0)
     parser.add_argument("--quality-reservoir-top-quality", type=int, default=0)
     parser.add_argument("--quality-reservoir-origin-reserve", type=int, default=0)

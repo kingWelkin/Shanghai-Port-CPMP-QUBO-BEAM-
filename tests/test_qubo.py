@@ -4820,6 +4820,21 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_quality_reservoir_va
     assert variant in _variant_names("wang_research_all")
 
 
+def test_quality_reservoir_profile_can_disable_reservoir_by_cli_override():
+    from benchmark_compact_beam_qubo_n0 import build_parser as compact_build_parser
+
+    args = compact_build_parser().parse_args(
+        [
+            "--solver-profile",
+            "scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
+            "--no-quality-reservoir-enabled",
+        ]
+    )
+
+    assert args.quality_reservoir_enabled is False
+    assert args.quality_reservoir_max_candidates == 1600
+
+
 def test_open_runner_default_variant_is_diversity_union_mainline():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
