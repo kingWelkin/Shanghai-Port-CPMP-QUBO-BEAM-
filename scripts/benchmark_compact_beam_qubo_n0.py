@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from types import SimpleNamespace
-from typing import NamedTuple
+from typing import Iterable, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 for path in (ROOT, ROOT / "src", ROOT / "scripts"):
@@ -4561,6 +4561,13 @@ class UnionDiversityQuboFeatures(NamedTuple):
     is_frg_macro: bool = False
     source_scarcity: float = 0.0
     completion_witness_quality: float = 0.0
+    quality_reservoir_quality: float = 0.0
+    quality_reservoir_witness_quality: float = 0.0
+    quality_reservoir_receiver_debt: float = 0.0
+    quality_reservoir_height_risk: float = 0.0
+    quality_reservoir_chain_penalty: float = 0.0
+    quality_reservoir_macro_signature: tuple[int, ...] = ()
+    quality_reservoir_n_delta: int = 0
 
 
 class QualityReservoirCandidate(NamedTuple):
@@ -5326,6 +5333,17 @@ def _apply_quality_reservoir_candidates(
     return keep
 
 
+def _record_quality_reservoir_selected_telemetry(selected_codes: Iterable[bytes], args: argparse.Namespace) -> None:
+    if not bool(getattr(args, "quality_reservoir_enabled", False)):
+        return
+    reservoir_features_by_code = getattr(args, "_quality_reservoir_last_features_by_code", {}) or {}
+    if not reservoir_features_by_code:
+        return
+    if not hasattr(args, "_quality_reservoir_selected_total"):
+        args._quality_reservoir_selected_total = 0
+    args._quality_reservoir_selected_total += sum(1 for code in selected_codes if code in reservoir_features_by_code)
+
+
 def _union_diversity_source_scarcity(parent_code: bytes, source_stack: int, args: argparse.Namespace) -> float:
     global_scarcity = _clamp01(float(getattr(args, "_initial_scarcity_risk", 0.0) or 0.0))
     stack_count = int(getattr(args, "_stack_count", 0) or 0)
@@ -5365,6 +5383,36 @@ def _union_diversity_macro_pressure_score(
     return _clamp01(
         (debt_weight * debt_score + scarcity_weight * scarcity_score + witness_weight * witness_score) / total
     )
+
+
+def _quality_reservoir_qubo_linear_energy(
+    feature: UnionDiversityQuboFeatures,
+    args: argparse.Namespace,
+) -> float:
+    if not bool(getattr(args, "quality_reservoir_enabled", False)):
+        return float(feature.energy)
+    value = float(feature.energy)
+    value -= float(getattr(args, "quality_reservoir_witness_weight", 0.0) or 0.0) * float(
+        feature.quality_reservoir_witness_quality
+    )
+    value -= float(getattr(args, "quality_reservoir_progress_weight", 0.0) or 0.0) * max(
+        0.0,
+        float(feature.quality_reservoir_n_delta),
+    )
+    value -= float(getattr(args, "quality_reservoir_source_scarcity_weight", 0.0) or 0.0) * float(
+        feature.source_scarcity
+    )
+    value += float(getattr(args, "quality_reservoir_receiver_debt_weight", 0.0) or 0.0) * float(
+        feature.quality_reservoir_receiver_debt
+    )
+    value += float(getattr(args, "quality_reservoir_height_risk_weight", 0.0) or 0.0) * float(
+        feature.quality_reservoir_height_risk
+    )
+    value += float(getattr(args, "quality_reservoir_chain_cost_weight", 0.0) or 0.0) * float(
+        feature.quality_reservoir_chain_penalty
+    )
+    value -= float(feature.quality_reservoir_quality)
+    return float(value)
 
 
 def _union_diversity_adaptive_macro_quota_target(
@@ -6407,6 +6455,7 @@ def _union_diversity_qubo_features(
     completion_witness_quality = (
         _union_diversity_completion_witness_quality(rollout, args, n_value=int(n_value)) if is_frg_macro else 0.0
     )
+    reservoir_feature = (getattr(args, "_quality_reservoir_last_features_by_code", {}) or {}).get(code)
     macro_quality_bonus = float(getattr(args, "union_diversity_qubo_macro_quality_bonus", 0.0) or 0.0)
     if is_frg_macro and macro_quality_bonus > 0.0:
         macro_probe = UnionDiversityQuboFeatures(
@@ -6463,6 +6512,17 @@ def _union_diversity_qubo_features(
         is_frg_macro=bool(is_frg_macro),
         source_scarcity=float(source_scarcity),
         completion_witness_quality=float(completion_witness_quality),
+        quality_reservoir_quality=float(reservoir_feature.reservoir_quality) if reservoir_feature is not None else 0.0,
+        quality_reservoir_witness_quality=float(reservoir_feature.witness_quality)
+        if reservoir_feature is not None
+        else 0.0,
+        quality_reservoir_receiver_debt=float(reservoir_feature.receiver_debt) if reservoir_feature is not None else 0.0,
+        quality_reservoir_height_risk=float(reservoir_feature.height_risk) if reservoir_feature is not None else 0.0,
+        quality_reservoir_chain_penalty=float(reservoir_feature.chain_length_penalty)
+        if reservoir_feature is not None
+        else 0.0,
+        quality_reservoir_macro_signature=reservoir_feature.macro_signature if reservoir_feature is not None else (),
+        quality_reservoir_n_delta=int(reservoir_feature.n_delta) if reservoir_feature is not None else 0,
     )
     if micro is not None or receiver is not None or debt_basin is not None:
         trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", None)
@@ -6506,6 +6566,34 @@ def _union_diversity_candidate_origin(code: bytes, args: argparse.Namespace) -> 
     if code in (getattr(args, "_frg_frontier_child_codes", set()) or set()):
         return "frg_frontier_child"
     return "core"
+
+
+def _quality_reservoir_pair_penalty(
+    left: UnionDiversityQuboFeatures,
+    right: UnionDiversityQuboFeatures,
+    args: argparse.Namespace,
+) -> float:
+    reservoir_receiver_debt_penalty = float(
+        getattr(args, "quality_reservoir_pair_receiver_debt_penalty", 0.0) or 0.0
+    )
+    reservoir_macro_signature_penalty = float(
+        getattr(args, "quality_reservoir_pair_macro_signature_penalty", 0.0) or 0.0
+    )
+    value = 0.0
+    if (
+        reservoir_receiver_debt_penalty > 0.0
+        and int(round(left.quality_reservoir_receiver_debt * 10.0))
+        == int(round(right.quality_reservoir_receiver_debt * 10.0))
+        and (left.quality_reservoir_receiver_debt > 0.0 or right.quality_reservoir_receiver_debt > 0.0)
+    ):
+        value += reservoir_receiver_debt_penalty
+    if (
+        reservoir_macro_signature_penalty > 0.0
+        and left.quality_reservoir_macro_signature
+        and left.quality_reservoir_macro_signature == right.quality_reservoir_macro_signature
+    ):
+        value += reservoir_macro_signature_penalty
+    return float(value)
 
 
 def _union_diversity_objective(
@@ -6565,6 +6653,14 @@ def _union_diversity_objective(
                 and features[i].frg_witness_signature == features[j].frg_witness_signature
             ):
                 value += frg_witness_signature_penalty
+            reservoir_pair_penalty = _quality_reservoir_pair_penalty(features[i], features[j], args)
+            if reservoir_pair_penalty > 0.0:
+                value += reservoir_pair_penalty
+                if bool(getattr(args, "_quality_reservoir_objective_telemetry_enabled", True)) and hasattr(
+                    args,
+                    "_quality_reservoir_pair_penalty_total",
+                ):
+                    args._quality_reservoir_pair_penalty_total += reservoir_pair_penalty
     value += _union_diversity_adaptive_macro_quota_penalty(selected, features, args)
     return float(value)
 
@@ -6657,7 +6753,7 @@ def _select_union_diversity_qubo_supplement(
         for (code, _data), feature in zip(usable, features):
             if feature.micro_best_n >= 0 or feature.receiver_safe_delta != 0:
                 trace_features[code] = feature
-    linear = _normalize_values([feature.energy for feature in features])
+    linear = _normalize_values([_quality_reservoir_qubo_linear_energy(feature, args) for feature in features])
     model = QuboModel()
     vars_ = [model.add_binary_var(f"ud_{idx}") for idx in range(len(usable))]
     for idx, value in enumerate(linear):
@@ -6712,6 +6808,9 @@ def _select_union_diversity_qubo_supplement(
                 and features[i].frg_witness_signature == features[j].frg_witness_signature
             ):
                 model.add_quadratic(vars_[i], vars_[j], frg_witness_signature_penalty)
+            reservoir_pair_penalty = _quality_reservoir_pair_penalty(features[i], features[j], args)
+            if reservoir_pair_penalty > 0.0:
+                model.add_quadratic(vars_[i], vars_[j], reservoir_pair_penalty)
     _add_union_diversity_adaptive_macro_quota_terms(model, vars_, features, target, args)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
     sample_set = SimulatedAnnealingQuboSampler().sample(
@@ -6731,7 +6830,15 @@ def _select_union_diversity_qubo_supplement(
             for idx in range(len(usable))
             if sample_set.samples[0].binary_values.get(idx, 0) == 1
         }
-    picked = _repair_union_diversity_selection(picked, target, linear, features, args)
+    previous_objective_telemetry = getattr(args, "_quality_reservoir_objective_telemetry_enabled", None)
+    args._quality_reservoir_objective_telemetry_enabled = False
+    try:
+        picked = _repair_union_diversity_selection(picked, target, linear, features, args)
+    finally:
+        if previous_objective_telemetry is None:
+            delattr(args, "_quality_reservoir_objective_telemetry_enabled")
+        else:
+            args._quality_reservoir_objective_telemetry_enabled = previous_objective_telemetry
     if getattr(args, "debt_basin_enabled", False):
         if not hasattr(args, "_receiver_debt_selected_total"):
             args._receiver_debt_selected_total = 0.0
@@ -6758,6 +6865,15 @@ def _select_union_diversity_qubo_supplement(
             for j in ordered_picked[pos + 1 :]:
                 if features[i].basin_label and features[i].basin_label == features[j].basin_label:
                     args._basin_pair_penalty_total += basin_similarity_penalty
+    if hasattr(args, "_quality_reservoir_pair_penalty_total"):
+        ordered_picked = sorted(picked)
+        for pos, i in enumerate(ordered_picked):
+            for j in ordered_picked[pos + 1 :]:
+                args._quality_reservoir_pair_penalty_total += _quality_reservoir_pair_penalty(
+                    features[i],
+                    features[j],
+                    args,
+                )
     ordered = sorted(
         picked,
         key=lambda idx: (
@@ -12042,6 +12158,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._receiver_safety_scored_total = 0
     args._micro_rollout_cache = {}
     args._micro_rollout_feature_trace_by_code = {}
+    args._quality_reservoir_selected_total = 0
+    args._quality_reservoir_pair_penalty_total = 0.0
     args._feasibility_escape_calls_done = 0
     args._feasibility_escape_added_total = 0
     args._feasibility_escape_active_layers = 0
@@ -12390,6 +12508,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             peak_candidates = max(peak_candidates, len(candidates))
             _update_layer_candidate_metrics(candidates, args, cap)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
+        _record_quality_reservoir_selected_telemetry(selected_codes, args)
         qcalls += add_qcalls
         qvars += add_qvars
         qtime += add_qtime
@@ -12756,6 +12875,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         union_rollout_terminal_graft_used=union_rollout_terminal_graft_used,
         quality_reservoir_generated_total=int(getattr(args, "_quality_reservoir_generated_total", 0) or 0),
         quality_reservoir_kept_total=int(getattr(args, "_quality_reservoir_kept_total", 0) or 0),
+        quality_reservoir_selected_total=int(getattr(args, "_quality_reservoir_selected_total", 0) or 0),
         quality_reservoir_witness_found_total=int(getattr(args, "_quality_reservoir_witness_found_total", 0) or 0),
         quality_reservoir_avg_witness_quality=float(
             getattr(args, "_quality_reservoir_witness_quality_total", 0.0) or 0.0
@@ -12769,6 +12889,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             getattr(args, "_quality_reservoir_height_risk_total", 0.0) or 0.0
         )
         / quality_reservoir_kept_count,
+        quality_reservoir_pair_penalty_total=float(
+            getattr(args, "_quality_reservoir_pair_penalty_total", 0.0) or 0.0
+        ),
         micro_rollout_calls=args._micro_rollout_calls,
         micro_rollout_cache_hits=args._micro_rollout_cache_hits,
         micro_rollout_candidates=args._micro_rollout_candidates,
