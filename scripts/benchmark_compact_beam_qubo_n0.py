@@ -3200,6 +3200,14 @@ class CompactBeamResult:
     union_rollout_probe_selected_total: int = 0
     union_rollout_terminal_grafted_total: int = 0
     union_rollout_terminal_graft_used: bool = False
+    quality_reservoir_generated_total: int = 0
+    quality_reservoir_kept_total: int = 0
+    quality_reservoir_selected_total: int = 0
+    quality_reservoir_witness_found_total: int = 0
+    quality_reservoir_avg_witness_quality: float = 0.0
+    quality_reservoir_avg_receiver_debt: float = 0.0
+    quality_reservoir_avg_height_risk: float = 0.0
+    quality_reservoir_pair_penalty_total: float = 0.0
     micro_rollout_calls: int = 0
     micro_rollout_cache_hits: int = 0
     micro_rollout_candidates: int = 0
@@ -5218,9 +5226,71 @@ def _quality_reservoir_input_items(
     args: argparse.Namespace,
 ) -> list[tuple[bytes, tuple[int, int, bytes]]]:
     max_candidates = max(0, int(getattr(args, "quality_reservoir_max_candidates", 0) or 0))
-    if max_candidates <= 0 or len(candidates) <= max_candidates:
+    if max_candidates <= 0:
         return list(candidates.items())
-    return _rank_next_frontier_candidates(candidates, args)[:max_candidates]
+    origin_codes = {
+        code
+        for code in (getattr(args, "_candidate_origin_by_code", {}) or {})
+        if code in candidates
+    }
+    origin_codes.update(code for code in (getattr(args, "_frg_frontier_child_codes", set()) or set()) if code in candidates)
+    origin_codes.update(code for code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()) if code in candidates)
+    witness_codes = {
+        code
+        for code in (getattr(args, "_union_rollout_probe_current_results", {}) or {})
+        if code in candidates
+    }
+    origin_count = len(
+        {
+            (getattr(args, "_candidate_origin_by_code", {}) or {}).get(code, "explicit")
+            for code in origin_codes
+        }
+    )
+    origin_reserve = max(0, int(getattr(args, "quality_reservoir_origin_reserve", 0) or 0))
+    witness_reserve = max(0, int(getattr(args, "quality_reservoir_witness_reserve", 0) or 0))
+    progress_reserve = max(0, int(getattr(args, "quality_reservoir_progress_reserve", 0) or 0))
+    beam_width = max(0, int(getattr(args, "beam_width", 0) or 0))
+    input_cap = min(
+        len(candidates),
+        max(
+            max_candidates * 2,
+            max_candidates + origin_reserve * max(1, origin_count) + witness_reserve + progress_reserve,
+            beam_width,
+            max_candidates,
+        ),
+    )
+    if len(candidates) <= input_cap:
+        return list(candidates.items())
+
+    selected: dict[bytes, tuple[int, int, bytes]] = {}
+
+    def add_code(code: bytes) -> None:
+        if code in candidates and len(selected) < input_cap:
+            selected.setdefault(code, candidates[code])
+
+    ranked = _rank_next_frontier_candidates(candidates, args)
+    for code, data in ranked[:max_candidates]:
+        if len(selected) >= input_cap:
+            break
+        selected.setdefault(code, data)
+    for code in sorted(witness_codes):
+        add_code(code)
+    for code in sorted(origin_codes):
+        add_code(code)
+    if progress_reserve > 0 and len(selected) < input_cap:
+        progress_ranked = sorted(
+            candidates.items(),
+            key=lambda item: (int(item[1][0]), int(item[1][1]), item[1][2], item[0]),
+        )
+        for code, data in progress_ranked[: max_candidates + progress_reserve]:
+            if len(selected) >= input_cap:
+                break
+            selected.setdefault(code, data)
+    for code, data in ranked:
+        if len(selected) >= input_cap:
+            break
+        selected.setdefault(code, data)
+    return list(selected.items())
 
 
 def _apply_quality_reservoir_candidates(
@@ -12578,6 +12648,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         _write_terminal_trace_rows(terminal_trace_rows, Path(terminal_trace_output))
     receiver_debt_count = max(1, int(getattr(args, "_receiver_debt_selected_count", 0) or 0))
     escape_count = max(1, int(getattr(args, "_escape_potential_selected_count", 0) or 0))
+    quality_reservoir_kept_count = max(1, int(getattr(args, "_quality_reservoir_kept_total", 0) or 0))
     reduction_chain_selected_total = sum(
         1 for code in search_path_codes[1:] if code in (getattr(args, "_reduction_chain_depth_by_code", {}) or {})
     )
@@ -12683,6 +12754,21 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         union_rollout_probe_selected_total=args._union_rollout_probe_selected_total,
         union_rollout_terminal_grafted_total=args._union_rollout_terminal_grafted_total,
         union_rollout_terminal_graft_used=union_rollout_terminal_graft_used,
+        quality_reservoir_generated_total=int(getattr(args, "_quality_reservoir_generated_total", 0) or 0),
+        quality_reservoir_kept_total=int(getattr(args, "_quality_reservoir_kept_total", 0) or 0),
+        quality_reservoir_witness_found_total=int(getattr(args, "_quality_reservoir_witness_found_total", 0) or 0),
+        quality_reservoir_avg_witness_quality=float(
+            getattr(args, "_quality_reservoir_witness_quality_total", 0.0) or 0.0
+        )
+        / quality_reservoir_kept_count,
+        quality_reservoir_avg_receiver_debt=float(
+            getattr(args, "_quality_reservoir_receiver_debt_total", 0.0) or 0.0
+        )
+        / quality_reservoir_kept_count,
+        quality_reservoir_avg_height_risk=float(
+            getattr(args, "_quality_reservoir_height_risk_total", 0.0) or 0.0
+        )
+        / quality_reservoir_kept_count,
         micro_rollout_calls=args._micro_rollout_calls,
         micro_rollout_cache_hits=args._micro_rollout_cache_hits,
         micro_rollout_candidates=args._micro_rollout_candidates,

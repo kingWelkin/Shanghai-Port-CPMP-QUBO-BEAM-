@@ -2568,7 +2568,7 @@ def test_apply_quality_reservoir_bounds_feature_enrichment(monkeypatch):
     import argparse
     import benchmark_compact_beam_qubo_n0 as bench
 
-    candidates = {f"c{i}".encode(): (i, 1, b"parent") for i in range(6)}
+    candidates = {f"c{i}".encode(): (i, 1, b"parent") for i in range(20)}
     calls = []
 
     def fake_feature(code, data, args):
@@ -2605,9 +2605,104 @@ def test_apply_quality_reservoir_bounds_feature_enrichment(monkeypatch):
 
     kept = bench._apply_quality_reservoir_candidates(candidates, args)
 
-    assert len(calls) == 3
+    assert len(calls) < 20
     assert len(kept) == 3
     assert set(candidates) == kept
+    assert args._quality_reservoir_generated_total == 20
+    assert args._quality_reservoir_kept_total == 3
+    assert set(args._quality_reservoir_last_features_by_code) == kept
+
+
+def test_apply_quality_reservoir_includes_origin_witness_outside_base_window(monkeypatch):
+    import argparse
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent_code = b"parent"
+    candidates = {f"base{i}".encode(): (i, 1, parent_code) for i in range(6)}
+    candidates[b"frg_witness_tail"] = (99, 1, parent_code)
+    original_candidate_count = len(candidates)
+    calls = []
+
+    def fake_feature(code, data, args):
+        calls.append(code)
+        origin = (getattr(args, "_candidate_origin_by_code", {}) or {}).get(code, "core")
+        witness_quality = 1.0 if code in (getattr(args, "_union_rollout_probe_current_results", {}) or {}) else 0.0
+        reservoir_quality = 10.0 if code == b"frg_witness_tail" else float(6 - data[0])
+        return bench.QualityReservoirCandidate(
+            code,
+            data[0],
+            data[1],
+            data[2],
+            origin,
+            0,
+            witness_quality,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1,
+            -1,
+            (),
+            data[0],
+            reservoir_quality,
+        )
+
+    monkeypatch.setattr(bench, "_quality_reservoir_feature", fake_feature)
+    args = argparse.Namespace(
+        priority="n_then_depth",
+        beam_width=2,
+        quality_reservoir_enabled=True,
+        quality_reservoir_max_candidates=3,
+        quality_reservoir_top_quality=1,
+        quality_reservoir_origin_reserve=1,
+        quality_reservoir_witness_reserve=1,
+        quality_reservoir_progress_reserve=0,
+        _candidate_origin_by_code={b"frg_witness_tail": "frg_frontier_child"},
+        _frg_frontier_child_codes={b"frg_witness_tail"},
+        _wang_rollout_candidate_codes=set(),
+        _union_rollout_probe_current_results={b"frg_witness_tail": object()},
+    )
+
+    kept = bench._apply_quality_reservoir_candidates(candidates, args)
+
+    assert b"frg_witness_tail" in calls
+    assert b"frg_witness_tail" in kept
+    assert len(calls) < original_candidate_count
+    assert set(candidates) == kept
+
+
+def test_quality_reservoir_result_fields_store_task3_telemetry():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    result = bench.CompactBeamResult(
+        case="case",
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        quality_reservoir_generated_total=7,
+        quality_reservoir_kept_total=3,
+        quality_reservoir_witness_found_total=2,
+        quality_reservoir_avg_witness_quality=0.5,
+        quality_reservoir_avg_receiver_debt=0.25,
+        quality_reservoir_avg_height_risk=0.125,
+    )
+
+    assert result.quality_reservoir_generated_total == 7
+    assert result.quality_reservoir_kept_total == 3
+    assert result.quality_reservoir_witness_found_total == 2
+    assert result.quality_reservoir_avg_witness_quality == pytest.approx(0.5)
+    assert result.quality_reservoir_avg_receiver_debt == pytest.approx(0.25)
+    assert result.quality_reservoir_avg_height_risk == pytest.approx(0.125)
 
 
 def test_union_diversity_rollout_evaluator_ignores_infeasible_probe_by_default():
