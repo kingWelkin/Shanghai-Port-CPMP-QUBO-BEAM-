@@ -375,6 +375,21 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
             "union_diversity_qubo_macro_path_credit_weight",
             0.0,
         ),
+        "union_diversity_qubo_macro_future_credit_min_witness_quality": getattr(
+            args,
+            "union_diversity_qubo_macro_future_credit_min_witness_quality",
+            0.0,
+        ),
+        "union_diversity_qubo_receiver_debt_penalty_weight": getattr(
+            args,
+            "union_diversity_qubo_receiver_debt_penalty_weight",
+            0.0,
+        ),
+        "union_diversity_qubo_macro_future_credit_cap": getattr(
+            args,
+            "union_diversity_qubo_macro_future_credit_cap",
+            0.0,
+        ),
         "union_diversity_qubo_calls": getattr(result, "union_diversity_qubo_calls", 0),
         "union_diversity_qubo_vars": getattr(result, "union_diversity_qubo_vars", 0),
         "union_diversity_qubo_time_sec": getattr(result, "union_diversity_qubo_time_sec", 0.0),
@@ -1319,6 +1334,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -1614,6 +1630,9 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_diversity_qubo_receiver_debt_credit_weight",
         "union_diversity_qubo_source_scarcity_credit_weight",
         "union_diversity_qubo_macro_path_credit_weight",
+        "union_diversity_qubo_macro_future_credit_min_witness_quality",
+        "union_diversity_qubo_receiver_debt_penalty_weight",
+        "union_diversity_qubo_macro_future_credit_cap",
         "debt_basin_enabled",
         "w_receiver_debt",
         "w_escape_potential",
@@ -1880,6 +1899,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_macro_credit_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish":
@@ -2215,6 +2236,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -2486,6 +2508,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-diversity-qubo-receiver-debt-credit-weight", type=float)
     parser.add_argument("--union-diversity-qubo-source-scarcity-credit-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-path-credit-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-future-credit-min-witness-quality", type=float)
+    parser.add_argument("--union-diversity-qubo-receiver-debt-penalty-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-future-credit-cap", type=float)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
     parser.add_argument("--w-escape-potential", type=float, default=None)

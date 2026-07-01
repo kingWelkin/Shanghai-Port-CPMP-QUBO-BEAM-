@@ -3670,6 +3670,45 @@ def test_union_diversity_qubo_macro_future_credit_prefers_witnessed_macro(monkey
     assert selected == [b"macro"]
 
 
+def test_union_diversity_qubo_macro_future_credit_v2_gates_debt_and_caps_credit():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        union_diversity_qubo_macro_future_credit_enabled=True,
+        union_diversity_qubo_completion_witness_credit_weight=48.0,
+        union_diversity_qubo_receiver_debt_credit_weight=16.0,
+        union_diversity_qubo_source_scarcity_credit_weight=12.0,
+        union_diversity_qubo_macro_path_credit_weight=8.0,
+        union_diversity_qubo_macro_future_credit_min_witness_quality=0.35,
+        union_diversity_qubo_receiver_debt_penalty_weight=18.0,
+        union_diversity_qubo_macro_future_credit_cap=24.0,
+        quality_reservoir_enabled=False,
+    )
+    unwitnessed_debt = _union_feature_for_macro_quota(
+        origin="frg_frontier_child",
+        energy=10.0,
+        receiver_debt=3.0,
+        source_scarcity=1.0,
+        completion_witness_quality=0.0,
+        macro_edge_chain_length=4,
+        macro_edge_chain_penalty=1.0,
+    )
+    strong_witness = _union_feature_for_macro_quota(
+        origin="frg_frontier_child",
+        energy=10.0,
+        receiver_debt=0.1,
+        source_scarcity=1.0,
+        completion_witness_quality=0.95,
+        macro_edge_chain_length=4,
+        macro_edge_chain_penalty=0.05,
+    )
+
+    assert bench._union_diversity_macro_future_credit(unwitnessed_debt, args) < 0.0
+    assert bench._quality_reservoir_qubo_linear_energy(unwitnessed_debt, args) > unwitnessed_debt.energy
+    assert bench._union_diversity_macro_future_credit(strong_witness, args) == pytest.approx(24.0)
+    assert bench._quality_reservoir_qubo_linear_energy(strong_witness, args) == pytest.approx(-14.0)
+
+
 def test_micro_rollout_probe_obeys_two_step_limits_without_frontier_injection():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -5842,6 +5881,32 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_macro_credit_variant
     assert compact_args.union_diversity_qubo_receiver_debt_credit_weight > 0.0
     assert compact_args.union_diversity_qubo_source_scarcity_credit_weight > 0.0
     assert compact_args.union_diversity_qubo_macro_path_credit_weight > 0.0
+    assert compact_args.quality_reservoir_enabled is False
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_macro_credit_v2_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.frg_frontier_child_macro_edge_enabled is True
+    assert compact_args.union_diversity_qubo_macro_future_credit_enabled is True
+    assert compact_args.union_diversity_qubo_macro_future_credit_min_witness_quality > 0.0
+    assert compact_args.union_diversity_qubo_receiver_debt_penalty_weight > 0.0
+    assert compact_args.union_diversity_qubo_macro_future_credit_cap > 0.0
     assert compact_args.quality_reservoir_enabled is False
 
 
@@ -12356,6 +12421,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",

@@ -1386,6 +1386,9 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_receiver_debt_credit_weight": 0.0,
         "union_diversity_qubo_source_scarcity_credit_weight": 0.0,
         "union_diversity_qubo_macro_path_credit_weight": 0.0,
+        "union_diversity_qubo_macro_future_credit_min_witness_quality": 0.0,
+        "union_diversity_qubo_receiver_debt_penalty_weight": 0.0,
+        "union_diversity_qubo_macro_future_credit_cap": 0.0,
         "quality_reservoir_enabled": False,
         "quality_reservoir_max_candidates": 0,
         "quality_reservoir_top_quality": 0,
@@ -2700,6 +2703,19 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_polish"] 
     "quality_reservoir_enabled": False,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_polish"],
+    "union_diversity_qubo_completion_witness_credit_weight": 48.0,
+    "union_diversity_qubo_receiver_debt_credit_weight": 10.0,
+    "union_diversity_qubo_source_scarcity_credit_weight": 8.0,
+    "union_diversity_qubo_macro_path_credit_weight": 10.0,
+    "union_diversity_qubo_macro_future_credit_min_witness_quality": 0.35,
+    "union_diversity_qubo_receiver_debt_penalty_weight": 18.0,
+    "union_diversity_qubo_macro_future_credit_cap": 24.0,
+    "union_diversity_qubo_macro_edge_chain_cost_weight": 200.0,
+    "quality_reservoir_enabled": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -3692,6 +3708,13 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--union-diversity-qubo-source-scarcity-credit-weight"
         ),
         "union_diversity_qubo_macro_path_credit_weight": "--union-diversity-qubo-macro-path-credit-weight",
+        "union_diversity_qubo_macro_future_credit_min_witness_quality": (
+            "--union-diversity-qubo-macro-future-credit-min-witness-quality"
+        ),
+        "union_diversity_qubo_receiver_debt_penalty_weight": (
+            "--union-diversity-qubo-receiver-debt-penalty-weight"
+        ),
+        "union_diversity_qubo_macro_future_credit_cap": "--union-diversity-qubo-macro-future-credit-cap",
         "quality_reservoir_enabled": ("--quality-reservoir-enabled", "--no-quality-reservoir-enabled"),
         "quality_reservoir_max_candidates": "--quality-reservoir-max-candidates",
         "quality_reservoir_top_quality": "--quality-reservoir-top-quality",
@@ -5519,12 +5542,34 @@ def _union_diversity_macro_future_credit(
         float(getattr(args, "union_diversity_qubo_source_scarcity_credit_weight", 0.0) or 0.0),
     )
     path_weight = max(0.0, float(getattr(args, "union_diversity_qubo_macro_path_credit_weight", 0.0) or 0.0))
-    return (
-        witness_weight * _clamp01(float(feature.completion_witness_quality))
+    witness_quality = _clamp01(float(feature.completion_witness_quality))
+    path_quality = _union_diversity_macro_path_quality(feature)
+    evidence_quality = max(witness_quality, path_quality)
+    min_witness_quality = _clamp01(
+        float(getattr(args, "union_diversity_qubo_macro_future_credit_min_witness_quality", 0.0) or 0.0)
+    )
+    positive_credit = (
+        witness_weight * witness_quality
         + debt_weight * _union_diversity_receiver_debt_credit(feature)
         + scarcity_weight * _clamp01(float(feature.source_scarcity))
-        + path_weight * _union_diversity_macro_path_quality(feature)
+        + path_weight * path_quality
     )
+    if min_witness_quality > 0.0 and evidence_quality < min_witness_quality:
+        positive_credit = 0.0
+    debt_penalty_weight = max(
+        0.0,
+        float(getattr(args, "union_diversity_qubo_receiver_debt_penalty_weight", 0.0) or 0.0),
+    )
+    debt = max(0.0, float(feature.receiver_debt))
+    debt_penalty = debt_penalty_weight * _clamp01(debt / (1.0 + debt)) if debt > 0.0 else 0.0
+    net_credit = positive_credit - debt_penalty
+    credit_cap = max(
+        0.0,
+        float(getattr(args, "union_diversity_qubo_macro_future_credit_cap", 0.0) or 0.0),
+    )
+    if credit_cap > 0.0 and net_credit > 0.0:
+        net_credit = min(net_credit, credit_cap)
+    return net_credit
 
 
 def _quality_reservoir_qubo_linear_energy(
@@ -13624,6 +13669,21 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 "union_diversity_qubo_macro_path_credit_weight",
                 0.0,
             ),
+            "union_diversity_qubo_macro_future_credit_min_witness_quality": getattr(
+                args,
+                "union_diversity_qubo_macro_future_credit_min_witness_quality",
+                0.0,
+            ),
+            "union_diversity_qubo_receiver_debt_penalty_weight": getattr(
+                args,
+                "union_diversity_qubo_receiver_debt_penalty_weight",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_future_credit_cap": getattr(
+                args,
+                "union_diversity_qubo_macro_future_credit_cap",
+                0.0,
+            ),
             "union_diversity_qubo_calls": result.union_diversity_qubo_calls,
             "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
             "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
@@ -14601,6 +14661,9 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-receiver-debt-credit-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-source-scarcity-credit-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-path-credit-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-future-credit-min-witness-quality", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-receiver-debt-penalty-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-future-credit-cap", type=float, default=None)
     _add_quality_reservoir_arguments(parser)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
