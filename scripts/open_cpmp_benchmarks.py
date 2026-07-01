@@ -640,6 +640,20 @@ def _frg_frontier_child_row_fields(result, args: argparse.Namespace) -> dict[str
         "frg_macro_edge_recorded_total": getattr(result, "frg_macro_edge_recorded_total", 0),
         "frg_macro_edge_selected_total": getattr(result, "frg_macro_edge_selected_total", 0),
         "frg_macro_edge_expanded_steps_total": getattr(result, "frg_macro_edge_expanded_steps_total", 0),
+        "frg_frontier_child_terminal_witness_only_enabled": getattr(
+            args,
+            "frg_frontier_child_terminal_witness_only_enabled",
+            False,
+        ),
+        "frg_frontier_child_terminal_witness_respect_cap": getattr(
+            args,
+            "frg_frontier_child_terminal_witness_respect_cap",
+            True,
+        ),
+        "frg_terminal_witness_recorded_total": getattr(result, "frg_terminal_witness_recorded_total", 0),
+        "frg_terminal_witness_grafted_total": getattr(result, "frg_terminal_witness_grafted_total", 0),
+        "frg_terminal_witness_used": getattr(result, "frg_terminal_witness_used", False),
+        "frg_terminal_witness_moves": getattr(result, "frg_terminal_witness_moves", 0),
     }
 
 
@@ -1281,6 +1295,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
@@ -1614,6 +1629,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "frg_frontier_child_max_steps",
         "frg_frontier_child_append_only",
         "frg_frontier_child_macro_edge_enabled",
+        "frg_frontier_child_terminal_witness_only_enabled",
+        "frg_frontier_child_terminal_witness_respect_cap",
         "frg_frontier_child_certify_enabled",
         "frg_frontier_child_certify_max_steps",
         "frg_frontier_child_certify_time_limit",
@@ -1832,6 +1849,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish":
@@ -2164,6 +2183,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
@@ -2476,6 +2496,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-frontier-child-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-macro-edge-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--frg-frontier-child-terminal-witness-only-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument(
+        "--frg-frontier-child-terminal-witness-respect-cap",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     parser.add_argument("--frg-frontier-child-certify-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-certify-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-certify-time-limit", type=float)

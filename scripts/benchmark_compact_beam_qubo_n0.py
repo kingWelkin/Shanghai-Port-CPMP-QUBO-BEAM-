@@ -281,6 +281,12 @@ COMPACT_EXTRA_FIELDS = [
     "union_rollout_terminal_graft_respect_cap",
     "union_rollout_terminal_grafted_total",
     "union_rollout_terminal_graft_used",
+    "frg_frontier_child_terminal_witness_only_enabled",
+    "frg_frontier_child_terminal_witness_respect_cap",
+    "frg_terminal_witness_recorded_total",
+    "frg_terminal_witness_grafted_total",
+    "frg_terminal_witness_used",
+    "frg_terminal_witness_moves",
     "micro_rollout_enabled",
     "micro_rollout_trace_only",
     "receiver_safety_enabled",
@@ -1428,6 +1434,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_frontier_child_max_steps": 1,
         "frg_frontier_child_append_only": False,
         "frg_frontier_child_macro_edge_enabled": False,
+        "frg_frontier_child_terminal_witness_only_enabled": False,
+        "frg_frontier_child_terminal_witness_respect_cap": True,
         "frg_frontier_child_completion_prefix_enabled": False,
         "frg_frontier_child_completion_max_stack_count": 0,
         "frg_frontier_child_completion_time_limit": 0.003,
@@ -2669,6 +2677,24 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_po
     "quality_reservoir_enabled": False,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_mode": "hybrid_macro",
+    "frg_frontier_child_parent_width": 1,
+    "frg_frontier_child_limit": 3,
+    "frg_frontier_child_max_steps": 512,
+    "frg_frontier_child_append_only": False,
+    "frg_frontier_child_macro_edge_enabled": True,
+    "frg_frontier_child_terminal_witness_only_enabled": True,
+    "frg_frontier_child_terminal_witness_respect_cap": True,
+    "frg_frontier_child_certify_enabled": True,
+    "frg_frontier_child_certify_max_steps": 512,
+    "frg_frontier_child_certify_time_limit": 0.002,
+    "union_rollout_terminal_graft": False,
+    "quality_reservoir_enabled": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"],
     "quality_reservoir_enabled": True,
@@ -3242,6 +3268,10 @@ class CompactBeamResult:
     frg_macro_edge_recorded_total: int = 0
     frg_macro_edge_selected_total: int = 0
     frg_macro_edge_expanded_steps_total: int = 0
+    frg_terminal_witness_recorded_total: int = 0
+    frg_terminal_witness_grafted_total: int = 0
+    frg_terminal_witness_used: bool = False
+    frg_terminal_witness_moves: int = 0
     feasibility_escape_calls: int = 0
     feasibility_escape_added_total: int = 0
     feasibility_escape_active_layers: int = 0
@@ -3727,6 +3757,14 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "frg_frontier_child_macro_edge_enabled": (
             "--frg-frontier-child-macro-edge-enabled",
             "--no-frg-frontier-child-macro-edge-enabled",
+        ),
+        "frg_frontier_child_terminal_witness_only_enabled": (
+            "--frg-frontier-child-terminal-witness-only-enabled",
+            "--no-frg-frontier-child-terminal-witness-only-enabled",
+        ),
+        "frg_frontier_child_terminal_witness_respect_cap": (
+            "--frg-frontier-child-terminal-witness-respect-cap",
+            "--no-frg-frontier-child-terminal-witness-respect-cap",
         ),
         "frg_frontier_child_certify_enabled": (
             "--frg-frontier-child-certify-enabled",
@@ -5579,20 +5617,39 @@ def _union_rollout_probe_grafted_moves(
     rollout: UnionRolloutProbeResult,
     *,
     cap: int,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
 ) -> list[Move] | None:
     if not getattr(args, "union_rollout_terminal_graft", False):
         return None
+    return _completion_witness_grafted_moves(
+        code,
+        data,
+        parent,
+        instance,
+        rollout,
+        cap=cap,
+        macro_paths=macro_paths,
+        respect_cap=bool(getattr(args, "union_rollout_terminal_graft_respect_cap", True)),
+    )
+
+
+def _completion_witness_grafted_moves(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    parent: dict[bytes, bytes | None],
+    instance: Instance,
+    rollout: UnionRolloutProbeResult,
+    *,
+    cap: int,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+    respect_cap: bool = True,
+) -> list[Move] | None:
     if not rollout.feasible or int(rollout.final_n) != 0 or not rollout.move_path:
         return None
-    _n_value, _depth, parent_code = data
     try:
-        prefix_codes = _backtrack(parent, parent_code)
-    except (KeyError, RuntimeError):
-        return None
-    prefix_codes.append(code)
-    try:
+        prefix_codes = _candidate_prefix_codes(code, data, parent, macro_paths=macro_paths)
         prefix_moves = _codes_to_moves_instance(instance, prefix_codes)
-    except RuntimeError:
+    except (KeyError, RuntimeError):
         return None
     state = State(stacks=[list(stack) for stack in instance.stacks])
     try:
@@ -5611,11 +5668,28 @@ def _union_rollout_probe_grafted_moves(
         return None
     grafted = prefix_moves + tail_moves
     validation_cap = int(cap)
-    if not getattr(args, "union_rollout_terminal_graft_respect_cap", True):
+    if not respect_cap:
         validation_cap = 1_000_000_000
     if not _moves_reach_n0_with_cap(instance, grafted, validation_cap):
         return None
     return grafted
+
+
+def _candidate_prefix_codes(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    parent: dict[bytes, bytes | None],
+    *,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+) -> list[bytes]:
+    _n_value, _depth, parent_code = data
+    prefix_codes = _backtrack(parent, parent_code)
+    macro_path = tuple((macro_paths or {}).get(code, ()) or ())
+    if macro_path and macro_path[-1] == code:
+        prefix_codes.extend(macro_path)
+    else:
+        prefix_codes.append(code)
+    return prefix_codes
 
 
 def _union_rollout_probe_results(
@@ -6152,6 +6226,7 @@ def _inject_frg_frontier_child_candidates(
     best_depth: dict[bytes, int] | None = None,
     parent_chain: dict[bytes, bytes | None] | None = None,
     macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+    terminal_witnesses: list[tuple[bytes, tuple[int, int, bytes], UnionRolloutProbeResult]] | None = None,
 ) -> set[bytes]:
     if not getattr(args, "frg_frontier_child_enabled", False):
         return set()
@@ -6186,6 +6261,9 @@ def _inject_frg_frontier_child_candidates(
         macro_paths = getattr(args, "_frg_macro_edge_path_by_code", None)
     if macro_edge_enabled and not hasattr(args, "_frg_macro_edge_recorded_total"):
         args._frg_macro_edge_recorded_total = 0
+    terminal_witness_only = bool(getattr(args, "frg_frontier_child_terminal_witness_only_enabled", False))
+    if not hasattr(args, "_frg_terminal_witness_recorded_total"):
+        args._frg_terminal_witness_recorded_total = 0
     added: set[bytes] = set()
     origins = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))[:parent_width]
     for code, _n_value, depth in origins:
@@ -6266,10 +6344,22 @@ def _inject_frg_frontier_child_candidates(
                 ):
                     continue
                 _cache_frg_frontier_child_certification(args, child_code, certification_rollout)
-            candidates[child_code] = (int(child_n), child_depth, candidate_parent_code)
+            candidate_data = (int(child_n), child_depth, candidate_parent_code)
             if macro_edge_enabled and macro_paths is not None:
                 macro_paths[child_code] = tuple(macro_path_codes + [child_code])
                 args._frg_macro_edge_recorded_total += 1
+            if (
+                terminal_witnesses is not None
+                and certification_rollout is not None
+                and bool(certification_rollout.feasible)
+                and int(certification_rollout.final_n) == 0
+                and bool(certification_rollout.move_path)
+            ):
+                terminal_witnesses.append((child_code, candidate_data, certification_rollout))
+                args._frg_terminal_witness_recorded_total += 1
+            if terminal_witness_only:
+                continue
+            candidates[child_code] = candidate_data
             added.add(child_code)
             if getattr(args, "debt_basin_reduction_chain_enabled", False):
                 args._reduction_chain_depth_by_code[child_code] = len(moves)
@@ -12204,6 +12294,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._frg_macro_edge_recorded_total = 0
     args._frg_macro_edge_selected_total = 0
     args._frg_macro_edge_expanded_steps_total = 0
+    args._frg_terminal_witness_recorded_total = 0
+    args._frg_terminal_witness_grafted_total = 0
+    args._frg_terminal_witness_best_moves = 0
     args._union_rollout_probe_cache = {}
     args._union_rollout_probe_frg_cache = {}
     args._union_rollout_probe_current_results = {}
@@ -12326,6 +12419,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     stream_pruned_candidates = 0
     wang_rollout_added_total = 0
     rollout_terminal_moves: list[Move] | None = None
+    rollout_terminal_source = ""
     terminal_bridge_used = False
     terminal_bridge_moves = 0
     stream_seq = 0
@@ -12536,6 +12630,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 _update_layer_candidate_metrics(candidates, args, cap)
         frg_frontier_child_codes: set[bytes] = set()
         frg_macro_edge_paths: dict[bytes, tuple[bytes, ...]] = getattr(args, "_frg_macro_edge_path_by_code", {})
+        frg_terminal_witnesses: list[tuple[bytes, tuple[int, int, bytes], UnionRolloutProbeResult]] = []
         if not getattr(args, "frg_frontier_child_append_only", False):
             candidate_count_before_frg_frontier = len(candidates)
             frg_frontier_child_codes = _inject_frg_frontier_child_candidates(
@@ -12546,6 +12641,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 best_depth,
                 parent_chain=parent,
                 macro_paths=frg_macro_edge_paths,
+                terminal_witnesses=frg_terminal_witnesses,
             )
             if frg_frontier_child_codes:
                 for code in frg_frontier_child_codes:
@@ -12553,6 +12649,25 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 peak_candidates = max(peak_candidates, len(candidates))
                 if len(candidates) != candidate_count_before_frg_frontier:
                     _update_layer_candidate_metrics(candidates, args, cap)
+        for code, data, rollout in frg_terminal_witnesses:
+            grafted = _completion_witness_grafted_moves(
+                code,
+                data,
+                parent,
+                instance,
+                rollout,
+                cap=cap,
+                macro_paths=frg_macro_edge_paths,
+                respect_cap=bool(getattr(args, "frg_frontier_child_terminal_witness_respect_cap", True)),
+            )
+            if grafted is None:
+                continue
+            args._frg_terminal_witness_grafted_total += 1
+            if rollout_terminal_moves is None or len(grafted) < len(rollout_terminal_moves):
+                rollout_terminal_moves = grafted
+                rollout_terminal_source = "frg_terminal_witness"
+                args._frg_terminal_witness_best_moves = len(grafted)
+                depth_cap = min(depth_cap, max(0, len(grafted) - 1))
         args._frg_frontier_child_codes = set(frg_frontier_child_codes)
         if getattr(args, "quality_reservoir_enabled", False):
             kept_codes = _apply_quality_reservoir_candidates(candidates, args)
@@ -12597,6 +12712,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     continue
                 if rollout_terminal_moves is None or len(grafted) < len(rollout_terminal_moves):
                     rollout_terminal_moves = grafted
+                    rollout_terminal_source = "union_rollout"
                     depth_cap = min(depth_cap, max(0, len(grafted) - 1))
                 args._union_rollout_terminal_grafted_total += 1
         if dlts_feature_output is not None:
@@ -12747,6 +12863,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     wang_incumbent_used = False
     frg_seed_used = False
     union_rollout_terminal_graft_used = False
+    frg_terminal_witness_used = False
     search_path_codes: list[bytes] = []
     if target is not None:
         codes = _backtrack_with_macro_edges(parent, target, getattr(args, "_frg_macro_edge_path_by_code", {}))
@@ -12806,11 +12923,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             )
     if rollout_terminal_moves is not None and (not moves or len(rollout_terminal_moves) < len(moves)):
         moves = rollout_terminal_moves
-        union_rollout_terminal_graft_used = True
-        status += (
-            f"; union_rollout_terminal_graft_used=True; "
-            f"union_rollout_terminal_graft_moves={len(rollout_terminal_moves)}"
-        )
+        if rollout_terminal_source == "frg_terminal_witness":
+            frg_terminal_witness_used = True
+        else:
+            union_rollout_terminal_graft_used = True
+        status = "ok"
     if frg_seed is not None and frg_seed_accepted and (not moves or len(frg_seed.moves) < len(moves)):
         moves = list(frg_seed.moves)
         frg_seed_used = True
@@ -12987,6 +13104,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         frg_macro_edge_recorded_total=int(getattr(args, "_frg_macro_edge_recorded_total", 0) or 0),
         frg_macro_edge_selected_total=int(getattr(args, "_frg_macro_edge_selected_total", 0) or 0),
         frg_macro_edge_expanded_steps_total=int(getattr(args, "_frg_macro_edge_expanded_steps_total", 0) or 0),
+        frg_terminal_witness_recorded_total=int(getattr(args, "_frg_terminal_witness_recorded_total", 0) or 0),
+        frg_terminal_witness_grafted_total=int(getattr(args, "_frg_terminal_witness_grafted_total", 0) or 0),
+        frg_terminal_witness_used=bool(frg_terminal_witness_used),
+        frg_terminal_witness_moves=int(getattr(args, "_frg_terminal_witness_best_moves", 0) or 0),
         feasibility_escape_calls=args._feasibility_escape_calls_done,
         feasibility_escape_added_total=args._feasibility_escape_added_total,
         feasibility_escape_active_layers=args._feasibility_escape_active_layers,
@@ -13633,6 +13754,20 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_macro_edge_recorded_total": result.frg_macro_edge_recorded_total,
             "frg_macro_edge_selected_total": result.frg_macro_edge_selected_total,
             "frg_macro_edge_expanded_steps_total": result.frg_macro_edge_expanded_steps_total,
+            "frg_frontier_child_terminal_witness_only_enabled": getattr(
+                args,
+                "frg_frontier_child_terminal_witness_only_enabled",
+                False,
+            ),
+            "frg_frontier_child_terminal_witness_respect_cap": getattr(
+                args,
+                "frg_frontier_child_terminal_witness_respect_cap",
+                True,
+            ),
+            "frg_terminal_witness_recorded_total": result.frg_terminal_witness_recorded_total,
+            "frg_terminal_witness_grafted_total": result.frg_terminal_witness_grafted_total,
+            "frg_terminal_witness_used": result.frg_terminal_witness_used,
+            "frg_terminal_witness_moves": result.frg_terminal_witness_moves,
             "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
             "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
             "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
@@ -14407,6 +14542,16 @@ def main() -> int:
     parser.add_argument("--frg-frontier-child-max-steps", type=int, default=None)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-macro-edge-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--frg-frontier-child-terminal-witness-only-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument(
+        "--frg-frontier-child-terminal-witness-respect-cap",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     parser.add_argument("--frg-frontier-child-certify-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-certify-max-steps", type=int, default=None)
     parser.add_argument("--frg-frontier-child-certify-time-limit", type=float, default=None)

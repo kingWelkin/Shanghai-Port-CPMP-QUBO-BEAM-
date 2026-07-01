@@ -750,8 +750,16 @@ def test_open_priority_group_row_serializes_frg_macro_edge_fields():
         frg_macro_edge_recorded_total=5,
         frg_macro_edge_selected_total=2,
         frg_macro_edge_expanded_steps_total=4,
+        frg_terminal_witness_recorded_total=3,
+        frg_terminal_witness_grafted_total=1,
+        frg_terminal_witness_used=True,
+        frg_terminal_witness_moves=17,
     )
-    args = _compact_args(frg_frontier_child_macro_edge_enabled=True)
+    args = _compact_args(
+        frg_frontier_child_macro_edge_enabled=True,
+        frg_frontier_child_terminal_witness_only_enabled=True,
+        frg_frontier_child_terminal_witness_respect_cap=True,
+    )
 
     assert requires_priority_group_semantics(instance)
 
@@ -759,10 +767,17 @@ def test_open_priority_group_row_serializes_frg_macro_edge_fields():
 
     assert "frg_frontier_child_macro_edge_enabled" in OPEN_RESULT_FIELDS
     assert "frg_macro_edge_recorded_total" in OPEN_RESULT_FIELDS
+    assert "frg_terminal_witness_used" in OPEN_RESULT_FIELDS
     assert row["frg_frontier_child_macro_edge_enabled"] is True
     assert row["frg_macro_edge_recorded_total"] == 5
     assert row["frg_macro_edge_selected_total"] == 2
     assert row["frg_macro_edge_expanded_steps_total"] == 4
+    assert row["frg_frontier_child_terminal_witness_only_enabled"] is True
+    assert row["frg_frontier_child_terminal_witness_respect_cap"] is True
+    assert row["frg_terminal_witness_recorded_total"] == 3
+    assert row["frg_terminal_witness_grafted_total"] == 1
+    assert row["frg_terminal_witness_used"] is True
+    assert row["frg_terminal_witness_moves"] == 17
 
 
 def test_open_priority_group_row_serializes_quality_reservoir_fields():
@@ -3104,6 +3119,191 @@ def test_union_diversity_macro_edge_chain_cost_penalizes_unwitnessed_long_replay
     assert penalized.macro_edge_chain_penalty == pytest.approx(0.75)
     assert penalized.energy == pytest.approx(base.energy + 300.0)
     assert witnessed.energy == pytest.approx(base.energy)
+
+
+def test_union_rollout_terminal_graft_expands_macro_edge_path():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 4
+    parent_stacks = [[1, 4, 3, 2], [], [], []]
+    middle_stacks = [[1, 4, 3], [2], [], []]
+    child_stacks = [[1, 4], [2], [3], []]
+    parent_code, _parent_n = bench._encode(parent_stacks, stack_count, max_height)
+    middle_code, _middle_n = bench._encode(middle_stacks, stack_count, max_height)
+    child_code, child_n = bench._encode(child_stacks, stack_count, max_height)
+    instance = Instance(
+        "macro_terminal_graft",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count,
+        max_height,
+        4,
+        parent_stacks,
+    )
+    args = _compact_args(
+        union_rollout_terminal_graft=True,
+        union_rollout_terminal_graft_respect_cap=True,
+    )
+    rollout = bench.UnionRolloutProbeResult(
+        feasible=True,
+        final_n=0,
+        moves=1,
+        status="FRG_FEASIBLE",
+        runtime_sec=0.0,
+        move_path=(Move(3, 4, 1, 0, 2, 1),),
+    )
+
+    grafted = bench._union_rollout_probe_grafted_moves(
+        child_code,
+        (child_n, 2, parent_code),
+        {parent_code: None},
+        instance,
+        args,
+        rollout,
+        cap=99,
+        macro_paths={child_code: (middle_code, child_code)},
+    )
+
+    assert grafted is not None
+    assert [(move.box, move.from_stack, move.to_stack) for move in grafted] == [
+        (2, 0, 1),
+        (3, 0, 2),
+        (4, 0, 3),
+    ]
+
+
+def test_frg_frontier_child_terminal_witness_only_does_not_pollute_candidates(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 4
+    parent_stacks = [[1, 4, 3, 2], [], [], []]
+    middle_stacks = [[1, 4, 3], [2], [], []]
+    child_stacks = [[1, 4], [2], [3], []]
+    parent_code, parent_n = bench._encode(parent_stacks, stack_count, max_height)
+    middle_code, _middle_n = bench._encode(middle_stacks, stack_count, max_height)
+    child_code, child_n = bench._encode(child_stacks, stack_count, max_height)
+    middle_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in middle_stacks))
+    child_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in child_stacks))
+    rollout = bench.UnionRolloutProbeResult(
+        feasible=True,
+        final_n=0,
+        moves=1,
+        status="FRG_FEASIBLE",
+        runtime_sec=0.0,
+        move_path=(Move(3, 4, 1, 0, 2, 1),),
+    )
+
+    def fake_rows_for_mode(layout, height, step, args, *, child_limit, max_steps, completion_prefix_enabled):
+        del layout, height, step, args, child_limit, max_steps, completion_prefix_enabled
+        return [
+            (
+                child_layout,
+                (
+                    Move(1, 2, 0, 1, 4, 1),
+                    Move(2, 3, 0, 2, 3, 1),
+                ),
+                (middle_layout, child_layout),
+            )
+        ]
+
+    monkeypatch.setattr(bench, "_frg_frontier_child_rows_for_mode", fake_rows_for_mode)
+    monkeypatch.setattr(bench, "_frg_frontier_child_certification_rollout", lambda *args, **kwargs: rollout)
+    args = _compact_args(
+        frg_frontier_child_enabled=True,
+        frg_frontier_child_mode="hybrid_macro",
+        frg_frontier_child_macro_edge_enabled=True,
+        frg_frontier_child_terminal_witness_only_enabled=True,
+        frg_frontier_child_parent_width=1,
+        frg_frontier_child_limit=1,
+        frg_frontier_child_max_steps=3,
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+    candidates: dict[bytes, tuple[int, int, bytes]] = {}
+    macro_paths: dict[bytes, tuple[bytes, ...]] = {}
+    terminal_witnesses: list[tuple[bytes, tuple[int, int, bytes], bench.UnionRolloutProbeResult]] = []
+
+    added = bench._inject_frg_frontier_child_candidates(
+        [(parent_code, parent_n, 0)],
+        candidates,
+        args,
+        depth_cap=99,
+        best_depth={},
+        parent_chain={parent_code: None},
+        macro_paths=macro_paths,
+        terminal_witnesses=terminal_witnesses,
+    )
+
+    assert added == set()
+    assert candidates == {}
+    assert macro_paths[child_code] == (middle_code, child_code)
+    assert terminal_witnesses == [(child_code, (child_n, 2, parent_code), rollout)]
+
+
+def test_run_compact_beam_uses_frg_terminal_witness_without_frontier_pollution(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 4
+    parent_stacks = [[1, 4, 3, 2], [], [], []]
+    middle_stacks = [[1, 4, 3], [2], [], []]
+    child_stacks = [[1, 4], [2], [3], []]
+    middle_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in middle_stacks))
+    child_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in child_stacks))
+    rollout = bench.UnionRolloutProbeResult(
+        feasible=True,
+        final_n=0,
+        moves=1,
+        status="FRG_FEASIBLE",
+        runtime_sec=0.0,
+        move_path=(Move(3, 4, 1, 0, 2, 1),),
+    )
+
+    def fake_rows_for_mode(layout, height, step, args, *, child_limit, max_steps, completion_prefix_enabled):
+        del layout, height, step, args, child_limit, max_steps, completion_prefix_enabled
+        return [
+            (
+                child_layout,
+                (
+                    Move(1, 2, 0, 1, 4, 1),
+                    Move(2, 3, 0, 2, 3, 1),
+                ),
+                (middle_layout, child_layout),
+            )
+        ]
+
+    monkeypatch.setattr(bench, "_frg_frontier_child_rows_for_mode", fake_rows_for_mode)
+    monkeypatch.setattr(bench, "_frg_frontier_child_certification_rollout", lambda *args, **kwargs: rollout)
+    monkeypatch.setattr(bench, "_select_next_frontier", lambda candidates, args: ([], set(), 0, 0, 0.0))
+    instance = Instance(
+        "terminal_witness_only",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count,
+        max_height,
+        4,
+        parent_stacks,
+    )
+    args = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
+        time_limit=1.0,
+        alpha=10.0,
+        max_moves=20,
+        target_final_n=0,
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+
+    result = bench.run_compact_beam_instance("terminal_witness_only", instance, args)
+
+    assert result.status == "ok"
+    assert [(move.box, move.from_stack, move.to_stack) for move in result.moves] == [
+        (2, 0, 1),
+        (3, 0, 2),
+        (4, 0, 3),
+    ]
+    assert result.frg_frontier_child_added_total == 0
+    assert result.frg_terminal_witness_used is True
 
 
 def test_union_diversity_rollout_evaluator_respects_min_stack_gate():
@@ -5544,6 +5744,34 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_frg_macro_edge_qubo_
     assert compact_args.frg_frontier_child_mode == "hybrid_macro"
     assert compact_args.frg_frontier_child_append_only is False
     assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
+    assert compact_args.quality_reservoir_enabled is False
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_terminal_witness_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_enabled is True
+    assert compact_args.frg_frontier_child_mode == "hybrid_macro"
+    assert compact_args.frg_frontier_child_macro_edge_enabled is True
+    assert compact_args.frg_frontier_child_terminal_witness_only_enabled is True
+    assert compact_args.frg_frontier_child_terminal_witness_respect_cap is True
+    assert compact_args.frg_frontier_child_append_only is False
+    assert compact_args.frg_seed_enabled is True
+    assert compact_args.union_rollout_terminal_graft is False
     assert compact_args.quality_reservoir_enabled is False
 
 
@@ -12029,6 +12257,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",

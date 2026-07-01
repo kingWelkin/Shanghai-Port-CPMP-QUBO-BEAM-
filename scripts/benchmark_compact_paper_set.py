@@ -557,6 +557,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-frontier-child-limit", type=int)
     parser.add_argument("--frg-frontier-child-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--frg-frontier-child-terminal-witness-only-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument(
+        "--frg-frontier-child-terminal-witness-respect-cap",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     parser.add_argument("--frg-frontier-child-completion-prefix-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-completion-max-stack-count", type=int)
     parser.add_argument("--frg-frontier-child-completion-time-limit", type=float)
