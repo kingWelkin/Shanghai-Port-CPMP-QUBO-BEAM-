@@ -720,6 +720,51 @@ def test_open_priority_group_row_serializes_frg_frontier_soft_supply_fields():
     assert row["frg_frontier_child_added_total"] == 7
 
 
+def test_open_priority_group_row_serializes_frg_macro_edge_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import OPEN_RESULT_FIELDS, _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_frg_macro_edge_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        frg_macro_edge_recorded_total=5,
+        frg_macro_edge_selected_total=2,
+        frg_macro_edge_expanded_steps_total=4,
+    )
+    args = _compact_args(frg_frontier_child_macro_edge_enabled=True)
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert "frg_frontier_child_macro_edge_enabled" in OPEN_RESULT_FIELDS
+    assert "frg_macro_edge_recorded_total" in OPEN_RESULT_FIELDS
+    assert row["frg_frontier_child_macro_edge_enabled"] is True
+    assert row["frg_macro_edge_recorded_total"] == 5
+    assert row["frg_macro_edge_selected_total"] == 2
+    assert row["frg_macro_edge_expanded_steps_total"] == 4
+
+
 def test_open_priority_group_row_serializes_quality_reservoir_fields():
     from benchmark_compact_beam_qubo_n0 import CompactBeamResult
     from open_cpmp_benchmarks import OPEN_RESULT_FIELDS, _open_row_dict_from_instance_result, requires_priority_group_semantics
@@ -3006,6 +3051,61 @@ def test_union_diversity_rollout_evaluator_ignores_infeasible_probe_by_default()
     assert feature.energy == pytest.approx(7011.0)
 
 
+def test_union_diversity_macro_edge_chain_cost_penalizes_unwitnessed_long_replay():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent_code, _parent_n = bench._encode([[3, 2, 1], [], []], stack_count, max_height)
+    first_code, _first_n = bench._encode([[3, 2], [1], []], stack_count, max_height)
+    second_code, _second_n = bench._encode([[3], [1], [2]], stack_count, max_height)
+    child_code, child_n = bench._encode([[], [1], [2, 3]], stack_count, max_height)
+    base_args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        union_diversity_qubo_rank_weight=0.0,
+        union_diversity_qubo_wang_fixed_weight=0.0,
+        union_diversity_qubo_wang_pair_weight=0.0,
+        union_diversity_qubo_frg_weight=0.0,
+        union_diversity_qubo_rollout_bonus=0.0,
+        union_diversity_qubo_macro_edge_chain_cost_weight=0.0,
+        frg_frontier_child_max_steps=4,
+        _frg_macro_edge_path_by_code={child_code: (first_code, second_code, child_code)},
+    )
+    penalized_args = SimpleNamespace(**vars(base_args))
+    penalized_args.union_diversity_qubo_macro_edge_chain_cost_weight = 400.0
+
+    base = bench._union_diversity_qubo_features(
+        child_code,
+        (child_n, 10, parent_code),
+        0,
+        base_args,
+        rollout=None,
+        origin="frg_frontier_child",
+    )
+    penalized = bench._union_diversity_qubo_features(
+        child_code,
+        (child_n, 10, parent_code),
+        0,
+        penalized_args,
+        rollout=None,
+        origin="frg_frontier_child",
+    )
+    witnessed = bench._union_diversity_qubo_features(
+        child_code,
+        (child_n, 10, parent_code),
+        0,
+        penalized_args,
+        rollout=bench.UnionRolloutProbeResult(True, 0, 0, "FRG_FEASIBLE", 0.0),
+        origin="frg_frontier_child",
+    )
+
+    assert base.macro_edge_chain_length == 3
+    assert penalized.macro_edge_chain_penalty == pytest.approx(0.75)
+    assert penalized.energy == pytest.approx(base.energy + 300.0)
+    assert witnessed.energy == pytest.approx(base.energy)
+
+
 def test_union_diversity_rollout_evaluator_respects_min_stack_gate():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -4529,6 +4629,77 @@ def test_frg_frontier_child_completion_prefix_replays_rollout_as_chain(monkeypat
     assert args._reduction_chain_depth_by_code[final_code] == 2
 
 
+def test_frg_frontier_child_macro_edge_expands_replay_chain(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    parent_stacks = [[3, 2, 1], [], []]
+    one_step_stacks = [[3, 2], [1], []]
+    final_stacks = [[3], [1], [2]]
+    parent_code, parent_n = bench._encode(parent_stacks, stack_count, max_height)
+    one_step_code, _one_step_n = bench._encode(one_step_stacks, stack_count, max_height)
+    final_code, final_n = bench._encode(final_stacks, stack_count, max_height)
+    one_step_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in one_step_stacks))
+    final_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in final_stacks))
+
+    def fake_rollout_children(layout, height, step, args, *, child_limit, max_steps):
+        del layout, height, step, args, child_limit
+        assert max_steps == 2
+        return [
+            (
+                final_layout,
+                (
+                    Move(4, 1, 0, 1, 3, 1),
+                    Move(5, 2, 0, 2, 2, 1),
+                ),
+                (one_step_layout, final_layout),
+            )
+        ]
+
+    monkeypatch.setattr(bench, "_frg_frontier_child_rollout_children", fake_rollout_children)
+    args = _compact_args(
+        frg_frontier_child_enabled=True,
+        frg_frontier_child_macro_edge_enabled=True,
+        frg_frontier_child_parent_width=1,
+        frg_frontier_child_limit=1,
+        frg_frontier_child_max_steps=2,
+        _stack_count=stack_count,
+        _max_height=max_height,
+    )
+    candidates: dict[bytes, tuple[int, int, bytes]] = {}
+    parent_chain = {parent_code: None}
+    macro_paths: dict[bytes, tuple[bytes, ...]] = {}
+
+    added = bench._inject_frg_frontier_child_candidates(
+        [(parent_code, parent_n, 4)],
+        candidates,
+        args,
+        depth_cap=99,
+        best_depth={},
+        parent_chain=parent_chain,
+        macro_paths=macro_paths,
+    )
+    parent_chain[final_code] = candidates[final_code][2]
+
+    expanded_codes = bench._backtrack_with_macro_edges(parent_chain, final_code, macro_paths)
+    instance = Instance(
+        "macro_edge",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count,
+        max_height,
+        3,
+        parent_stacks,
+    )
+    moves = bench._codes_to_moves_instance(instance, expanded_codes)
+
+    assert added == {final_code}
+    assert candidates[final_code] == (final_n, 6, parent_code)
+    assert macro_paths[final_code] == (one_step_code, final_code)
+    assert expanded_codes == [parent_code, one_step_code, final_code]
+    assert [(move.from_stack, move.to_stack) for move in moves] == [(0, 1), (0, 2)]
+
+
 def test_parent_link_assignment_rejects_cycle_and_preserves_existing_parent():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -5350,6 +5521,30 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_frg_soft_supply_qubo
     assert compact_args.frg_frontier_child_parent_width < compact_args.frg_frontier_child_soft_supply_parent_width
     assert compact_args.frg_frontier_child_limit < compact_args.frg_frontier_child_soft_supply_limit
     assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_frg_macro_edge_qubo_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.frg_frontier_child_macro_edge_enabled is True
+    assert compact_args.frg_frontier_child_mode == "hybrid_macro"
+    assert compact_args.frg_frontier_child_append_only is False
+    assert compact_args.union_diversity_qubo_adaptive_macro_quota_enabled is True
+    assert compact_args.quality_reservoir_enabled is False
 
 
 def test_open_and_paper_runners_accept_qubo_diversity_union_quality_reservoir_variant():
@@ -11833,6 +12028,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",

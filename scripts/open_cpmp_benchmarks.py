@@ -347,6 +347,11 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
         "union_diversity_qubo_macro_quality_bonus": getattr(
             args, "union_diversity_qubo_macro_quality_bonus", 0.0
         ),
+        "union_diversity_qubo_macro_edge_chain_cost_weight": getattr(
+            args,
+            "union_diversity_qubo_macro_edge_chain_cost_weight",
+            0.0,
+        ),
         "union_diversity_qubo_calls": getattr(result, "union_diversity_qubo_calls", 0),
         "union_diversity_qubo_vars": getattr(result, "union_diversity_qubo_vars", 0),
         "union_diversity_qubo_time_sec": getattr(result, "union_diversity_qubo_time_sec", 0.0),
@@ -631,6 +636,10 @@ def _frg_frontier_child_row_fields(result, args: argparse.Namespace) -> dict[str
         "frg_frontier_child_calls": getattr(result, "frg_frontier_child_calls", 0),
         "frg_frontier_child_generated": getattr(result, "frg_frontier_child_generated", 0),
         "frg_frontier_child_added_total": getattr(result, "frg_frontier_child_added_total", 0),
+        "frg_frontier_child_macro_edge_enabled": getattr(args, "frg_frontier_child_macro_edge_enabled", False),
+        "frg_macro_edge_recorded_total": getattr(result, "frg_macro_edge_recorded_total", 0),
+        "frg_macro_edge_selected_total": getattr(result, "frg_macro_edge_selected_total", 0),
+        "frg_macro_edge_expanded_steps_total": getattr(result, "frg_macro_edge_expanded_steps_total", 0),
     }
 
 
@@ -1271,6 +1280,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
@@ -1559,6 +1569,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_diversity_qubo_macro_quota_scarcity_weight",
         "union_diversity_qubo_macro_quota_witness_weight",
         "union_diversity_qubo_macro_quality_bonus",
+        "union_diversity_qubo_macro_edge_chain_cost_weight",
         "debt_basin_enabled",
         "w_receiver_debt",
         "w_escape_potential",
@@ -1602,6 +1613,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "frg_frontier_child_limit",
         "frg_frontier_child_max_steps",
         "frg_frontier_child_append_only",
+        "frg_frontier_child_macro_edge_enabled",
         "frg_frontier_child_certify_enabled",
         "frg_frontier_child_certify_max_steps",
         "frg_frontier_child_certify_time_limit",
@@ -1818,6 +1830,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish":
@@ -2149,6 +2163,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish",
@@ -2409,6 +2424,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-diversity-qubo-macro-quota-scarcity-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-quota-witness-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-quality-bonus", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-edge-chain-cost-weight", type=float)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
     parser.add_argument("--w-escape-potential", type=float, default=None)
@@ -2459,6 +2475,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--frg-frontier-child-limit", type=int)
     parser.add_argument("--frg-frontier-child-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-macro-edge-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-certify-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-certify-max-steps", type=int)
     parser.add_argument("--frg-frontier-child-certify-time-limit", type=float)

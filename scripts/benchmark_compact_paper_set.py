@@ -518,6 +518,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--parent-core-cap", type=int)
     parser.add_argument("--union-diversity-qubo-origin-similarity-penalty", type=float)
     parser.add_argument("--union-diversity-qubo-same-origin-parent-n-band-penalty", type=float)
+    parser.add_argument(
+        "--union-diversity-qubo-adaptive-macro-quota-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--union-diversity-qubo-macro-edge-chain-cost-weight", type=float)
     parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-rollout-probe-max-candidates", type=int)
     parser.add_argument("--union-rollout-probe-time-limit", type=float)

@@ -231,6 +231,7 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_macro_quota_scarcity_weight",
     "union_diversity_qubo_macro_quota_witness_weight",
     "union_diversity_qubo_macro_quality_bonus",
+    "union_diversity_qubo_macro_edge_chain_cost_weight",
     "union_diversity_qubo_calls",
     "union_diversity_qubo_vars",
     "union_diversity_qubo_time_sec",
@@ -347,6 +348,10 @@ COMPACT_EXTRA_FIELDS = [
     "frg_frontier_child_calls",
     "frg_frontier_child_generated",
     "frg_frontier_child_added_total",
+    "frg_frontier_child_macro_edge_enabled",
+    "frg_macro_edge_recorded_total",
+    "frg_macro_edge_selected_total",
+    "frg_macro_edge_expanded_steps_total",
     "frg_seed_enabled",
     "frg_seed_time_limit",
     "frg_seed_min_max_steps",
@@ -1364,6 +1369,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_quota_scarcity_weight": 0.35,
         "union_diversity_qubo_macro_quota_witness_weight": 0.30,
         "union_diversity_qubo_macro_quality_bonus": 0.0,
+        "union_diversity_qubo_macro_edge_chain_cost_weight": 0.0,
         "quality_reservoir_enabled": False,
         "quality_reservoir_max_candidates": 0,
         "quality_reservoir_top_quality": 0,
@@ -1421,6 +1427,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_frontier_child_limit": 0,
         "frg_frontier_child_max_steps": 1,
         "frg_frontier_child_append_only": False,
+        "frg_frontier_child_macro_edge_enabled": False,
         "frg_frontier_child_completion_prefix_enabled": False,
         "frg_frontier_child_completion_max_stack_count": 0,
         "frg_frontier_child_completion_time_limit": 0.003,
@@ -2655,6 +2662,13 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_p
     "union_diversity_qubo_macro_quota_max_share": 0.45,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"],
+    "frg_frontier_child_macro_edge_enabled": True,
+    "union_diversity_qubo_macro_edge_chain_cost_weight": 400.0,
+    "quality_reservoir_enabled": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"],
     "quality_reservoir_enabled": True,
@@ -3225,6 +3239,9 @@ class CompactBeamResult:
     frg_frontier_child_calls: int = 0
     frg_frontier_child_generated: int = 0
     frg_frontier_child_added_total: int = 0
+    frg_macro_edge_recorded_total: int = 0
+    frg_macro_edge_selected_total: int = 0
+    frg_macro_edge_expanded_steps_total: int = 0
     feasibility_escape_calls: int = 0
     feasibility_escape_added_total: int = 0
     feasibility_escape_active_layers: int = 0
@@ -3607,6 +3624,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_diversity_qubo_macro_quota_scarcity_weight": "--union-diversity-qubo-macro-quota-scarcity-weight",
         "union_diversity_qubo_macro_quota_witness_weight": "--union-diversity-qubo-macro-quota-witness-weight",
         "union_diversity_qubo_macro_quality_bonus": "--union-diversity-qubo-macro-quality-bonus",
+        "union_diversity_qubo_macro_edge_chain_cost_weight": "--union-diversity-qubo-macro-edge-chain-cost-weight",
         "quality_reservoir_enabled": ("--quality-reservoir-enabled", "--no-quality-reservoir-enabled"),
         "quality_reservoir_max_candidates": "--quality-reservoir-max-candidates",
         "quality_reservoir_top_quality": "--quality-reservoir-top-quality",
@@ -3705,6 +3723,10 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "frg_frontier_child_append_only": (
             "--frg-frontier-child-append-only",
             "--no-frg-frontier-child-append-only",
+        ),
+        "frg_frontier_child_macro_edge_enabled": (
+            "--frg-frontier-child-macro-edge-enabled",
+            "--no-frg-frontier-child-macro-edge-enabled",
         ),
         "frg_frontier_child_certify_enabled": (
             "--frg-frontier-child-certify-enabled",
@@ -4561,6 +4583,8 @@ class UnionDiversityQuboFeatures(NamedTuple):
     is_frg_macro: bool = False
     source_scarcity: float = 0.0
     completion_witness_quality: float = 0.0
+    macro_edge_chain_length: int = 0
+    macro_edge_chain_penalty: float = 0.0
     quality_reservoir_quality: float = 0.0
     quality_reservoir_witness_quality: float = 0.0
     quality_reservoir_receiver_debt: float = 0.0
@@ -6127,6 +6151,7 @@ def _inject_frg_frontier_child_candidates(
     depth_cap: int,
     best_depth: dict[bytes, int] | None = None,
     parent_chain: dict[bytes, bytes | None] | None = None,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
 ) -> set[bytes]:
     if not getattr(args, "frg_frontier_child_enabled", False):
         return set()
@@ -6156,6 +6181,11 @@ def _inject_frg_frontier_child_candidates(
             args._reduction_chain_depth_by_code = {}
         if not hasattr(args, "_reduction_chain_origin_by_code"):
             args._reduction_chain_origin_by_code = {}
+    macro_edge_enabled = bool(getattr(args, "frg_frontier_child_macro_edge_enabled", False))
+    if macro_edge_enabled and macro_paths is None:
+        macro_paths = getattr(args, "_frg_macro_edge_path_by_code", None)
+    if macro_edge_enabled and not hasattr(args, "_frg_macro_edge_recorded_total"):
+        args._frg_macro_edge_recorded_total = 0
     added: set[bytes] = set()
     origins = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))[:parent_width]
     for code, _n_value, depth in origins:
@@ -6188,14 +6218,16 @@ def _inject_frg_frontier_child_candidates(
             child_depth = int(depth) + len(moves)
             previous_code = code
             previous_depth = int(depth)
+            macro_path_codes: list[bytes] = []
             for prefix_layout in layout_path[:-1]:
                 prefix_stacks = [list(stack) for stack in getattr(prefix_layout, "stacks", ())]
                 if len(prefix_stacks) != stack_count:
                     previous_code = b""
                     break
                 prefix_code, _prefix_n = _encode(prefix_stacks, stack_count, max_height)
+                macro_path_codes.append(prefix_code)
                 previous_depth += 1
-                if parent_chain is not None and prefix_code not in parent_chain:
+                if not macro_edge_enabled and parent_chain is not None and prefix_code not in parent_chain:
                     if _parent_chain_would_cycle(parent_chain, prefix_code, previous_code):
                         previous_code = b""
                         break
@@ -6209,7 +6241,8 @@ def _inject_frg_frontier_child_candidates(
             child_code, child_n = _encode(child_stacks, stack_count, max_height)
             if child_code == code:
                 continue
-            if _parent_chain_would_cycle(parent_chain, child_code, previous_code):
+            candidate_parent_code = code if macro_edge_enabled else previous_code
+            if _parent_chain_would_cycle(parent_chain, child_code, candidate_parent_code):
                 continue
             if child_depth + int(child_n) > depth_cap:
                 continue
@@ -6233,7 +6266,10 @@ def _inject_frg_frontier_child_candidates(
                 ):
                     continue
                 _cache_frg_frontier_child_certification(args, child_code, certification_rollout)
-            candidates[child_code] = (int(child_n), child_depth, previous_code)
+            candidates[child_code] = (int(child_n), child_depth, candidate_parent_code)
+            if macro_edge_enabled and macro_paths is not None:
+                macro_paths[child_code] = tuple(macro_path_codes + [child_code])
+                args._frg_macro_edge_recorded_total += 1
             added.add(child_code)
             if getattr(args, "debt_basin_reduction_chain_enabled", False):
                 args._reduction_chain_depth_by_code[child_code] = len(moves)
@@ -6250,6 +6286,7 @@ def _append_frg_frontier_child_frontier(
     depth_cap: int,
     best_depth: dict[bytes, int] | None = None,
     parent_chain: dict[bytes, bytes | None] | None = None,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
 ) -> set[bytes]:
     if not getattr(args, "frg_frontier_child_append_only", False):
         return set()
@@ -6261,6 +6298,7 @@ def _append_frg_frontier_child_frontier(
         depth_cap,
         best_depth,
         parent_chain=parent_chain,
+        macro_paths=macro_paths,
     )
     appended: set[bytes] = set()
     for code in sorted(added, key=lambda item: _candidate_sort_key((item, candidates[item]), args)):
@@ -6434,6 +6472,21 @@ def _union_diversity_qubo_features(
     completion_witness_quality = (
         _union_diversity_completion_witness_quality(rollout, args, n_value=int(n_value)) if is_frg_macro else 0.0
     )
+    macro_edge_chain_length = 0
+    macro_edge_chain_penalty = 0.0
+    if is_frg_macro:
+        macro_path = tuple((getattr(args, "_frg_macro_edge_path_by_code", {}) or {}).get(code, ()) or ())
+        if macro_path and macro_path[-1] == code:
+            macro_edge_chain_length = len(macro_path)
+            max_macro_steps = max(1, int(getattr(args, "frg_frontier_child_max_steps", 512) or 512))
+            macro_edge_chain_penalty = min(1.0, float(macro_edge_chain_length) / float(max_macro_steps))
+            macro_chain_cost_weight = float(
+                getattr(args, "union_diversity_qubo_macro_edge_chain_cost_weight", 0.0) or 0.0
+            )
+            if macro_chain_cost_weight > 0.0:
+                energy += macro_chain_cost_weight * macro_edge_chain_penalty * (
+                    1.0 - _clamp01(float(completion_witness_quality))
+                )
     reservoir_feature = (getattr(args, "_quality_reservoir_last_features_by_code", {}) or {}).get(code)
     macro_quality_bonus = float(getattr(args, "union_diversity_qubo_macro_quality_bonus", 0.0) or 0.0)
     if is_frg_macro and macro_quality_bonus > 0.0:
@@ -6491,6 +6544,8 @@ def _union_diversity_qubo_features(
         is_frg_macro=bool(is_frg_macro),
         source_scarcity=float(source_scarcity),
         completion_witness_quality=float(completion_witness_quality),
+        macro_edge_chain_length=int(macro_edge_chain_length),
+        macro_edge_chain_penalty=float(macro_edge_chain_penalty),
         quality_reservoir_quality=float(reservoir_feature.reservoir_quality) if reservoir_feature is not None else 0.0,
         quality_reservoir_witness_quality=float(reservoir_feature.witness_quality)
         if reservoir_feature is not None
@@ -10509,6 +10564,25 @@ def _backtrack(parent: dict[bytes, bytes | None], target: bytes) -> list[bytes]:
     return codes
 
 
+def _backtrack_with_macro_edges(
+    parent: dict[bytes, bytes | None],
+    target: bytes,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+) -> list[bytes]:
+    codes = _backtrack(parent, target)
+    if not macro_paths:
+        return codes
+
+    expanded = [codes[0]]
+    for code in codes[1:]:
+        macro_path = tuple(macro_paths.get(code, ()) or ())
+        if macro_path and macro_path[-1] == code:
+            expanded.extend(macro_path)
+        else:
+            expanded.append(code)
+    return expanded
+
+
 def _code_n(code: bytes, stack_count: int, max_height: int) -> int:
     return sum(_stack_n(chunk, max_height) for chunk in _split(code, stack_count, max_height))
 
@@ -12127,6 +12201,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._frg_frontier_child_calls = 0
     args._frg_frontier_child_generated = 0
     args._frg_frontier_child_added_total = 0
+    args._frg_macro_edge_recorded_total = 0
+    args._frg_macro_edge_selected_total = 0
+    args._frg_macro_edge_expanded_steps_total = 0
     args._union_rollout_probe_cache = {}
     args._union_rollout_probe_frg_cache = {}
     args._union_rollout_probe_current_results = {}
@@ -12157,6 +12234,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._wang2017_task_selected_stable_height_total = 0
     args._wang_rollout_candidate_codes = set()
     args._frg_frontier_child_codes = set()
+    args._frg_macro_edge_path_by_code = {}
     args._candidate_origin_by_code = {}
     args._reduction_chain_depth_by_code = {}
     args._reduction_chain_origin_by_code = {}
@@ -12457,6 +12535,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             if len(candidates) != candidate_count_before_rollout:
                 _update_layer_candidate_metrics(candidates, args, cap)
         frg_frontier_child_codes: set[bytes] = set()
+        frg_macro_edge_paths: dict[bytes, tuple[bytes, ...]] = getattr(args, "_frg_macro_edge_path_by_code", {})
         if not getattr(args, "frg_frontier_child_append_only", False):
             candidate_count_before_frg_frontier = len(candidates)
             frg_frontier_child_codes = _inject_frg_frontier_child_candidates(
@@ -12466,6 +12545,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 depth_cap,
                 best_depth,
                 parent_chain=parent,
+                macro_paths=frg_macro_edge_paths,
             )
             if frg_frontier_child_codes:
                 for code in frg_frontier_child_codes:
@@ -12484,9 +12564,16 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             args._candidate_origin_by_code = candidate_origin_by_code
             frg_frontier_child_codes &= kept_codes
             args._frg_frontier_child_codes = set(frg_frontier_child_codes)
+            if frg_macro_edge_paths:
+                args._frg_macro_edge_path_by_code = {
+                    code: path for code, path in frg_macro_edge_paths.items() if code in candidates
+                }
+                frg_macro_edge_paths = args._frg_macro_edge_path_by_code
             peak_candidates = max(peak_candidates, len(candidates))
             _update_layer_candidate_metrics(candidates, args, cap)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
+        if frg_macro_edge_paths:
+            args._frg_macro_edge_selected_total += sum(1 for code in selected_codes if code in frg_macro_edge_paths)
         _record_quality_reservoir_selected_telemetry(selected_codes, args)
         qcalls += add_qcalls
         qvars += add_qvars
@@ -12545,6 +12632,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             depth_cap,
             best_depth,
             parent_chain=parent,
+            macro_paths=frg_macro_edge_paths,
         )
         if appended_frg_frontier_child_codes:
             frg_frontier_child_codes |= appended_frg_frontier_child_codes
@@ -12661,9 +12749,15 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     union_rollout_terminal_graft_used = False
     search_path_codes: list[bytes] = []
     if target is not None:
-        codes = _backtrack(parent, target)
+        codes = _backtrack_with_macro_edges(parent, target, getattr(args, "_frg_macro_edge_path_by_code", {}))
         original_codes = list(codes)
         search_path_codes = list(original_codes)
+        macro_edge_paths = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
+        args._frg_macro_edge_expanded_steps_total = sum(
+            max(0, len(tuple(macro_edge_paths.get(code, ()) or ())) - 1)
+            for code in original_codes[1:]
+            if code in macro_edge_paths
+        )
         qubo_selected_on_search_path = sum(1 for code in original_codes[1:] if source_by_code.get(code) == "qubo")
         qubo_ancestor_on_search_path = sum(1 for code in original_codes[1:] if qubo_ancestor_by_code.get(code, False))
         codes, polish_stats = _post_polish_codes_with_qubo(
@@ -12890,6 +12984,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         frg_frontier_child_calls=args._frg_frontier_child_calls,
         frg_frontier_child_generated=args._frg_frontier_child_generated,
         frg_frontier_child_added_total=args._frg_frontier_child_added_total,
+        frg_macro_edge_recorded_total=int(getattr(args, "_frg_macro_edge_recorded_total", 0) or 0),
+        frg_macro_edge_selected_total=int(getattr(args, "_frg_macro_edge_selected_total", 0) or 0),
+        frg_macro_edge_expanded_steps_total=int(getattr(args, "_frg_macro_edge_expanded_steps_total", 0) or 0),
         feasibility_escape_calls=args._feasibility_escape_calls_done,
         feasibility_escape_added_total=args._feasibility_escape_added_total,
         feasibility_escape_active_layers=args._feasibility_escape_active_layers,
@@ -13295,6 +13392,11 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 "union_diversity_qubo_macro_quality_bonus",
                 0.0,
             ),
+            "union_diversity_qubo_macro_edge_chain_cost_weight": getattr(
+                args,
+                "union_diversity_qubo_macro_edge_chain_cost_weight",
+                0.0,
+            ),
             "union_diversity_qubo_calls": result.union_diversity_qubo_calls,
             "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
             "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
@@ -13527,6 +13629,10 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_frontier_child_calls": result.frg_frontier_child_calls,
             "frg_frontier_child_generated": result.frg_frontier_child_generated,
             "frg_frontier_child_added_total": result.frg_frontier_child_added_total,
+            "frg_frontier_child_macro_edge_enabled": getattr(args, "frg_frontier_child_macro_edge_enabled", False),
+            "frg_macro_edge_recorded_total": result.frg_macro_edge_recorded_total,
+            "frg_macro_edge_selected_total": result.frg_macro_edge_selected_total,
+            "frg_macro_edge_expanded_steps_total": result.frg_macro_edge_expanded_steps_total,
             "feasibility_escape_enabled": getattr(args, "feasibility_escape_enabled", False),
             "feasibility_escape_supplement_width": getattr(args, "feasibility_escape_supplement_width", 0),
             "feasibility_escape_focus_n": getattr(args, "feasibility_escape_focus_n", 8),
@@ -14244,6 +14350,7 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-macro-quota-scarcity-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-quota-witness-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-quality-bonus", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-edge-chain-cost-weight", type=float, default=None)
     _add_quality_reservoir_arguments(parser)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
@@ -14299,6 +14406,7 @@ def main() -> int:
     parser.add_argument("--frg-frontier-child-limit", type=int, default=None)
     parser.add_argument("--frg-frontier-child-max-steps", type=int, default=None)
     parser.add_argument("--frg-frontier-child-append-only", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-macro-edge-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-certify-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-frontier-child-certify-max-steps", type=int, default=None)
     parser.add_argument("--frg-frontier-child-certify-time-limit", type=float, default=None)
