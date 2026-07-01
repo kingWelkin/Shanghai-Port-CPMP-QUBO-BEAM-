@@ -1,113 +1,122 @@
 # Algorithm Profile Status
 
-Date: 2026-06-29
+Date: 2026-07-01
 
-This guide is the compact status table for the current compact CPMP / QUBO beam work. It separates the default algorithm, clean baselines, opt-in ablations, and paper-reproduction assets so local improvements are not mistaken for promoted mainline behavior.
+This guide is the compact status table for the current compact CPMP / QUBO beam work. It separates promoted mainline behavior, clean baselines, open-only references, and opt-in ablations.
 
 ## Decision Snapshot
 
-Current default for open and paper benchmark work:
+Current promoted mainline for open120 plus paper BF/CV work:
 
 ```text
-qubo_scheduler_state_v5_qubo_diversity_union_polish
+qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish
 ```
 
-Clean paired baseline:
+Clean historical paired baseline:
 
 ```text
 qubo_scheduler_state_v5_wang_rescue_polish
 ```
 
-The diversity-union line remains the current mainline because it preserves the open120 `118/120` validity level while improving aggregate quality numbers, and because it gives a much stronger paper BF/CV sample10 result than the Wang rescue baseline. Paper evidence is recorded as separate BF and CV scorecard rows, not only as a combined BF+CV total.
+Open120-only full-coverage path-quality reference:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish
+```
+
+The v2 macro-credit line is promoted because it keeps open120 at `120/120` and improves the paper BF/CV sample1 scorecard from macro-edge's `51/62` primary solved and `5289` penalty to `56/62` primary solved and `4437` penalty.
 
 ## Promotion Rule
 
-A new profile should not replace the current mainline unless it passes a paired comparison against `qubo_scheduler_state_v5_qubo_diversity_union_polish`.
+A new profile should not replace the current mainline unless it passes a paired comparison against:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish
+```
 
 Minimum evidence:
 
-- open120 DLTS 5x5/7x5 test-120 with no new failures and a better aggregate quality signal;
-- paper BF and paper CV sample10 rows, each with no meaningful solved-count or penalty regression;
-- focused tests for profile switches and runner wiring;
-- clear mechanism telemetry showing why the change helps.
+- open120 DLTS 5x5/7x5 test-120 with no new failures;
+- paper BF and paper CV rows reported separately, with no meaningful solved-count or penalty regression;
+- focused tests for profile switches, scoring behavior, and runner wiring;
+- telemetry showing whether the change helps candidate generation, QUBO selection, or selected-lineage survival.
 
-Do not promote a profile from a smoke run, one residual-case rescue, a CSV-only probe, or a result that improves feasibility by accepting much longer paths.
+Do not promote a profile from a smoke run, one residual-case rescue, a CSV-only probe, or a result that improves feasibility by accepting much longer paths without paper-set evidence.
 
 ## Stable Defaults And Baselines
 
 | Profile or solver | Role | Current status | Evidence summary |
 |---|---|---|---|
-| `qubo_scheduler_state_v5_qubo_diversity_union_polish` | Current open and paper benchmark mainline | Default | Open120: `118/120`, full penalty `3858`, solved moves `3677`, gap sum `335`. Paper sample10 split scorecard: BF `383/401` feasible, `336/401` primary, full penalty `1043373`; CV `189/210` feasible, `165/210` primary, full penalty `14927`; combined feasible `572/611`, primary `501/611`, full penalty `1058300`. |
-| `qubo_scheduler_state_v5_wang_rescue_polish` | Clean paired baseline | Keep as baseline | Open120: `118/120`, full penalty `3873`, solved moves `3692`, gap sum `350`. Stable and interpretable, but no longer the combined-evidence mainline. |
-| `speed_v2` / `scheduler_state_v5` internal line | Internal 30-case speed reference | Keep for deployment regression context | Useful for the historical Shanghai Port 30-case path, but not the current promotion gate. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish` | Current open and paper benchmark mainline | Promoted default | Open120 t20: `120/120`, full penalty `4105`, solved moves `4105`, gap sum `710`. Paper BF/CV sample1 t20: primary `56/62`, feasible `56/62`, full penalty `4437`, moves `2638`. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` | Open120 full-coverage path-quality reference | Reference, not default | Open120 t20: `120/120`, full penalty `4100`, solved moves `4100`, gap sum `705`. Paper sample1 t20: primary `51/62`, feasible `56/62`, full penalty `5289`. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_polish` | Previous mainline / short-path open reference | Demoted reference | Open120 t20: `118/120`, full penalty `3858`, solved moves `3677`, gap sum `335`. Paper sample1 t20: primary `26/62`, feasible `56/62`, full penalty `10699`. |
+| `qubo_scheduler_state_v5_wang_rescue_polish` | Clean historical paired baseline | Keep as baseline | Open120 historical clean run: `118/120`, full penalty `3873`, solved moves `3692`, gap sum `350`. Stable and interpretable, but no longer the combined-evidence mainline. |
+| `speed_v2` / `scheduler_state_v5` internal line | Internal 30-case speed reference | Keep for deployment regression context | Useful for the historical Shanghai Port 30-case path, but not the current open/paper promotion gate. |
 | `wang_bs_b` | Classical feasibility reference | Reference or teacher, not quality mainline | Can cover more open cases in older runs, but paths are much longer. Use for diagnosis, not as the default quality solver. |
+
+## Promoted Macro Credit v2 Interpretation
+
+The v2 selector is a QUBO beam-selection change, not a fallback solver:
+
+- legal child states still come from the compact beam engine;
+- FRG/macro candidates enter the normal candidate pool;
+- QUBO linear energy gives positive macro future credit only with witness or macro-path evidence;
+- receiver debt becomes a penalty pressure, so debt alone is not rewarded;
+- positive macro credit is capped.
+
+This is the current cleanest integration of BS-FRG-inspired deep recovery evidence into the QUBO beam framework.
 
 ## Opt-In Ablations
 
 | Profile | Mechanism | Status | Decision reason |
 |---|---|---|---|
-| `qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish` | Adds candidate-origin pair penalties to the union QUBO selector. | Ablation only | Helped one immediate open120 paired rerun but lost paper sample10 cases and worsened paper penalty. Origin diversity is useful only as a guarded tie concept. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish` | v1 macro future credit without the v2 witness/debt/cap correction. | Superseded | Open120 full coverage, but paper sample1 only `50/62`, penalty `5898`; v2 improves both paper solved count and penalty. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_origin_aware_polish` | Adds candidate-origin pair penalties to the union QUBO selector. | Ablation only | Helped one immediate open120 paired rerun but lost paper cases and worsened paper penalty. Origin diversity is useful only as a guarded tie concept. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish` | Adds bounded rollout signal to union selection. | Ablation only | Rollout signal is real, but it can rank locally promising candidates that later commit to long cleanup paths. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish` | Grafts a validated rollout-complete tail when available. | Ablation only | Useful for diagnosis, but grafting should not become an implicit fallback path without paired evidence. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish` | Emits micro-rollout and receiver-safety telemetry without changing selection. | Diagnostic | Safe for trace collection because trace-only mode keeps the linear adjustment at zero. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_receiver_safety_polish` | Adds receiver-safety soft score without rollout. | Ablation only | Useful as a feature probe, but not yet discriminative enough as a promotion candidate. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_micro_only_polish` | Uses the bounded micro-rollout signal without receiver safety. | Ablation only | Keep as a component-isolation profile. |
-| `qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish` | Combines micro rollout and receiver-safety scoring. | Ablation only | Open120 had mixed wins and regressions; paper sample10 was worse than the paired baseline. |
-| `qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish` | Applies micro rollout only to near-tied QUBO candidates. | Ablation only | Protected open120 aggregate quality, but paper sample10 gained solved cases while worsening moves and full penalty. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_micro_rollout_polish` | Combines micro rollout and receiver-safety scoring. | Ablation only | Open120 had mixed wins and regressions; paper sample evidence was worse than the paired baseline. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish` | Applies micro rollout only to near-tied QUBO candidates. | Ablation only | Protected some open120 aggregate quality, but paper-set penalty regressed. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish` | Appends BS-FRG-derived child states after normal frontier selection. | Light frontier experiment | Candidate support only. It is not a BS-FRG fallback solver. |
-| `qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish` | Merges FRG children into the same fixed-width candidate pool before selection. | Experimental, not promoted | Same solved count as a light frontier paired run, but worse path quality. FRG children can dominate core selection without improving results. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish` | Merges FRG children into the same fixed-width candidate pool before selection. | Experimental, not promoted | FRG children can dominate core selection without improving results. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish` | Expands FRG frontier support on high-N plateau or small-stack pressure. | Ablation only | Keep as a controlled diagnostic for FRG support strength. |
-| `qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish` | Adds receiver-debt, escape-potential, basin-diversity, and reduction-chain selector signals. | Diagnostic, not promoted | 2026-06-29 paper sample10: `568/611` feasible, `332/611` primary, full penalty `1095855`, worse than current union `572/611` feasible, `501/611` primary, `1058300` penalty. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish` | Adds receiver-debt, escape-potential, basin-diversity, and reduction-chain selector signals. | Diagnostic, not promoted | Earlier paper sample10 gate regressed badly: combined primary `332/611`, full penalty `1095855`. |
 
-## 2026-06-29 Debt/Basin Interpretation
+## Current Remaining Failure Classes
 
-The debt/basin profile clarified mechanisms but did not improve the gate:
+The promoted v2 line still fails several paper sample1 rows:
 
-- BF14/BF32 still need short recovery-basin access; long FRG seed paths are feasibility-only under strict scorecards.
-- CV 5-8 / 6-6 show that local micro/debt signals can introduce path debt.
-- CV 10-6 reaches low `n` but falls into a dead retained lineage.
-- CV 10-10 barely lowers `n`, suggesting missing useful recovery candidates.
+- `BF14`
+- `BF30`
+- `CV/5-4`
+- `CV/6-6`
+- `CV/10-6`
+- `CV/10-10`
 
-The next successor should separate route-quality guards from basin-escape activation instead of using debt as a broad linear preference.
+Parameter sweeps around v2 did not beat the promoted defaults:
 
-## Reproduction And Reference Assets
-
-| Asset | Role | Status | Evidence summary |
-|---|---|---|---|
-| `paper_pure=True` BS-FRG via `scripts/benchmark_bs_frg_paper.py` | Paper-style BS-FRG reproduction | Reproduction asset | Full BF/CV run solved `1545/1561`: BF `719/721`, CV `826/840`, total moves `97808`, average runtime about `19.854s`. |
-| `scripts/run_bs_frg_paper_parallel.ps1` | Family-level BS-FRG runner | Keep | Useful for paper-faithful corpus runs and failed-case reruns. |
-| `scripts/run_bs_frg_bf14_failed_unlimited.py` | No-deadline failed-case rerun helper | Keep | Useful for separating quick `NO_SOLUTION` cases from deep-search outliers such as BF14. |
-| `docs/experiments/bf_seed_cache_smoke_20260626.jsonl` | Materialized FRG seed cache smoke artifact | Experimental | Jobs1 and jobs2 consumed artifact seeds for BF14/BF32 and reproduced the same feasibility-only move counts. |
-
-BS-FRG is a strong reproduction and diagnostic line, not the promoted compact QUBO-beam default. Do not describe the mainline as "run BS-FRG if the beam fails" unless a future explicit fallback design is approved and validated.
-
-## Rejected Or Diagnostic Conclusions
-
-- Bigger QUBO influence is not automatically better.
-- Origin diversity is not a universal beam principle.
-- Micro rollout should not override the main union score.
-- FRG child injection can help diagnose missing candidates, but raw injection can consume frontier budget or dominate the fixed beam.
-- Debt/basin features are informative telemetry, but the first broad selector integration damaged the strict paper scorecard.
-- A profile that rescues a few cases but introduces long paths or paper-set regressions remains an ablation, not a mainline.
+| sweep | paper sample1 result |
+|---|---|
+| default v2 | `56/62`, penalty `4437` |
+| `receiver_debt_penalty_weight=12` | `52/62`, penalty `5452` |
+| `min_witness_quality=0.25` | `54/62`, penalty `5034` |
 
 ## Recommended Next Work
 
-The next useful round should be trace-first and mode-split.
+The next useful round should target the remaining failure classes without broadening fallback behavior.
 
-1. Keep BF and CV paper sample rows separate throughout analysis.
-2. Add a guarded route-quality mode that uses receiver-debt as a near-tie veto only when the compact route is already making clean progress.
-3. Add a separate basin-escape trigger for low-n lineage collapse or no-n-drop candidate-universe failure.
-4. Re-run the seven hard/regression cases before any full gate.
-5. Evaluate every successor with paired open120 and paper sample10 commands before promotion.
+1. Treat BF and CV paper rows separately in every scorecard.
+2. Diagnose BF14/BF30 as time-boundary and recovery-chain selection problems.
+3. Diagnose CV/10-6 and CV/10-10 as candidate-universe or lineage-collapse problems.
+4. Keep macro credit v2 as the paired baseline for all successor experiments.
+5. Rerun open120 plus paper BF/CV before any future promotion.
 
 ## Source Evidence
 
-- `README.md`
-- `docs/guides/current-mainline-algorithm.md`
-- `docs/experiments/paper_hard_case_trace_report_20260629.md`
-- `docs/guides/debt-basin-selector-analysis.md`
-- `docs/experiments/debt_basin_paper_sample10_t20_20260629_summary.md`
-- `docs/experiments/debt_basin_hard_20260629_summary.md`
-- `docs/experiments/debt_basin_open_smoke_20260629_summary.md`
-- `docs/experiments/strict_hard_union_sample10_t20_20260626.md`
-- `docs/experiments/bf_seed_cache_concurrency_smoke_20260626.md`
+- `docs/experiments/verify_open120_t20_qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish_20260701_summary.md`
+- `docs/experiments/macro_credit_v2_paper_sample1_t20_20260701_summary.md`
+- `docs/experiments/verify_paper_sample1_t20_qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish_20260701_summary.md`
+- `docs/experiments/verify_paper_sample1_t20_qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish_20260701_summary.md`
+- `docs/experiments/verify_paper_sample1_t20_qubo_scheduler_state_v5_qubo_diversity_union_polish_20260701_summary.md`

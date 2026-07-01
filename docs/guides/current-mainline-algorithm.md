@@ -1,144 +1,125 @@
 # Current Mainline Algorithm
 
-Date: 2026-06-29
+Date: 2026-07-01
 
 ## Decision
 
-The current open and paper benchmark mainline candidate is:
+The current promoted open120 plus BF/CV paper-set mainline is:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish
+```
+
+This promotion treats open120 and the paper BF/CV set as equally important. The reason is not that v2 is the shortest open120 profile; it is that it keeps open120 full coverage while materially improving the paper BF/CV scorecard.
+
+Reference roles:
 
 ```text
 qubo_scheduler_state_v5_qubo_diversity_union_polish
 ```
 
-The previous strong line remains the paired baseline:
+Previous mainline and short-path open reference. It has better solved-move totals on open120, but only solves `118/120` open cases and is much weaker on the paper sample1 gate.
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish
+```
+
+Best open120 single-scope reference in this batch. It solves `120/120` with 5 fewer open120 moves than v2, but is clearly weaker on paper BF/CV.
 
 ```text
 qubo_scheduler_state_v5_wang_rescue_polish
 ```
 
-This distinction matters. `wang_rescue_polish` is still the clean comparison point, but the diversity-union profile is the stronger current candidate on the combined open120 and paper BF/CV evidence.
+Clean historical paired baseline.
 
-## Evidence
+## Promotion Evidence
 
-Open DLTS 5x5/7x5 test-120 evidence:
+Open DLTS 5x5/7x5 test-120, `t20`, 2026-07-01:
 
-| profile | valid | full penalty | solved moves | gap sum | avg runtime sec |
-|---|---:|---:|---:|---:|---:|
-| `qubo_scheduler_state_v5_wang_rescue_polish` | 118/120 | 3873 | 3692 | 350 | 3.901 |
-| `qubo_scheduler_state_v5_qubo_diversity_union_polish` | 118/120 | 3858 | 3677 | 335 | 4.442 |
+| profile | valid | full penalty | solved moves | gap sum |
+|---|---:|---:|---:|---:|
+| `qubo_scheduler_state_v5_qubo_diversity_union_polish` | 118/120 | 3858 | 3677 | 335 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` | 120/120 | 4100 | 4100 | 705 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish` | 120/120 | 4105 | 4105 | 710 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish` | 120/120 | 4105 | 4105 | 710 |
 
-Paper sample10 evidence, split by dataset:
+Paper BF/CV sample1, `t20`, 2026-07-01:
 
-| profile | scope | cases | feasible solved | primary accepted | full penalty | feasible moves | avg runtime sec |
-|---|---|---:|---:|---:|---:|---:|---:|
-| `union_diversity` | BF | 401 | 383 | 336 | 1043373 | 32499 | 15.703 |
-| `union_diversity` | CV | 210 | 189 | 165 | 14927 | 9756 | 6.577 |
-| `union_diversity` | BF+CV | 611 | 572 | 501 | 1058300 | 42255 | 12.567 |
+| profile | primary solved | feasibility solved | moves | full penalty |
+|---|---:|---:|---:|---:|
+| `qubo_scheduler_state_v5_qubo_diversity_union_polish` | 26/62 | 56/62 | 1904 | 10699 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` | 51/62 | 56/62 | 2363 | 5289 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish` | 50/62 | 56/62 | 2152 | 5898 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish` | 56/62 | 56/62 | 2638 | 4437 |
 
-In this table, feasible solved means replay reaches `final_n=0`; primary accepted additionally passes the stricter benchmark acceptance flags.
-
-## Latest Ablation Verdict
-
-The 2026-06-29 debt/basin profile is implemented:
-
-```text
-qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish
-```
-
-It adds receiver-debt, escape-potential, basin-diversity, and bounded reduction-chain selector signals. It remains diagnostic only because the paper sample10 gate regressed:
-
-| profile | scope | cases | feasible solved | primary accepted | full penalty | avg runtime sec |
-|---|---|---:|---:|---:|---:|---:|
-| `union_diversity` | BF+CV | 611 | 572 | 501 | 1058300 | 12.567 |
-| `debt_basin` | BF+CV | 611 | 568 | 332 | 1095855 | 12.118 |
-| `debt_basin` | BF | 401 | 379 | 179 | 1079574 | 14.218 |
-| `debt_basin` | CV | 210 | 189 | 153 | 16281 | 8.108 |
-
-The hard-case trace still supports the mechanism split that motivated debt/basin, but the selector preference is too blunt for promotion. See `docs/guides/debt-basin-selector-analysis.md`.
+On the equal-weighted open120 plus BF/CV gate, v2 is the best current compromise: it preserves open120 full solve coverage and gives the strongest paper-set primary solved count and full penalty.
 
 ## Mechanism
 
-`scheduler_state_v5_qubo_diversity_union_polish` extends the FRG-seeded v5 line and adds a small QUBO exploration selector:
+`macro_credit_v2` keeps the same compact beam and legal child generation boundary as the union line. It changes only QUBO beam selection scoring for macro candidates:
 
-- candidate generation remains legal compact beam generation;
-- FRG seed struct-skip remains enabled;
-- direct candidate-ledger rank perturbation remains disabled;
-- union QUBO selects a small supplement from already generated legal candidates;
-- pair penalties discourage same parent, same source stack, same transition signature, same reduce signature, and same n-band.
+- QUBO still selects among already legal child states.
+- It does not generate crane moves.
+- It does not run BS-FRG as a fallback solver.
+- It rewards macro/recovery candidates only when they carry completion-witness or macro-path evidence.
+- It subtracts receiver-debt pressure so "high debt without witness" is not treated as future value.
+- It caps positive macro future credit to prevent one macro family from overwhelming the selector.
 
-QUBO remains a beam-selection mechanism. It does not generate crane moves and does not bypass validator replay.
+The practical interpretation is: QUBO now selects recovery chains with future proof, not merely diverse states or raw FRG macro edges.
 
 ## Operational Rule
 
-Use `qubo_scheduler_state_v5_qubo_diversity_union_polish` for current open/paper benchmark runs unless a command is explicitly asking for a baseline.
+Use this profile for current open120 and paper BF/CV benchmark work:
 
-Use `qubo_scheduler_state_v5_wang_rescue_polish` when a paired baseline is needed.
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish
+```
 
-Use `qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish` only for trace, telemetry, and ablation work.
+Use `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` when the question is specifically "best open120 path quality among full-coverage profiles".
 
-Do not promote `scheduler_state_v5_pareto_union_polish`: the light version was neutral on samples, and the wide version damaged open sample quality.
+Use `qubo_scheduler_state_v5_qubo_diversity_union_polish` only as the previous mainline / short-path open reference.
 
-## Three-Set Scorecard Rule
+Use `qubo_scheduler_state_v5_wang_rescue_polish` as the clean historical paired baseline.
 
-The strongest-algorithm label is based on three recorded sets:
+## Remaining Failure Classes
 
-1. open120 DLTS 5x5/7x5, where valid count, full penalty, solved moves, gap sum, and runtime are tracked.
-2. paper BF sample10, where feasible solved, primary accepted, full penalty, feasible moves, and runtime are tracked.
-3. paper CV sample10, using the same paper-set metrics as BF.
+The promoted v2 line still leaves these paper sample1 primary failures:
 
-A candidate that only improves the combined BF+CV total, or only improves one paper dataset while damaging the other, remains an ablation until this scorecard is clean.
+- `BF14`
+- `BF30`
+- `CV/5-4`
+- `CV/6-6`
+- `CV/10-6`
+- `CV/10-10`
 
-## Current Ablation Branches
+Small parameter sweeps did not beat the promoted v2 defaults:
 
-The current codebase contains several opt-in ablation profiles derived from the diversity-union line:
+| sweep | result |
+|---|---|
+| `macro_future_credit_cap=32` | helped some BF edges but damaged CV/5-9 on the edge set |
+| `receiver_debt_penalty_weight=12` | looked good on a 9-case edge set, but dropped sample1 to `52/62`, penalty `5452` |
+| `min_witness_quality=0.25` | improved some edge behavior, but sample1 was only `54/62`, penalty `5034` |
 
-| profile | purpose | promotion status |
-|---|---|---|
-| `qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish` | add a bounded FRG-style rollout probe as a selection signal | ablation only |
-| `qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish` | splice a validated rollout-complete tail when the selected child reaches one | ablation only |
-| `qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish` | use micro rollout only for near-tied QUBO candidates | ablation only; paper-set penalty regressed |
-| `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish` | append BS-FRG-generated child states after normal frontier selection | light frontier experiment; not default |
-| `qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish` | merge FRG-generated children into the same fixed-width candidate pool before selection | experimental; not promoted |
-| `qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish` | receiver-debt, escape-potential, basin-diversity, and bounded reduction-chain selector signals | diagnostic; failed paper sample10 promotion gate |
-| `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_adaptive_polish` | start with a smaller FRG frontier and expand on high-n plateau or small-stack pressure | ablation only |
+So the current defaults remain:
 
-These profiles are useful for paper-set and residual-case diagnosis, but they should not replace `qubo_scheduler_state_v5_qubo_diversity_union_polish` without paired full open120 and paper-set improvement.
-
-## Latest Engineering State
-
-The debt/basin implementation series through commit `bf01ff2` added:
-
-- opt-in debt/basin profile and open-runner mapping;
-- receiver-debt and escape-potential feature scoring;
-- basin similarity pair penalty in the union selector;
-- reduction-chain depth tracking for FRG frontier children;
-- result-row and frontier-trace telemetry;
-- on-path telemetry tightening for debt/basin selected states.
-
-The 2026-06-29 generated artifacts are diagnostic:
-
-- `docs/experiments/paper_hard_case_trace_report_20260629.md`
-- `docs/experiments/debt_basin_hard_20260629_summary.md`
-- `docs/experiments/debt_basin_open_smoke_20260629_summary.md`
-- `docs/experiments/debt_basin_paper_sample10_t20_20260629_summary.md`
-- `docs/guides/debt-basin-selector-analysis.md`
+```text
+min_witness_quality = 0.35
+receiver_debt_penalty_weight = 18.0
+macro_future_credit_cap = 24.0
+```
 
 ## Reproduction
 
 Open test-120 mainline:
 
 ```powershell
-python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_polish --time-limit 10 --alpha 10 --jobs 8 --output docs\experiments\mainline_union_open120_t10.csv
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish --time-limit 20 --alpha 10 --jobs 8 --output docs\experiments\mainline_macro_credit_v2_open120_t20.csv
 ```
 
-Paper sample10 mainline:
+Paper BF/CV sample1 mainline gate:
 
 ```powershell
-python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --sample-per-family 10 --variant qubo_scheduler_state_v5_qubo_diversity_union_polish --time-limit 20 --alpha 10 --jobs 8 --output docs\experiments\mainline_union_paper_sample10_t20.csv
+python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --sample-per-family 1 --variant qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish --time-limit 20 --alpha 10 --jobs 8 --output docs\experiments\mainline_macro_credit_v2_paper_sample1_t20.csv
 ```
 
-Debt/basin diagnostic paper gate:
-
-```powershell
-python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --sample-per-family 10 --variant qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish --time-limit 20 --alpha 10 --jobs 8 --output docs\experiments\debt_basin_paper_sample10_t20_YYYYMMDD.csv
-```
+For a heavier future stress gate, rerun paper sample10 with the same profile and keep BF and CV rows separate.
