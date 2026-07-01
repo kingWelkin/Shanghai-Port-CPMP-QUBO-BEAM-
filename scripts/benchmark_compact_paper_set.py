@@ -36,7 +36,20 @@ from open_cpmp_benchmarks import (  # noqa: E402
     _open_row_valid,
     _select_open_no_regret_row,
     _open_validate_instance_result,
+    _variant_names as _open_variant_names,
 )
+
+
+def _known_open_qubo_variants() -> set[str]:
+    variants: set[str] = set()
+    for name in ("both", "all", "wang_all", "wang_research_all"):
+        variants.update(_open_variant_names(name))
+    return variants
+
+
+def _reject_unknown_qubo_variant(variant: str) -> None:
+    if variant.startswith("qubo_scheduler_state_v5") and variant not in _known_open_qubo_variants():
+        raise ValueError(f"unknown compact paper variant: {variant}")
 
 
 def _args_for_variant(
@@ -49,6 +62,7 @@ def _args_for_variant(
 ) -> argparse.Namespace:
     if isinstance(args_or_variant, str):
         variant = args_or_variant
+        _reject_unknown_qubo_variant(variant)
         args = build_parser().parse_args(["--variant", variant])
         if alpha is not None:
             args.alpha = alpha
@@ -57,6 +71,7 @@ def _args_for_variant(
         return _open_args_for_variant(args, variant, instance)
     if variant is None:
         raise TypeError("variant is required when passing an argparse namespace")
+    _reject_unknown_qubo_variant(variant)
     return _open_args_for_variant(args_or_variant, variant, instance)
 
 
@@ -129,7 +144,14 @@ def _paper_time_limit_ok(row: dict[str, object], *, time_limit: float) -> bool:
     return runtime <= float(time_limit)
 
 
-def _apply_paper_scorecard(row: dict[str, object], *, time_limit: float) -> dict[str, object]:
+def _apply_paper_scorecard(
+    row: dict[str, object],
+    *,
+    time_limit: float,
+    business_cap_enabled: bool = True,
+) -> dict[str, object]:
+    if not business_cap_enabled:
+        row["business_ok"] = True
     feasibility_ok = (
         _is_true(row.get("goal_validation_ok"))
         and row.get("final_n") == 0
@@ -180,6 +202,7 @@ def row_from_paper_exception(
         "full_quality_penalty": 1_000_000,
         "reference_tiers": "",
         "business_alpha": args.alpha,
+        "business_cap_enabled": getattr(args, "business_cap_enabled", True),
         "business_ok": False,
         "goal_validation_ok": False,
         "feasibility_ok": False,
@@ -203,6 +226,7 @@ def _resolve_optional_path(path: Path | str | None) -> Path | None:
 
 def _args_with_paper_defaults(args: argparse.Namespace) -> argparse.Namespace:
     values = dict(vars(args))
+    values.setdefault("business_cap_enabled", True)
     values.setdefault("max_moves", None)
     values.setdefault("solver_profile", "speed_v2")
     return argparse.Namespace(**values)
@@ -271,7 +295,13 @@ def _run_paper_variant_row(
     compact_args = _args_for_variant(args, variant, instance)
     result = run_compact_beam_instance(case.case_id, instance, compact_args)
     row = _open_row_dict_from_instance_result(result, instance, compact_args)
-    business_ok, goal_ok, msg = _open_validate_instance_result(result, instance, business_alpha=args.alpha)
+    business_cap_enabled = bool(getattr(compact_args, "business_cap_enabled", True))
+    business_ok, goal_ok, msg = _open_validate_instance_result(
+        result,
+        instance,
+        business_alpha=args.alpha,
+        business_cap_enabled=business_cap_enabled,
+    )
     row.update(
         {
             "dataset": case.dataset,
@@ -283,12 +313,17 @@ def _run_paper_variant_row(
             "move_gap": "",
             "reference_tiers": "",
             "business_alpha": args.alpha,
+            "business_cap_enabled": business_cap_enabled,
             "business_ok": business_ok,
             "goal_validation_ok": goal_ok,
             "validation_msg": msg,
         }
     )
-    row = _apply_paper_scorecard(row, time_limit=args.time_limit)
+    row = _apply_paper_scorecard(
+        row,
+        time_limit=args.time_limit,
+        business_cap_enabled=business_cap_enabled,
+    )
     row["full_quality_penalty"] = _open_full_quality_penalty(row)
     return row
 
@@ -316,7 +351,11 @@ def _run_paper_portfolio_row(
     selected["portfolio_selected_profile"] = selected.get("solver_profile", "")
     selected["portfolio_runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
     selected["runtime_sec"] = f"{portfolio_runtime_sec:.6f}"
-    selected = _apply_paper_scorecard(selected, time_limit=float(getattr(args, "time_limit", float("inf"))))
+    selected = _apply_paper_scorecard(
+        selected,
+        time_limit=float(getattr(args, "time_limit", float("inf"))),
+        business_cap_enabled=bool(getattr(args, "business_cap_enabled", True)),
+    )
     selected["full_quality_penalty"] = _open_full_quality_penalty(selected)
     return selected
 
@@ -512,6 +551,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--solver-profile", default="speed_v2")
     parser.add_argument("--time-limit", type=_strict_positive_time_limit, default=20.0)
     parser.add_argument("--alpha", type=float, default=10.0)
+    parser.add_argument(
+        "--business-cap",
+        dest="business_cap_enabled",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable the historical entropy business cap; pass --no-business-cap for uncapped benchmark alignment.",
+    )
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--beam-width", type=int)
     parser.add_argument("--core-width", type=int)

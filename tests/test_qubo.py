@@ -576,6 +576,13 @@ def test_compact_beam_instance_entry_solves_tiny_open_cpmp():
     assert goal_ok, msg
 
 
+def test_compact_args_default_to_business_cap_enabled():
+    from benchmark_compact_beam_qubo_n0 import make_compact_args
+
+    assert make_compact_args().business_cap_enabled is True
+    assert make_compact_args(business_cap_enabled=False).business_cap_enabled is False
+
+
 def test_open_row_serializes_post_polish_successor_cache_for_priority_group_instances():
     from benchmark_compact_beam_qubo_n0 import CompactBeamResult
     from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
@@ -1247,6 +1254,56 @@ def test_open_priority_group_validation_accepts_zero_move_initial_goal():
 
     assert business_ok
     assert goal_ok, msg
+
+
+def test_open_validation_can_disable_business_cap_for_paper_benchmarks():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_validate_instance_result
+
+    instance = Instance(
+        "already_ordered_with_detour",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[3, 2, 1], [], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="TARGET_REACHABLE",
+        moves=[
+            Move(1, 1, 0, 1, 3, 1),
+            Move(2, 1, 1, 0, 1, 3),
+        ],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=1,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=2,
+    )
+
+    capped_business_ok, capped_goal_ok, capped_msg = _open_validate_instance_result(
+        result,
+        instance,
+        business_alpha=1.3,
+    )
+    uncapped_business_ok, uncapped_goal_ok, uncapped_msg = _open_validate_instance_result(
+        result,
+        instance,
+        business_alpha=1.3,
+        business_cap_enabled=False,
+    )
+
+    assert capped_goal_ok, capped_msg
+    assert not capped_business_ok
+    assert uncapped_business_ok
+    assert uncapped_goal_ok, uncapped_msg
 
 
 def test_compact_row_and_validation_accept_zero_move_initial_goal():
@@ -3241,6 +3298,128 @@ def test_frg_frontier_child_terminal_witness_only_does_not_pollute_candidates(mo
     assert terminal_witnesses == [(child_code, (child_n, 2, parent_code), rollout)]
 
 
+def test_macro_chain_witness_candidate_adds_qubo_selectable_macro_edge(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 4
+    parent_stacks = [[], [], [], [1, 4, 3, 2]]
+    middle_stacks = [[2], [], [], [1, 4, 3]]
+    child_stacks = [[2], [3], [], [1, 4]]
+    final_stacks = [[2], [3], [4], [1]]
+    parent_code, parent_n = bench._encode(parent_stacks, stack_count, max_height)
+    middle_code, _middle_n = bench._encode(middle_stacks, stack_count, max_height)
+    child_code, child_n = bench._encode(child_stacks, stack_count, max_height)
+    final_layout = SimpleNamespace(stacks=tuple(tuple(stack) for stack in final_stacks))
+    rollout_moves = (
+        Move(1, 2, 3, 0, 4, 1),
+        Move(2, 3, 3, 1, 3, 1),
+        Move(3, 4, 3, 2, 2, 1),
+    )
+
+    def fake_completion(layout, height, *, start_step, max_steps, deadline, cache, paper_pure):
+        del layout, height, start_step, max_steps, deadline, cache, paper_pure
+        return SimpleNamespace(
+            feasible=True,
+            layout=final_layout,
+            moves=rollout_moves,
+            final_n=0,
+            generated=3,
+            status="FRG_FEASIBLE",
+        )
+
+    monkeypatch.setattr(bench, "_bs_frg_completion_cached", fake_completion)
+    args = _compact_args(
+        macro_chain_witness_enabled=True,
+        macro_chain_witness_parent_width=1,
+        macro_chain_witness_prefix_steps=2,
+        macro_chain_witness_max_steps=64,
+        macro_chain_witness_time_limit=0.01,
+        macro_chain_witness_min_stack_count=0,
+        macro_chain_witness_min_height=0,
+        _stack_count=stack_count,
+        _max_height=max_height,
+        _frg_macro_edge_parent_by_code={},
+        _union_rollout_probe_cache={},
+    )
+    candidates: dict[bytes, tuple[int, int, bytes]] = {}
+    macro_paths: dict[bytes, tuple[bytes, ...]] = {}
+
+    added = bench._inject_macro_chain_witness_candidates(
+        [(parent_code, parent_n, 0)],
+        candidates,
+        args,
+        depth_cap=99,
+        best_depth={},
+        parent_chain={parent_code: None},
+        macro_paths=macro_paths,
+    )
+
+    assert added == {child_code}
+    assert candidates[child_code] == (child_n, 2, parent_code)
+    assert macro_paths[child_code] == (middle_code, child_code)
+    assert args._frg_macro_edge_parent_by_code[child_code] == parent_code
+    assert args._macro_chain_witness_codes == {child_code}
+    assert args._macro_chain_witness_added_total == 1
+    assert args._macro_chain_witness_generated == 3
+    assert args._union_rollout_probe_cache[child_code].feasible is True
+    assert args._union_rollout_probe_cache[child_code].final_n == 0
+    assert getattr(args, "_frg_terminal_witness_recorded_total", 0) == 0
+
+
+def test_macro_chain_witness_origin_receives_future_credit():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 4
+    max_height = 4
+    parent_code, _parent_n = bench._encode([[], [], [], [1, 4, 3, 2]], stack_count, max_height)
+    middle_code, _middle_n = bench._encode([[2], [], [], [1, 4, 3]], stack_count, max_height)
+    child_code, child_n = bench._encode([[2], [3], [], [1, 4]], stack_count, max_height)
+    rollout = bench.UnionRolloutProbeResult(
+        feasible=True,
+        final_n=0,
+        moves=3,
+        status="FRG_FEASIBLE",
+        runtime_sec=0.0,
+    )
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        union_diversity_qubo_rank_weight=0.0,
+        union_diversity_qubo_frg_weight=0.0,
+        union_diversity_qubo_rollout_bonus=0.0,
+        union_diversity_qubo_macro_future_credit_enabled=True,
+        union_diversity_qubo_completion_witness_credit_weight=10.0,
+        union_diversity_qubo_macro_future_credit_min_witness_quality=0.1,
+        union_diversity_qubo_macro_future_credit_cap=20.0,
+        _frg_macro_edge_path_by_code={child_code: (middle_code, child_code)},
+    )
+
+    core = bench._union_diversity_qubo_features(
+        child_code,
+        (child_n, 2, parent_code),
+        0,
+        args,
+        rollout=rollout,
+        origin="core",
+    )
+    macro = bench._union_diversity_qubo_features(
+        child_code,
+        (child_n, 2, parent_code),
+        0,
+        args,
+        rollout=rollout,
+        origin="frg_macro_chain_witness",
+    )
+
+    assert macro.is_frg_macro is True
+    assert macro.completion_witness_quality > 0.0
+    assert bench._quality_reservoir_qubo_linear_energy(macro, args) < bench._quality_reservoir_qubo_linear_energy(
+        core,
+        args,
+    )
+
+
 def test_run_compact_beam_uses_frg_terminal_witness_without_frontier_pollution(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -5041,6 +5220,41 @@ def test_macro_edge_backtrack_skips_stale_path_when_selected_parent_differs():
 
     assert expanded_codes == [one_step_code, final_code]
     assert [(move.from_stack, move.to_stack) for move in moves] == [(0, 2)]
+
+
+def test_repair_compact_code_path_lifts_two_step_gap():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    start_stacks = [[3, 2, 1], [], []]
+    middle_stacks = [[3, 2], [1], []]
+    final_stacks = [[3], [1], [2]]
+    start_code, _start_n = bench._encode(start_stacks, stack_count, max_height)
+    middle_code, _middle_n = bench._encode(middle_stacks, stack_count, max_height)
+    final_code, _final_n = bench._encode(final_stacks, stack_count, max_height)
+    instance = Instance(
+        "compact_lift_gap",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count,
+        max_height,
+        3,
+        start_stacks,
+    )
+    args = _compact_args(post_polish_bridge_expanded=64)
+
+    repaired, inserted = bench._repair_compact_code_path_for_lifting(
+        instance,
+        [start_code, final_code],
+        cap=99,
+        args=args,
+        deadline=float("inf"),
+    )
+    moves = bench._codes_to_moves_instance(instance, repaired)
+
+    assert repaired == [start_code, middle_code, final_code]
+    assert inserted == 1
+    assert [(move.box, move.from_stack, move.to_stack) for move in moves] == [(1, 0, 1), (2, 0, 2)]
 
 
 def test_parent_link_assignment_rejects_cycle_and_preserves_existing_parent():
@@ -11728,6 +11942,67 @@ def test_open_runner_accepts_bs_frg_qubo_variant():
     assert "qubo_scheduler_state_v5_bs_frg_qubo_polish" in _variant_names("wang_research_all")
 
 
+def test_open_runner_accepts_macro_chain_witness_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    _apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish"
+    assert args.macro_chain_witness_enabled is True
+    assert args.frg_seed_enabled is False
+    assert args.union_rollout_terminal_graft is False
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_paper_runner_rejects_unknown_qubo_variant():
+    from benchmark_compact_paper_set import _args_for_variant, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_typo_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+
+    with pytest.raises(ValueError, match=variant):
+        _args_for_variant(outer, variant)
+
+
+def test_open_and_paper_runners_pass_no_business_cap():
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant as open_args_for_variant
+    from open_cpmp_benchmarks import build_parser as build_open_parser
+
+    open_outer = build_open_parser().parse_args(["--variant", "qubo", "--no-business-cap"])
+    paper_outer = build_paper_parser().parse_args(["--variant", "qubo", "--no-business-cap"])
+
+    assert open_args_for_variant(open_outer, "qubo").business_cap_enabled is False
+    assert paper_args_for_variant(paper_outer, "qubo").business_cap_enabled is False
+    assert open_args_for_variant(build_open_parser().parse_args(["--variant", "qubo"]), "qubo").business_cap_enabled is True
+    assert paper_args_for_variant(build_paper_parser().parse_args(["--variant", "qubo"]), "qubo").business_cap_enabled is True
+
+
+def test_paper_scorecard_can_ignore_business_cap():
+    from benchmark_compact_paper_set import _apply_paper_scorecard
+
+    row = {
+        "goal_validation_ok": True,
+        "final_n": 0,
+        "moves": 12,
+        "runtime_sec": 1.0,
+        "business_ok": False,
+    }
+
+    capped = _apply_paper_scorecard(dict(row), time_limit=10.0)
+    uncapped = _apply_paper_scorecard(dict(row), time_limit=10.0, business_cap_enabled=False)
+
+    assert capped["feasibility_ok"] is True
+    assert capped["primary_ok"] is False
+    assert uncapped["business_ok"] is True
+    assert uncapped["primary_ok"] is True
+
+
 def test_open_runner_accepts_frg_compound_variant():
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
 
@@ -12481,6 +12756,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",

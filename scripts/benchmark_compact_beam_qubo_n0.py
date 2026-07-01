@@ -93,6 +93,7 @@ COMPACT_EXTRA_FIELDS = [
     "profile",
     "solver_profile",
     "qubo_influence_profile",
+    "business_cap_enabled",
     "selection_policy",
     "priority",
     "deterministic_qubo_sampler",
@@ -363,6 +364,19 @@ COMPACT_EXTRA_FIELDS = [
     "frg_macro_edge_recorded_total",
     "frg_macro_edge_selected_total",
     "frg_macro_edge_expanded_steps_total",
+    "macro_chain_witness_enabled",
+    "macro_chain_witness_parent_width",
+    "macro_chain_witness_prefix_steps",
+    "macro_chain_witness_max_steps",
+    "macro_chain_witness_time_limit",
+    "macro_chain_witness_min_stack_count",
+    "macro_chain_witness_min_height",
+    "macro_chain_witness_min_n",
+    "macro_chain_witness_min_candidates",
+    "macro_chain_witness_calls",
+    "macro_chain_witness_generated",
+    "macro_chain_witness_added_total",
+    "macro_chain_witness_selected_total",
     "frg_seed_enabled",
     "frg_seed_time_limit",
     "frg_seed_min_max_steps",
@@ -1472,6 +1486,15 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_frontier_child_soft_supply_min_n": 0,
         "frg_frontier_child_soft_supply_plateau_window": 2,
         "frg_frontier_child_soft_supply_plateau_delta": 0,
+        "macro_chain_witness_enabled": False,
+        "macro_chain_witness_parent_width": 0,
+        "macro_chain_witness_prefix_steps": 16,
+        "macro_chain_witness_max_steps": 512,
+        "macro_chain_witness_time_limit": 0.01,
+        "macro_chain_witness_min_stack_count": 0,
+        "macro_chain_witness_min_height": 0,
+        "macro_chain_witness_min_n": 0,
+        "macro_chain_witness_min_candidates": 0,
         "frg_seed_enabled": False,
         "frg_seed_time_limit": 0.0,
         "frg_seed_min_max_steps": 256,
@@ -2721,6 +2744,28 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_po
     "deterministic_qubo_sampler": True,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish"],
+    "frg_seed_enabled": False,
+    "frg_seed_time_limit": 0.0,
+    "frg_seed_beam_enabled": False,
+    "union_rollout_terminal_graft": False,
+    "macro_chain_witness_enabled": True,
+    "macro_chain_witness_parent_width": 4,
+    "macro_chain_witness_prefix_steps": 8,
+    "macro_chain_witness_max_steps": 512,
+    "macro_chain_witness_time_limit": 0.02,
+    "macro_chain_witness_min_stack_count": 6,
+    "macro_chain_witness_min_height": 8,
+    "macro_chain_witness_min_n": 12,
+    "macro_chain_witness_min_candidates": 1000,
+    "frg_frontier_child_macro_edge_enabled": True,
+    "union_diversity_qubo_macro_edge_chain_cost_weight": 160.0,
+    "union_diversity_qubo_completion_witness_credit_weight": 64.0,
+    "union_diversity_qubo_macro_path_credit_weight": 12.0,
+    "union_diversity_qubo_macro_future_credit_cap": 32.0,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -3042,6 +3087,7 @@ def make_compact_args(**overrides: object) -> argparse.Namespace:
         "terminal_trace_output": None,
         "target_final_n": 0,
         "alpha": 1.3,
+        "business_cap_enabled": True,
         "max_moves": None,
         "time_limit": 0.0,
         "qubo_profile": "frontier_cohort",
@@ -3312,6 +3358,10 @@ class CompactBeamResult:
     frg_macro_edge_recorded_total: int = 0
     frg_macro_edge_selected_total: int = 0
     frg_macro_edge_expanded_steps_total: int = 0
+    macro_chain_witness_calls: int = 0
+    macro_chain_witness_generated: int = 0
+    macro_chain_witness_added_total: int = 0
+    macro_chain_witness_selected_total: int = 0
     frg_terminal_witness_recorded_total: int = 0
     frg_terminal_witness_grafted_total: int = 0
     frg_terminal_witness_used: bool = False
@@ -3613,6 +3663,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "priority": "--priority",
         "g_weight": "--g-weight",
         "n_weight": "--n-weight",
+        "business_cap_enabled": ("--business-cap", "--no-business-cap"),
         "target_guided_weight": "--target-guided-weight",
         "target_guided_focus_n": "--target-guided-focus-n",
         "target_guided_supplement_width": "--target-guided-supplement-width",
@@ -5200,12 +5251,15 @@ def _union_rollout_probe_witness_signature(result: UnionRolloutProbeResult | Non
     return (status_bucket, final_bucket, moves_bucket)
 
 
+_FRG_MACRO_ORIGINS = {"frg_frontier_child", "frg_macro_chain_witness"}
+
+
 def _union_diversity_is_macro_feature(feature: UnionDiversityQuboFeatures) -> bool:
-    return bool(feature.is_frg_macro) or str(feature.origin) == "frg_frontier_child"
+    return bool(feature.is_frg_macro) or str(feature.origin) in _FRG_MACRO_ORIGINS
 
 
 def _union_diversity_macro_origin(origin: str) -> bool:
-    return str(origin or "") == "frg_frontier_child"
+    return str(origin or "") in _FRG_MACRO_ORIGINS
 
 
 def _union_diversity_completion_witness_quality(
@@ -6349,6 +6403,181 @@ def _assign_parent_link(parent_chain: dict[bytes, bytes | None], child_code: byt
     return True
 
 
+def _ensure_macro_chain_witness_counters(args: argparse.Namespace) -> None:
+    if not hasattr(args, "_macro_chain_witness_calls"):
+        args._macro_chain_witness_calls = 0
+    if not hasattr(args, "_macro_chain_witness_generated"):
+        args._macro_chain_witness_generated = 0
+    if not hasattr(args, "_macro_chain_witness_added_total"):
+        args._macro_chain_witness_added_total = 0
+    if not hasattr(args, "_macro_chain_witness_selected_total"):
+        args._macro_chain_witness_selected_total = 0
+    if not hasattr(args, "_macro_chain_witness_codes"):
+        args._macro_chain_witness_codes = set()
+    if not hasattr(args, "_frg_macro_edge_recorded_total"):
+        args._frg_macro_edge_recorded_total = 0
+
+
+def _macro_chain_witness_active(
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> bool:
+    if not getattr(args, "macro_chain_witness_enabled", False):
+        return False
+    if not frontier:
+        return False
+    if max(0, int(getattr(args, "macro_chain_witness_parent_width", 0) or 0)) <= 0:
+        return False
+    if max(0, int(getattr(args, "macro_chain_witness_prefix_steps", 0) or 0)) <= 0:
+        return False
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if stack_count <= 0 or max_height <= 0:
+        return False
+    min_stack_count = max(0, int(getattr(args, "macro_chain_witness_min_stack_count", 0) or 0))
+    if min_stack_count > 0 and stack_count < min_stack_count:
+        return False
+    min_height = max(0, int(getattr(args, "macro_chain_witness_min_height", 0) or 0))
+    if min_height > 0 and max_height < min_height:
+        return False
+    min_n = max(0, int(getattr(args, "macro_chain_witness_min_n", 0) or 0))
+    best_n = min((int(n_value) for _code, n_value, _depth in frontier), default=0)
+    if min_n > 0 and best_n < min_n:
+        return False
+    min_candidates = max(0, int(getattr(args, "macro_chain_witness_min_candidates", 0) or 0))
+    candidate_count = int(getattr(args, "_layer_candidate_count", 0) or len(candidates))
+    if min_candidates > 0 and candidate_count < min_candidates:
+        return False
+    return True
+
+
+def _inject_macro_chain_witness_candidates(
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+    parent_chain: dict[bytes, bytes | None] | None = None,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+) -> set[bytes]:
+    if not _macro_chain_witness_active(frontier, candidates, args):
+        return set()
+    _ensure_macro_chain_witness_counters(args)
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    parent_width = max(1, int(getattr(args, "macro_chain_witness_parent_width", 1) or 1))
+    prefix_steps = max(1, int(getattr(args, "macro_chain_witness_prefix_steps", 1) or 1))
+    max_steps = max(prefix_steps, int(getattr(args, "macro_chain_witness_max_steps", 512) or 512))
+    time_limit = max(0.0, float(getattr(args, "macro_chain_witness_time_limit", 0.01) or 0.0))
+    paper_pure = bool(getattr(args, "frg_seed_paper_pure", True))
+    completion_cache = getattr(args, "_macro_chain_witness_completion_cache", None)
+    if completion_cache is None:
+        completion_cache = {}
+        args._macro_chain_witness_completion_cache = completion_cache
+    union_cache = getattr(args, "_union_rollout_probe_cache", None)
+    if union_cache is None:
+        union_cache = {}
+        args._union_rollout_probe_cache = union_cache
+    if macro_paths is None:
+        macro_paths = getattr(args, "_frg_macro_edge_path_by_code", None)
+    if macro_paths is None:
+        macro_paths = {}
+        args._frg_macro_edge_path_by_code = macro_paths
+    macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", None)
+    if macro_parent_by_code is None:
+        macro_parent_by_code = {}
+        args._frg_macro_edge_parent_by_code = macro_parent_by_code
+
+    added: set[bytes] = set()
+    origins = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))[:parent_width]
+    for code, parent_n, depth in origins:
+        if int(depth) >= int(depth_cap):
+            continue
+        stacks = _code_to_stacks(code, stack_count, max_height)
+        group_count = max((int(box) for stack in stacks for box in stack), default=0)
+        instance = Instance(
+            "macro_chain_witness",
+            ProblemVariant.PREMARSHALLING_CPMP,
+            stack_count,
+            max_height,
+            group_count,
+            stacks,
+        )
+        layout = _bs_frg_initial_layout(instance)
+        started = time.perf_counter()
+        deadline = started + time_limit if time_limit > 0.0 else math.inf
+        args._macro_chain_witness_calls += 1
+        rollout = _bs_frg_completion_cached(
+            layout,
+            max_height,
+            start_step=int(depth),
+            max_steps=max_steps,
+            deadline=deadline,
+            cache=completion_cache,
+            paper_pure=paper_pure,
+        )
+        args._macro_chain_witness_generated += int(getattr(rollout, "generated", 0) or 0)
+        moves = tuple(getattr(rollout, "moves", ()) or ())
+        if not moves:
+            continue
+        rollout_final_n_raw = getattr(rollout, "final_n", None)
+        rollout_final_n = int(parent_n) if rollout_final_n_raw is None else int(rollout_final_n_raw)
+        rollout_feasible = bool(getattr(rollout, "feasible", False)) and rollout_final_n <= 0
+        prefix_moves = moves[: min(prefix_steps, len(moves))]
+        layout_path = _layout_path_from_moves(layout, prefix_moves, max_height)
+        if not layout_path:
+            continue
+        child_layout = layout_path[-1]
+        child_stacks = [list(stack) for stack in getattr(child_layout, "stacks", ()) or ()]
+        if len(child_stacks) != stack_count:
+            continue
+        child_code, child_n = _encode(child_stacks, stack_count, max_height)
+        child_depth = int(depth) + len(layout_path)
+        if child_code == code:
+            continue
+        if not (rollout_feasible or rollout_final_n < int(parent_n) or int(child_n) < int(parent_n)):
+            continue
+        if _parent_chain_would_cycle(parent_chain, child_code, code):
+            continue
+        if child_depth + int(child_n) > int(depth_cap):
+            continue
+        old_best_depth = best_depth.get(child_code) if best_depth is not None else None
+        if old_best_depth is not None and child_depth >= old_best_depth:
+            continue
+        old = candidates.get(child_code)
+        if old is not None and old[1] <= child_depth:
+            continue
+
+        macro_path_codes: list[bytes] = []
+        for prefix_layout in layout_path:
+            prefix_stacks = [list(stack) for stack in getattr(prefix_layout, "stacks", ()) or ()]
+            if len(prefix_stacks) != stack_count:
+                macro_path_codes = []
+                break
+            prefix_code, _prefix_n = _encode(prefix_stacks, stack_count, max_height)
+            macro_path_codes.append(prefix_code)
+        if not macro_path_codes or macro_path_codes[-1] != child_code:
+            continue
+
+        candidates[child_code] = (int(child_n), child_depth, code)
+        macro_paths[child_code] = tuple(macro_path_codes)
+        macro_parent_by_code[child_code] = code
+        args._macro_chain_witness_codes.add(child_code)
+        added.add(child_code)
+        args._frg_macro_edge_recorded_total += 1
+        union_cache[child_code] = UnionRolloutProbeResult(
+            feasible=rollout_feasible,
+            final_n=rollout_final_n,
+            moves=len(moves),
+            status=str(getattr(rollout, "status", "")),
+            runtime_sec=time.perf_counter() - started,
+            move_path=moves,
+        )
+    args._macro_chain_witness_added_total += len(added)
+    return added
+
+
 def _inject_frg_frontier_child_candidates(
     frontier: list[tuple[bytes, int, int]],
     candidates: dict[bytes, tuple[int, int, bytes]],
@@ -6821,6 +7050,8 @@ def _union_diversity_candidate_origin(code: bytes, args: argparse.Namespace) -> 
         return str(origin)
     if code in (getattr(args, "_wang_rollout_candidate_codes", set()) or set()):
         return "wang_rollout"
+    if code in (getattr(args, "_macro_chain_witness_codes", set()) or set()):
+        return "frg_macro_chain_witness"
     if code in (getattr(args, "_frg_frontier_child_codes", set()) or set()):
         return "frg_frontier_child"
     return "core"
@@ -8078,7 +8309,9 @@ def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: 
     multiplier = max(1, int(getattr(args, "frg_seed_max_steps_multiplier", 10) or 10))
     min_steps = max(1, int(getattr(args, "frg_seed_min_max_steps", 256) or 256))
     max_steps = max(min_steps, initial_n * multiplier)
-    cap = entropy_limit(instance, float(getattr(args, "alpha", 1.3) or 1.3))
+    cap = int(getattr(args, "_business_cap", -1) or -1)
+    if cap < 0:
+        cap = entropy_limit(instance, float(getattr(args, "alpha", 1.3) or 1.3))
     if respect_cap:
         max_steps = min(max_steps, max(1, int(cap)))
     max_steps_cap = max(0, int(getattr(args, "frg_seed_max_steps_cap", 0) or 0))
@@ -10794,20 +11027,57 @@ def _backtrack_with_macro_edges(
     macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
     *,
     macro_parent_by_code: dict[bytes, bytes] | None = None,
+    stack_count: int | None = None,
+    max_height: int | None = None,
 ) -> list[bytes]:
     codes = _backtrack(parent, target)
     if not macro_paths:
         return codes
 
+    validate_macro_path = (
+        stack_count is not None
+        and max_height is not None
+        and int(stack_count) > 0
+        and int(max_height) > 0
+    )
     expanded = [codes[0]]
     for parent_code, code in zip(codes, codes[1:]):
         macro_path = tuple(macro_paths.get(code, ()) or ())
         macro_parent_matches = macro_parent_by_code is None or macro_parent_by_code.get(code) == parent_code
-        if macro_path and macro_path[-1] == code and macro_parent_matches:
+        macro_path_valid = True
+        if validate_macro_path and macro_path:
+            macro_path_valid = _compact_code_path_is_successor_chain(
+                parent_code,
+                macro_path,
+                int(stack_count),
+                int(max_height),
+            )
+        if macro_path and macro_path[-1] == code and macro_parent_matches and macro_path_valid:
             expanded.extend(macro_path)
         else:
             expanded.append(code)
     return expanded
+
+
+def _compact_code_is_successor(start: bytes, goal: bytes, stack_count: int, max_height: int) -> bool:
+    if start == goal:
+        return False
+    start_n = _code_n(start, stack_count, max_height)
+    return any(nxt == goal for nxt, _nxt_n in _successors_with_n_cached(start, start_n, stack_count, max_height))
+
+
+def _compact_code_path_is_successor_chain(
+    start: bytes,
+    path: tuple[bytes, ...],
+    stack_count: int,
+    max_height: int,
+) -> bool:
+    current = start
+    for code in path:
+        if not _compact_code_is_successor(current, code, stack_count, max_height):
+            return False
+        current = code
+    return True
 
 
 def _code_n(code: bytes, stack_count: int, max_height: int) -> int:
@@ -12292,6 +12562,114 @@ def _post_polish_codes_with_qubo(
     return current, stats
 
 
+def _lift_compact_transition_from_stacks(
+    stacks: list[list[int]],
+    next_code: bytes,
+    stack_count: int,
+    max_height: int,
+    step: int,
+) -> tuple[Move, list[list[int]]] | None:
+    for src_idx, src in enumerate(stacks):
+        if not src:
+            continue
+        for dst_idx, dst in enumerate(stacks):
+            if src_idx == dst_idx or len(dst) >= max_height:
+                continue
+            trial = [list(stack) for stack in stacks]
+            box = trial[src_idx].pop()
+            from_level = len(src)
+            to_level = len(dst) + 1
+            trial[dst_idx].append(box)
+            code, _n_after = _encode(trial, stack_count, max_height)
+            if code == next_code:
+                return (
+                    Move(
+                        step=step,
+                        box=box,
+                        from_stack=src_idx,
+                        to_stack=dst_idx,
+                        from_level=from_level,
+                        to_level=to_level,
+                    ),
+                    trial,
+                )
+    return None
+
+
+def _compact_lift_repair_max_depth(args: argparse.Namespace) -> int:
+    return max(
+        2,
+        16,
+        int(getattr(args, "macro_chain_witness_prefix_steps", 0) or 0),
+        int(getattr(args, "frg_frontier_child_max_steps", 0) or 0),
+        int(getattr(args, "post_polish_max_bridge_depth", 0) or 0),
+    )
+
+
+def _repair_compact_code_path_for_lifting(
+    instance: Instance,
+    codes: list[bytes],
+    *,
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+) -> tuple[list[bytes], int]:
+    if not codes:
+        return codes, 0
+    stacks = [list(stack) for stack in instance.stacks]
+    current_code, _current_n = _encode(stacks, instance.stack_count, instance.max_height)
+    if current_code != codes[0]:
+        return codes, 0
+
+    repaired = [codes[0]]
+    inserted = 0
+    max_depth = _compact_lift_repair_max_depth(args)
+    for next_code in codes[1:]:
+        lifted = _lift_compact_transition_from_stacks(
+            stacks,
+            next_code,
+            instance.stack_count,
+            instance.max_height,
+            len(repaired) - 1,
+        )
+        if lifted is not None:
+            _move, stacks = lifted
+            repaired.append(next_code)
+            continue
+
+        current_code, _current_n = _encode(stacks, instance.stack_count, instance.max_height)
+        bridge, _expanded = _bridge_shorter_path(
+            current_code,
+            next_code,
+            len(repaired) - 1,
+            cap,
+            instance.stack_count,
+            instance.max_height,
+            max_depth,
+            deadline,
+            args,
+        )
+        if bridge is None or len(bridge) < 2:
+            return codes, 0
+
+        trial_stacks = [list(stack) for stack in stacks]
+        for bridge_code in bridge[1:]:
+            bridge_lifted = _lift_compact_transition_from_stacks(
+                trial_stacks,
+                bridge_code,
+                instance.stack_count,
+                instance.max_height,
+                len(repaired) - 1,
+            )
+            if bridge_lifted is None:
+                return codes, 0
+            _bridge_move, trial_stacks = bridge_lifted
+        stacks = trial_stacks
+        repaired.extend(bridge[1:])
+        inserted += max(0, len(bridge) - 2)
+    return repaired, inserted
+
+
 def _codes_to_moves_instance(instance: Instance, codes: list[bytes]) -> list[Move]:
     stacks = [list(stack) for stack in instance.stacks]
     current_code, _ = _encode(stacks, instance.stack_count, instance.max_height)
@@ -12300,34 +12678,16 @@ def _codes_to_moves_instance(instance: Instance, codes: list[bytes]) -> list[Mov
 
     moves: list[Move] = []
     for step, next_code in enumerate(codes[1:], start=1):
-        chosen: Move | None = None
-        for src_idx, src in enumerate(stacks):
-            if not src:
-                continue
-            for dst_idx, dst in enumerate(stacks):
-                if src_idx == dst_idx or len(dst) >= instance.max_height:
-                    continue
-                trial = [list(stack) for stack in stacks]
-                box = trial[src_idx].pop()
-                from_level = len(src)
-                to_level = len(dst) + 1
-                trial[dst_idx].append(box)
-                code, _n_after = _encode(trial, instance.stack_count, instance.max_height)
-                if code == next_code:
-                    chosen = Move(
-                        step=step - 1,
-                        box=box,
-                        from_stack=src_idx,
-                        to_stack=dst_idx,
-                        from_level=from_level,
-                        to_level=to_level,
-                    )
-                    stacks = trial
-                    break
-            if chosen is not None:
-                break
-        if chosen is None:
+        lifted = _lift_compact_transition_from_stacks(
+            stacks,
+            next_code,
+            instance.stack_count,
+            instance.max_height,
+            step - 1,
+        )
+        if lifted is None:
             raise RuntimeError(f"could not lift compact transition at step {step}")
+        chosen, stacks = lifted
         moves.append(chosen)
     return moves
 
@@ -12339,9 +12699,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     start = time.perf_counter()
     deadline = start + args.time_limit if args.time_limit > 0 else math.inf
     initial, n0 = _encode(instance.stacks, instance.stack_count, instance.max_height)
-    cap = entropy_limit(instance, args.alpha)
+    reported_business_cap = entropy_limit(instance, args.alpha)
+    business_cap_enabled = bool(getattr(args, "business_cap_enabled", True))
+    cap = reported_business_cap if business_cap_enabled else 10**9
     depth_cap = min(cap, args.max_moves) if args.max_moves is not None else cap
     args._business_cap = cap
+    args._reported_business_cap = reported_business_cap
+    args._business_cap_enabled = business_cap_enabled
     frg_seed_cache_input = getattr(args, "frg_seed_cache_input", None)
     frg_seed_cache_input_text = str(frg_seed_cache_input) if frg_seed_cache_input else ""
     frg_seed_cache_key = _frg_seed_cache_key(case, instance, args) if frg_seed_cache_input else ""
@@ -12431,6 +12795,12 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._frg_macro_edge_recorded_total = 0
     args._frg_macro_edge_selected_total = 0
     args._frg_macro_edge_expanded_steps_total = 0
+    args._macro_chain_witness_calls = 0
+    args._macro_chain_witness_generated = 0
+    args._macro_chain_witness_added_total = 0
+    args._macro_chain_witness_selected_total = 0
+    args._macro_chain_witness_codes = set()
+    args._macro_chain_witness_completion_cache = {}
     args._frg_terminal_witness_recorded_total = 0
     args._frg_terminal_witness_grafted_total = 0
     args._frg_terminal_witness_best_moves = 0
@@ -12767,6 +13137,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             if len(candidates) != candidate_count_before_rollout:
                 _update_layer_candidate_metrics(candidates, args, cap)
         frg_frontier_child_codes: set[bytes] = set()
+        macro_chain_witness_codes: set[bytes] = set()
         frg_macro_edge_paths: dict[bytes, tuple[bytes, ...]] = getattr(args, "_frg_macro_edge_path_by_code", {})
         frg_terminal_witnesses: list[tuple[bytes, tuple[int, int, bytes], UnionRolloutProbeResult]] = []
         if not getattr(args, "frg_frontier_child_append_only", False):
@@ -12787,6 +13158,22 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 peak_candidates = max(peak_candidates, len(candidates))
                 if len(candidates) != candidate_count_before_frg_frontier:
                     _update_layer_candidate_metrics(candidates, args, cap)
+        candidate_count_before_macro_chain = len(candidates)
+        macro_chain_witness_codes = _inject_macro_chain_witness_candidates(
+            frontier,
+            candidates,
+            args,
+            depth_cap,
+            best_depth,
+            parent_chain=parent,
+            macro_paths=frg_macro_edge_paths,
+        )
+        if macro_chain_witness_codes:
+            for code in macro_chain_witness_codes:
+                candidate_origin_by_code.setdefault(code, "frg_macro_chain_witness")
+            peak_candidates = max(peak_candidates, len(candidates))
+            if len(candidates) != candidate_count_before_macro_chain:
+                _update_layer_candidate_metrics(candidates, args, cap)
         for code, data, rollout in frg_terminal_witnesses:
             grafted = _completion_witness_grafted_moves(
                 code,
@@ -12807,6 +13194,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 args._frg_terminal_witness_best_moves = len(grafted)
                 depth_cap = min(depth_cap, max(0, len(grafted) - 1))
         args._frg_frontier_child_codes = set(frg_frontier_child_codes)
+        args._macro_chain_witness_codes = set(macro_chain_witness_codes)
         if getattr(args, "quality_reservoir_enabled", False):
             kept_codes = _apply_quality_reservoir_candidates(candidates, args)
             candidate_origin_by_code = {
@@ -12816,7 +13204,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             }
             args._candidate_origin_by_code = candidate_origin_by_code
             frg_frontier_child_codes &= kept_codes
+            macro_chain_witness_codes &= kept_codes
             args._frg_frontier_child_codes = set(frg_frontier_child_codes)
+            args._macro_chain_witness_codes = set(macro_chain_witness_codes)
             if frg_macro_edge_paths:
                 args._frg_macro_edge_path_by_code = {
                     code: path for code, path in frg_macro_edge_paths.items() if code in candidates
@@ -12837,6 +13227,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 if code in frg_macro_edge_paths
                 and macro_parent_by_code.get(code) == candidates.get(code, (0, 0, None))[2]
             )
+        if macro_chain_witness_codes:
+            args._macro_chain_witness_selected_total += sum(
+                1 for code in selected_codes if code in macro_chain_witness_codes
+            )
         _record_quality_reservoir_selected_telemetry(selected_codes, args)
         qcalls += add_qcalls
         qvars += add_qvars
@@ -12855,6 +13249,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     args,
                     rollout,
                     cap=cap,
+                    macro_paths=frg_macro_edge_paths,
                 )
                 if grafted is None:
                     continue
@@ -12986,9 +13381,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     "wang_rollout"
                     if code in rollout_codes
                     else (
-                        "frg_frontier_child"
-                        if code in frg_frontier_child_codes
-                        else ("frg_compound" if code in frg_compound_codes else "deterministic")
+                        "frg_macro_chain_witness"
+                        if code in macro_chain_witness_codes
+                        else (
+                            "frg_frontier_child"
+                            if code in frg_frontier_child_codes
+                            else ("frg_compound" if code in frg_compound_codes else "deterministic")
+                        )
                     )
                 )
             )
@@ -13012,6 +13411,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     frg_seed_used = False
     union_rollout_terminal_graft_used = False
     frg_terminal_witness_used = False
+    compact_lift_repair_inserted = 0
     search_path_codes: list[bytes] = []
     if target is not None:
         macro_edge_paths = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
@@ -13022,6 +13422,15 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             target,
             macro_edge_paths,
             macro_parent_by_code=macro_parent_by_code,
+            stack_count=instance.stack_count,
+            max_height=instance.max_height,
+        )
+        codes, compact_lift_repair_inserted = _repair_compact_code_path_for_lifting(
+            instance,
+            codes,
+            cap=cap,
+            args=args,
+            deadline=deadline,
         )
         original_codes = list(codes)
         search_path_codes = list(original_codes)
@@ -13045,10 +13454,33 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 moves = _codes_to_moves_instance(instance, codes)
             except RuntimeError:
                 codes = original_codes
+                repaired_codes, inserted = _repair_compact_code_path_for_lifting(
+                    instance,
+                    codes,
+                    cap=cap,
+                    args=args,
+                    deadline=deadline,
+                )
+                if inserted:
+                    compact_lift_repair_inserted += inserted
+                    codes = repaired_codes
                 moves = _codes_to_moves_instance(instance, codes)
                 status += "; post_polish_lift_failed_reverted"
         else:
-            moves = _codes_to_moves_instance(instance, codes)
+            try:
+                moves = _codes_to_moves_instance(instance, codes)
+            except RuntimeError:
+                repaired_codes, inserted = _repair_compact_code_path_for_lifting(
+                    instance,
+                    codes,
+                    cap=cap,
+                    args=args,
+                    deadline=deadline,
+                )
+                if inserted:
+                    compact_lift_repair_inserted += inserted
+                    codes = repaired_codes
+                moves = _codes_to_moves_instance(instance, codes)
         qubo_selected_on_path = sum(1 for code in codes[1:] if source_by_code.get(code) == "qubo")
         qubo_ancestor_on_path = sum(1 for code in codes[1:] if qubo_ancestor_by_code.get(code, False))
         final_n_values = _path_n_values(codes, instance.stack_count, instance.max_height)
@@ -13058,6 +13490,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         tail_n_trace = ">".join(str(value) for value in tail_n_values)
         tail_ordered_trace = ">".join(str(value) for value in tail_ordered_values)
         tail_ordered_gain = tail_ordered_values[-1] - tail_ordered_values[0] if tail_ordered_values else 0
+        if compact_lift_repair_inserted:
+            status += f"; compact_lift_repair_inserted={compact_lift_repair_inserted}"
         if terminal_bridge_used:
             status += f"; terminal_bridge_used=True; terminal_bridge_moves={terminal_bridge_moves}"
         if polish_stats.qcalls or polish_stats.attempts:
@@ -13259,6 +13693,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         frg_macro_edge_recorded_total=int(getattr(args, "_frg_macro_edge_recorded_total", 0) or 0),
         frg_macro_edge_selected_total=int(getattr(args, "_frg_macro_edge_selected_total", 0) or 0),
         frg_macro_edge_expanded_steps_total=int(getattr(args, "_frg_macro_edge_expanded_steps_total", 0) or 0),
+        macro_chain_witness_calls=int(getattr(args, "_macro_chain_witness_calls", 0) or 0),
+        macro_chain_witness_generated=int(getattr(args, "_macro_chain_witness_generated", 0) or 0),
+        macro_chain_witness_added_total=int(getattr(args, "_macro_chain_witness_added_total", 0) or 0),
+        macro_chain_witness_selected_total=int(getattr(args, "_macro_chain_witness_selected_total", 0) or 0),
         frg_terminal_witness_recorded_total=int(getattr(args, "_frg_terminal_witness_recorded_total", 0) or 0),
         frg_terminal_witness_grafted_total=int(getattr(args, "_frg_terminal_witness_grafted_total", 0) or 0),
         frg_terminal_witness_used=bool(frg_terminal_witness_used),
@@ -13339,6 +13777,7 @@ def _row_from_instance_result(result: CompactBeamResult, instance: Instance, arg
             f"target_stop=N0; proof=not_optimality_proof; "
             f"solver_profile={getattr(args, 'solver_profile', 'speed_v2')}; "
             f"qubo_influence_profile={getattr(args, 'qubo_influence_profile', 'stable')}; "
+            f"business_cap_enabled={getattr(args, 'business_cap_enabled', True)}; "
             f"wang_incumbent_enabled={getattr(args, 'wang_incumbent_enabled', False)}; "
             f"wang_incumbent_used={result.wang_incumbent_used}; "
             f"wang_incumbent_moves={result.wang_incumbent_moves}; "
@@ -13537,6 +13976,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "profile": getattr(args, "solver_profile", "speed_v2"),
             "solver_profile": getattr(args, "solver_profile", "speed_v2"),
             "qubo_influence_profile": getattr(args, "qubo_influence_profile", "stable"),
+            "business_cap_enabled": getattr(args, "business_cap_enabled", True),
             "selection_policy": getattr(args, "selection_policy", "enhanced"),
             "priority": args.priority,
             "deterministic_qubo_sampler": getattr(args, "deterministic_qubo_sampler", False),
@@ -13949,6 +14389,19 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_macro_edge_recorded_total": result.frg_macro_edge_recorded_total,
             "frg_macro_edge_selected_total": result.frg_macro_edge_selected_total,
             "frg_macro_edge_expanded_steps_total": result.frg_macro_edge_expanded_steps_total,
+            "macro_chain_witness_enabled": getattr(args, "macro_chain_witness_enabled", False),
+            "macro_chain_witness_parent_width": getattr(args, "macro_chain_witness_parent_width", 0),
+            "macro_chain_witness_prefix_steps": getattr(args, "macro_chain_witness_prefix_steps", 0),
+            "macro_chain_witness_max_steps": getattr(args, "macro_chain_witness_max_steps", 0),
+            "macro_chain_witness_time_limit": getattr(args, "macro_chain_witness_time_limit", 0.0),
+            "macro_chain_witness_min_stack_count": getattr(args, "macro_chain_witness_min_stack_count", 0),
+            "macro_chain_witness_min_height": getattr(args, "macro_chain_witness_min_height", 0),
+            "macro_chain_witness_min_n": getattr(args, "macro_chain_witness_min_n", 0),
+            "macro_chain_witness_min_candidates": getattr(args, "macro_chain_witness_min_candidates", 0),
+            "macro_chain_witness_calls": result.macro_chain_witness_calls,
+            "macro_chain_witness_generated": result.macro_chain_witness_generated,
+            "macro_chain_witness_added_total": result.macro_chain_witness_added_total,
+            "macro_chain_witness_selected_total": result.macro_chain_witness_selected_total,
             "frg_frontier_child_terminal_witness_only_enabled": getattr(
                 args,
                 "frg_frontier_child_terminal_witness_only_enabled",
@@ -14326,6 +14779,7 @@ def _validate_instance_result(
     result: CompactBeamResult,
     instance: Instance,
     business_alpha: float = 1.3,
+    business_cap_enabled: bool = True,
 ) -> tuple[bool, bool, str]:
     if not result.moves:
         initial = create_initial_state(instance)
@@ -14341,7 +14795,7 @@ def _validate_instance_result(
             status=result.status,
         )
         goal_ok, goal_msg, _ = validate_solution(instance, solution)
-        business_ok = 0 <= entropy_limit(instance, business_alpha)
+        business_ok = True if not business_cap_enabled else 0 <= entropy_limit(instance, business_alpha)
         return business_ok, goal_ok, goal_msg
     solution = Solution(
         solver_name=SOLVER_NAME,
@@ -14353,7 +14807,9 @@ def _validate_instance_result(
         status=result.status,
     )
     goal_ok, goal_msg, _ = validate_solution(instance, solution)
-    business_ok = max_entropy_along_moves(instance, result.moves) <= entropy_limit(instance, business_alpha)
+    business_ok = True if not business_cap_enabled else (
+        max_entropy_along_moves(instance, result.moves) <= entropy_limit(instance, business_alpha)
+    )
     return business_ok, goal_ok, goal_msg
 
 
@@ -14547,6 +15003,13 @@ def build_parser() -> argparse.ArgumentParser:
         dest="solver_profile",
         choices=sorted(_SOLVER_PROFILES.keys()),
         default="speed_v2",
+    )
+    parser.add_argument(
+        "--business-cap",
+        dest="business_cap_enabled",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable the historical entropy business cap; pass --no-business-cap for uncapped benchmark alignment.",
     )
     _add_quality_reservoir_arguments(parser)
     return parser
@@ -14878,6 +15341,13 @@ def main() -> int:
     parser.add_argument("--tail-risk-max-stack-count", type=int, default=None)
     parser.add_argument("--target-final-n", type=int, default=0)
     parser.add_argument("--alpha", type=float, default=1.3)
+    parser.add_argument(
+        "--business-cap",
+        dest="business_cap_enabled",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable the historical entropy business cap; pass --no-business-cap for uncapped benchmark alignment.",
+    )
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--time-limit", type=float, default=0.0, help="Per-case limit in seconds; 0 means no limit.")
     parser.add_argument("--stream-candidate-limit", type=int, default=0, help="0 keeps the full per-layer candidate set.")

@@ -678,6 +678,19 @@ def _frg_frontier_child_row_fields(result, args: argparse.Namespace) -> dict[str
         "frg_macro_edge_recorded_total": getattr(result, "frg_macro_edge_recorded_total", 0),
         "frg_macro_edge_selected_total": getattr(result, "frg_macro_edge_selected_total", 0),
         "frg_macro_edge_expanded_steps_total": getattr(result, "frg_macro_edge_expanded_steps_total", 0),
+        "macro_chain_witness_enabled": getattr(args, "macro_chain_witness_enabled", False),
+        "macro_chain_witness_parent_width": getattr(args, "macro_chain_witness_parent_width", 0),
+        "macro_chain_witness_prefix_steps": getattr(args, "macro_chain_witness_prefix_steps", 0),
+        "macro_chain_witness_max_steps": getattr(args, "macro_chain_witness_max_steps", 0),
+        "macro_chain_witness_time_limit": getattr(args, "macro_chain_witness_time_limit", 0.0),
+        "macro_chain_witness_min_stack_count": getattr(args, "macro_chain_witness_min_stack_count", 0),
+        "macro_chain_witness_min_height": getattr(args, "macro_chain_witness_min_height", 0),
+        "macro_chain_witness_min_n": getattr(args, "macro_chain_witness_min_n", 0),
+        "macro_chain_witness_min_candidates": getattr(args, "macro_chain_witness_min_candidates", 0),
+        "macro_chain_witness_calls": getattr(result, "macro_chain_witness_calls", 0),
+        "macro_chain_witness_generated": getattr(result, "macro_chain_witness_generated", 0),
+        "macro_chain_witness_added_total": getattr(result, "macro_chain_witness_added_total", 0),
+        "macro_chain_witness_selected_total": getattr(result, "macro_chain_witness_selected_total", 0),
         "frg_frontier_child_terminal_witness_only_enabled": getattr(
             args,
             "frg_frontier_child_terminal_witness_only_enabled",
@@ -784,6 +797,7 @@ def _priority_group_row_dict_from_instance_result(
         "profile": getattr(args, "solver_profile", "speed_v2"),
         "solver_profile": getattr(args, "solver_profile", "speed_v2"),
         "qubo_influence_profile": getattr(args, "qubo_influence_profile", "stable"),
+        "business_cap_enabled": getattr(args, "business_cap_enabled", True),
         "selection_policy": getattr(args, "selection_policy", "enhanced"),
         "priority": args.priority,
         "beam_width": args.beam_width,
@@ -1044,21 +1058,37 @@ def _validate_priority_group_result(
     result,
     instance: Instance,
     business_alpha: float,
+    business_cap_enabled: bool = True,
 ) -> tuple[bool, bool, str]:
     if not result.moves:
         goal_ok, goal_msg, _stacks, _n_trace, max_g = _simulate_priority_group_moves(instance, [])
         cap = int(math.floor(min(float(business_alpha), 2.0) * future_disorder_count_stacks(instance.stacks) + 1e-9))
-        return max_g <= cap, goal_ok, goal_msg if goal_ok else result.status
+        return (True if not business_cap_enabled else max_g <= cap), goal_ok, goal_msg if goal_ok else result.status
     goal_ok, goal_msg, _stacks, _n_trace, max_g = _simulate_priority_group_moves(instance, result.moves)
     cap = int(math.floor(min(float(business_alpha), 2.0) * future_disorder_count_stacks(instance.stacks) + 1e-9))
-    business_ok = max_g <= cap
+    business_ok = True if not business_cap_enabled else max_g <= cap
     return business_ok, goal_ok, goal_msg
 
 
-def _open_validate_instance_result(result, instance: Instance, business_alpha: float) -> tuple[bool, bool, str]:
+def _open_validate_instance_result(
+    result,
+    instance: Instance,
+    business_alpha: float,
+    business_cap_enabled: bool = True,
+) -> tuple[bool, bool, str]:
     if requires_priority_group_semantics(instance):
-        return _validate_priority_group_result(result, instance, business_alpha)
-    return _validate_instance_result(result, instance, business_alpha=business_alpha)
+        return _validate_priority_group_result(
+            result,
+            instance,
+            business_alpha,
+            business_cap_enabled=business_cap_enabled,
+        )
+    return _validate_instance_result(
+        result,
+        instance,
+        business_alpha=business_alpha,
+        business_cap_enabled=business_cap_enabled,
+    )
 
 
 def read_dlts_reference(path: Path | None) -> DltsReference:
@@ -1336,6 +1366,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -1384,6 +1415,7 @@ def _case_id_selected(case_id: str, case_ids_csv: str) -> bool:
 def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance | None = None) -> argparse.Namespace:
     overrides: dict[str, object] = {
         "alpha": args.alpha,
+        "business_cap_enabled": getattr(args, "business_cap_enabled", True),
         "max_moves": args.max_moves,
         "solver_profile": args.solver_profile,
         "target_final_n": 0,
@@ -1904,6 +1936,8 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish"})
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish":
+        overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish":
@@ -2016,7 +2050,12 @@ def _run_open_variant_row(
     compact_args = _args_for_variant(args, variant, instance)
     result = run_compact_beam_instance(case.case_id, instance, compact_args)
     row = _open_row_dict_from_instance_result(result, instance, compact_args)
-    business_ok, goal_ok, msg = _open_validate_instance_result(result, instance, business_alpha=args.alpha)
+    business_ok, goal_ok, msg = _open_validate_instance_result(
+        result,
+        instance,
+        business_alpha=args.alpha,
+        business_cap_enabled=getattr(compact_args, "business_cap_enabled", True),
+    )
     reference_moves = case.reference.optimal_moves
     moves = row.get("moves")
     row.update(
@@ -2241,6 +2280,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -2291,6 +2331,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--skip-invalid", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--solver-profile", choices=sorted(_SOLVER_PROFILES.keys()), default="speed_v2")
     parser.add_argument("--alpha", type=float, default=10.0)
+    parser.add_argument(
+        "--business-cap",
+        dest="business_cap_enabled",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable the historical entropy business cap; pass --no-business-cap for uncapped benchmark alignment.",
+    )
     parser.add_argument("--max-moves", type=int)
     parser.add_argument("--time-limit", type=float, default=10.0)
     parser.add_argument("--beam-width", type=int)
