@@ -524,6 +524,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument("--union-diversity-qubo-macro-edge-chain-cost-weight", type=float)
+    parser.add_argument(
+        "--union-diversity-qubo-macro-future-credit-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--union-diversity-qubo-completion-witness-credit-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-receiver-debt-credit-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-source-scarcity-credit-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-path-credit-weight", type=float)
     parser.add_argument("--union-rollout-probe-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-rollout-probe-max-candidates", type=int)
     parser.add_argument("--union-rollout-probe-time-limit", type=float)
