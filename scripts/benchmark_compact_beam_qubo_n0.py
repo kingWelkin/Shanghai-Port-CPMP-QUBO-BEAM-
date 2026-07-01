@@ -2716,6 +2716,11 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish
     "quality_reservoir_enabled": False,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish"],
+    "deterministic_qubo_sampler": True,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -6473,6 +6478,9 @@ def _inject_frg_frontier_child_candidates(
             candidate_data = (int(child_n), child_depth, candidate_parent_code)
             if macro_edge_enabled and macro_paths is not None:
                 macro_paths[child_code] = tuple(macro_path_codes + [child_code])
+                macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", None)
+                if macro_parent_by_code is not None:
+                    macro_parent_by_code[child_code] = candidate_parent_code
                 args._frg_macro_edge_recorded_total += 1
             if (
                 terminal_witnesses is not None
@@ -10784,15 +10792,18 @@ def _backtrack_with_macro_edges(
     parent: dict[bytes, bytes | None],
     target: bytes,
     macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+    *,
+    macro_parent_by_code: dict[bytes, bytes] | None = None,
 ) -> list[bytes]:
     codes = _backtrack(parent, target)
     if not macro_paths:
         return codes
 
     expanded = [codes[0]]
-    for code in codes[1:]:
+    for parent_code, code in zip(codes, codes[1:]):
         macro_path = tuple(macro_paths.get(code, ()) or ())
-        if macro_path and macro_path[-1] == code:
+        macro_parent_matches = macro_parent_by_code is None or macro_parent_by_code.get(code) == parent_code
+        if macro_path and macro_path[-1] == code and macro_parent_matches:
             expanded.extend(macro_path)
         else:
             expanded.append(code)
@@ -12454,6 +12465,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._wang_rollout_candidate_codes = set()
     args._frg_frontier_child_codes = set()
     args._frg_macro_edge_path_by_code = {}
+    args._frg_macro_edge_parent_by_code = {}
     args._candidate_origin_by_code = {}
     args._reduction_chain_depth_by_code = {}
     args._reduction_chain_origin_by_code = {}
@@ -12810,11 +12822,21 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     code: path for code, path in frg_macro_edge_paths.items() if code in candidates
                 }
                 frg_macro_edge_paths = args._frg_macro_edge_path_by_code
+                macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
+                args._frg_macro_edge_parent_by_code = {
+                    code: parent_code for code, parent_code in macro_parent_by_code.items() if code in frg_macro_edge_paths
+                }
             peak_candidates = max(peak_candidates, len(candidates))
             _update_layer_candidate_metrics(candidates, args, cap)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         if frg_macro_edge_paths:
-            args._frg_macro_edge_selected_total += sum(1 for code in selected_codes if code in frg_macro_edge_paths)
+            macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
+            args._frg_macro_edge_selected_total += sum(
+                1
+                for code in selected_codes
+                if code in frg_macro_edge_paths
+                and macro_parent_by_code.get(code) == candidates.get(code, (0, 0, None))[2]
+            )
         _record_quality_reservoir_selected_telemetry(selected_codes, args)
         qcalls += add_qcalls
         qvars += add_qvars
@@ -12992,14 +13014,21 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     frg_terminal_witness_used = False
     search_path_codes: list[bytes] = []
     if target is not None:
-        codes = _backtrack_with_macro_edges(parent, target, getattr(args, "_frg_macro_edge_path_by_code", {}))
+        macro_edge_paths = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
+        macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
+        raw_search_codes = _backtrack(parent, target)
+        codes = _backtrack_with_macro_edges(
+            parent,
+            target,
+            macro_edge_paths,
+            macro_parent_by_code=macro_parent_by_code,
+        )
         original_codes = list(codes)
         search_path_codes = list(original_codes)
-        macro_edge_paths = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
         args._frg_macro_edge_expanded_steps_total = sum(
             max(0, len(tuple(macro_edge_paths.get(code, ()) or ())) - 1)
-            for code in original_codes[1:]
-            if code in macro_edge_paths
+            for parent_code, code in zip(raw_search_codes, raw_search_codes[1:])
+            if code in macro_edge_paths and macro_parent_by_code.get(code) == parent_code
         )
         qubo_selected_on_search_path = sum(1 for code in original_codes[1:] if source_by_code.get(code) == "qubo")
         qubo_ancestor_on_search_path = sum(1 for code in original_codes[1:] if qubo_ancestor_by_code.get(code, False))

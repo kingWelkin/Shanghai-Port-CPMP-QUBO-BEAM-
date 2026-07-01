@@ -5008,6 +5008,41 @@ def test_frg_frontier_child_macro_edge_expands_replay_chain(monkeypatch):
     assert [(move.from_stack, move.to_stack) for move in moves] == [(0, 1), (0, 2)]
 
 
+def test_macro_edge_backtrack_skips_stale_path_when_selected_parent_differs():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    stack_count = 3
+    max_height = 3
+    one_step_stacks = [[3, 2], [1], []]
+    final_stacks = [[3], [1], [2]]
+    stale_origin_stacks = [[3, 2, 1], [], []]
+    one_step_code, _one_step_n = bench._encode(one_step_stacks, stack_count, max_height)
+    final_code, _final_n = bench._encode(final_stacks, stack_count, max_height)
+    stale_origin_code, _stale_origin_n = bench._encode(stale_origin_stacks, stack_count, max_height)
+    parent_chain = {one_step_code: None, final_code: one_step_code}
+    macro_paths = {final_code: (one_step_code, final_code)}
+    macro_parent_by_code = {final_code: stale_origin_code}
+
+    expanded_codes = bench._backtrack_with_macro_edges(
+        parent_chain,
+        final_code,
+        macro_paths,
+        macro_parent_by_code=macro_parent_by_code,
+    )
+    instance = Instance(
+        "stale_macro_edge",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count,
+        max_height,
+        3,
+        one_step_stacks,
+    )
+    moves = bench._codes_to_moves_instance(instance, expanded_codes)
+
+    assert expanded_codes == [one_step_code, final_code]
+    assert [(move.from_stack, move.to_stack) for move in moves] == [(0, 2)]
+
+
 def test_parent_link_assignment_rejects_cycle_and_preserves_existing_parent():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -5907,6 +5942,29 @@ def test_open_and_paper_runners_accept_qubo_diversity_union_macro_credit_v2_vari
     assert compact_args.union_diversity_qubo_macro_future_credit_min_witness_quality > 0.0
     assert compact_args.union_diversity_qubo_receiver_debt_penalty_weight > 0.0
     assert compact_args.union_diversity_qubo_macro_future_credit_cap > 0.0
+    assert compact_args.quality_reservoir_enabled is False
+
+
+def test_open_and_paper_runners_accept_qubo_diversity_union_macro_credit_v2_det_variant():
+    from benchmark_compact_beam_qubo_n0 import _apply_solver_profile, make_compact_args
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    paper_args = _args_for_variant(paper_outer, variant)
+    compact_args = make_compact_args(solver_profile=args.solver_profile)
+
+    _apply_solver_profile(compact_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish"
+    assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish"
+    assert variant in _variant_names("wang_research_all")
+    assert compact_args.union_diversity_qubo_macro_future_credit_enabled is True
+    assert compact_args.union_diversity_qubo_macro_future_credit_min_witness_quality > 0.0
+    assert compact_args.deterministic_qubo_sampler is True
     assert compact_args.quality_reservoir_enabled is False
 
 
@@ -12422,6 +12480,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_det_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
