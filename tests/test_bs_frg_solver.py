@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from container_reshuffle.core import Instance, ProblemVariant
+from container_reshuffle.core import Instance, Move, ProblemVariant
 from container_reshuffle.solvers.base import SolverConfig
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,6 +78,35 @@ def test_bs_frg_solver_supports_priority_group_instances():
     assert row["goal_validation_ok"] is True
     assert row["final_n"] == 0
     assert row["moves"] == len(solution.moves)
+
+
+def test_frg_completion_honors_generated_limit(monkeypatch):
+    import math
+
+    import container_reshuffle.solvers.bs_frg as bs_frg
+
+    start = bs_frg._FrgLayout(bs_frg._to_key([[2, 3], [1], []]), None, (0, 0, 0))
+    child = bs_frg._FrgLayout(bs_frg._to_key([[2], [1, 3], []]), None, (0, 0, 0))
+    move = Move(0, 3, 0, 1, 2, 2)
+
+    def fake_step_children(layout, max_height, step, *, limit=None, paper_pure=False):
+        del layout, max_height, step, limit, paper_pure
+        return [bs_frg._Child(child, (move,), 5, (0.0,))]
+
+    monkeypatch.setattr(bs_frg, "_frg_step_children", fake_step_children)
+
+    result = bs_frg._frg_completion(
+        start,
+        3,
+        start_step=0,
+        max_steps=10,
+        deadline=math.inf,
+        max_generated=1,
+    )
+
+    assert result.status == "FRG_GENERATED_LIMIT"
+    assert result.generated == 5
+    assert result.moves == (move,)
 
 
 def test_gen_sequence_uses_top_down_nonincreasing_order():

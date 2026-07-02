@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from functools import lru_cache
 from math import inf
 
 from ..core import Instance, Move, ProblemVariant, Solution, future_disorder_count_stacks
@@ -89,15 +90,21 @@ def _initial_layout(instance: Instance) -> _FrgLayout:
     )
 
 
-def _is_ordered_stack(stack: list[int] | tuple[int, ...]) -> bool:
+@lru_cache(maxsize=262144)
+def _is_ordered_stack_tuple(stack: tuple[int, ...]) -> bool:
     return all(stack[idx] >= stack[idx + 1] for idx in range(len(stack) - 1))
+
+
+def _is_ordered_stack(stack: list[int] | tuple[int, ...]) -> bool:
+    return _is_ordered_stack_tuple(stack if isinstance(stack, tuple) else tuple(stack))
 
 
 def _is_goal(stacks: list[list[int]] | tuple[tuple[int, ...], ...]) -> bool:
     return all(_is_ordered_stack(stack) for stack in stacks)
 
 
-def _stable_prefix_len(stack: list[int] | tuple[int, ...]) -> int:
+@lru_cache(maxsize=262144)
+def _stable_prefix_len_tuple(stack: tuple[int, ...]) -> int:
     if not stack:
         return 0
     length = 1
@@ -107,6 +114,10 @@ def _stable_prefix_len(stack: list[int] | tuple[int, ...]) -> int:
         else:
             break
     return length
+
+
+def _stable_prefix_len(stack: list[int] | tuple[int, ...]) -> int:
+    return _stable_prefix_len_tuple(stack if isinstance(stack, tuple) else tuple(stack))
 
 
 def _bad_suffix_len(stack: list[int] | tuple[int, ...]) -> int:
@@ -162,9 +173,21 @@ def _apply_move(
     *,
     reset_reduction: bool,
 ) -> tuple[_FrgLayout, Move]:
-    stacks = _to_lists(layout.stacks)
-    move = _make_move(stacks, choice.source, choice.target, step)
-    stacks[choice.target].append(stacks[choice.source].pop())
+    stacks = layout.stacks
+    src_stack = stacks[choice.source]
+    dst_stack = stacks[choice.target]
+    box = int(src_stack[-1])
+    move = Move(
+        step=step,
+        box=box,
+        from_stack=choice.source,
+        to_stack=choice.target,
+        from_level=len(src_stack),
+        to_level=len(dst_stack) + 1,
+    )
+    next_stacks = list(stacks)
+    next_stacks[choice.source] = src_stack[:-1]
+    next_stacks[choice.target] = dst_stack + (box,)
     selected_counts = choice.selected_counts if choice.selected_counts is not None else layout.selected_counts
     if reset_reduction or not choice.keep_reduction:
         next_active = None
@@ -184,7 +207,7 @@ def _apply_move(
         )
     return (
         _FrgLayout(
-            stacks=_to_key(stacks),
+            stacks=tuple(next_stacks),
             active_reduce_stack=next_active,
             selected_counts=tuple(selected_counts),
             reduction_assignments=reduction_assignments,
@@ -586,6 +609,7 @@ def _frg_completion(
     start_step: int,
     max_steps: int,
     deadline: float,
+    max_generated: int | None = None,
     paper_pure: bool = False,
 ) -> _RolloutResult:
     current = layout
@@ -598,6 +622,8 @@ def _frg_completion(
             return _RolloutResult(False, current, tuple(moves), future_disorder_count_stacks(_to_lists(current.stacks)), generated, "FRG_DEPTH_LIMIT")
         if time.perf_counter() >= deadline:
             return _RolloutResult(False, current, tuple(moves), future_disorder_count_stacks(_to_lists(current.stacks)), generated, "TIME_LIMIT")
+        if max_generated is not None and generated >= max_generated:
+            return _RolloutResult(False, current, tuple(moves), future_disorder_count_stacks(_to_lists(current.stacks)), generated, "FRG_GENERATED_LIMIT")
 
         children = _frg_step_children(
             current,
@@ -643,6 +669,7 @@ def _frg_completion_cached(
     max_steps: int,
     deadline: float,
     cache: dict[_FrgLayout, _RolloutResult],
+    max_generated: int | None = None,
     paper_pure: bool = False,
 ) -> _RolloutResult:
     cached = cache.get(layout)
@@ -666,15 +693,16 @@ def _frg_completion_cached(
                 cached.status,
             )
 
-    result = _frg_completion(
-        layout,
-        max_height,
-        start_step=start_step,
-        max_steps=max_steps,
-        deadline=deadline,
-        paper_pure=paper_pure,
-    )
-    if result.status not in {"TIME_LIMIT", "FRG_DEPTH_LIMIT"}:
+    completion_kwargs = {
+        "start_step": start_step,
+        "max_steps": max_steps,
+        "deadline": deadline,
+        "paper_pure": paper_pure,
+    }
+    if max_generated is not None:
+        completion_kwargs["max_generated"] = max_generated
+    result = _frg_completion(layout, max_height, **completion_kwargs)
+    if result.status not in {"TIME_LIMIT", "FRG_DEPTH_LIMIT", "FRG_GENERATED_LIMIT"}:
         cache[layout] = _RolloutResult(
             result.feasible,
             result.layout,
