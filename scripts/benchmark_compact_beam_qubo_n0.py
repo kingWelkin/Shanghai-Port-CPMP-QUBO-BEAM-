@@ -17,6 +17,7 @@ import json
 import math
 import sys
 import time
+from concurrent.futures import ProcessPoolExecutor
 from collections import deque
 from dataclasses import dataclass
 from functools import lru_cache
@@ -241,6 +242,9 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_receiver_debt_credit_weight",
     "union_diversity_qubo_source_scarcity_credit_weight",
     "union_diversity_qubo_macro_path_credit_weight",
+    "union_diversity_qubo_macro_future_credit_min_witness_quality",
+    "union_diversity_qubo_receiver_debt_penalty_weight",
+    "union_diversity_qubo_macro_future_credit_cap",
     "union_diversity_qubo_macro_witness_move_penalty_weight",
     "union_diversity_qubo_macro_witness_move_penalty_scale",
     "union_diversity_qubo_macro_prefix_penalty_weight",
@@ -543,6 +547,7 @@ COMPACT_EXTRA_FIELDS = [
     "post_polish_respect_time_limit",
     "post_polish_max_attempts",
     "post_polish_time_budget",
+    "inner_jobs",
     "post_polish_window_min_stacks",
     "post_polish_attempts",
     "post_polish_improvements",
@@ -1743,6 +1748,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "post_polish_mode": "legacy",
         "post_polish_accept": "better",
         "post_polish_time_budget": 0.0,
+        "inner_jobs": 1,
         "post_polish_window_min_stacks": 0,
         "post_polish_passes": 2,
         "post_polish_focus_n": 8,
@@ -3640,6 +3646,124 @@ class PostPolishStats:
 
 
 @dataclass(frozen=True)
+class _PostPolishSuffixWorkerPayload:
+    order: int
+    start_code: bytes
+    start_n: int
+    offset_depth: int
+    cap: int
+    stack_count: int
+    max_height: int
+    max_depth: int
+    time_budget: float
+    args_fields: dict[str, object]
+
+
+@dataclass(frozen=True)
+class _PostPolishSuffixWorkerResult:
+    order: int
+    bridge: tuple[bytes, ...] | None
+    expanded: int
+
+
+@dataclass(frozen=True)
+class _PostPolishWindowWorkerPayload:
+    order: int
+    window: PostPolishWindow
+    start_code: bytes
+    goal_code: bytes
+    offset_depth: int
+    cap: int
+    stack_count: int
+    max_height: int
+    max_depth: int
+    time_budget: float
+    args_fields: dict[str, object]
+
+
+@dataclass(frozen=True)
+class _PostPolishWindowWorkerResult:
+    order: int
+    window: PostPolishWindow
+    bridge: tuple[bytes, ...] | None
+    expanded: int
+
+
+def _post_polish_worker_args_fields(args: argparse.Namespace, *, bridge_expanded: int | None = None) -> dict[str, object]:
+    fields: dict[str, object] = {
+        "post_polish_successor_cache": bool(getattr(args, "post_polish_successor_cache", False)),
+        "post_polish_suffix_expanded": int(getattr(args, "post_polish_suffix_expanded", 60000)),
+        "post_polish_bridge_expanded": int(getattr(args, "post_polish_bridge_expanded", 20000)),
+    }
+    if bridge_expanded is not None:
+        fields["post_polish_bridge_expanded"] = int(bridge_expanded)
+    return fields
+
+
+def _post_polish_inner_jobs(args: argparse.Namespace, task_count: int) -> int:
+    if task_count <= 1:
+        return 1
+    try:
+        requested = int(getattr(args, "inner_jobs", 1) or 1)
+    except (TypeError, ValueError):
+        requested = 1
+    return min(max(1, requested), task_count)
+
+
+def _post_polish_remaining_time_budget(deadline: float) -> float:
+    if math.isinf(deadline):
+        return math.inf
+    return max(0.0, deadline - time.perf_counter())
+
+
+def _post_polish_worker_deadline(time_budget: float) -> float:
+    if math.isinf(time_budget):
+        return math.inf
+    return time.perf_counter() + max(0.0, time_budget)
+
+
+def _post_polish_suffix_worker(payload: _PostPolishSuffixWorkerPayload) -> _PostPolishSuffixWorkerResult:
+    args = argparse.Namespace(**payload.args_fields)
+    bridge, expanded = _suffix_shorter_path_to_n0(
+        payload.start_code,
+        payload.start_n,
+        payload.offset_depth,
+        payload.cap,
+        payload.stack_count,
+        payload.max_height,
+        payload.max_depth,
+        _post_polish_worker_deadline(payload.time_budget),
+        args,
+    )
+    return _PostPolishSuffixWorkerResult(
+        order=payload.order,
+        bridge=tuple(bridge) if bridge is not None else None,
+        expanded=expanded,
+    )
+
+
+def _post_polish_window_worker(payload: _PostPolishWindowWorkerPayload) -> _PostPolishWindowWorkerResult:
+    args = argparse.Namespace(**payload.args_fields)
+    bridge, expanded = _bridge_shorter_path(
+        payload.start_code,
+        payload.goal_code,
+        payload.offset_depth,
+        payload.cap,
+        payload.stack_count,
+        payload.max_height,
+        payload.max_depth,
+        _post_polish_worker_deadline(payload.time_budget),
+        args,
+    )
+    return _PostPolishWindowWorkerResult(
+        order=payload.order,
+        window=payload.window,
+        bridge=tuple(bridge) if bridge is not None else None,
+        expanded=expanded,
+    )
+
+
+@dataclass(frozen=True)
 class InitialScarcityMetrics:
     n0: int
     d0: int
@@ -4384,6 +4508,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         ),
         "post_polish_max_attempts": "--post-polish-max-attempts",
         "post_polish_time_budget": "--post-polish-time-budget",
+        "inner_jobs": "--inner-jobs",
         "post_polish_window_min_stacks": "--post-polish-window-min-stacks",
         "post_polish_passes": "--post-polish-passes",
         "post_polish_focus_n": "--post-polish-focus-n",
@@ -11392,6 +11517,7 @@ def _backtrack_with_macro_edges(
     return expanded
 
 
+@lru_cache(maxsize=1048576)
 def _compact_code_is_successor(start: bytes, goal: bytes, stack_count: int, max_height: int) -> bool:
     if start == goal:
         return False
@@ -12363,6 +12489,62 @@ def _try_post_polish_suffix_pass(
         stats.qcalls += 1
         stats.qvars += suffix_qvars
         stats.qtime += suffix_qtime
+    inner_jobs = _post_polish_inner_jobs(args, len(selected_suffixes))
+    if inner_jobs > 1:
+        payloads: list[_PostPolishSuffixWorkerPayload] = []
+        payload_meta: dict[int, tuple[PostPolishSuffix, int]] = {}
+        for order, suffix in enumerate(selected_suffixes):
+            if time.perf_counter() >= deadline or _post_polish_attempt_budget_exhausted(args, stats):
+                break
+            if suffix.start >= len(current) - 1:
+                continue
+            old_remaining = len(current) - 1 - suffix.start
+            max_depth = min(old_remaining - 1, int(getattr(args, "post_polish_suffix_max_depth", 18)))
+            if max_depth <= 0:
+                continue
+            stats.attempts += 1
+            stats.suffix_attempts += 1
+            payloads.append(
+                _PostPolishSuffixWorkerPayload(
+                    order=order,
+                    start_code=current[suffix.start],
+                    start_n=suffix.n_value,
+                    offset_depth=suffix.start,
+                    cap=cap,
+                    stack_count=stack_count,
+                    max_height=max_height,
+                    max_depth=max_depth,
+                    time_budget=_post_polish_remaining_time_budget(deadline),
+                    args_fields=_post_polish_worker_args_fields(args),
+                )
+            )
+            payload_meta[order] = (suffix, old_remaining)
+
+        if not payloads:
+            return current, False
+
+        with ProcessPoolExecutor(max_workers=_post_polish_inner_jobs(args, len(payloads))) as executor:
+            results = list(executor.map(_post_polish_suffix_worker, payloads))
+        results_by_order = {result.order: result for result in results}
+        stats.suffix_expanded += sum(max(0, result.expanded) for result in results)
+
+        for order in sorted(payload_meta):
+            suffix, old_remaining = payload_meta[order]
+            result = results_by_order.get(order)
+            if result is None or result.bridge is None:
+                continue
+            bridge = list(result.bridge)
+            saved = old_remaining - (len(bridge) - 1)
+            if saved <= 0:
+                continue
+            candidate = current[: suffix.start] + bridge
+            if not _path_business_ok(candidate, stack_count, max_height, cap):
+                continue
+            stats.improvements += 1
+            stats.suffix_improvements += 1
+            stats.moves_saved += saved
+            return candidate, True
+        return current, False
     for suffix in selected_suffixes:
         if time.perf_counter() >= deadline or _post_polish_attempt_budget_exhausted(args, stats):
             break
@@ -12632,7 +12814,9 @@ def _bridge_shorter_path(
     deadline: float,
     args: argparse.Namespace,
 ) -> tuple[list[bytes] | None, int]:
-    if max_depth <= 0 or start == goal:
+    if start == goal:
+        return [start], 0
+    if max_depth <= 0:
         return None, 0
     start_n = _code_n(start, stack_count, max_height)
     goal_n = _code_n(goal, stack_count, max_height)
@@ -12665,6 +12849,7 @@ def _bridge_shorter_path(
     return None, expanded
 
 
+@lru_cache(maxsize=1048576)
 def _compact_transition_move(
     start: bytes,
     goal: bytes,
@@ -12982,6 +13167,108 @@ def _try_post_polish_replay_shortcut_pass(
     return codes, False
 
 
+def _try_post_polish_window_parallel_pass(
+    current: list[bytes],
+    selected: list[PostPolishWindow],
+    stack_count: int,
+    max_height: int,
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+    stats: PostPolishStats,
+    accept_mode: str,
+) -> tuple[list[bytes], bool, bool]:
+    payloads: list[_PostPolishWindowWorkerPayload] = []
+    payload_windows: dict[int, PostPolishWindow] = {}
+    payload_key_by_order: dict[int, tuple[bytes, bytes, int]] = {}
+    seen_payload_keys: set[tuple[bytes, bytes, int]] = set()
+    bridge_expanded = int(
+        getattr(
+            args,
+            "post_polish_window_repair_expanded",
+            getattr(args, "post_polish_bridge_expanded", 20000),
+        )
+    )
+
+    for order, window in enumerate(selected):
+        if time.perf_counter() >= deadline or _post_polish_attempt_budget_exhausted(args, stats):
+            break
+        if window.start < 0 or window.end >= len(current) or window.end <= window.start:
+            continue
+        old_len = window.end - window.start
+        if old_len <= 0:
+            continue
+        if accept_mode == "equal_or_better":
+            max_depth = old_len + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
+        else:
+            max_depth = old_len - 1 + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
+        max_depth = min(max(0, max_depth), int(getattr(args, "post_polish_max_bridge_depth", max_depth)))
+        if max_depth <= 0:
+            continue
+
+        payload_key = (current[window.start], current[window.end], max_depth)
+        payload_key_by_order[order] = payload_key
+        if payload_key not in seen_payload_keys:
+            seen_payload_keys.add(payload_key)
+            stats.attempts += 1
+            stats.window_attempts += 1
+            payloads.append(
+                _PostPolishWindowWorkerPayload(
+                    order=order,
+                    window=window,
+                    start_code=current[window.start],
+                    goal_code=current[window.end],
+                    offset_depth=window.start,
+                    cap=cap,
+                    stack_count=stack_count,
+                    max_height=max_height,
+                    max_depth=max_depth,
+                    time_budget=_post_polish_remaining_time_budget(deadline),
+                    args_fields=_post_polish_worker_args_fields(args, bridge_expanded=bridge_expanded),
+                )
+            )
+        payload_windows[order] = window
+
+    if not payloads:
+        return current, False, False
+
+    with ProcessPoolExecutor(max_workers=_post_polish_inner_jobs(args, len(payloads))) as executor:
+        results = list(executor.map(_post_polish_window_worker, payloads))
+    results_by_order = {result.order: result for result in results}
+    stats.bridge_expanded += sum(max(0, result.expanded) for result in results)
+    result_by_key = {
+        (payload.start_code, payload.goal_code, payload.max_depth): result
+        for payload, result in zip(payloads, results)
+    }
+
+    for order in sorted(payload_windows):
+        window = payload_windows[order]
+        result = results_by_order.get(order)
+        if result is None:
+            result = result_by_key.get(payload_key_by_order.get(order, (b"", b"", -1)))
+        if result is None or result.bridge is None:
+            continue
+        bridge = list(result.bridge)
+        old_len = window.end - window.start
+        saved = old_len - (len(bridge) - 1)
+        if accept_mode == "better":
+            if saved <= 0:
+                continue
+        elif saved < 0:
+            continue
+
+        candidate = current[: window.start] + bridge + current[window.end + 1 :]
+        if not _path_business_ok(candidate, stack_count, max_height, cap):
+            continue
+
+        stats.improvements += 1
+        stats.moves_saved += max(0, saved)
+        stats.window_successes += 1
+        stats.window_moves_saved += max(0, saved)
+        return candidate, True, saved > 0
+    return current, False, False
+
+
 def _post_polish_codes_with_qubo_windows_v2(
     codes: list[bytes],
     stack_count: int,
@@ -13038,73 +13325,86 @@ def _post_polish_codes_with_qubo_windows_v2(
                 stats.qtime += qtime
 
             improved_this_pass = False
-            for window in selected:
-                if time.perf_counter() >= deadline or _post_polish_attempt_budget_exhausted(args, stats):
-                    break
-                if window.start < 0 or window.end >= len(current) or window.end <= window.start:
-                    continue
-                old_len = window.end - window.start
-                if old_len <= 0:
-                    continue
-                if accept_mode == "equal_or_better":
-                    max_depth = old_len + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
-                else:
-                    max_depth = old_len - 1 + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
-                max_depth = min(max(0, max_depth), int(getattr(args, "post_polish_max_bridge_depth", max_depth)))
-                if max_depth <= 0:
-                    continue
-
-                stats.attempts += 1
-                stats.window_attempts += 1
-
-                def bridge_call() -> tuple[list[bytes] | None, int]:
-                    return _bridge_shorter_path(
-                        current[window.start],
-                        current[window.end],
-                        window.start,
-                        cap,
-                        stack_count,
-                        max_height,
-                        max_depth,
-                        deadline,
-                        args,
-                    )
-
-                bridge, expanded = _with_temporary_args(
+            if _post_polish_inner_jobs(args, len(selected)) > 1:
+                current, _accepted_this_pass, improved_this_pass = _try_post_polish_window_parallel_pass(
+                    current,
+                    selected,
+                    stack_count,
+                    max_height,
+                    cap,
                     args,
-                        {
-                            "post_polish_bridge_expanded": int(
-                                getattr(
-                                    args,
-                                    "post_polish_window_repair_expanded",
-                                    getattr(args, "post_polish_bridge_expanded", 20000),
-                                )
-                            )
-                        },
-                        bridge_call,
-                    )
-                stats.bridge_expanded += expanded
-                if bridge is None:
-                    continue
-
-                saved = old_len - (len(bridge) - 1)
-                if accept_mode == "better":
-                    if saved <= 0:
+                    deadline,
+                    stats,
+                    accept_mode,
+                )
+            else:
+                for window in selected:
+                    if time.perf_counter() >= deadline or _post_polish_attempt_budget_exhausted(args, stats):
+                        break
+                    if window.start < 0 or window.end >= len(current) or window.end <= window.start:
                         continue
-                elif saved < 0:
-                    continue
+                    old_len = window.end - window.start
+                    if old_len <= 0:
+                        continue
+                    if accept_mode == "equal_or_better":
+                        max_depth = old_len + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
+                    else:
+                        max_depth = old_len - 1 + int(getattr(args, "post_polish_window_repair_depth_extra", 0))
+                    max_depth = min(max(0, max_depth), int(getattr(args, "post_polish_max_bridge_depth", max_depth)))
+                    if max_depth <= 0:
+                        continue
 
-                candidate = current[: window.start] + bridge + current[window.end + 1 :]
-                if not _path_business_ok(candidate, stack_count, max_height, cap):
-                    continue
+                    stats.attempts += 1
+                    stats.window_attempts += 1
 
-                current = candidate
-                stats.improvements += 1
-                stats.moves_saved += max(0, saved)
-                stats.window_successes += 1
-                stats.window_moves_saved += max(0, saved)
-                improved_this_pass = saved > 0
-                break
+                    def bridge_call() -> tuple[list[bytes] | None, int]:
+                        return _bridge_shorter_path(
+                            current[window.start],
+                            current[window.end],
+                            window.start,
+                            cap,
+                            stack_count,
+                            max_height,
+                            max_depth,
+                            deadline,
+                            args,
+                        )
+
+                    bridge, expanded = _with_temporary_args(
+                        args,
+                            {
+                                "post_polish_bridge_expanded": int(
+                                    getattr(
+                                        args,
+                                        "post_polish_window_repair_expanded",
+                                        getattr(args, "post_polish_bridge_expanded", 20000),
+                                    )
+                                )
+                            },
+                            bridge_call,
+                        )
+                    stats.bridge_expanded += expanded
+                    if bridge is None:
+                        continue
+
+                    saved = old_len - (len(bridge) - 1)
+                    if accept_mode == "better":
+                        if saved <= 0:
+                            continue
+                    elif saved < 0:
+                        continue
+
+                    candidate = current[: window.start] + bridge + current[window.end + 1 :]
+                    if not _path_business_ok(candidate, stack_count, max_height, cap):
+                        continue
+
+                    current = candidate
+                    stats.improvements += 1
+                    stats.moves_saved += max(0, saved)
+                    stats.window_successes += 1
+                    stats.window_moves_saved += max(0, saved)
+                    improved_this_pass = saved > 0
+                    break
             if improved_this_pass:
                 continue
             if _post_polish_attempt_budget_exhausted(args, stats):
@@ -15505,6 +15805,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "post_polish_respect_time_limit": getattr(args, "post_polish_respect_time_limit", True),
             "post_polish_max_attempts": getattr(args, "post_polish_max_attempts", 0),
             "post_polish_time_budget": getattr(args, "post_polish_time_budget", 0.0),
+            "inner_jobs": getattr(args, "inner_jobs", 1),
             "post_polish_window_min_stacks": getattr(args, "post_polish_window_min_stacks", 0),
             "post_polish_attempts": result.post_polish_attempts,
             "post_polish_improvements": result.post_polish_improvements,
@@ -15930,6 +16231,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=True,
         help="Enable the historical entropy business cap; pass --no-business-cap for uncapped benchmark alignment.",
     )
+    parser.add_argument("--inner-jobs", type=int, default=1)
     _add_quality_reservoir_arguments(parser)
     return parser
 
@@ -16490,6 +16792,7 @@ def main() -> int:
     parser.add_argument("--post-polish-accept", choices=["better", "equal_or_better"], default="better")
     parser.add_argument("--post-polish-respect-time-limit", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--post-polish-max-attempts", type=int, default=0)
+    parser.add_argument("--inner-jobs", type=int, default=1)
     parser.add_argument("--post-polish-window-min-stacks", type=int, default=0)
     parser.add_argument("--post-polish-passes", type=int, default=2)
     parser.add_argument("--post-polish-focus-n", type=int, default=8)

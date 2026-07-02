@@ -877,6 +877,7 @@ def _priority_group_row_dict_from_instance_result(
         "post_polish_respect_time_limit": getattr(args, "post_polish_respect_time_limit", True),
         "post_polish_max_attempts": getattr(args, "post_polish_max_attempts", 0),
         "post_polish_time_budget": getattr(args, "post_polish_time_budget", 0.0),
+        "inner_jobs": getattr(args, "inner_jobs", 1),
         "post_polish_window_min_stacks": getattr(args, "post_polish_window_min_stacks", 0),
         "post_polish_attempts": result.post_polish_attempts,
         "post_polish_improvements": result.post_polish_improvements,
@@ -1735,6 +1736,7 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "post_polish_respect_time_limit",
         "post_polish_max_attempts",
         "post_polish_time_budget",
+        "inner_jobs",
         "post_polish_window_repair_expanded",
         "post_polish_shortcut_replay_enabled",
         "post_polish_shortcut_min_delete",
@@ -2703,6 +2705,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--post-polish-respect-time-limit", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-max-attempts", type=int)
     parser.add_argument("--post-polish-time-budget", type=float)
+    parser.add_argument("--inner-jobs", type=int)
     parser.add_argument("--post-polish-window-repair-expanded", type=int)
     parser.add_argument("--post-polish-successor-cache", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)

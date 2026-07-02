@@ -12369,6 +12369,24 @@ def test_macro_chain_witness_successor_cache_can_be_toggled_from_runners():
     assert paper_args.post_polish_successor_cache is False
 
 
+def test_post_polish_inner_jobs_can_be_toggled_from_runners():
+    from benchmark_compact_beam_qubo_n0 import build_parser as build_compact_parser
+    from benchmark_compact_beam_qubo_n0 import make_compact_args
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish"
+    assert make_compact_args().inner_jobs == 1
+    assert build_compact_parser().parse_args(["--inner-jobs", "3"]).inner_jobs == 3
+
+    open_outer = build_parser().parse_args(["--variant", variant, "--inner-jobs", "4"])
+    paper_outer = build_paper_parser().parse_args(["--variant", variant, "--inner-jobs", "5"])
+
+    assert _args_for_variant(open_outer, variant).inner_jobs == 4
+    assert paper_args_for_variant(paper_outer, variant).inner_jobs == 5
+
+
 def test_open_runner_accepts_macro_chain_quality_variant():
     from benchmark_compact_beam_qubo_n0 import _apply_solver_profile
     from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
@@ -14420,6 +14438,28 @@ def test_post_polish_replay_shortcut_uses_direct_later_successor():
     assert stats.window_moves_saved == 1
 
 
+def test_post_polish_transition_predicates_are_cached():
+    import benchmark_compact_beam_qubo_n0 as compact
+
+    stack_count = 3
+    max_height = 3
+    code_a, _n_a = compact._encode([[1, 2], [3], []], stack_count, max_height)
+    code_d, _n_d = compact._encode([[1], [3, 2], []], stack_count, max_height)
+
+    compact._compact_code_is_successor.cache_clear()
+    assert compact._compact_code_is_successor(code_a, code_d, stack_count, max_height) is True
+    successor_info = compact._compact_code_is_successor.cache_info()
+    assert compact._compact_code_is_successor(code_a, code_d, stack_count, max_height) is True
+    assert compact._compact_code_is_successor.cache_info().hits == successor_info.hits + 1
+
+    compact._compact_transition_move.cache_clear()
+    first_move = compact._compact_transition_move(code_a, code_d, stack_count, max_height)
+    assert first_move is not None
+    move_info = compact._compact_transition_move.cache_info()
+    assert compact._compact_transition_move(code_a, code_d, stack_count, max_height) == first_move
+    assert compact._compact_transition_move.cache_info().hits == move_info.hits + 1
+
+
 def test_post_polish_bridge_scan_finds_shorter_unselected_window(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as compact
 
@@ -14673,6 +14713,140 @@ def test_post_polish_attempt_budget_exhaustion_is_deterministic():
 
     args.post_polish_max_attempts = 0
     assert compact._post_polish_attempt_budget_exhausted(args, stats) is False
+
+
+def test_post_polish_bridge_treats_identical_endpoints_as_zero_move_chain():
+    import benchmark_compact_beam_qubo_n0 as compact
+
+    args = _compact_args()
+
+    bridge, expanded = compact._bridge_shorter_path(
+        b"same",
+        b"same",
+        offset_depth=0,
+        cap=99,
+        stack_count=3,
+        max_height=3,
+        max_depth=0,
+        deadline=float("inf"),
+        args=args,
+    )
+
+    assert bridge == [b"same"]
+    assert expanded == 0
+
+
+def test_post_polish_suffix_inner_jobs_uses_ordered_parallel_results(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+
+    codes = [b"s0", b"s1", b"s2", b"s3", b"goal"]
+    suffixes = [
+        compact.PostPolishSuffix(start=0, old_remaining=4, n_value=3, score=9.0),
+        compact.PostPolishSuffix(start=1, old_remaining=3, n_value=2, score=8.0),
+        compact.PostPolishSuffix(start=2, old_remaining=2, n_value=2, score=7.0),
+    ]
+    args = _compact_args(inner_jobs=3, post_polish_suffix_max_depth=8)
+    stats = compact.PostPolishStats()
+    observed_max_workers: list[int] = []
+
+    class FakeProcessPoolExecutor:
+        def __init__(self, max_workers: int):
+            observed_max_workers.append(max_workers)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc_info):
+            return False
+
+        def map(self, fn, payloads):
+            return [fn(payload) for payload in payloads]
+
+    def fake_suffix_shorter_path(start, *_args, **_kwargs):
+        if start == b"s1":
+            return [b"s1", b"goal"], 5
+        if start == b"s2":
+            return [b"s2", b"goal"], 7
+        return None, 1
+
+    monkeypatch.setattr(compact, "ProcessPoolExecutor", FakeProcessPoolExecutor, raising=False)
+    monkeypatch.setattr(compact, "_path_n_values", lambda *_args: [3, 2, 2, 1, 0])
+    monkeypatch.setattr(compact, "_post_polish_suffixes", lambda *_args: suffixes)
+    monkeypatch.setattr(compact, "_select_post_polish_suffixes_qubo", lambda selected, _args: (selected, 0, 0.0))
+    monkeypatch.setattr(compact, "_suffix_shorter_path_to_n0", fake_suffix_shorter_path)
+    monkeypatch.setattr(compact, "_path_business_ok", lambda *_args: True)
+
+    polished, improved = compact._try_post_polish_suffix_pass(
+        codes,
+        stack_count=3,
+        max_height=3,
+        cap=99,
+        args=args,
+        deadline=float("inf"),
+        stats=stats,
+    )
+
+    assert improved is True
+    assert observed_max_workers == [3]
+    assert polished == [b"s0", b"s1", b"goal"]
+    assert stats.suffix_attempts == 3
+    assert stats.suffix_expanded == 13
+
+
+def test_post_polish_window_parallel_deduplicates_same_bridge_payload(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as compact
+
+    current = [b"s0", b"s1", b"s0", b"s1", b"goal"]
+    selected = [
+        compact.PostPolishWindow(start=0, end=1, old_len=1, min_n=1, max_n=2, score=10.0),
+        compact.PostPolishWindow(start=2, end=3, old_len=1, min_n=1, max_n=2, score=9.0),
+    ]
+    args = _compact_args(
+        inner_jobs=2,
+        post_polish_accept="equal_or_better",
+        post_polish_window_repair_depth_extra=0,
+        post_polish_max_bridge_depth=1,
+        post_polish_window_repair_expanded=64,
+    )
+    stats = compact.PostPolishStats()
+    payload_counts: list[int] = []
+
+    class FakeProcessPoolExecutor:
+        def __init__(self, max_workers: int):
+            self.max_workers = max_workers
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc_info):
+            return False
+
+        def map(self, fn, payloads):
+            payloads = list(payloads)
+            payload_counts.append(len(payloads))
+            return [fn(payload) for payload in payloads]
+
+    monkeypatch.setattr(compact, "ProcessPoolExecutor", FakeProcessPoolExecutor, raising=False)
+    monkeypatch.setattr(compact, "_bridge_shorter_path", lambda *_args: (None, 3))
+
+    polished, accepted, improved = compact._try_post_polish_window_parallel_pass(
+        current,
+        selected,
+        stack_count=3,
+        max_height=3,
+        cap=99,
+        args=args,
+        deadline=float("inf"),
+        stats=stats,
+        accept_mode="equal_or_better",
+    )
+
+    assert polished == current
+    assert accepted is False
+    assert improved is False
+    assert payload_counts == [1]
+    assert stats.window_attempts == 1
+    assert stats.bridge_expanded == 3
 
 
 def test_post_polish_windows_v2_accepts_strictly_shorter_bridge_and_records_metrics(monkeypatch):

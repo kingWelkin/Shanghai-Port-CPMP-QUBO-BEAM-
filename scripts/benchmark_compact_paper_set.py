@@ -591,6 +591,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--post-polish-respect-time-limit", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-max-attempts", type=int)
     parser.add_argument("--post-polish-time-budget", type=float)
+    parser.add_argument("--inner-jobs", type=int)
     parser.add_argument("--post-polish-window-repair-expanded", type=int)
     parser.add_argument("--post-polish-successor-cache", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-shortcut-replay-enabled", action=argparse.BooleanOptionalAction, default=None)
