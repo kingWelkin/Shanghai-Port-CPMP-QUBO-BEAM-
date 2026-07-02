@@ -1,0 +1,5 @@
+ablation,cases,valid,invalid_or_unsolved,moves_total,full_quality_penalty_total,runtime_total,runtime_avg,qubo_calls,wang_pair_qubo_calls,group_qubo_calls,post_polish_saved,output
+base,120,112,8,3379,4513,661.5229874001088,5.512691561667574,7959,3370,1090,23,C:\Users\Donghao\Desktop\上港堆叠装箱\docs\experiments\hardcoded_ablation\start_layer_ablation_open120_20260618_base.csv
+qubo_start_layer_4,120,114,6,3482,4255,634.7704182999732,5.289753485833111,7795,3356,1027,23,C:\Users\Donghao\Desktop\上港堆叠装箱\docs\experiments\hardcoded_ablation\start_layer_ablation_open120_q4_q12_20260618_qubo_start_layer_4.csv
+qubo_start_layer_8,120,112,8,3371,4520,662.5343418999255,5.521119515832712,7623,3376,967,25,C:\Users\Donghao\Desktop\上港堆叠装箱\docs\experiments\hardcoded_ablation\start_layer_ablation_open120_20260618_qubo_start_layer_8.csv
+qubo_start_layer_12,120,109,11,3272,4780,675.2092365001299,5.626743637501082,7208,3339,887,27,C:\Users\Donghao\Desktop\上港堆叠装箱\docs\experiments\hardcoded_ablation\start_layer_ablation_open120_q4_q12_20260618_qubo_start_layer_12.csv

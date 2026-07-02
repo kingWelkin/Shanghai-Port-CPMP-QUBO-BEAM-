@@ -24,6 +24,7 @@ class QuboSamplerConfig:
     num_reads: int = 50
     random_seed: int = 1
     time_limit_sec: float = 60.0
+    respect_time_limit: bool = True
     external_command: Optional[str] = None
     working_dir: Optional[str] = None
     sa_iterations: int = 5000
@@ -46,6 +47,50 @@ class QuboSampleSet:
     samples: List[QuboSample] = field(default_factory=list)
     sampler_name: str = ""
     runtime_sec: float = 0.0
+
+
+@dataclass(frozen=True)
+class _CompiledQuboTerms:
+    offset: float
+    linear: List[float]
+    quadratic: List[tuple[int, int, float]]
+    adjacency: List[List[tuple[int, float]]]
+
+    def energy(self, values: List[int]) -> float:
+        energy = self.offset
+        for idx, coeff in enumerate(self.linear):
+            if values[idx]:
+                energy += coeff
+        for i, j, coeff in self.quadratic:
+            if values[i] and values[j]:
+                energy += coeff
+        return float(energy)
+
+    def flip_delta(self, values: List[int], bit: int) -> float:
+        direction = 1.0 if values[bit] == 0 else -1.0
+        local = self.linear[bit]
+        for other, coeff in self.adjacency[bit]:
+            if values[other]:
+                local += coeff
+        return float(direction * local)
+
+
+def _compile_qubo_terms(model: QuboModel) -> _CompiledQuboTerms:
+    n = len(model.var_index)
+    linear = [0.0] * n
+    quadratic: List[tuple[int, int, float]] = []
+    adjacency: List[List[tuple[int, float]]] = [[] for _ in range(n)]
+    for (i, j), coeff in model.Q.items():
+        i = int(i)
+        j = int(j)
+        coeff = float(coeff)
+        if i == j:
+            linear[i] += coeff
+            continue
+        quadratic.append((i, j, coeff))
+        adjacency[i].append((j, coeff))
+        adjacency[j].append((i, coeff))
+    return _CompiledQuboTerms(float(model.offset), linear, quadratic, adjacency)
 
 
 class IQuboSampler:
@@ -71,12 +116,20 @@ class SimulatedAnnealingQuboSampler(IQuboSampler):
         reads = max(1, config.num_reads)
         iterations = max(1, config.sa_iterations)
         samples: List[QuboSample] = []
-        deadline = start + max(0.001, config.time_limit_sec)
+        deadline = start + max(0.001, config.time_limit_sec) if config.respect_time_limit else math.inf
+        compiled = _compile_qubo_terms(model)
+
+        if n == 0:
+            return QuboSampleSet(
+                samples=[QuboSample({}, compiled.offset)],
+                sampler_name=self.name,
+                runtime_sec=time.perf_counter() - start,
+            )
 
         for _ in range(reads):
-            x = {i: rng.randint(0, 1) for i in range(n)}
-            energy = model.evaluate(x)
-            best_x = dict(x)
+            x = [rng.randint(0, 1) for _ in range(n)]
+            energy = compiled.energy(x)
+            best_x = list(x)
             best_energy = energy
             for it in range(iterations):
                 if time.perf_counter() > deadline:
@@ -84,18 +137,18 @@ class SimulatedAnnealingQuboSampler(IQuboSampler):
                 frac = it / max(1, iterations - 1)
                 temp = config.initial_temperature * ((config.final_temperature / config.initial_temperature) ** frac)
                 bit = rng.randrange(n) if n else 0
-                x[bit] = 1 - x.get(bit, 0)
-                new_energy = model.evaluate(x)
-                delta = new_energy - energy
+                delta = compiled.flip_delta(x, bit)
+                x[bit] = 1 - x[bit]
+                new_energy = energy + delta
                 accept = delta <= 0 or rng.random() < math.exp(-delta / max(temp, 1e-12))
                 if accept:
                     energy = new_energy
                     if energy < best_energy:
                         best_energy = energy
-                        best_x = dict(x)
+                        best_x = list(x)
                 else:
-                    x[bit] = 1 - x.get(bit, 0)
-            samples.append(QuboSample(best_x, best_energy))
+                    x[bit] = 1 - x[bit]
+            samples.append(QuboSample({i: value for i, value in enumerate(best_x)}, best_energy))
             if time.perf_counter() > deadline:
                 break
         samples.sort(key=lambda s: s.energy)

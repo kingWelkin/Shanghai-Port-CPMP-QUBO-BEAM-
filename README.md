@@ -1,120 +1,150 @@
-# 上港堆叠装箱
+# Shanghai Port CPMP QUBO Beam
 
-这是一个单贝位 container pre-marshalling / CPMP 实验项目。核心约束是：
+This repository contains engineering experiments for container pre-marshalling / CPMP on Shanghai Port style layouts. The active research line is a compact byte-state beam search with QUBO-assisted frontier selection and post-polish path compression.
 
-- 每一步只能移动某个非空栈的栈顶箱。
-- 只能把箱子放到另一个未满栈的栈顶。
-- 不能移动非栈顶箱。
-- 不能把箱子移出堆场。
-- 最终验收目标是 `N=0`，即所有箱子都不再处于逆序影响范围内。
+## Current Mainline
 
-当前主线是 **QUBO 增强 Beam**。QUBO 不直接输出最终动作，也不负责可行性证明；所有动作都由 classical state engine 生成，并由 validator 重新模拟验收。
+The current promoted open120 plus paper BF/CV benchmark mainline is:
 
-## 快速运行
-
-推荐先安装为 editable 包：
-
-```powershell
-python -m pip install -e .
-python -m greedy --zone A1
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish
 ```
 
-也可以直接运行脚本：
+This profile supersedes the previous combined-evidence mainline:
 
-```powershell
-.\run.bat --zone A1
-.\run.bat
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish
 ```
 
-当前主推 `N=0` benchmark：
+The clean historical paired baseline remains:
 
-```powershell
-python scripts\benchmark_compact_beam_qubo_n0.py --profile speed_v2 --output docs\experiments\micro_optimized_speed_v2_full30.csv
+```text
+qubo_scheduler_state_v5_wang_rescue_polish
 ```
 
-严格 QUBO / no-QUBO 时间匹配消融：
+The open120-only path-quality reference remains:
 
-```powershell
-python scripts\benchmark_compact_qubo_ablation_time_aligned.py --solver-profile speed_v2 --sweep-all-no-qubo --output docs\experiments\micro_optimized_strict_ablation_full30.csv --no-qubo-widths 1300 1400 1600 2000 2400 3200 4800 6400
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish
 ```
 
-## 当前结论
+`macro_chain_witness` is promoted because open120 and the paper BF/CV benchmark sets are now treated as equally important. It keeps open120 at full coverage and, unlike the earlier macro-credit line, transfers BS-FRG value as short recovery-chain candidates with completion-witness evidence instead of only as shallow selector credit.
 
-当前只把 30 个单贝位 `N=0` 分支作为主结论。
+## Latest Evidence
 
-| 算法 | 定位 | 解出 | 总步数 | 平均时间 |
-|---|---|---:|---:|---:|
-| QUBO Beam `speed_v2` 微优化版 | 当前主推 | 30/30 | 509 | 2.237 秒 |
-| enhanced no-QUBO | 强工程消融 | 30/30 | 510 | 2.258 秒 |
-| classic no-QUBO time-matched | 传统 Beam 严格消融 | 25/30 | 364* | 2.409 秒 |
-| classic no-QUBO budget-best | 传统 Beam 严格消融 | 25/30 | 364* | 2.409 秒 |
-| dynamic QUBO quality | 质量增强变体 | 30/30 | 507 | 4.902 秒 |
-| A* no-proof | 速度强基线，不证明最优 | 30/30 | 514 | 2.829 秒 |
+Open DLTS 5x5/7x5 test-120, no business cap, `t120`, 2026-07-01:
 
-`*` classic no-QUBO 的步数只统计成功算例，不能直接与 30/30 算法的总步数对比。
+| profile | valid | full penalty | solved moves | notes |
+|---|---:|---:|---:|---|
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish` | 120/120 | 6886 | 6886 | current promoted no-cap mainline |
 
-26 号贝位：
+Paper BF/CV full benchmark, no business cap, `t120`, 2026-07-01:
 
-| 算法 | 解出 | 总步数 | 平均时间 |
-|---|---:|---:|---:|
-| QUBO Beam `speed_v2` 微优化版 | 15/15 | 414 | 4.031 秒 |
-| enhanced no-QUBO | 15/15 | 415 | 4.004 秒 |
-| classic no-QUBO time-matched | 10/15 | 269* | 4.396 秒 |
+| profile or solver | primary solved | feasibility solved | primary moves | feasible moves | full penalty | avg runtime |
+|---|---:|---:|---:|---:|---:|---:|
+| `macro_chain_witness_polish`, patched full aggregate | 1560/1561 | 1561/1561 | 102574 | 102637 | 102881 | 9.771 |
+| `macro_chain_witness_polish`, original full run before lift repair | 1558/1561 | 1559/1561 | 102176 | 102239 | 2102483 | 9.757 |
+| pure BS-FRG reproduction | 1545/1561 | 1545/1561 | 97808 | 97808 | n/a | 19.854 |
+| previous `macro_credit_v2_polish` full run | 1407/1561 | 1408/1561 | 65752 | not summarized | 1100292 | 11.317 |
 
-## QUBO 的实际作用
+The patched full aggregate is the original BF/CV full run with the two former compact-lift error rows replaced by the targeted repair rerun:
 
-当前版本中，QUBO 的作用要分开看：
+| targeted set | result | repaired rows |
+|---|---:|---|
+| BF32 first 4 plus CV/10-6 first 4 | 8/8 primary solved | `BF32/cpmp_20_8_128_52_96_2`, `CV/10-6/data10-6-4` |
 
-- **Frontier QUBO**：在 enhanced Beam 的 deterministic core 之外，小比例补充候选状态。它不是逐步主导最终路径，而是稀疏改变搜索前沿结构。
-- **Post-polish QUBO**：主搜索已经找到 `N=0` 后，选择 suffix/window 做局部路径压缩。它不能把 `N>0` 失败路径变成 `N=0`。
-- **相对 classic Beam**：同时间预算下，QUBO Beam 为 30/30，classic no-QUBO 为 25/30。
-- **相对 enhanced no-QUBO**：enhanced no-QUBO 也能 30/30，说明 deterministic parent-diversity 机制很强；QUBO 当前可见贡献主要是 1 步压缩和少量路径祖先影响。
+Promotion decisions should continue to report open120, BF, and CV separately. The patched full aggregate is the current recommended scorecard; a same-command full rerun is optional publication hygiene, not required to justify replacing `macro_credit_v2`.
 
-## 文档入口
+## Mechanism Boundary
 
-- [文档导航](docs/index.md)
-- [当前 QUBO Beam 主算法完整描述](docs/guides/current-qubo-beam-algorithm.md)
-- [QUBO 影响增强 profile 试验记录](docs/guides/qubo-quality-profile-probes.md)
-- [实验结论汇总](docs/experiments/README.md)
-- [Task 04：QUBO 贡献拆解](docs/experiments/frontier_qubo_contribution_task04_summary.md)
-- [Task 08：`N=0` 高效算法矩阵](docs/experiments/n0_efficient_algorithm_matrix_task08_summary.md)
-- [Task 09：严格时间匹配消融](docs/experiments/time_aligned_ablation_task09_summary.md)
-- [v3 任务收口记录](docs/experiments/v3_task_closure_summary.md)
-- [数据格式](docs/guides/data-format.md)
-- [运行说明](docs/guides/usage.md)
-- [开发说明](docs/guides/development.md)
+QUBO is used as a beam-selection helper, not as a move generator.
 
-## 项目结构
+- Legal child states are generated by the compact classical beam engine.
+- The union QUBO selector chooses exploration states from already legal candidates.
+- BS-FRG contributes short recovery chains and completion witnesses, not an independent fallback solver.
+- Macro-chain candidates enter the same candidate pool as ordinary children.
+- QUBO receives cross-layer evidence: receiver debt, source scarcity, and witness quality.
+- Compact macro paths are expanded back to legal crane moves during reconstruction.
+- The lift repair step validates and repairs compact successor gaps before validator replay.
+- Validator replay remains the final feasibility check.
+
+The practical reading is simple: the current mainline lets QUBO choose recovery chains with future proof, while preserving one solver path and one validator boundary.
+
+## Main Commands
+
+Run the current open120 no-cap mainline:
+
+```powershell
+python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\mainline_macro_chain_nocap_open120_t120.csv
+```
+
+Run the paper BF/CV no-cap full benchmark:
+
+```powershell
+python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --variant qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\mainline_macro_chain_nocap_paper_bf_cv_all_t120.csv
+```
+
+Run the targeted lift-repair check:
+
+```powershell
+python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --families BF32 10-6 --case-ids 1,2,3,4 --variant qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish --time-limit 120 --alpha 10 --jobs 4 --no-business-cap --output docs\experiments\debug_bf32_cv10_6_parallel_lift_fixed_rerun.csv
+```
+
+Run focused regression tests for the current QUBO/FRG/macro-chain work:
+
+```powershell
+$env:PYTHONPATH='.'; $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest tests\test_qubo.py -q
+```
+
+Compile-check the main benchmark scripts:
+
+```powershell
+$env:PYTHONPATH='.'; python -m py_compile scripts\benchmark_compact_beam_qubo_n0.py scripts\open_cpmp_benchmarks.py scripts\benchmark_compact_paper_set.py
+```
+
+## Experimental Branches
+
+These profiles are implemented for ablation and diagnosis, but are not the default mainline:
+
+| profile | purpose | status |
+|---|---|---|
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish` | shallow macro future credit with witness/debt/cap correction | superseded combined-evidence baseline |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` | direct macro-edge QUBO selection | open120 reference, weaker on paper BF/CV |
+| `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_polish` | v1 macro future credit | superseded by v2 and macro-chain witness |
+| `qubo_scheduler_state_v5_qubo_diversity_union_rollout_polish` | bounded FRG-style rollout probe as a selection signal | ablation |
+| `qubo_scheduler_state_v5_qubo_diversity_union_rollout_graft_polish` | graft a validated rollout-complete tail when available | ablation |
+| `qubo_scheduler_state_v5_qubo_diversity_union_micro_tiebreak_polish` | use micro rollout only for near-tied candidates | ablation; paper-set penalty regressed |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_frontier_polish` | append BS-FRG-generated child states after normal frontier selection | light frontier experiment |
+| `qubo_scheduler_state_v5_qubo_diversity_union_frg_single_frontier_polish` | merge FRG children into the same candidate pool before selection | experimental |
+| `qubo_scheduler_state_v5_qubo_diversity_union_debt_basin_polish` | receiver-debt, escape-potential, basin-diversity, and reduction-chain selector signals | diagnostic |
+
+Promotion requires paired evidence on open120 and the paper BF/CV benchmark surfaces.
+
+## Documentation
+
+- [Current mainline algorithm](docs/guides/current-mainline-algorithm.md)
+- [Algorithm profile status](docs/guides/algorithm-profile-status.md)
+- [Current best algorithm note](docs/guides/current-best-algorithm.md)
+- [Current QUBO beam algorithm details](docs/guides/current-qubo-beam-algorithm.md)
+- [QUBO mechanism attribution](docs/guides/qubo-mechanism-attribution.md)
+
+## Project Layout
 
 ```text
 .
-├── config/          # 运行默认参数记录
-├── data/
-│   ├── input/       # 原始输入数据
-│   └── results/     # 历史/生成结果
-├── docs/            # 文档入口、模型说明、使用指南和实验结论
-├── notebooks/       # 探索分析预留目录
-├── scripts/         # benchmark、消融和分析脚本
-├── src/greedy/      # Python 源码包
-├── tests/           # pytest 回归测试
-├── pyproject.toml
-└── run.bat
+|-- config/          # runtime defaults and profile records
+|-- data/            # local input and generated result folders
+|-- docs/            # guides, experiment summaries, plots, and plans
+|-- notebooks/       # exploratory analysis notebooks
+|-- scripts/         # benchmark, ablation, reproduction, and analysis scripts
+|-- src/             # solver and QUBO implementation code
+|-- tests/           # pytest regression tests
+|-- pyproject.toml
+`-- run.bat
 ```
 
-## 验证
+## Notes
 
-```powershell
-python -m pytest -q
-```
-
-如果 `gurobipy` 不可用，MIP 相关用例会按测试配置跳过或返回不可用状态。当前 QUBO Beam 主线不依赖 Gurobi。
-
-## 开源 CPMP 外部算例
-
-已经新增 DLTS 开源 CPMP 数据集 runner：
-
-```powershell
-python scripts\open_cpmp_benchmarks.py --families 5x5_cv1_test 5x5_cv1_validation --limit-per-family 100 --variant both --time-limit 3 --alpha 10 --output docs\experiments\open_cpmp_dlts_5x5_cv1_200cases_both.csv
-```
-
-cv1 唯一优先级结果见 [Open CPMP 外部算例初测](docs/experiments/open_cpmp_dlts_initial_external_benchmark_summary.md)。当前 runner 也已支持 cv2/cv3 重复优先级分支，按 priority-group 语义验解；扩展结果见 [Open CPMP 重复优先级扩展基准](docs/experiments/open_cpmp_priority_group_benchmark_summary.md)。严格时间匹配 no-QUBO 消融见 [Open CPMP 时间匹配消融](docs/experiments/open_cpmp_time_matched_ablation_summary.md)。
+- `src.zip` is treated as a local artifact unless explicitly requested for packaging.
+- Gurobi is not required for the current QUBO beam mainline.
+- Historical 30-case `speed_v2` results remain useful for internal-regression context, but the current promotion gate is open120 plus the paper BF/CV benchmark sets.
