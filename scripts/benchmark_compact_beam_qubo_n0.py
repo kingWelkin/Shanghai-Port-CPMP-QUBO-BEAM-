@@ -13675,6 +13675,28 @@ def _repair_compact_code_path_for_lifting(
     return repaired, inserted
 
 
+def _try_lift_repaired_compact_codes(
+    instance: Instance,
+    codes: list[bytes],
+    *,
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+) -> tuple[list[Move], list[bytes], int] | None:
+    repaired_codes, inserted = _repair_compact_code_path_for_lifting(
+        instance,
+        list(codes),
+        cap=cap,
+        args=args,
+        deadline=deadline,
+    )
+    try:
+        moves = _codes_to_moves_instance(instance, repaired_codes)
+    except RuntimeError:
+        return None
+    return moves, repaired_codes, inserted
+
+
 def _codes_to_moves_instance(instance: Instance, codes: list[bytes]) -> list[Move]:
     stacks = [list(stack) for stack in instance.stacks]
     current_code, _ = _encode(stacks, instance.stack_count, instance.max_height)
@@ -14580,6 +14602,24 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             status += "; macro_edge_witness_lift_used=True"
             return True
 
+        def lift_repaired_raw_search_path() -> bool:
+            nonlocal moves, codes, status, compact_lift_repair_inserted
+            repaired = _try_lift_repaired_compact_codes(
+                instance,
+                raw_search_codes,
+                cap=cap,
+                args=args,
+                deadline=deadline,
+            )
+            if repaired is None:
+                return False
+            repaired_moves, repaired_codes, inserted = repaired
+            moves = repaired_moves
+            codes = repaired_codes
+            compact_lift_repair_inserted += inserted
+            status += "; compact_lift_raw_repair_used=True"
+            return True
+
         qubo_selected_on_search_path = sum(1 for code in original_codes[1:] if source_by_code.get(code) == "qubo")
         qubo_ancestor_on_search_path = sum(1 for code in original_codes[1:] if qubo_ancestor_by_code.get(code, False))
         codes, polish_stats = _post_polish_codes_with_qubo(
@@ -14609,7 +14649,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 try:
                     moves = _codes_to_moves_instance(instance, codes)
                 except RuntimeError as repaired_exc:
-                    if not lift_raw_macro_witness_path():
+                    if not lift_raw_macro_witness_path() and not lift_repaired_raw_search_path():
                         moves = []
                         status += (
                             f"; compact_lift_failed={type(repaired_exc).__name__}; "
@@ -14632,7 +14672,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 try:
                     moves = _codes_to_moves_instance(instance, codes)
                 except RuntimeError as repaired_exc:
-                    if not lift_raw_macro_witness_path():
+                    if not lift_raw_macro_witness_path() and not lift_repaired_raw_search_path():
                         moves = []
                         status += (
                             f"; compact_lift_failed={type(repaired_exc).__name__}; "

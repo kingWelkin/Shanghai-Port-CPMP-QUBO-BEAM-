@@ -14736,6 +14736,45 @@ def test_post_polish_bridge_treats_identical_endpoints_as_zero_move_chain():
     assert expanded == 0
 
 
+def test_compact_lift_can_repair_raw_two_step_transition():
+    import benchmark_compact_beam_qubo_n0 as compact
+
+    instance = Instance(
+        instance_id="raw_lift_repair",
+        variant=ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[3, 2, 1], [], []],
+    )
+    start_code, _ = compact._encode(instance.stacks, instance.stack_count, instance.max_height)
+    goal_stacks = [[3], [1], [2]]
+    goal_code, _ = compact._encode(goal_stacks, instance.stack_count, instance.max_height)
+    args = _compact_args(
+        post_polish_max_bridge_depth=4,
+        post_polish_bridge_expanded=1000,
+        post_polish_window_repair_expanded=1000,
+    )
+
+    with pytest.raises(RuntimeError):
+        compact._codes_to_moves_instance(instance, [start_code, goal_code])
+
+    repaired = compact._try_lift_repaired_compact_codes(
+        instance,
+        [start_code, goal_code],
+        cap=99,
+        args=args,
+        deadline=float("inf"),
+    )
+
+    assert repaired is not None
+    moves, repaired_codes, inserted = repaired
+    assert len(moves) == 2
+    assert inserted == 1
+    assert repaired_codes[0] == start_code
+    assert repaired_codes[-1] == goal_code
+
+
 def test_post_polish_suffix_inner_jobs_uses_ordered_parallel_results(monkeypatch):
     import benchmark_compact_beam_qubo_n0 as compact
 
