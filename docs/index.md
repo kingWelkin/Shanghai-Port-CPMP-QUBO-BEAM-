@@ -4,6 +4,9 @@ This index points to the current decision documents first. Older experiment repo
 
 ## Current Decision Path
 
+- [v4.0 mainline algorithm](guides/v4-mainline-chainaware-algorithm.md) - promoted chain-aware QUBO beam profile and mechanism explanation.
+- [v4.0 flow diagrams](guides/v4-mainline-flow-diagrams.md) - pipeline, candidate supply, QUBO selector, and promotion-gate diagrams.
+- [v4.0 scorecard and reproduction](guides/v4-mainline-scorecard-and-reproduction.md) - latest open120 plus full BF/CV t120 evidence and commands.
 - [Current mainline algorithm](guides/current-mainline-algorithm.md) - current default, evidence, promotion rules, and reproduction commands.
 - [Algorithm profile status](guides/algorithm-profile-status.md) - compact status table for defaults, baselines, and opt-in ablations.
 - [Current best algorithm note](guides/current-best-algorithm.md) - short explanation of what "best" means for open/paper versus internal 30-case runs.
