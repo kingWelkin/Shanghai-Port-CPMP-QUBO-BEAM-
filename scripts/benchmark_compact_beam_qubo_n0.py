@@ -2961,6 +2961,13 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_c
     "union_diversity_qubo_macro_ancestry_penalty_scale": 4.0,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "post_polish_respect_time_limit": True,
+    "post_polish_accept": "better",
+    "post_polish_successor_cache": True,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -14053,6 +14060,22 @@ def _try_lift_repaired_compact_codes(
 _MISSING_PARENT = object()
 
 
+def _compact_lift_rejected_edges(args: argparse.Namespace) -> set[tuple[bytes, bytes | None]]:
+    rejected = getattr(args, "_compact_lift_rejected_target_edges", None)
+    if rejected is None:
+        rejected = set()
+        args._compact_lift_rejected_target_edges = rejected
+    return rejected
+
+
+def _compact_lift_edge_was_rejected(
+    args: argparse.Namespace,
+    target: bytes,
+    parent_code: bytes | None,
+) -> bool:
+    return (target, parent_code) in (getattr(args, "_compact_lift_rejected_target_edges", set()) or set())
+
+
 def _try_lift_target_path(
     instance: Instance,
     parent: dict[bytes, bytes | None],
@@ -14106,6 +14129,9 @@ def _try_accept_liftable_target(
     deadline: float,
 ) -> bool:
     old_parent = parent.get(target, _MISSING_PARENT)
+    rejected_parent = candidate_parent if candidate_parent is not None else old_parent
+    if rejected_parent is _MISSING_PARENT:
+        rejected_parent = None
     assigned = False
     if candidate_parent is not None:
         if not _assign_parent_link(parent, target, candidate_parent):
@@ -14131,6 +14157,7 @@ def _try_accept_liftable_target(
         else:
             parent[target] = old_parent  # type: ignore[assignment]
     args._compact_lift_rejected_targets = int(getattr(args, "_compact_lift_rejected_targets", 0) or 0) + 1
+    _compact_lift_rejected_edges(args).add((target, rejected_parent))
     return False
 
 
@@ -14405,6 +14432,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._frg_macro_edge_moves_by_code = {}
     args._frg_macro_edge_ancestry_by_code = {}
     args._compact_lift_rejected_targets = 0
+    args._compact_lift_rejected_target_edges = set()
     args._candidate_origin_by_code = {}
     args._reduction_chain_depth_by_code = {}
     args._reduction_chain_origin_by_code = {}
@@ -14531,6 +14559,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 break
             depth_reached = max(depth_reached, depth)
             if current_n <= args.target_final_n:
+                if _compact_lift_edge_was_rejected(args, code, parent.get(code)):
+                    continue
                 if _try_accept_liftable_target(
                     instance,
                     parent,
@@ -14627,6 +14657,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             macro_edge_paths_for_lift = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
             macro_parent_by_code_for_lift = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
             for goal_code, data in sorted(goals.items(), key=_candidate_key_func(args)):
+                if _compact_lift_edge_was_rejected(args, goal_code, data[2]):
+                    continue
                 if not _try_accept_liftable_target(
                     instance,
                     parent,
@@ -14842,6 +14874,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 }
             peak_candidates = max(peak_candidates, len(candidates))
             _update_layer_candidate_metrics(candidates, args, cap)
+        rejected_lift_edges = getattr(args, "_compact_lift_rejected_target_edges", set()) or set()
+        if rejected_lift_edges:
+            for rejected_code, rejected_data in list(candidates.items()):
+                if _compact_lift_edge_was_rejected(args, rejected_code, rejected_data[2]):
+                    candidates.pop(rejected_code, None)
         selected_codes, selected_by_qubo, add_qcalls, add_qvars, add_qtime = _select_next_frontier(candidates, args)
         if frg_macro_edge_paths:
             macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}

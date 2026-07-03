@@ -12798,6 +12798,9 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"
     soft_variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish"
     chain_variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"
+    stable_quality_variant = (
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
+    )
     witness_outer = build_parser().parse_args(["--variant", witness_variant])
     outer = build_parser().parse_args(["--variant", variant])
     paper_outer = build_paper_parser().parse_args(["--variant", variant])
@@ -12805,6 +12808,8 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     soft_paper_outer = build_paper_parser().parse_args(["--variant", soft_variant])
     chain_outer = build_parser().parse_args(["--variant", chain_variant])
     chain_paper_outer = build_paper_parser().parse_args(["--variant", chain_variant])
+    stable_quality_outer = build_parser().parse_args(["--variant", stable_quality_variant])
+    stable_quality_paper_outer = build_paper_parser().parse_args(["--variant", stable_quality_variant])
     witness_args = _args_for_variant(witness_outer, witness_variant)
     args = _args_for_variant(outer, variant)
     paper_args = paper_args_for_variant(paper_outer, variant)
@@ -12812,6 +12817,8 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     soft_paper_args = paper_args_for_variant(soft_paper_outer, soft_variant)
     chain_args = _args_for_variant(chain_outer, chain_variant)
     chain_paper_args = paper_args_for_variant(chain_paper_outer, chain_variant)
+    stable_quality_args = _args_for_variant(stable_quality_outer, stable_quality_variant)
+    stable_quality_paper_args = paper_args_for_variant(stable_quality_paper_outer, stable_quality_variant)
     _apply_solver_profile(witness_args)
     _apply_solver_profile(args)
     _apply_solver_profile(paper_args)
@@ -12819,6 +12826,8 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     _apply_solver_profile(soft_paper_args)
     _apply_solver_profile(chain_args)
     _apply_solver_profile(chain_paper_args)
+    _apply_solver_profile(stable_quality_args)
+    _apply_solver_profile(stable_quality_paper_args)
 
     assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"
     assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"
@@ -12829,6 +12838,12 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     assert chain_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"
     assert chain_paper_args.solver_profile == (
         "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"
+    )
+    assert stable_quality_args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
+    )
+    assert stable_quality_paper_args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
     )
     assert args.macro_chain_witness_enabled is True
     assert args.macro_chain_witness_respect_time_limit is True
@@ -12846,9 +12861,31 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     assert chain_args.union_diversity_qubo_macro_ancestry_penalty_weight == pytest.approx(40.0)
     assert chain_args.union_diversity_qubo_macro_ancestry_penalty_scale == pytest.approx(4.0)
     assert chain_args.frg_frontier_child_certify_time_limit == pytest.approx(0.004)
+    assert stable_quality_args.frg_rollout_respect_time_limit == chain_args.frg_rollout_respect_time_limit
+    assert stable_quality_args.frg_frontier_child_certify_time_limit == pytest.approx(
+        chain_args.frg_frontier_child_certify_time_limit
+    )
+    assert stable_quality_args.macro_chain_witness_respect_time_limit == (
+        chain_args.macro_chain_witness_respect_time_limit
+    )
+    assert stable_quality_args.macro_chain_witness_time_limit == pytest.approx(
+        chain_args.macro_chain_witness_time_limit
+    )
+    assert stable_quality_args.macro_chain_witness_max_generated == chain_args.macro_chain_witness_max_generated
+    assert stable_quality_args.frg_frontier_child_certify_max_generated == (
+        chain_args.frg_frontier_child_certify_max_generated
+    )
+    assert stable_quality_args.frg_frontier_child_completion_max_generated == (
+        chain_args.frg_frontier_child_completion_max_generated
+    )
+    assert stable_quality_args.post_polish_respect_time_limit is True
+    assert stable_quality_args.post_polish_accept == "better"
+    assert stable_quality_args.post_polish_successor_cache is True
+    assert stable_quality_args.post_polish_time_budget == pytest.approx(chain_args.post_polish_time_budget)
     assert variant in _variant_names("wang_research_all")
     assert soft_variant in _variant_names("wang_research_all")
     assert chain_variant in _variant_names("wang_research_all")
+    assert stable_quality_variant in _variant_names("wang_research_all")
 
 
 def test_unified_macro_supply_uses_bounded_pass_and_restores_primary_settings(monkeypatch):
@@ -13825,6 +13862,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -15177,6 +15215,7 @@ def test_compact_goal_acceptance_restores_parent_for_unliftable_target(monkeypat
     assert parent[good_goal] == start_code
     assert seen_targets == [bad_goal, good_goal]
     assert args._compact_lift_rejected_targets == 1
+    assert args._compact_lift_rejected_target_edges == {(bad_goal, start_code)}
 
 
 def test_post_polish_suffix_inner_jobs_uses_ordered_parallel_results(monkeypatch):

@@ -1441,6 +1441,7 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -2079,6 +2080,14 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update(
             {"solver_profile": "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"}
         )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
+                )
+            }
+        )
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish":
         overrides.update({"solver_profile": "scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"})
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish":
@@ -2433,6 +2442,7 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
