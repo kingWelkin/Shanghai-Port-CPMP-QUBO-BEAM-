@@ -570,6 +570,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument("--union-diversity-qubo-macro-edge-chain-cost-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-ancestry-penalty-weight", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-ancestry-penalty-scale", type=float)
     parser.add_argument(
         "--union-diversity-qubo-macro-future-credit-enabled",
         action=argparse.BooleanOptionalAction,
@@ -582,6 +584,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-diversity-qubo-macro-future-credit-min-witness-quality", type=float)
     parser.add_argument("--union-diversity-qubo-receiver-debt-penalty-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-future-credit-cap", type=float)
+    parser.add_argument("--union-diversity-qubo-unified-macro-future-credit-scale", type=float)
+    parser.add_argument("--union-diversity-qubo-unified-macro-pair-penalty", type=float)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-scale", type=float)
     parser.add_argument("--union-diversity-qubo-macro-prefix-penalty-weight", type=float)

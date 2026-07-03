@@ -237,6 +237,8 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_macro_quota_witness_weight",
     "union_diversity_qubo_macro_quality_bonus",
     "union_diversity_qubo_macro_edge_chain_cost_weight",
+    "union_diversity_qubo_macro_ancestry_penalty_weight",
+    "union_diversity_qubo_macro_ancestry_penalty_scale",
     "union_diversity_qubo_macro_future_credit_enabled",
     "union_diversity_qubo_completion_witness_credit_weight",
     "union_diversity_qubo_receiver_debt_credit_weight",
@@ -245,6 +247,8 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_macro_future_credit_min_witness_quality",
     "union_diversity_qubo_receiver_debt_penalty_weight",
     "union_diversity_qubo_macro_future_credit_cap",
+    "union_diversity_qubo_unified_macro_future_credit_scale",
+    "union_diversity_qubo_unified_macro_pair_penalty",
     "union_diversity_qubo_macro_witness_move_penalty_weight",
     "union_diversity_qubo_macro_witness_move_penalty_scale",
     "union_diversity_qubo_macro_prefix_penalty_weight",
@@ -395,6 +399,17 @@ COMPACT_EXTRA_FIELDS = [
     "macro_chain_witness_generated",
     "macro_chain_witness_added_total",
     "macro_chain_witness_selected_total",
+    "unified_macro_supply_enabled",
+    "unified_macro_supply_respect_time_limit",
+    "unified_macro_supply_parent_width",
+    "unified_macro_supply_parent_offset",
+    "unified_macro_supply_max_steps",
+    "unified_macro_supply_max_generated",
+    "unified_macro_supply_min_candidates",
+    "unified_macro_supply_calls",
+    "unified_macro_supply_generated",
+    "unified_macro_supply_added_total",
+    "unified_macro_supply_selected_total",
     "frg_seed_enabled",
     "frg_seed_time_limit",
     "frg_seed_min_max_steps",
@@ -1427,6 +1442,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_quota_witness_weight": 0.30,
         "union_diversity_qubo_macro_quality_bonus": 0.0,
         "union_diversity_qubo_macro_edge_chain_cost_weight": 0.0,
+        "union_diversity_qubo_macro_ancestry_penalty_weight": 0.0,
+        "union_diversity_qubo_macro_ancestry_penalty_scale": 4.0,
         "union_diversity_qubo_macro_future_credit_enabled": False,
         "union_diversity_qubo_completion_witness_credit_weight": 0.0,
         "union_diversity_qubo_receiver_debt_credit_weight": 0.0,
@@ -1441,6 +1458,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_future_credit_min_witness_quality": 0.0,
         "union_diversity_qubo_receiver_debt_penalty_weight": 0.0,
         "union_diversity_qubo_macro_future_credit_cap": 0.0,
+        "union_diversity_qubo_unified_macro_future_credit_scale": 1.0,
+        "union_diversity_qubo_unified_macro_pair_penalty": 0.0,
         "quality_reservoir_enabled": False,
         "quality_reservoir_max_candidates": 0,
         "quality_reservoir_top_quality": 0,
@@ -1541,6 +1560,13 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "macro_chain_witness_min_height": 0,
         "macro_chain_witness_min_n": 0,
         "macro_chain_witness_min_candidates": 0,
+        "unified_macro_supply_enabled": False,
+        "unified_macro_supply_respect_time_limit": False,
+        "unified_macro_supply_parent_width": 0,
+        "unified_macro_supply_parent_offset": 0,
+        "unified_macro_supply_max_steps": 128,
+        "unified_macro_supply_max_generated": 768,
+        "unified_macro_supply_min_candidates": 0,
         "frg_seed_enabled": False,
         "frg_seed_time_limit": 0.0,
         "frg_seed_min_max_steps": 256,
@@ -2911,6 +2937,30 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_chain_bounded_po
     "post_polish_time_budget": 6.0,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish"],
+    "unified_macro_supply_enabled": True,
+    "unified_macro_supply_respect_time_limit": False,
+    "unified_macro_supply_parent_width": 4,
+    "unified_macro_supply_parent_offset": 4,
+    "unified_macro_supply_max_steps": 128,
+    "unified_macro_supply_max_generated": 768,
+    "unified_macro_supply_min_candidates": 1000,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"],
+    "union_diversity_qubo_unified_macro_future_credit_scale": 0.70,
+    "union_diversity_qubo_unified_macro_pair_penalty": 0.18,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"],
+    "frg_frontier_child_certify_time_limit": 0.004,
+    "union_diversity_qubo_macro_ancestry_penalty_weight": 40.0,
+    "union_diversity_qubo_macro_ancestry_penalty_scale": 4.0,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -3516,6 +3566,10 @@ class CompactBeamResult:
     macro_chain_witness_generated: int = 0
     macro_chain_witness_added_total: int = 0
     macro_chain_witness_selected_total: int = 0
+    unified_macro_supply_calls: int = 0
+    unified_macro_supply_generated: int = 0
+    unified_macro_supply_added_total: int = 0
+    unified_macro_supply_selected_total: int = 0
     frg_terminal_witness_recorded_total: int = 0
     frg_terminal_witness_grafted_total: int = 0
     frg_terminal_witness_used: bool = False
@@ -4022,6 +4076,12 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_diversity_qubo_macro_quota_witness_weight": "--union-diversity-qubo-macro-quota-witness-weight",
         "union_diversity_qubo_macro_quality_bonus": "--union-diversity-qubo-macro-quality-bonus",
         "union_diversity_qubo_macro_edge_chain_cost_weight": "--union-diversity-qubo-macro-edge-chain-cost-weight",
+        "union_diversity_qubo_macro_ancestry_penalty_weight": (
+            "--union-diversity-qubo-macro-ancestry-penalty-weight"
+        ),
+        "union_diversity_qubo_macro_ancestry_penalty_scale": (
+            "--union-diversity-qubo-macro-ancestry-penalty-scale"
+        ),
         "union_diversity_qubo_macro_future_credit_enabled": (
             "--union-diversity-qubo-macro-future-credit-enabled",
             "--no-union-diversity-qubo-macro-future-credit-enabled",
@@ -4061,6 +4121,12 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--union-diversity-qubo-receiver-debt-penalty-weight"
         ),
         "union_diversity_qubo_macro_future_credit_cap": "--union-diversity-qubo-macro-future-credit-cap",
+        "union_diversity_qubo_unified_macro_future_credit_scale": (
+            "--union-diversity-qubo-unified-macro-future-credit-scale"
+        ),
+        "union_diversity_qubo_unified_macro_pair_penalty": (
+            "--union-diversity-qubo-unified-macro-pair-penalty"
+        ),
         "quality_reservoir_enabled": ("--quality-reservoir-enabled", "--no-quality-reservoir-enabled"),
         "quality_reservoir_max_candidates": "--quality-reservoir-max-candidates",
         "quality_reservoir_top_quality": "--quality-reservoir-top-quality",
@@ -4238,6 +4304,19 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "macro_chain_witness_min_height": "--macro-chain-witness-min-height",
         "macro_chain_witness_min_n": "--macro-chain-witness-min-n",
         "macro_chain_witness_min_candidates": "--macro-chain-witness-min-candidates",
+        "unified_macro_supply_enabled": (
+            "--unified-macro-supply-enabled",
+            "--no-unified-macro-supply-enabled",
+        ),
+        "unified_macro_supply_respect_time_limit": (
+            "--unified-macro-supply-respect-time-limit",
+            "--no-unified-macro-supply-respect-time-limit",
+        ),
+        "unified_macro_supply_parent_width": "--unified-macro-supply-parent-width",
+        "unified_macro_supply_parent_offset": "--unified-macro-supply-parent-offset",
+        "unified_macro_supply_max_steps": "--unified-macro-supply-max-steps",
+        "unified_macro_supply_max_generated": "--unified-macro-supply-max-generated",
+        "unified_macro_supply_min_candidates": "--unified-macro-supply-min-candidates",
         "frg_seed_enabled": ("--frg-seed-enabled", "--no-frg-seed-enabled"),
         "frg_seed_time_limit": "--frg-seed-time-limit",
         "frg_seed_min_max_steps": "--frg-seed-min-max-steps",
@@ -5101,6 +5180,8 @@ class UnionDiversityQuboFeatures(NamedTuple):
     completion_witness_quality: float = 0.0
     macro_edge_chain_length: int = 0
     macro_edge_chain_penalty: float = 0.0
+    macro_edge_ancestry_depth: int = 0
+    macro_edge_ancestry_penalty: float = 0.0
     quality_reservoir_quality: float = 0.0
     quality_reservoir_witness_quality: float = 0.0
     quality_reservoir_receiver_debt: float = 0.0
@@ -5613,7 +5694,7 @@ def _union_rollout_probe_witness_signature(result: UnionRolloutProbeResult | Non
     return (status_bucket, final_bucket, moves_bucket)
 
 
-_FRG_MACRO_ORIGINS = {"frg_frontier_child", "frg_macro_chain_witness"}
+_FRG_MACRO_ORIGINS = {"frg_frontier_child", "frg_macro_chain_witness", "unified_macro_supply"}
 
 
 def _union_diversity_is_macro_feature(feature: UnionDiversityQuboFeatures) -> bool:
@@ -5975,6 +6056,10 @@ def _union_diversity_macro_future_credit(
         + scarcity_weight * _clamp01(float(feature.source_scarcity))
         + path_weight * path_quality
     )
+    if str(feature.origin) == "unified_macro_supply":
+        positive_credit *= _clamp01(
+            float(getattr(args, "union_diversity_qubo_unified_macro_future_credit_scale", 1.0) or 0.0)
+        )
     move_penalty = 0.0
     move_penalty_weight = max(
         0.0,
@@ -6842,6 +6927,24 @@ def _ensure_macro_chain_witness_counters(args: argparse.Namespace) -> None:
         args._frg_macro_edge_recorded_total = 0
 
 
+def _ensure_frg_macro_edge_ancestry(args: argparse.Namespace) -> dict[bytes, int]:
+    ancestry = getattr(args, "_frg_macro_edge_ancestry_by_code", None)
+    if ancestry is None:
+        ancestry = {}
+        args._frg_macro_edge_ancestry_by_code = ancestry
+    return ancestry
+
+
+def _record_frg_macro_edge_ancestry(args: argparse.Namespace, child_code: bytes, parent_code: bytes | None) -> int:
+    ancestry = _ensure_frg_macro_edge_ancestry(args)
+    parent_depth = 0
+    if parent_code is not None:
+        parent_depth = max(0, int(ancestry.get(parent_code, 0) or 0))
+    depth = parent_depth + 1
+    ancestry[child_code] = depth
+    return depth
+
+
 def _macro_chain_witness_active(
     frontier: list[tuple[bytes, int, int]],
     candidates: dict[bytes, tuple[int, int, bytes]],
@@ -6999,6 +7102,7 @@ def _inject_macro_chain_witness_candidates(
         macro_paths[child_code] = tuple(macro_path_codes)
         macro_parent_by_code[child_code] = code
         macro_moves_by_code[child_code] = tuple(prefix_moves)
+        _record_frg_macro_edge_ancestry(args, child_code, code)
         args._macro_chain_witness_codes.add(child_code)
         added.add(child_code)
         args._frg_macro_edge_recorded_total += 1
@@ -7011,6 +7115,91 @@ def _inject_macro_chain_witness_candidates(
             move_path=moves,
         )
     args._macro_chain_witness_added_total += len(added)
+    return added
+
+
+def _ensure_unified_macro_supply_counters(args: argparse.Namespace) -> None:
+    if not hasattr(args, "_unified_macro_supply_calls"):
+        args._unified_macro_supply_calls = 0
+    if not hasattr(args, "_unified_macro_supply_generated"):
+        args._unified_macro_supply_generated = 0
+    if not hasattr(args, "_unified_macro_supply_added_total"):
+        args._unified_macro_supply_added_total = 0
+    if not hasattr(args, "_unified_macro_supply_selected_total"):
+        args._unified_macro_supply_selected_total = 0
+    if not hasattr(args, "_unified_macro_supply_codes"):
+        args._unified_macro_supply_codes = set()
+
+
+def _inject_unified_macro_supply_candidates(
+    frontier: list[tuple[bytes, int, int]],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None = None,
+    parent_chain: dict[bytes, bytes | None] | None = None,
+    macro_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+) -> set[bytes]:
+    if not getattr(args, "unified_macro_supply_enabled", False):
+        return set()
+    if not getattr(args, "macro_chain_witness_enabled", False):
+        return set()
+
+    _ensure_macro_chain_witness_counters(args)
+    _ensure_unified_macro_supply_counters(args)
+    before_calls = int(getattr(args, "_macro_chain_witness_calls", 0) or 0)
+    before_generated = int(getattr(args, "_macro_chain_witness_generated", 0) or 0)
+    saved = {
+        "macro_chain_witness_respect_time_limit": getattr(args, "macro_chain_witness_respect_time_limit", True),
+        "macro_chain_witness_parent_width": getattr(args, "macro_chain_witness_parent_width", 0),
+        "macro_chain_witness_max_steps": getattr(args, "macro_chain_witness_max_steps", 512),
+        "macro_chain_witness_max_generated": getattr(args, "macro_chain_witness_max_generated", 0),
+        "macro_chain_witness_min_candidates": getattr(args, "macro_chain_witness_min_candidates", 0),
+    }
+    try:
+        args.macro_chain_witness_respect_time_limit = bool(
+            getattr(args, "unified_macro_supply_respect_time_limit", False)
+        )
+        parent_width = int(getattr(args, "unified_macro_supply_parent_width", 0) or 0)
+        if parent_width > 0:
+            args.macro_chain_witness_parent_width = parent_width
+        parent_offset = max(0, int(getattr(args, "unified_macro_supply_parent_offset", 0) or 0))
+        supply_frontier = sorted(frontier, key=lambda item: (item[1], item[2], item[0]))
+        if parent_offset:
+            supply_frontier = supply_frontier[parent_offset:]
+        args.macro_chain_witness_max_steps = max(
+            1,
+            int(getattr(args, "unified_macro_supply_max_steps", 128) or 128),
+        )
+        args.macro_chain_witness_max_generated = max(
+            0,
+            int(getattr(args, "unified_macro_supply_max_generated", 0) or 0),
+        )
+        min_candidates = int(getattr(args, "unified_macro_supply_min_candidates", 0) or 0)
+        if min_candidates > 0:
+            args.macro_chain_witness_min_candidates = min_candidates
+        added = _inject_macro_chain_witness_candidates(
+            supply_frontier,
+            candidates,
+            args,
+            depth_cap,
+            best_depth,
+            parent_chain=parent_chain,
+            macro_paths=macro_paths,
+        )
+    finally:
+        for name, value in saved.items():
+            setattr(args, name, value)
+
+    added = set(added)
+    args._macro_chain_witness_codes.update(added)
+    args._unified_macro_supply_codes.update(added)
+    args._unified_macro_supply_added_total += len(added)
+    args._unified_macro_supply_calls += max(0, int(getattr(args, "_macro_chain_witness_calls", 0) or 0) - before_calls)
+    args._unified_macro_supply_generated += max(
+        0,
+        int(getattr(args, "_macro_chain_witness_generated", 0) or 0) - before_generated,
+    )
     return added
 
 
@@ -7055,12 +7244,21 @@ def _inject_frg_frontier_child_candidates(
     macro_edge_enabled = bool(getattr(args, "frg_frontier_child_macro_edge_enabled", False))
     if macro_edge_enabled and macro_paths is None:
         macro_paths = getattr(args, "_frg_macro_edge_path_by_code", None)
+    if macro_edge_enabled and macro_paths is None:
+        macro_paths = {}
+        args._frg_macro_edge_path_by_code = macro_paths
+    macro_parent_by_code = None
     macro_moves_by_code = None
     if macro_edge_enabled:
+        macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", None)
+        if macro_parent_by_code is None:
+            macro_parent_by_code = {}
+            args._frg_macro_edge_parent_by_code = macro_parent_by_code
         macro_moves_by_code = getattr(args, "_frg_macro_edge_moves_by_code", None)
         if macro_moves_by_code is None:
             macro_moves_by_code = {}
             args._frg_macro_edge_moves_by_code = macro_moves_by_code
+        _ensure_frg_macro_edge_ancestry(args)
     if macro_edge_enabled and not hasattr(args, "_frg_macro_edge_recorded_total"):
         args._frg_macro_edge_recorded_total = 0
     terminal_witness_only = bool(getattr(args, "frg_frontier_child_terminal_witness_only_enabled", False))
@@ -7149,11 +7347,11 @@ def _inject_frg_frontier_child_candidates(
             candidate_data = (int(child_n), child_depth, candidate_parent_code)
             if macro_edge_enabled and macro_paths is not None:
                 macro_paths[child_code] = tuple(macro_path_codes + [child_code])
-                macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", None)
                 if macro_parent_by_code is not None:
                     macro_parent_by_code[child_code] = candidate_parent_code
                 if macro_moves_by_code is not None:
                     macro_moves_by_code[child_code] = tuple(moves)
+                _record_frg_macro_edge_ancestry(args, child_code, candidate_parent_code)
                 args._frg_macro_edge_recorded_total += 1
             if (
                 terminal_witnesses is not None
@@ -7371,6 +7569,8 @@ def _union_diversity_qubo_features(
     )
     macro_edge_chain_length = 0
     macro_edge_chain_penalty = 0.0
+    macro_edge_ancestry_depth = 0
+    macro_edge_ancestry_penalty = 0.0
     if is_frg_macro:
         macro_path = tuple((getattr(args, "_frg_macro_edge_path_by_code", {}) or {}).get(code, ()) or ())
         if macro_path and macro_path[-1] == code:
@@ -7384,6 +7584,27 @@ def _union_diversity_qubo_features(
                 energy += macro_chain_cost_weight * macro_edge_chain_penalty * (
                     1.0 - _clamp01(float(completion_witness_quality))
                 )
+        macro_edge_ancestry_depth = max(
+            0,
+            int((getattr(args, "_frg_macro_edge_ancestry_by_code", {}) or {}).get(code, 0) or 0),
+        )
+        if macro_edge_ancestry_depth <= 0 and macro_edge_chain_length > 0:
+            macro_edge_ancestry_depth = 1
+        ancestry_weight = max(
+            0.0,
+            float(getattr(args, "union_diversity_qubo_macro_ancestry_penalty_weight", 0.0) or 0.0),
+        )
+        if ancestry_weight > 0.0 and macro_edge_ancestry_depth > 1:
+            ancestry_scale = max(
+                1.0,
+                float(getattr(args, "union_diversity_qubo_macro_ancestry_penalty_scale", 4.0) or 4.0),
+            )
+            macro_edge_ancestry_penalty = _clamp01(float(macro_edge_ancestry_depth - 1) / ancestry_scale)
+            energy += (
+                ancestry_weight
+                * macro_edge_ancestry_penalty
+                * (1.0 - _clamp01(float(completion_witness_quality)))
+            )
     reservoir_feature = (getattr(args, "_quality_reservoir_last_features_by_code", {}) or {}).get(code)
     macro_quality_bonus = float(getattr(args, "union_diversity_qubo_macro_quality_bonus", 0.0) or 0.0)
     if is_frg_macro and macro_quality_bonus > 0.0:
@@ -7443,6 +7664,8 @@ def _union_diversity_qubo_features(
         completion_witness_quality=float(completion_witness_quality),
         macro_edge_chain_length=int(macro_edge_chain_length),
         macro_edge_chain_penalty=float(macro_edge_chain_penalty),
+        macro_edge_ancestry_depth=int(macro_edge_ancestry_depth),
+        macro_edge_ancestry_penalty=float(macro_edge_ancestry_penalty),
         quality_reservoir_quality=float(reservoir_feature.reservoir_quality) if reservoir_feature is not None else 0.0,
         quality_reservoir_witness_quality=float(reservoir_feature.witness_quality)
         if reservoir_feature is not None
@@ -7526,6 +7749,15 @@ def _quality_reservoir_pair_penalty(
         and left.quality_reservoir_macro_signature == right.quality_reservoir_macro_signature
     ):
         value += reservoir_macro_signature_penalty
+    unified_macro_pair_penalty = float(
+        getattr(args, "union_diversity_qubo_unified_macro_pair_penalty", 0.0) or 0.0
+    )
+    if (
+        unified_macro_pair_penalty > 0.0
+        and str(left.origin) == "unified_macro_supply"
+        and str(right.origin) == "unified_macro_supply"
+    ):
+        value += unified_macro_pair_penalty
     return float(value)
 
 
@@ -12849,6 +13081,104 @@ def _bridge_shorter_path(
     return None, expanded
 
 
+def _physical_stack_key(stacks: list[list[int]]) -> tuple[tuple[int, ...], ...]:
+    return tuple(tuple(stack) for stack in stacks)
+
+
+def _lift_bridge_codes_from_stacks(
+    stacks: list[list[int]],
+    bridge: list[bytes],
+    stack_count: int,
+    max_height: int,
+    start_step: int,
+) -> list[list[int]] | None:
+    trial_stacks = [list(stack) for stack in stacks]
+    for bridge_code in bridge[1:]:
+        bridge_lifted = _lift_compact_transition_from_stacks(
+            trial_stacks,
+            bridge_code,
+            stack_count,
+            max_height,
+            start_step,
+        )
+        if bridge_lifted is None:
+            return None
+        _bridge_move, trial_stacks = bridge_lifted
+    return trial_stacks
+
+
+def _bridge_liftable_path_from_stacks(
+    stacks: list[list[int]],
+    goal: bytes,
+    offset_depth: int,
+    cap: int,
+    stack_count: int,
+    max_height: int,
+    max_depth: int,
+    deadline: float,
+    args: argparse.Namespace,
+) -> tuple[list[bytes] | None, list[list[int]] | None, int]:
+    start_stacks = [list(stack) for stack in stacks]
+    start_code, start_n = _encode(start_stacks, stack_count, max_height)
+    if start_code == goal:
+        return [start_code], start_stacks, 0
+    if max_depth <= 0:
+        return None, None, 0
+
+    goal_n = _code_n(goal, stack_count, max_height)
+    start_key = _physical_stack_key(start_stacks)
+    states: dict[tuple[tuple[int, ...], ...], list[list[int]]] = {start_key: start_stacks}
+    parent: dict[tuple[tuple[int, ...], ...], tuple[tuple[int, ...], ...] | None] = {start_key: None}
+    code_by_state: dict[tuple[tuple[int, ...], ...], bytes] = {start_key: start_code}
+    depth_by_state: dict[tuple[tuple[int, ...], ...], int] = {start_key: 0}
+    heap: list[tuple[float, int, int, tuple[tuple[int, ...], ...]]] = [(abs(start_n - goal_n), 0, 0, start_key)]
+    expanded = 0
+    counter = 0
+    max_expanded = max(1, int(getattr(args, "post_polish_bridge_expanded", 1) or 1))
+
+    while heap and time.perf_counter() < deadline and expanded < max_expanded:
+        _priority, depth, _tie, key = heapq.heappop(heap)
+        if depth != depth_by_state.get(key):
+            continue
+        if depth >= max_depth:
+            continue
+        current_stacks = states[key]
+        expanded += 1
+        next_depth = depth + 1
+        for src_idx, src in enumerate(current_stacks):
+            if not src:
+                continue
+            for dst_idx, dst in enumerate(current_stacks):
+                if src_idx == dst_idx or len(dst) >= max_height:
+                    continue
+                trial = [list(stack) for stack in current_stacks]
+                box = trial[src_idx].pop()
+                trial[dst_idx].append(box)
+                code, code_n = _encode(trial, stack_count, max_height)
+                if offset_depth + next_depth + code_n > cap:
+                    continue
+                next_key = _physical_stack_key(trial)
+                old_depth = depth_by_state.get(next_key)
+                if old_depth is not None and next_depth >= old_depth:
+                    continue
+                states[next_key] = trial
+                parent[next_key] = key
+                code_by_state[next_key] = code
+                depth_by_state[next_key] = next_depth
+                if code == goal:
+                    path_keys: list[tuple[tuple[int, ...], ...]] = []
+                    cursor: tuple[tuple[int, ...], ...] | None = next_key
+                    while cursor is not None:
+                        path_keys.append(cursor)
+                        cursor = parent[cursor]
+                    path_keys.reverse()
+                    return [code_by_state[path_key] for path_key in path_keys], trial, expanded
+                score = next_depth + 0.35 * abs(code_n - goal_n) + 0.05 * code_n
+                counter += 1
+                heapq.heappush(heap, (score, next_depth, counter, next_key))
+    return None, None, expanded
+
+
 @lru_cache(maxsize=1048576)
 def _compact_transition_move(
     start: bytes,
@@ -13643,32 +13973,55 @@ def _repair_compact_code_path_for_lifting(
             continue
 
         current_code, _current_n = _encode(stacks, instance.stack_count, instance.max_height)
-        bridge, _expanded = _bridge_shorter_path(
-            current_code,
-            next_code,
-            len(repaired) - 1,
-            cap,
-            instance.stack_count,
-            instance.max_height,
-            max_depth,
-            repair_deadline,
-            args,
-        )
-        if bridge is None or len(bridge) < 2:
-            return codes, 0
-
-        trial_stacks = [list(stack) for stack in stacks]
-        for bridge_code in bridge[1:]:
-            bridge_lifted = _lift_compact_transition_from_stacks(
-                trial_stacks,
-                bridge_code,
+        bridge: list[bytes] | None = None
+        trial_stacks: list[list[int]] | None = None
+        seen_bridges: set[tuple[bytes, ...]] = set()
+        bridge_attempts = max(1, int(getattr(args, "compact_lift_repair_bridge_attempts", 2) or 2))
+        for _attempt in range(bridge_attempts):
+            candidate_bridge, _expanded = _bridge_shorter_path(
+                current_code,
+                next_code,
+                len(repaired) - 1,
+                cap,
+                instance.stack_count,
+                instance.max_height,
+                max_depth,
+                repair_deadline,
+                args,
+            )
+            if candidate_bridge is None or len(candidate_bridge) < 2:
+                break
+            bridge_key = tuple(candidate_bridge)
+            if bridge_key in seen_bridges:
+                break
+            seen_bridges.add(bridge_key)
+            candidate_stacks = _lift_bridge_codes_from_stacks(
+                stacks,
+                candidate_bridge,
                 instance.stack_count,
                 instance.max_height,
                 len(repaired) - 1,
             )
-            if bridge_lifted is None:
-                return codes, 0
-            _bridge_move, trial_stacks = bridge_lifted
+            if candidate_stacks is not None:
+                bridge = candidate_bridge
+                trial_stacks = candidate_stacks
+                break
+
+        if bridge is None or trial_stacks is None:
+            bridge, trial_stacks, _expanded = _bridge_liftable_path_from_stacks(
+                stacks,
+                next_code,
+                len(repaired) - 1,
+                cap,
+                instance.stack_count,
+                instance.max_height,
+                max_depth,
+                repair_deadline,
+                args,
+            )
+        if bridge is None or trial_stacks is None or len(bridge) < 2:
+            return codes, 0
+
         stacks = trial_stacks
         repaired.extend(bridge[1:])
         inserted += max(0, len(bridge) - 2)
@@ -13695,6 +14048,90 @@ def _try_lift_repaired_compact_codes(
     except RuntimeError:
         return None
     return moves, repaired_codes, inserted
+
+
+_MISSING_PARENT = object()
+
+
+def _try_lift_target_path(
+    instance: Instance,
+    parent: dict[bytes, bytes | None],
+    target: bytes,
+    *,
+    macro_edge_paths: dict[bytes, tuple[bytes, ...]],
+    macro_parent_by_code: dict[bytes, bytes],
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+) -> tuple[list[Move], list[bytes], int] | None:
+    raw_codes = _backtrack(parent, target)
+    macro_codes = _backtrack_with_macro_edges(
+        parent,
+        target,
+        macro_edge_paths,
+        macro_parent_by_code=macro_parent_by_code,
+        stack_count=instance.stack_count,
+        max_height=instance.max_height,
+    )
+    lifted = _try_lift_repaired_compact_codes(
+        instance,
+        macro_codes,
+        cap=cap,
+        args=args,
+        deadline=deadline,
+    )
+    if lifted is not None:
+        return lifted
+    if macro_codes != raw_codes:
+        return _try_lift_repaired_compact_codes(
+            instance,
+            raw_codes,
+            cap=cap,
+            args=args,
+            deadline=deadline,
+        )
+    return None
+
+
+def _try_accept_liftable_target(
+    instance: Instance,
+    parent: dict[bytes, bytes | None],
+    target: bytes,
+    *,
+    candidate_parent: bytes | None = None,
+    macro_edge_paths: dict[bytes, tuple[bytes, ...]] | None = None,
+    macro_parent_by_code: dict[bytes, bytes] | None = None,
+    cap: int,
+    args: argparse.Namespace,
+    deadline: float,
+) -> bool:
+    old_parent = parent.get(target, _MISSING_PARENT)
+    assigned = False
+    if candidate_parent is not None:
+        if not _assign_parent_link(parent, target, candidate_parent):
+            return False
+        assigned = True
+
+    lifted = _try_lift_target_path(
+        instance,
+        parent,
+        target,
+        macro_edge_paths=macro_edge_paths or {},
+        macro_parent_by_code=macro_parent_by_code or {},
+        cap=cap,
+        args=args,
+        deadline=deadline,
+    )
+    if lifted is not None:
+        return True
+
+    if assigned:
+        if old_parent is _MISSING_PARENT:
+            parent.pop(target, None)
+        else:
+            parent[target] = old_parent  # type: ignore[assignment]
+    args._compact_lift_rejected_targets = int(getattr(args, "_compact_lift_rejected_targets", 0) or 0) + 1
+    return False
 
 
 def _codes_to_moves_instance(instance: Instance, codes: list[bytes]) -> list[Move]:
@@ -13924,6 +14361,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._macro_chain_witness_added_total = 0
     args._macro_chain_witness_selected_total = 0
     args._macro_chain_witness_codes = set()
+    args._unified_macro_supply_calls = 0
+    args._unified_macro_supply_generated = 0
+    args._unified_macro_supply_added_total = 0
+    args._unified_macro_supply_selected_total = 0
+    args._unified_macro_supply_codes = set()
     args._macro_chain_witness_completion_cache = {}
     args._frg_terminal_witness_recorded_total = 0
     args._frg_terminal_witness_grafted_total = 0
@@ -13961,6 +14403,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._frg_macro_edge_path_by_code = {}
     args._frg_macro_edge_parent_by_code = {}
     args._frg_macro_edge_moves_by_code = {}
+    args._frg_macro_edge_ancestry_by_code = {}
+    args._compact_lift_rejected_targets = 0
     args._candidate_origin_by_code = {}
     args._reduction_chain_depth_by_code = {}
     args._reduction_chain_origin_by_code = {}
@@ -14087,8 +14531,19 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 break
             depth_reached = max(depth_reached, depth)
             if current_n <= args.target_final_n:
-                target = code
-                break
+                if _try_accept_liftable_target(
+                    instance,
+                    parent,
+                    code,
+                    macro_edge_paths=getattr(args, "_frg_macro_edge_path_by_code", {}) or {},
+                    macro_parent_by_code=getattr(args, "_frg_macro_edge_parent_by_code", {}) or {},
+                    cap=cap,
+                    args=args,
+                    deadline=deadline,
+                ):
+                    target = code
+                    break
+                continue
             if _remaining_lower_bound(current_n, depth, depth_cap) > args.target_final_n:
                 pruned_bound += 1
                 continue
@@ -14168,8 +14623,22 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if target is not None:
             break
         if goals:
+            rejected_goal_codes: list[bytes] = []
+            macro_edge_paths_for_lift = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
+            macro_parent_by_code_for_lift = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
             for goal_code, data in sorted(goals.items(), key=_candidate_key_func(args)):
-                if not _assign_parent_link(parent, goal_code, data[2]):
+                if not _try_accept_liftable_target(
+                    instance,
+                    parent,
+                    goal_code,
+                    candidate_parent=data[2],
+                    macro_edge_paths=macro_edge_paths_for_lift,
+                    macro_parent_by_code=macro_parent_by_code_for_lift,
+                    cap=cap,
+                    args=args,
+                    deadline=deadline,
+                ):
+                    rejected_goal_codes.append(goal_code)
                     continue
                 target = goal_code
                 best_depth[target] = data[1]
@@ -14177,6 +14646,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 qubo_ancestor_by_code[target] = qubo_ancestor_by_code.get(data[2], False)
                 depth_reached = max(depth_reached, data[1])
                 break
+            for rejected_goal_code in rejected_goal_codes:
+                candidates.pop(rejected_goal_code, None)
             if target is not None:
                 break
         if getattr(args, "terminal_bridge_enabled", False):
@@ -14263,6 +14734,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 _update_layer_candidate_metrics(candidates, args, cap)
         frg_frontier_child_codes: set[bytes] = set()
         macro_chain_witness_codes: set[bytes] = set()
+        unified_macro_supply_codes: set[bytes] = set()
         frg_macro_edge_paths: dict[bytes, tuple[bytes, ...]] = getattr(args, "_frg_macro_edge_path_by_code", {})
         frg_terminal_witnesses: list[tuple[bytes, tuple[int, int, bytes], UnionRolloutProbeResult]] = []
         if not getattr(args, "frg_frontier_child_append_only", False):
@@ -14299,6 +14771,23 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             peak_candidates = max(peak_candidates, len(candidates))
             if len(candidates) != candidate_count_before_macro_chain:
                 _update_layer_candidate_metrics(candidates, args, cap)
+        candidate_count_before_unified_macro = len(candidates)
+        unified_macro_supply_codes = _inject_unified_macro_supply_candidates(
+            frontier,
+            candidates,
+            args,
+            depth_cap,
+            best_depth,
+            parent_chain=parent,
+            macro_paths=frg_macro_edge_paths,
+        )
+        if unified_macro_supply_codes:
+            macro_chain_witness_codes |= unified_macro_supply_codes
+            for code in unified_macro_supply_codes:
+                candidate_origin_by_code.setdefault(code, "unified_macro_supply")
+            peak_candidates = max(peak_candidates, len(candidates))
+            if len(candidates) != candidate_count_before_unified_macro:
+                _update_layer_candidate_metrics(candidates, args, cap)
         for code, data, rollout in frg_terminal_witnesses:
             grafted = _completion_witness_grafted_moves(
                 code,
@@ -14330,8 +14819,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             args._candidate_origin_by_code = candidate_origin_by_code
             frg_frontier_child_codes &= kept_codes
             macro_chain_witness_codes &= kept_codes
+            unified_macro_supply_codes &= kept_codes
             args._frg_frontier_child_codes = set(frg_frontier_child_codes)
             args._macro_chain_witness_codes = set(macro_chain_witness_codes)
+            args._unified_macro_supply_codes = set(unified_macro_supply_codes)
             if frg_macro_edge_paths:
                 args._frg_macro_edge_path_by_code = {
                     code: path for code, path in frg_macro_edge_paths.items() if code in candidates
@@ -14344,6 +14835,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 macro_moves_by_code = getattr(args, "_frg_macro_edge_moves_by_code", {}) or {}
                 args._frg_macro_edge_moves_by_code = {
                     code: moves for code, moves in macro_moves_by_code.items() if code in frg_macro_edge_paths
+                }
+                macro_ancestry_by_code = getattr(args, "_frg_macro_edge_ancestry_by_code", {}) or {}
+                args._frg_macro_edge_ancestry_by_code = {
+                    code: depth for code, depth in macro_ancestry_by_code.items() if code in frg_macro_edge_paths
                 }
             peak_candidates = max(peak_candidates, len(candidates))
             _update_layer_candidate_metrics(candidates, args, cap)
@@ -14359,6 +14854,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         if macro_chain_witness_codes:
             args._macro_chain_witness_selected_total += sum(
                 1 for code in selected_codes if code in macro_chain_witness_codes
+            )
+        if unified_macro_supply_codes:
+            args._unified_macro_supply_selected_total += sum(
+                1 for code in selected_codes if code in unified_macro_supply_codes
             )
         _record_quality_reservoir_selected_telemetry(selected_codes, args)
         qcalls += add_qcalls
@@ -14510,12 +15009,16 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                     "wang_rollout"
                     if code in rollout_codes
                     else (
-                        "frg_macro_chain_witness"
-                        if code in macro_chain_witness_codes
+                        "unified_macro_supply"
+                        if code in unified_macro_supply_codes
                         else (
-                            "frg_frontier_child"
-                            if code in frg_frontier_child_codes
-                            else ("frg_compound" if code in frg_compound_codes else "deterministic")
+                            "frg_macro_chain_witness"
+                            if code in macro_chain_witness_codes
+                            else (
+                                "frg_frontier_child"
+                                if code in frg_frontier_child_codes
+                                else ("frg_compound" if code in frg_compound_codes else "deterministic")
+                            )
                         )
                     )
                 )
@@ -14729,6 +15232,9 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             f"; wang_incumbent_used=True; wang_incumbent_moves={len(wang_incumbent.moves)}; "
             f"wang_incumbent_runtime_sec={wang_incumbent.runtime_sec:.6f}"
         )
+    compact_lift_rejected_targets = int(getattr(args, "_compact_lift_rejected_targets", 0) or 0)
+    if compact_lift_rejected_targets:
+        status += f"; compact_lift_rejected_targets={compact_lift_rejected_targets}"
     if beam_survivor_output is not None and beam_survivor_records:
         _write_beam_survivor_rows(
             _finalize_beam_survivor_rows(beam_survivor_records, search_path_codes),
@@ -14894,6 +15400,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         macro_chain_witness_generated=int(getattr(args, "_macro_chain_witness_generated", 0) or 0),
         macro_chain_witness_added_total=int(getattr(args, "_macro_chain_witness_added_total", 0) or 0),
         macro_chain_witness_selected_total=int(getattr(args, "_macro_chain_witness_selected_total", 0) or 0),
+        unified_macro_supply_calls=int(getattr(args, "_unified_macro_supply_calls", 0) or 0),
+        unified_macro_supply_generated=int(getattr(args, "_unified_macro_supply_generated", 0) or 0),
+        unified_macro_supply_added_total=int(getattr(args, "_unified_macro_supply_added_total", 0) or 0),
+        unified_macro_supply_selected_total=int(getattr(args, "_unified_macro_supply_selected_total", 0) or 0),
         frg_terminal_witness_recorded_total=int(getattr(args, "_frg_terminal_witness_recorded_total", 0) or 0),
         frg_terminal_witness_grafted_total=int(getattr(args, "_frg_terminal_witness_grafted_total", 0) or 0),
         frg_terminal_witness_used=bool(frg_terminal_witness_used),
@@ -15310,6 +15820,16 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 "union_diversity_qubo_macro_edge_chain_cost_weight",
                 0.0,
             ),
+            "union_diversity_qubo_macro_ancestry_penalty_weight": getattr(
+                args,
+                "union_diversity_qubo_macro_ancestry_penalty_weight",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_ancestry_penalty_scale": getattr(
+                args,
+                "union_diversity_qubo_macro_ancestry_penalty_scale",
+                4.0,
+            ),
             "union_diversity_qubo_macro_future_credit_enabled": getattr(
                 args,
                 "union_diversity_qubo_macro_future_credit_enabled",
@@ -15378,6 +15898,16 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_diversity_qubo_macro_future_credit_cap": getattr(
                 args,
                 "union_diversity_qubo_macro_future_credit_cap",
+                0.0,
+            ),
+            "union_diversity_qubo_unified_macro_future_credit_scale": getattr(
+                args,
+                "union_diversity_qubo_unified_macro_future_credit_scale",
+                1.0,
+            ),
+            "union_diversity_qubo_unified_macro_pair_penalty": getattr(
+                args,
+                "union_diversity_qubo_unified_macro_pair_penalty",
                 0.0,
             ),
             "union_diversity_qubo_calls": result.union_diversity_qubo_calls,
@@ -15648,6 +16178,21 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "macro_chain_witness_generated": result.macro_chain_witness_generated,
             "macro_chain_witness_added_total": result.macro_chain_witness_added_total,
             "macro_chain_witness_selected_total": result.macro_chain_witness_selected_total,
+            "unified_macro_supply_enabled": getattr(args, "unified_macro_supply_enabled", False),
+            "unified_macro_supply_respect_time_limit": getattr(
+                args,
+                "unified_macro_supply_respect_time_limit",
+                False,
+            ),
+            "unified_macro_supply_parent_width": getattr(args, "unified_macro_supply_parent_width", 0),
+            "unified_macro_supply_parent_offset": getattr(args, "unified_macro_supply_parent_offset", 0),
+            "unified_macro_supply_max_steps": getattr(args, "unified_macro_supply_max_steps", 0),
+            "unified_macro_supply_max_generated": getattr(args, "unified_macro_supply_max_generated", 0),
+            "unified_macro_supply_min_candidates": getattr(args, "unified_macro_supply_min_candidates", 0),
+            "unified_macro_supply_calls": result.unified_macro_supply_calls,
+            "unified_macro_supply_generated": result.unified_macro_supply_generated,
+            "unified_macro_supply_added_total": result.unified_macro_supply_added_total,
+            "unified_macro_supply_selected_total": result.unified_macro_supply_selected_total,
             "frg_frontier_child_terminal_witness_only_enabled": getattr(
                 args,
                 "frg_frontier_child_terminal_witness_only_enabled",
@@ -16405,6 +16950,8 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-macro-quota-witness-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-quality-bonus", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-edge-chain-cost-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-ancestry-penalty-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-ancestry-penalty-scale", type=float, default=None)
     parser.add_argument(
         "--union-diversity-qubo-macro-future-credit-enabled",
         action=argparse.BooleanOptionalAction,
@@ -16417,6 +16964,8 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-macro-future-credit-min-witness-quality", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-receiver-debt-penalty-weight", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-macro-future-credit-cap", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-unified-macro-future-credit-scale", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-unified-macro-pair-penalty", type=float, default=None)
     _add_quality_reservoir_arguments(parser)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
