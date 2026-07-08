@@ -57,6 +57,46 @@ The practical reading: v4.0 lets QUBO choose among ordinary children and
 future-proven recovery-chain objects in one beam, while keeping one solver path
 and one validator boundary.
 
+## Positioning Decision
+
+The current algorithm family is intentionally split into three roles:
+
+- **Default mainline:** keep v4.0 as the fast, high-coverage solver for open120
+  plus full paper BF/CV. It optimizes solved count and runtime first, with path
+  length as the next objective.
+- **Quality modes:** use BS-FRG post-compress profiles when shorter paths matter
+  more than raw runtime. These modes start from a validated beam solution and
+  only accept shorter valid recovery-chain replacements, so they are the
+  practical route for CV long-path compression.
+- **Research line:** keep beam-native witness quality profiles experimental.
+  Asking the beam itself to preserve the future-best deep recovery chain is
+  strict and fragile; those profiles should not replace v4.0 until they pass the
+  full paired open120, BF, and CV gate.
+
+The v4.1 beam-feedback candidate is:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish
+```
+
+It keeps BS-FRG post-compress disabled and adds a conservative beam-internal
+feedback credit layer: same-parent witness alternatives are compared locally,
+shorter completion witnesses can receive high-confidence positive QUBO credit,
+receiver debt and height risk reduce that credit, and one-layer survival credit
+rewards signatures that actually produce progress in the next beam layer. The
+feedback is scoped to the QUBO candidate window rather than applied as a global
+reservoir pruning pass. It is experimental until full paired open120, BF, and CV
+no-cap t120 evidence beats v4.0 without solved-count loss.
+
+The first full v4.1 gate check on 2026-07-07 did **not** pass promotion:
+open120 stayed solved at `120/120` but moved from the v4.0 reference `6928`
+moves to `7065`; paper BF/CV solved `1558/1561`, with `BF 720/721` and
+`CV 838/840`. Keep it as an experimental research profile, not a default.
+
+Pure BS-FRG remains a path-quality teacher and reference, not the default
+solver. It can produce much shorter CV paths when given enough time, but the
+current engineering advantage of v4.0 is fast, stable coverage.
+
 ## Main Commands
 
 Run the current open120 no-cap mainline:
@@ -88,6 +128,7 @@ $env:PYTHONPATH='.'; python -m py_compile scripts\benchmark_compact_beam_qubo_n0
 - [v4.0 mainline algorithm](docs/guides/v4-mainline-chainaware-algorithm.md)
 - [v4.0 flow diagrams](docs/guides/v4-mainline-flow-diagrams.md)
 - [v4.0 scorecard and reproduction](docs/guides/v4-mainline-scorecard-and-reproduction.md)
+- [v4.1 beam feedback candidate](docs/guides/v41-beam-feedback-candidate.md)
 - [Current mainline algorithm](docs/guides/current-mainline-algorithm.md)
 - [Algorithm profile status](docs/guides/algorithm-profile-status.md)
 - [Current best algorithm note](docs/guides/current-best-algorithm.md)

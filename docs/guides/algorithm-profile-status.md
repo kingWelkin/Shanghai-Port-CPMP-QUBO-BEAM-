@@ -1,6 +1,6 @@
 # Algorithm Profile Status
 
-Date: 2026-07-03
+Date: 2026-07-07
 Version: v4.0
 
 This guide separates the promoted default, still-useful baselines, and opt-in
@@ -12,6 +12,30 @@ Current promoted mainline:
 
 ```text
 qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish
+```
+
+Opt-in quality mode for long-path CV compression:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish
+```
+
+Faster opt-in quality mode:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish
+```
+
+Experimental beam-native quality mode:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish
+```
+
+Experimental v4.1 beam-feedback candidate:
+
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish
 ```
 
 Previous promoted mainline:
@@ -31,6 +55,23 @@ Open120-only path-quality reference:
 ```text
 qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish
 ```
+
+## Role Positioning
+
+Do not collapse every strong profile into one promotion race. The current
+algorithm family has three separate roles:
+
+| Role | Profile family | Decision |
+|---|---|---|
+| Default solver | `...chainaware_polish` | Promoted v4.0 mainline for fast, stable open120 plus BF/CV coverage |
+| Quality compression | `...chainaware_quality*_polish` | Opt-in post-compress modes for shorter paths, especially long CV paths |
+| Beam-native research | `...chainaware_beam_quality_polish`, `...chainaware_feedback_v41_polish`, and related witness selectors | Experimental; useful for learning, not promoted until full paired evidence beats v4.0 without solved-count loss |
+
+Pure BS-FRG remains a reference and teacher for deep recovery chains. It is not
+the default solver and should not be described as a fallback in v4.0. The
+accepted engineering split is: v4.0 finds valid solutions quickly, quality modes
+compress paths afterward, and beam-native witness work explores whether that
+compression quality can eventually move inside the beam.
 
 ## Stable Defaults And Baselines
 
@@ -62,6 +103,10 @@ v4.0 is still a QUBO beam selector, not a solver portfolio:
 |---|---|---|
 | `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish` | Adds unified macro supply without chain-aware ancestry penalty | Ablation below v4.0 |
 | `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish` | Adds softer unified macro future credit | Ablation below v4.0 |
+| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish` | v4.0 plus beam-native multi-witness macro alternatives; BS-FRG post-compress disabled | Experimental quality branch; promote only after paired open120 + BF + CV full t120 evidence |
+| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish` | v4.0 plus QUBO-window beam feedback: local witness-cost comparison, source scarcity, one-layer survival credit, and receiver-debt/height-risk credit reduction; only high-confidence positive feedback affects QUBO linear energy; BS-FRG post-compress disabled | Experimental v4.1 mainline candidate; full gate on 2026-07-07 failed with open120 `120/120` but paper BF/CV `1558/1561`, so do not promote |
+| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish` | v4.0 plus BS-FRG post-compress witness on long paths | Opt-in quality mode; slower, use for CV long-path compression |
+| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish` | v4.0 plus suffix-first BS-FRG post-compress with early accept | Faster opt-in quality mode; intended for long CV paths when 35s post-compress is too costly |
 | `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish` | v4.0 plus stricter post-polish settings | Experimental quality/stability branch |
 | `qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_quality_polish` | Macro-chain witness with witness-move penalty | Quality ablation |
 | `qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_deep_polish` | More aggressive post-polish and bridge search | Quality ablation, slower |
@@ -96,4 +141,6 @@ Minimum evidence:
 
 - `docs/experiments/chainaware_commit411da4b_open120_t120_20260703_summary.md`
 - `docs/experiments/chainaware_commit411da4b_paper_bf_cv_full1561_t120_20260703_summary.md`
+- `docs/experiments/v41_feedback_open120_t120_nocap_20260707_fullgate_summary.md`
+- `docs/experiments/v41_feedback_paper_bf_cv_full1561_t120_nocap_20260707_fullgate_summary.md`
 - [v4.0 scorecard and reproduction](v4-mainline-scorecard-and-reproduction.md)

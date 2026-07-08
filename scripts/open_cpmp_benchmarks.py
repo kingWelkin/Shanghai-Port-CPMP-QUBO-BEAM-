@@ -385,6 +385,11 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
             "union_diversity_qubo_macro_witness_move_penalty_scale",
             256,
         ),
+        "union_diversity_qubo_macro_witness_quality_relief": getattr(
+            args,
+            "union_diversity_qubo_macro_witness_quality_relief",
+            0.0,
+        ),
         "union_diversity_qubo_macro_prefix_penalty_weight": getattr(
             args,
             "union_diversity_qubo_macro_prefix_penalty_weight",
@@ -404,6 +409,16 @@ def _union_diversity_qubo_row_fields(result, args: argparse.Namespace) -> dict[s
             args,
             "union_diversity_qubo_macro_witness_move_penalty_max_stack_count",
             0,
+        ),
+        "macro_witness_effective_depth_weight": getattr(
+            args,
+            "macro_witness_effective_depth_weight",
+            0.0,
+        ),
+        "macro_witness_goal_effective_depth_weight": getattr(
+            args,
+            "macro_witness_goal_effective_depth_weight",
+            0.0,
         ),
         "union_diversity_qubo_macro_future_credit_min_witness_quality": getattr(
             args,
@@ -528,6 +543,28 @@ def _quality_reservoir_row_fields(result, args: argparse.Namespace) -> dict[str,
         "quality_reservoir_avg_receiver_debt": getattr(result, "quality_reservoir_avg_receiver_debt", 0.0),
         "quality_reservoir_avg_height_risk": getattr(result, "quality_reservoir_avg_height_risk", 0.0),
         "quality_reservoir_pair_penalty_total": getattr(result, "quality_reservoir_pair_penalty_total", 0.0),
+        "beam_feedback_enabled": getattr(args, "beam_feedback_enabled", False),
+        "beam_feedback_linear_weight": getattr(args, "beam_feedback_linear_weight", 0.0),
+        "beam_feedback_survival_credit_weight": getattr(args, "beam_feedback_survival_credit_weight", 0.0),
+        "beam_feedback_pair_signature_penalty": getattr(args, "beam_feedback_pair_signature_penalty", 0.0),
+        "beam_feedback_min_parent_alternatives": getattr(args, "beam_feedback_min_parent_alternatives", 0),
+        "beam_feedback_witness_relative_penalty_weight": getattr(
+            args,
+            "beam_feedback_witness_relative_penalty_weight",
+            0.0,
+        ),
+        "beam_feedback_min_credit_score": getattr(args, "beam_feedback_min_credit_score", 0.0),
+        "beam_feedback_candidates_total": getattr(result, "beam_feedback_candidates_total", 0),
+        "beam_feedback_parent_groups_total": getattr(result, "beam_feedback_parent_groups_total", 0),
+        "beam_feedback_selected_total": getattr(result, "beam_feedback_selected_total", 0),
+        "beam_feedback_avg_selected_score": getattr(result, "beam_feedback_avg_selected_score", 0.0),
+        "beam_feedback_shorter_witness_selected_total": getattr(
+            result,
+            "beam_feedback_shorter_witness_selected_total",
+            0,
+        ),
+        "beam_feedback_survival_credit_hits": getattr(result, "beam_feedback_survival_credit_hits", 0),
+        "beam_feedback_pair_penalty_total": getattr(result, "beam_feedback_pair_penalty_total", 0.0),
     }
 
 
@@ -732,6 +769,13 @@ def _frg_frontier_child_row_fields(result, args: argparse.Namespace) -> dict[str
         "macro_chain_witness_max_steps": getattr(args, "macro_chain_witness_max_steps", 0),
         "macro_chain_witness_time_limit": getattr(args, "macro_chain_witness_time_limit", 0.0),
         "macro_chain_witness_max_generated": getattr(args, "macro_chain_witness_max_generated", 0),
+        "macro_chain_witness_beam_enabled": getattr(args, "macro_chain_witness_beam_enabled", False),
+        "macro_chain_witness_beam_width": getattr(args, "macro_chain_witness_beam_width", 0),
+        "macro_chain_witness_beam_candidate_limit_per_state": getattr(
+            args,
+            "macro_chain_witness_beam_candidate_limit_per_state",
+            0,
+        ),
         "macro_chain_witness_min_stack_count": getattr(args, "macro_chain_witness_min_stack_count", 0),
         "macro_chain_witness_min_height": getattr(args, "macro_chain_witness_min_height", 0),
         "macro_chain_witness_min_n": getattr(args, "macro_chain_witness_min_n", 0),
@@ -1059,6 +1103,7 @@ def _priority_group_row_dict_from_instance_result(
         ),
         "frg_seed_enabled": getattr(args, "frg_seed_enabled", False),
         "frg_seed_time_limit": getattr(args, "frg_seed_time_limit", 0.0),
+        "frg_seed_time_limit_margin": getattr(args, "frg_seed_time_limit_margin", 0.0),
         "frg_seed_min_max_steps": getattr(args, "frg_seed_min_max_steps", 0),
         "frg_seed_max_steps_multiplier": getattr(args, "frg_seed_max_steps_multiplier", 0),
         "frg_seed_max_steps_cap": getattr(args, "frg_seed_max_steps_cap", 0),
@@ -1441,7 +1486,14 @@ def _variant_names(name: str) -> list[str]:
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -1745,10 +1797,13 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "union_diversity_qubo_unified_macro_pair_penalty",
         "union_diversity_qubo_macro_witness_move_penalty_weight",
         "union_diversity_qubo_macro_witness_move_penalty_scale",
+        "union_diversity_qubo_macro_witness_quality_relief",
         "union_diversity_qubo_macro_prefix_penalty_weight",
         "union_diversity_qubo_macro_witness_move_penalty_min_stack_count",
         "union_diversity_qubo_macro_witness_move_penalty_max_height",
         "union_diversity_qubo_macro_witness_move_penalty_max_stack_count",
+        "macro_witness_effective_depth_weight",
+        "macro_witness_goal_effective_depth_weight",
         "post_polish_respect_time_limit",
         "post_polish_max_attempts",
         "post_polish_time_budget",
@@ -1837,12 +1892,23 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         "macro_chain_witness_max_steps",
         "macro_chain_witness_time_limit",
         "macro_chain_witness_max_generated",
+        "macro_chain_witness_beam_enabled",
+        "macro_chain_witness_beam_width",
+        "macro_chain_witness_beam_candidate_limit_per_state",
         "macro_chain_witness_min_stack_count",
         "macro_chain_witness_min_height",
         "macro_chain_witness_min_n",
         "macro_chain_witness_min_candidates",
+        "unified_macro_supply_enabled",
+        "unified_macro_supply_respect_time_limit",
+        "unified_macro_supply_parent_width",
+        "unified_macro_supply_parent_offset",
+        "unified_macro_supply_max_steps",
+        "unified_macro_supply_max_generated",
+        "unified_macro_supply_min_candidates",
         "frg_seed_enabled",
         "frg_seed_time_limit",
+        "frg_seed_time_limit_margin",
         "frg_seed_min_max_steps",
         "frg_seed_max_steps_multiplier",
         "frg_seed_max_steps_cap",
@@ -2080,11 +2146,67 @@ def _args_for_variant(args: argparse.Namespace, variant: str, instance: Instance
         overrides.update(
             {"solver_profile": "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"}
         )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish"
+                )
+            }
+        )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish"
+                )
+            }
+        )
     if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish":
         overrides.update(
             {
                 "solver_profile": (
                     "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
+                )
+            }
+        )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish"
+                )
+            }
+        )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish"
+                )
+            }
+        )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+                )
+            }
+        )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish"
+                )
+            }
+        )
+    if variant == "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish":
+        overrides.update(
+            {
+                "solver_profile": (
+                    "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish"
                 )
             }
         )
@@ -2442,7 +2564,14 @@ def build_parser() -> argparse.ArgumentParser:
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
             "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
@@ -2740,10 +2869,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--union-diversity-qubo-unified-macro-pair-penalty", type=float)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-scale", type=float)
+    parser.add_argument("--union-diversity-qubo-macro-witness-quality-relief", type=float)
     parser.add_argument("--union-diversity-qubo-macro-prefix-penalty-weight", type=float)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-min-stack-count", type=int)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-max-height", type=int)
     parser.add_argument("--union-diversity-qubo-macro-witness-move-penalty-max-stack-count", type=int)
+    parser.add_argument("--macro-witness-effective-depth-weight", type=float)
+    parser.add_argument("--macro-witness-goal-effective-depth-weight", type=float)
     parser.add_argument("--post-polish-respect-time-limit", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-max-attempts", type=int)
     parser.add_argument("--post-polish-time-budget", type=float)
@@ -2838,10 +2970,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--macro-chain-witness-max-steps", type=int)
     parser.add_argument("--macro-chain-witness-time-limit", type=float)
     parser.add_argument("--macro-chain-witness-max-generated", type=int)
+    parser.add_argument("--macro-chain-witness-beam-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--macro-chain-witness-beam-width", type=int)
+    parser.add_argument("--macro-chain-witness-beam-candidate-limit-per-state", type=int)
     parser.add_argument("--macro-chain-witness-min-stack-count", type=int)
     parser.add_argument("--macro-chain-witness-min-height", type=int)
     parser.add_argument("--macro-chain-witness-min-n", type=int)
     parser.add_argument("--macro-chain-witness-min-candidates", type=int)
+    parser.add_argument("--unified-macro-supply-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--unified-macro-supply-respect-time-limit", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--unified-macro-supply-parent-width", type=int)
+    parser.add_argument("--unified-macro-supply-parent-offset", type=int)
+    parser.add_argument("--unified-macro-supply-max-steps", type=int)
+    parser.add_argument("--unified-macro-supply-max-generated", type=int)
+    parser.add_argument("--unified-macro-supply-min-candidates", type=int)
     parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-time-limit", type=float)
     parser.add_argument("--frg-seed-min-max-steps", type=int)

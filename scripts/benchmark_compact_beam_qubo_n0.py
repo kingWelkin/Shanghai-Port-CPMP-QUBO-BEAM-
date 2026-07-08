@@ -251,10 +251,15 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_unified_macro_pair_penalty",
     "union_diversity_qubo_macro_witness_move_penalty_weight",
     "union_diversity_qubo_macro_witness_move_penalty_scale",
+    "union_diversity_qubo_macro_witness_quality_relief",
     "union_diversity_qubo_macro_prefix_penalty_weight",
+    "union_diversity_qubo_macro_alt_relative_move_penalty_weight",
+    "union_diversity_qubo_macro_alt_same_parent_pair_penalty",
     "union_diversity_qubo_macro_witness_move_penalty_min_stack_count",
     "union_diversity_qubo_macro_witness_move_penalty_max_height",
     "union_diversity_qubo_macro_witness_move_penalty_max_stack_count",
+    "macro_witness_effective_depth_weight",
+    "macro_witness_goal_effective_depth_weight",
     "union_diversity_qubo_calls",
     "union_diversity_qubo_vars",
     "union_diversity_qubo_time_sec",
@@ -281,6 +286,20 @@ COMPACT_EXTRA_FIELDS = [
     "quality_reservoir_avg_receiver_debt",
     "quality_reservoir_avg_height_risk",
     "quality_reservoir_pair_penalty_total",
+    "beam_feedback_enabled",
+    "beam_feedback_linear_weight",
+    "beam_feedback_survival_credit_weight",
+    "beam_feedback_pair_signature_penalty",
+    "beam_feedback_min_parent_alternatives",
+    "beam_feedback_witness_relative_penalty_weight",
+    "beam_feedback_min_credit_score",
+    "beam_feedback_candidates_total",
+    "beam_feedback_parent_groups_total",
+    "beam_feedback_selected_total",
+    "beam_feedback_avg_selected_score",
+    "beam_feedback_shorter_witness_selected_total",
+    "beam_feedback_survival_credit_hits",
+    "beam_feedback_pair_penalty_total",
     "union_rollout_probe_enabled",
     "union_rollout_probe_max_candidates",
     "union_rollout_probe_time_limit",
@@ -391,14 +410,29 @@ COMPACT_EXTRA_FIELDS = [
     "macro_chain_witness_max_steps",
     "macro_chain_witness_time_limit",
     "macro_chain_witness_max_generated",
+    "macro_chain_witness_beam_enabled",
+    "macro_chain_witness_beam_width",
+    "macro_chain_witness_beam_candidate_limit_per_state",
     "macro_chain_witness_min_stack_count",
     "macro_chain_witness_min_height",
     "macro_chain_witness_min_n",
     "macro_chain_witness_min_candidates",
+    "macro_chain_witness_alternatives_enabled",
+    "macro_chain_witness_alternatives_per_parent",
+    "macro_chain_witness_alternative_first_child_limit",
+    "macro_chain_witness_alternative_time_limit",
+    "macro_chain_witness_alternative_max_generated",
     "macro_chain_witness_calls",
     "macro_chain_witness_generated",
     "macro_chain_witness_added_total",
+    "macro_chain_witness_replaced_total",
     "macro_chain_witness_selected_total",
+    "macro_chain_witness_alternative_calls",
+    "macro_chain_witness_alternative_added_total",
+    "macro_chain_witness_alternative_replaced_total",
+    "macro_chain_witness_alternative_selected_total",
+    "macro_chain_witness_alternative_avg_witness_moves",
+    "macro_chain_witness_alternative_shorter_selected_total",
     "unified_macro_supply_enabled",
     "unified_macro_supply_respect_time_limit",
     "unified_macro_supply_parent_width",
@@ -412,6 +446,7 @@ COMPACT_EXTRA_FIELDS = [
     "unified_macro_supply_selected_total",
     "frg_seed_enabled",
     "frg_seed_time_limit",
+    "frg_seed_time_limit_margin",
     "frg_seed_min_max_steps",
     "frg_seed_max_steps_multiplier",
     "frg_seed_max_steps_cap",
@@ -437,6 +472,34 @@ COMPACT_EXTRA_FIELDS = [
     "frg_seed_generated",
     "frg_seed_cap_ok",
     "frg_seed_large_layout_ok",
+    "bs_frg_postcompress_enabled",
+    "bs_frg_postcompress_time_limit",
+    "bs_frg_postcompress_time_limit_margin",
+    "bs_frg_postcompress_min_moves",
+    "bs_frg_postcompress_min_ratio",
+    "bs_frg_postcompress_min_stack_count",
+    "bs_frg_postcompress_min_height",
+    "bs_frg_postcompress_min_max_steps",
+    "bs_frg_postcompress_max_steps_multiplier",
+    "bs_frg_postcompress_max_steps_cap",
+    "bs_frg_postcompress_respect_cap",
+    "bs_frg_postcompress_allow_large_over_cap",
+    "bs_frg_postcompress_paper_pure",
+    "bs_frg_postcompress_beam_width",
+    "bs_frg_postcompress_candidate_limit_per_state",
+    "bs_frg_postcompress_suffix_points",
+    "bs_frg_postcompress_suffix_min_moves",
+    "bs_frg_postcompress_full_time_share",
+    "bs_frg_postcompress_suffix_first",
+    "bs_frg_postcompress_early_stop_saved_ratio",
+    "bs_frg_postcompress_early_stop_max_moves",
+    "bs_frg_postcompress_attempts",
+    "bs_frg_postcompress_accepted",
+    "bs_frg_postcompress_moves_saved",
+    "bs_frg_postcompress_runtime_sec",
+    "bs_frg_postcompress_source",
+    "bs_frg_postcompress_status",
+    "bs_frg_postcompress_generated",
     "frg_candidate_supplement_enabled",
     "frg_candidate_supplement_width",
     "frg_candidate_focus_n",
@@ -1451,7 +1514,10 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_path_credit_weight": 0.0,
         "union_diversity_qubo_macro_witness_move_penalty_weight": 0.0,
         "union_diversity_qubo_macro_witness_move_penalty_scale": 256,
+        "union_diversity_qubo_macro_witness_quality_relief": 0.0,
         "union_diversity_qubo_macro_prefix_penalty_weight": 0.0,
+        "union_diversity_qubo_macro_alt_relative_move_penalty_weight": 0.0,
+        "union_diversity_qubo_macro_alt_same_parent_pair_penalty": 0.0,
         "union_diversity_qubo_macro_witness_move_penalty_min_stack_count": 0,
         "union_diversity_qubo_macro_witness_move_penalty_max_height": 0,
         "union_diversity_qubo_macro_witness_move_penalty_max_stack_count": 0,
@@ -1460,6 +1526,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_future_credit_cap": 0.0,
         "union_diversity_qubo_unified_macro_future_credit_scale": 1.0,
         "union_diversity_qubo_unified_macro_pair_penalty": 0.0,
+        "macro_witness_effective_depth_weight": 0.0,
+        "macro_witness_goal_effective_depth_weight": 0.0,
         "quality_reservoir_enabled": False,
         "quality_reservoir_max_candidates": 0,
         "quality_reservoir_top_quality": 0,
@@ -1556,10 +1624,18 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "macro_chain_witness_max_steps": 512,
         "macro_chain_witness_time_limit": 0.01,
         "macro_chain_witness_max_generated": 0,
+        "macro_chain_witness_beam_enabled": False,
+        "macro_chain_witness_beam_width": 128,
+        "macro_chain_witness_beam_candidate_limit_per_state": 3,
         "macro_chain_witness_min_stack_count": 0,
         "macro_chain_witness_min_height": 0,
         "macro_chain_witness_min_n": 0,
         "macro_chain_witness_min_candidates": 0,
+        "macro_chain_witness_alternatives_enabled": False,
+        "macro_chain_witness_alternatives_per_parent": 1,
+        "macro_chain_witness_alternative_first_child_limit": 0,
+        "macro_chain_witness_alternative_time_limit": 0.0,
+        "macro_chain_witness_alternative_max_generated": 0,
         "unified_macro_supply_enabled": False,
         "unified_macro_supply_respect_time_limit": False,
         "unified_macro_supply_parent_width": 0,
@@ -1569,6 +1645,7 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "unified_macro_supply_min_candidates": 0,
         "frg_seed_enabled": False,
         "frg_seed_time_limit": 0.0,
+        "frg_seed_time_limit_margin": 0.0,
         "frg_seed_min_max_steps": 256,
         "frg_seed_max_steps_multiplier": 10,
         "frg_seed_max_steps_cap": 0,
@@ -1587,6 +1664,27 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_seed_cache_key": "",
         "frg_seed_cache_hit": False,
         "frg_seed_cache_source": "",
+        "bs_frg_postcompress_enabled": False,
+        "bs_frg_postcompress_time_limit": 0.0,
+        "bs_frg_postcompress_time_limit_margin": 0.0,
+        "bs_frg_postcompress_min_moves": 200,
+        "bs_frg_postcompress_min_ratio": 2.0,
+        "bs_frg_postcompress_min_stack_count": 7,
+        "bs_frg_postcompress_min_height": 8,
+        "bs_frg_postcompress_min_max_steps": 1000,
+        "bs_frg_postcompress_max_steps_multiplier": 20,
+        "bs_frg_postcompress_max_steps_cap": 0,
+        "bs_frg_postcompress_respect_cap": True,
+        "bs_frg_postcompress_allow_large_over_cap": False,
+        "bs_frg_postcompress_paper_pure": True,
+        "bs_frg_postcompress_beam_width": 1000,
+        "bs_frg_postcompress_candidate_limit_per_state": 3,
+        "bs_frg_postcompress_suffix_points": 3,
+        "bs_frg_postcompress_suffix_min_moves": 120,
+        "bs_frg_postcompress_full_time_share": 0.75,
+        "bs_frg_postcompress_suffix_first": False,
+        "bs_frg_postcompress_early_stop_saved_ratio": 0.0,
+        "bs_frg_postcompress_early_stop_max_moves": 0,
         "frg_candidate_supplement_enabled": False,
         "frg_candidate_supplement_width": 0,
         "frg_candidate_focus_n": -1,
@@ -2961,11 +3059,116 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_c
     "union_diversity_qubo_macro_ancestry_penalty_scale": 4.0,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "macro_chain_witness_alternatives_enabled": True,
+    "macro_chain_witness_alternatives_per_parent": 3,
+    "macro_chain_witness_alternative_first_child_limit": 4,
+    "macro_chain_witness_alternative_time_limit": 0.03,
+    "macro_chain_witness_alternative_max_generated": 768,
+    "union_diversity_qubo_macro_alt_relative_move_penalty_weight": 18.0,
+    "union_diversity_qubo_macro_alt_same_parent_pair_penalty": 0.25,
+    "bs_frg_postcompress_enabled": False,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "beam_feedback_enabled": True,
+    "beam_feedback_linear_weight": 4.0,
+    "beam_feedback_survival_credit_weight": 8.0,
+    "beam_feedback_pair_signature_penalty": 0.0,
+    "beam_feedback_min_parent_alternatives": 2,
+    "beam_feedback_witness_relative_penalty_weight": 16.0,
+    "beam_feedback_min_credit_score": 0.60,
+    "quality_reservoir_enabled": False,
+    "quality_reservoir_max_candidates": 2200,
+    "quality_reservoir_top_quality": 900,
+    "quality_reservoir_origin_reserve": 96,
+    "quality_reservoir_witness_reserve": 128,
+    "quality_reservoir_progress_reserve": 128,
+    "quality_reservoir_witness_weight": 0.40,
+    "quality_reservoir_progress_weight": 0.25,
+    "quality_reservoir_source_scarcity_weight": 0.15,
+    "quality_reservoir_receiver_debt_weight": 0.25,
+    "quality_reservoir_height_risk_weight": 0.10,
+    "quality_reservoir_chain_cost_weight": 0.0,
+    "bs_frg_postcompress_enabled": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
     "post_polish_respect_time_limit": True,
     "post_polish_accept": "better",
     "post_polish_successor_cache": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "union_diversity_qubo_macro_witness_move_penalty_weight": 12.0,
+    "union_diversity_qubo_macro_witness_move_penalty_scale": 220,
+    "union_diversity_qubo_macro_witness_quality_relief": 1.0,
+    "union_diversity_qubo_macro_prefix_penalty_weight": 4.0,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "frg_seed_enabled": True,
+    "frg_seed_time_limit": 110.0,
+    "frg_seed_time_limit_margin": 5.0,
+    "frg_seed_min_max_steps": 1000,
+    "frg_seed_max_steps_multiplier": 20,
+    "frg_seed_max_steps_cap": 0,
+    "frg_seed_respect_cap": False,
+    "frg_seed_prune_to_incumbent": False,
+    "frg_seed_allow_large_over_cap": True,
+    "frg_seed_paper_pure": True,
+    "frg_seed_beam_enabled": True,
+    "frg_seed_beam_width": 1000,
+    "frg_seed_candidate_limit_per_state": 3,
+    "frg_seed_beam_large_only": False,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "frg_seed_enabled": False,
+    "frg_seed_prune_to_incumbent": False,
+    "bs_frg_postcompress_enabled": True,
+    "bs_frg_postcompress_time_limit": 35.0,
+    "bs_frg_postcompress_time_limit_margin": 3.0,
+    "bs_frg_postcompress_min_moves": 200,
+    "bs_frg_postcompress_min_ratio": 2.0,
+    "bs_frg_postcompress_min_stack_count": 7,
+    "bs_frg_postcompress_min_height": 8,
+    "bs_frg_postcompress_min_max_steps": 1000,
+    "bs_frg_postcompress_max_steps_multiplier": 20,
+    "bs_frg_postcompress_max_steps_cap": 0,
+    "bs_frg_postcompress_respect_cap": False,
+    "bs_frg_postcompress_allow_large_over_cap": True,
+    "bs_frg_postcompress_paper_pure": True,
+    "bs_frg_postcompress_beam_width": 1000,
+    "bs_frg_postcompress_candidate_limit_per_state": 3,
+    "bs_frg_postcompress_suffix_points": 3,
+    "bs_frg_postcompress_suffix_min_moves": 120,
+    "bs_frg_postcompress_full_time_share": 0.75,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish"] = {
+    **_SOLVER_PROFILES[
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    ],
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish"] = {
+    **_SOLVER_PROFILES[
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    ],
+    "bs_frg_postcompress_time_limit": 15.0,
+    "bs_frg_postcompress_time_limit_margin": 2.0,
+    "bs_frg_postcompress_full_time_share": 0.35,
+    "bs_frg_postcompress_suffix_first": True,
+    "bs_frg_postcompress_suffix_points": 2,
+    "bs_frg_postcompress_early_stop_saved_ratio": 0.45,
+    "bs_frg_postcompress_early_stop_max_moves": 220,
 }
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
@@ -3549,6 +3752,13 @@ class CompactBeamResult:
     quality_reservoir_avg_receiver_debt: float = 0.0
     quality_reservoir_avg_height_risk: float = 0.0
     quality_reservoir_pair_penalty_total: float = 0.0
+    beam_feedback_candidates_total: int = 0
+    beam_feedback_parent_groups_total: int = 0
+    beam_feedback_selected_total: int = 0
+    beam_feedback_avg_selected_score: float = 0.0
+    beam_feedback_shorter_witness_selected_total: int = 0
+    beam_feedback_survival_credit_hits: int = 0
+    beam_feedback_pair_penalty_total: float = 0.0
     micro_rollout_calls: int = 0
     micro_rollout_cache_hits: int = 0
     micro_rollout_candidates: int = 0
@@ -3572,7 +3782,14 @@ class CompactBeamResult:
     macro_chain_witness_calls: int = 0
     macro_chain_witness_generated: int = 0
     macro_chain_witness_added_total: int = 0
+    macro_chain_witness_replaced_total: int = 0
     macro_chain_witness_selected_total: int = 0
+    macro_chain_witness_alternative_calls: int = 0
+    macro_chain_witness_alternative_added_total: int = 0
+    macro_chain_witness_alternative_replaced_total: int = 0
+    macro_chain_witness_alternative_selected_total: int = 0
+    macro_chain_witness_alternative_avg_witness_moves: float = 0.0
+    macro_chain_witness_alternative_shorter_selected_total: int = 0
     unified_macro_supply_calls: int = 0
     unified_macro_supply_generated: int = 0
     unified_macro_supply_added_total: int = 0
@@ -3596,6 +3813,13 @@ class CompactBeamResult:
     frg_seed_cache_key: str = ""
     frg_seed_cache_hit: bool = False
     frg_seed_cache_source: str = ""
+    bs_frg_postcompress_attempts: int = 0
+    bs_frg_postcompress_accepted: int = 0
+    bs_frg_postcompress_moves_saved: int = 0
+    bs_frg_postcompress_runtime_sec: float = 0.0
+    bs_frg_postcompress_source: str = ""
+    bs_frg_postcompress_status: str = ""
+    bs_frg_postcompress_generated: int = 0
     frg_candidate_selected_total: int = 0
     frg_compound_appended_total: int = 0
     dlts_value_selected_total: int = 0
@@ -3618,6 +3842,18 @@ class FrgSeedResult:
     runtime_sec: float
     status: str
     cap_ok: bool
+
+
+@dataclass(frozen=True)
+class BsFrgPostCompressResult:
+    moves: tuple[Move, ...]
+    attempts: int
+    accepted: int
+    moves_saved: int
+    runtime_sec: float
+    source: str
+    status: str
+    generated: int
 
 
 @dataclass(frozen=True)
@@ -4109,8 +4345,17 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_diversity_qubo_macro_witness_move_penalty_scale": (
             "--union-diversity-qubo-macro-witness-move-penalty-scale"
         ),
+        "union_diversity_qubo_macro_witness_quality_relief": (
+            "--union-diversity-qubo-macro-witness-quality-relief"
+        ),
         "union_diversity_qubo_macro_prefix_penalty_weight": (
             "--union-diversity-qubo-macro-prefix-penalty-weight"
+        ),
+        "union_diversity_qubo_macro_alt_relative_move_penalty_weight": (
+            "--union-diversity-qubo-macro-alt-relative-move-penalty-weight"
+        ),
+        "union_diversity_qubo_macro_alt_same_parent_pair_penalty": (
+            "--union-diversity-qubo-macro-alt-same-parent-pair-penalty"
         ),
         "union_diversity_qubo_macro_witness_move_penalty_min_stack_count": (
             "--union-diversity-qubo-macro-witness-move-penalty-min-stack-count"
@@ -4121,6 +4366,8 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "union_diversity_qubo_macro_witness_move_penalty_max_stack_count": (
             "--union-diversity-qubo-macro-witness-move-penalty-max-stack-count"
         ),
+        "macro_witness_effective_depth_weight": "--macro-witness-effective-depth-weight",
+        "macro_witness_goal_effective_depth_weight": "--macro-witness-goal-effective-depth-weight",
         "union_diversity_qubo_macro_future_credit_min_witness_quality": (
             "--union-diversity-qubo-macro-future-credit-min-witness-quality"
         ),
@@ -4148,6 +4395,13 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "quality_reservoir_chain_cost_weight": "--quality-reservoir-chain-cost-weight",
         "quality_reservoir_pair_receiver_debt_penalty": "--quality-reservoir-pair-receiver-debt-penalty",
         "quality_reservoir_pair_macro_signature_penalty": "--quality-reservoir-pair-macro-signature-penalty",
+        "beam_feedback_enabled": ("--beam-feedback-enabled", "--no-beam-feedback-enabled"),
+        "beam_feedback_linear_weight": "--beam-feedback-linear-weight",
+        "beam_feedback_survival_credit_weight": "--beam-feedback-survival-credit-weight",
+        "beam_feedback_pair_signature_penalty": "--beam-feedback-pair-signature-penalty",
+        "beam_feedback_min_parent_alternatives": "--beam-feedback-min-parent-alternatives",
+        "beam_feedback_witness_relative_penalty_weight": "--beam-feedback-witness-relative-penalty-weight",
+        "beam_feedback_min_credit_score": "--beam-feedback-min-credit-score",
         "debt_basin_enabled": (
             "--debt-basin-enabled",
             "--no-debt-basin-enabled",
@@ -4307,10 +4561,28 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "macro_chain_witness_max_steps": "--macro-chain-witness-max-steps",
         "macro_chain_witness_time_limit": "--macro-chain-witness-time-limit",
         "macro_chain_witness_max_generated": "--macro-chain-witness-max-generated",
+        "macro_chain_witness_beam_enabled": (
+            "--macro-chain-witness-beam-enabled",
+            "--no-macro-chain-witness-beam-enabled",
+        ),
+        "macro_chain_witness_beam_width": "--macro-chain-witness-beam-width",
+        "macro_chain_witness_beam_candidate_limit_per_state": (
+            "--macro-chain-witness-beam-candidate-limit-per-state"
+        ),
         "macro_chain_witness_min_stack_count": "--macro-chain-witness-min-stack-count",
         "macro_chain_witness_min_height": "--macro-chain-witness-min-height",
         "macro_chain_witness_min_n": "--macro-chain-witness-min-n",
         "macro_chain_witness_min_candidates": "--macro-chain-witness-min-candidates",
+        "macro_chain_witness_alternatives_enabled": (
+            "--macro-chain-witness-alternatives-enabled",
+            "--no-macro-chain-witness-alternatives-enabled",
+        ),
+        "macro_chain_witness_alternatives_per_parent": "--macro-chain-witness-alternatives-per-parent",
+        "macro_chain_witness_alternative_first_child_limit": (
+            "--macro-chain-witness-alternative-first-child-limit"
+        ),
+        "macro_chain_witness_alternative_time_limit": "--macro-chain-witness-alternative-time-limit",
+        "macro_chain_witness_alternative_max_generated": "--macro-chain-witness-alternative-max-generated",
         "unified_macro_supply_enabled": (
             "--unified-macro-supply-enabled",
             "--no-unified-macro-supply-enabled",
@@ -4326,6 +4598,7 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "unified_macro_supply_min_candidates": "--unified-macro-supply-min-candidates",
         "frg_seed_enabled": ("--frg-seed-enabled", "--no-frg-seed-enabled"),
         "frg_seed_time_limit": "--frg-seed-time-limit",
+        "frg_seed_time_limit_margin": "--frg-seed-time-limit-margin",
         "frg_seed_min_max_steps": "--frg-seed-min-max-steps",
         "frg_seed_max_steps_multiplier": "--frg-seed-max-steps-multiplier",
         "frg_seed_max_steps_cap": "--frg-seed-max-steps-cap",
@@ -4343,6 +4616,42 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "frg_seed_beam_min_stack_count": "--frg-seed-beam-min-stack-count",
         "frg_seed_beam_min_height": "--frg-seed-beam-min-height",
         "frg_seed_small_time_limit": "--frg-seed-small-time-limit",
+        "bs_frg_postcompress_enabled": (
+            "--bs-frg-postcompress-enabled",
+            "--no-bs-frg-postcompress-enabled",
+        ),
+        "bs_frg_postcompress_time_limit": "--bs-frg-postcompress-time-limit",
+        "bs_frg_postcompress_time_limit_margin": "--bs-frg-postcompress-time-limit-margin",
+        "bs_frg_postcompress_min_moves": "--bs-frg-postcompress-min-moves",
+        "bs_frg_postcompress_min_ratio": "--bs-frg-postcompress-min-ratio",
+        "bs_frg_postcompress_min_stack_count": "--bs-frg-postcompress-min-stack-count",
+        "bs_frg_postcompress_min_height": "--bs-frg-postcompress-min-height",
+        "bs_frg_postcompress_min_max_steps": "--bs-frg-postcompress-min-max-steps",
+        "bs_frg_postcompress_max_steps_multiplier": "--bs-frg-postcompress-max-steps-multiplier",
+        "bs_frg_postcompress_max_steps_cap": "--bs-frg-postcompress-max-steps-cap",
+        "bs_frg_postcompress_respect_cap": (
+            "--bs-frg-postcompress-respect-cap",
+            "--no-bs-frg-postcompress-respect-cap",
+        ),
+        "bs_frg_postcompress_allow_large_over_cap": (
+            "--bs-frg-postcompress-allow-large-over-cap",
+            "--no-bs-frg-postcompress-allow-large-over-cap",
+        ),
+        "bs_frg_postcompress_paper_pure": (
+            "--bs-frg-postcompress-paper-pure",
+            "--no-bs-frg-postcompress-paper-pure",
+        ),
+        "bs_frg_postcompress_beam_width": "--bs-frg-postcompress-beam-width",
+        "bs_frg_postcompress_candidate_limit_per_state": "--bs-frg-postcompress-candidate-limit-per-state",
+        "bs_frg_postcompress_suffix_points": "--bs-frg-postcompress-suffix-points",
+        "bs_frg_postcompress_suffix_min_moves": "--bs-frg-postcompress-suffix-min-moves",
+        "bs_frg_postcompress_full_time_share": "--bs-frg-postcompress-full-time-share",
+        "bs_frg_postcompress_suffix_first": (
+            "--bs-frg-postcompress-suffix-first",
+            "--no-bs-frg-postcompress-suffix-first",
+        ),
+        "bs_frg_postcompress_early_stop_saved_ratio": "--bs-frg-postcompress-early-stop-saved-ratio",
+        "bs_frg_postcompress_early_stop_max_moves": "--bs-frg-postcompress-early-stop-max-moves",
         "frg_candidate_supplement_enabled": (
             "--frg-candidate-supplement-enabled",
             "--no-frg-candidate-supplement-enabled",
@@ -5189,6 +5498,10 @@ class UnionDiversityQuboFeatures(NamedTuple):
     macro_edge_chain_penalty: float = 0.0
     macro_edge_ancestry_depth: int = 0
     macro_edge_ancestry_penalty: float = 0.0
+    macro_alt_parent_alternative_count: int = 0
+    macro_alt_best_witness_moves: int = 0
+    macro_alt_relative_move_penalty: float = 0.0
+    macro_alt_signature: tuple[int, ...] = ()
     quality_reservoir_quality: float = 0.0
     quality_reservoir_witness_quality: float = 0.0
     quality_reservoir_receiver_debt: float = 0.0
@@ -5196,6 +5509,11 @@ class UnionDiversityQuboFeatures(NamedTuple):
     quality_reservoir_chain_penalty: float = 0.0
     quality_reservoir_macro_signature: tuple[int, ...] = ()
     quality_reservoir_n_delta: int = 0
+    beam_feedback_score: float = 0.0
+    beam_feedback_signature: tuple[int, ...] = ()
+    beam_feedback_parent_alternative_count: int = 0
+    beam_feedback_relative_witness_cost: float = 0.0
+    beam_feedback_survival_credit: float = 0.0
 
 
 class QualityReservoirCandidate(NamedTuple):
@@ -5215,6 +5533,11 @@ class QualityReservoirCandidate(NamedTuple):
     macro_signature: tuple[int, ...]
     n_band: int
     reservoir_quality: float = 0.0
+    beam_feedback_score: float = 0.0
+    beam_feedback_signature: tuple[int, ...] = ()
+    beam_feedback_parent_alternative_count: int = 0
+    beam_feedback_relative_witness_cost: float = 0.0
+    beam_feedback_survival_credit: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -5476,6 +5799,12 @@ def _receiver_safety_score(parent_code: bytes, child_code: bytes, args: argparse
     max_height = int(getattr(args, "_max_height", 0) or 0)
     if stack_count <= 0 or max_height <= 0:
         return ReceiverSafetyScore(0, 0, 0, 0, 0, 0.0, False)
+    cache = getattr(args, "_receiver_safety_score_cache", None)
+    cache_key = (parent_code, child_code, stack_count, max_height)
+    if isinstance(cache, dict):
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
     before = _safe_receiver_count(parent_code, stack_count, max_height)
     after = _safe_receiver_count(child_code, stack_count, max_height)
     empty_buffer_consumed_by_low_receiver = _empty_buffer_low_receiver_move(
@@ -5489,7 +5818,7 @@ def _receiver_safety_score(parent_code: bytes, child_code: bytes, args: argparse
     free_before = _free_slot_count(parent_code, stack_count, max_height)
     free_after = _free_slot_count(child_code, stack_count, max_height)
     delta = int(after) - int(before)
-    return ReceiverSafetyScore(
+    result = ReceiverSafetyScore(
         safe_receivers_before=int(before),
         safe_receivers_after=int(after),
         safe_receiver_delta=delta,
@@ -5498,6 +5827,9 @@ def _receiver_safety_score(parent_code: bytes, child_code: bytes, args: argparse
         height_pressure_after=_height_pressure(child_code, stack_count, max_height),
         last_buffer_consumed=bool(empty_buffer_consumed_by_low_receiver or (before > 1 and after <= 1 and delta < 0)),
     )
+    if isinstance(cache, dict):
+        cache[cache_key] = result
+    return result
 
 
 def _debt_basin_features(
@@ -5734,7 +6066,7 @@ def _union_diversity_completion_witness_quality(
 
 
 def _quality_reservoir_score(feature: QualityReservoirCandidate, args: argparse.Namespace) -> float:
-    return float(
+    score = float(
         float(getattr(args, "quality_reservoir_witness_weight", 0.0) or 0.0) * float(feature.witness_quality)
         + float(getattr(args, "quality_reservoir_progress_weight", 0.0) or 0.0) * max(0.0, float(feature.n_delta))
         + float(getattr(args, "quality_reservoir_source_scarcity_weight", 0.0) or 0.0)
@@ -5744,6 +6076,226 @@ def _quality_reservoir_score(feature: QualityReservoirCandidate, args: argparse.
         - float(getattr(args, "quality_reservoir_chain_cost_weight", 0.0) or 0.0)
         * float(feature.chain_length_penalty)
     )
+    if bool(getattr(args, "beam_feedback_enabled", False)):
+        score += float(feature.beam_feedback_score)
+    return float(score)
+
+
+def _beam_feedback_score(
+    *,
+    witness_quality: float,
+    progress_score: float,
+    source_scarcity: float,
+    survival_credit: float,
+    receiver_debt: float,
+    relative_witness_cost: float,
+    height_risk: float,
+    args: argparse.Namespace,
+) -> float:
+    survival_scale = max(0.0, float(getattr(args, "beam_feedback_survival_credit_weight", 8.0) or 0.0)) / 8.0
+    relative_scale = max(
+        0.0,
+        float(getattr(args, "beam_feedback_witness_relative_penalty_weight", 16.0) or 0.0),
+    ) / 16.0
+    return float(
+        0.40 * _clamp01(float(witness_quality))
+        + 0.25 * _clamp01(float(progress_score))
+        + 0.15 * _clamp01(float(source_scarcity))
+        + 0.10 * _clamp01(float(survival_credit)) * survival_scale
+        - 0.25 * _clamp01(float(receiver_debt))
+        - 0.20 * _clamp01(float(relative_witness_cost)) * relative_scale
+        - 0.10 * _clamp01(float(height_risk))
+    )
+
+
+def _beam_feedback_origin_bucket(origin: str) -> int:
+    if origin == "frg_macro_chain_witness":
+        return 1
+    if origin == "unified_macro_supply":
+        return 2
+    if origin == "frg_frontier_child":
+        return 3
+    if origin == "wang_rollout":
+        return 4
+    return 0
+
+
+def _beam_feedback_signature(
+    *,
+    origin: str,
+    source_stack: int,
+    n_value: int,
+    n_delta: int,
+    witness_quality: float,
+    receiver_debt: float,
+    args: argparse.Namespace,
+) -> tuple[int, ...]:
+    n_band = max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1))
+    return (
+        _beam_feedback_origin_bucket(str(origin)),
+        min(31, max(-1, int(source_stack))),
+        int(n_value) // n_band,
+        min(7, max(0, int(round(_clamp01(float(witness_quality)) * 4.0)))),
+        min(7, max(0, int(round(_clamp01(float(receiver_debt)) * 4.0)))),
+        1 if int(n_delta) > 0 else 0,
+    )
+
+
+def _beam_feedback_rollout_for_code(code: bytes, args: argparse.Namespace) -> UnionRolloutProbeResult | None:
+    current = getattr(args, "_union_rollout_probe_current_results", {}) or {}
+    rollout = current.get(code)
+    if rollout is not None:
+        return rollout
+    cache = getattr(args, "_union_rollout_probe_cache", {}) or {}
+    return cache.get(code)
+
+
+def _beam_feedback_candidate_metrics(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> tuple[float, float, float, float, float, tuple[int, ...], int]:
+    n_value, _depth, parent_code = data
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if parent_code and stack_count > 0 and max_height > 0:
+        parent_n = _code_n(parent_code, stack_count, max_height)
+        source_stack = _transition_source_stack(parent_code, code, stack_count, max_height)
+    else:
+        parent_n = int(n_value)
+        source_stack = -1
+    n_delta = int(parent_n) - int(n_value)
+    progress_score = _clamp01(float(max(0, n_delta)) / float(max(1, int(parent_n))))
+    rollout = _beam_feedback_rollout_for_code(code, args)
+    witness_quality = _union_diversity_completion_witness_quality(rollout, args, n_value=int(n_value))
+    source_scarcity = _union_diversity_source_scarcity(parent_code, source_stack, args)
+    receiver_debt = 0.0
+    height_risk = 0.0
+    if parent_code and stack_count > 0 and max_height > 0:
+        receiver = _receiver_safety_score(parent_code, code, args)
+        receiver_debt = _clamp01(
+            0.45 * max(0.0, -float(receiver.safe_receiver_delta))
+            + 0.35 * float(receiver.height_pressure_after)
+            + (0.20 if receiver.last_buffer_consumed else 0.0)
+        )
+        height_risk = _clamp01(float(receiver.height_pressure_after))
+    origin = _union_diversity_candidate_origin(code, args)
+    signature = _beam_feedback_signature(
+        origin=str(origin),
+        source_stack=int(source_stack),
+        n_value=int(n_value),
+        n_delta=int(n_delta),
+        witness_quality=float(witness_quality),
+        receiver_debt=float(receiver_debt),
+        args=args,
+    )
+    return (
+        float(witness_quality),
+        float(progress_score),
+        float(source_scarcity),
+        float(receiver_debt),
+        float(height_risk),
+        signature,
+        int(source_stack),
+    )
+
+
+def _update_beam_feedback_survival_credit(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> None:
+    if not bool(getattr(args, "beam_feedback_enabled", False)):
+        return
+    pending = dict(getattr(args, "_beam_feedback_pending_selected_by_code", {}) or {})
+    if not pending:
+        args._beam_feedback_pending_selected_by_code = {}
+        return
+    by_parent: dict[bytes, list[tuple[bytes, tuple[int, int, bytes]]]] = {}
+    for code, data in candidates.items():
+        by_parent.setdefault(data[2], []).append((code, data))
+    credits = dict(getattr(args, "_beam_feedback_survival_credit_by_signature", {}) or {})
+    for parent_code, payload in pending.items():
+        if not isinstance(payload, tuple) or len(payload) != 2:
+            continue
+        signature, parent_n = payload
+        children = by_parent.get(parent_code, [])
+        survived = False
+        for code, data in children:
+            child_n = int(data[0])
+            rollout = _beam_feedback_rollout_for_code(code, args)
+            witness_quality = _union_diversity_completion_witness_quality(rollout, args, n_value=child_n)
+            if child_n < int(parent_n) or witness_quality >= 0.60:
+                survived = True
+                break
+        if survived and signature:
+            credits[tuple(signature)] = min(1.0, float(credits.get(tuple(signature), 0.0) or 0.0) + 1.0)
+    args._beam_feedback_survival_credit_by_signature = credits
+    args._beam_feedback_pending_selected_by_code = {}
+
+
+def _prepare_beam_feedback_layer(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> None:
+    if not bool(getattr(args, "beam_feedback_enabled", False)):
+        return
+    min_alternatives = max(1, int(getattr(args, "beam_feedback_min_parent_alternatives", 2) or 2))
+    by_parent: dict[bytes, list[bytes]] = {}
+    for code, data in candidates.items():
+        by_parent.setdefault(data[2], []).append(code)
+    parent_alt_count = {code: len(codes) for codes in by_parent.values() for code in codes}
+    witness_moves: dict[bytes, int] = {}
+    for code in candidates:
+        rollout = _beam_feedback_rollout_for_code(code, args)
+        if rollout is not None and int(rollout.moves) > 0:
+            witness_moves[code] = int(rollout.moves)
+
+    score_by_code: dict[bytes, float] = {}
+    signature_by_code: dict[bytes, tuple[int, ...]] = {}
+    relative_by_code: dict[bytes, float] = {}
+    survival_by_code: dict[bytes, float] = {}
+    source_by_code: dict[bytes, int] = {}
+    credit_by_signature = getattr(args, "_beam_feedback_survival_credit_by_signature", {}) or {}
+    for parent_code, codes in by_parent.items():
+        comparable_moves = [witness_moves[code] for code in codes if code in witness_moves]
+        best_moves = min(comparable_moves) if len(comparable_moves) >= 2 and len(codes) >= min_alternatives else 0
+        for code in codes:
+            data = candidates[code]
+            witness_quality, progress_score, source_scarcity, receiver_debt, height_risk, signature, source_stack = (
+                _beam_feedback_candidate_metrics(code, data, args)
+            )
+            relative_cost = 0.0
+            if best_moves > 0 and code in witness_moves:
+                relative_cost = _clamp01(float(max(0, witness_moves[code] - best_moves)) / float(max(1, best_moves)))
+            survival_credit = _clamp01(float(credit_by_signature.get(signature, 0.0) or 0.0))
+            score_by_code[code] = _beam_feedback_score(
+                witness_quality=witness_quality,
+                progress_score=progress_score,
+                source_scarcity=source_scarcity,
+                survival_credit=survival_credit,
+                receiver_debt=receiver_debt,
+                relative_witness_cost=relative_cost,
+                height_risk=height_risk,
+                args=args,
+            )
+            signature_by_code[code] = tuple(signature)
+            relative_by_code[code] = float(relative_cost)
+            survival_by_code[code] = float(survival_credit)
+            source_by_code[code] = int(source_stack)
+
+    args._beam_feedback_score_by_code = score_by_code
+    args._beam_feedback_signature_by_code = signature_by_code
+    args._beam_feedback_parent_count_by_code = parent_alt_count
+    args._beam_feedback_relative_witness_cost_by_code = relative_by_code
+    args._beam_feedback_survival_credit_by_code = survival_by_code
+    args._beam_feedback_source_by_code = source_by_code
+    args._beam_feedback_candidates_total = int(getattr(args, "_beam_feedback_candidates_total", 0) or 0) + len(candidates)
+    args._beam_feedback_parent_groups_total = int(getattr(args, "_beam_feedback_parent_groups_total", 0) or 0) + sum(
+        1 for codes in by_parent.values() if len(codes) >= min_alternatives
+    )
+    args._beam_feedback_survival_credit_hits = int(
+        getattr(args, "_beam_feedback_survival_credit_hits", 0) or 0
+    ) + sum(1 for value in survival_by_code.values() if value > 0.0)
 
 
 def _quality_reservoir_feature(
@@ -5802,6 +6354,17 @@ def _quality_reservoir_feature(
         receiver_signature=int(receiver_signature),
         macro_signature=tuple(macro_signature),
         n_band=int(n_value) // max(1, int(getattr(args, "union_diversity_qubo_n_band_size", 1) or 1)),
+        beam_feedback_score=float((getattr(args, "_beam_feedback_score_by_code", {}) or {}).get(code, 0.0) or 0.0),
+        beam_feedback_signature=tuple((getattr(args, "_beam_feedback_signature_by_code", {}) or {}).get(code, ()) or ()),
+        beam_feedback_parent_alternative_count=int(
+            (getattr(args, "_beam_feedback_parent_count_by_code", {}) or {}).get(code, 0) or 0
+        ),
+        beam_feedback_relative_witness_cost=float(
+            (getattr(args, "_beam_feedback_relative_witness_cost_by_code", {}) or {}).get(code, 0.0) or 0.0
+        ),
+        beam_feedback_survival_credit=float(
+            (getattr(args, "_beam_feedback_survival_credit_by_code", {}) or {}).get(code, 0.0) or 0.0
+        ),
     )
     return feature._replace(reservoir_quality=_quality_reservoir_score(feature, args))
 
@@ -5940,6 +6503,14 @@ def _apply_quality_reservoir_candidates(
     input_items = _quality_reservoir_input_items(candidates, args)
     features = [_quality_reservoir_feature(code, data, args) for code, data in input_items]
     keep = _quality_reservoir_keep_codes(features, args)
+    if bool(getattr(args, "beam_feedback_enabled", False)):
+        baseline_window = max(
+            int(getattr(args, "beam_width", 0) or 0),
+            int(getattr(args, "core_width", 0) or 0),
+        )
+        if baseline_window > 0 and len(candidates) > len(keep):
+            ranked = _rank_next_frontier_candidates(candidates, args)
+            keep.update(code for code, _data in ranked[:baseline_window])
     generated = len(candidates)
     kept = len(keep)
     if not hasattr(args, "_quality_reservoir_generated_total"):
@@ -5973,6 +6544,61 @@ def _record_quality_reservoir_selected_telemetry(selected_codes: Iterable[bytes]
     if not hasattr(args, "_quality_reservoir_selected_total"):
         args._quality_reservoir_selected_total = 0
     args._quality_reservoir_selected_total += sum(1 for code in selected_codes if code in reservoir_features_by_code)
+
+
+def _record_beam_feedback_selected_telemetry(
+    selected_codes: Iterable[bytes],
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+) -> None:
+    if not bool(getattr(args, "beam_feedback_enabled", False)):
+        return
+    selected = [code for code in selected_codes if code in candidates]
+    if not selected:
+        args._beam_feedback_pending_selected_by_code = {}
+        return
+    score_by_code = getattr(args, "_beam_feedback_score_by_code", {}) or {}
+    signature_by_code = getattr(args, "_beam_feedback_signature_by_code", {}) or {}
+    parent_count_by_code = getattr(args, "_beam_feedback_parent_count_by_code", {}) or {}
+    relative_by_code = getattr(args, "_beam_feedback_relative_witness_cost_by_code", {}) or {}
+    source_by_code = getattr(args, "_beam_feedback_source_by_code", {}) or {}
+    min_alternatives = max(1, int(getattr(args, "beam_feedback_min_parent_alternatives", 2) or 2))
+    scored = [code for code in selected if code in score_by_code]
+    args._beam_feedback_selected_total = int(getattr(args, "_beam_feedback_selected_total", 0) or 0) + len(scored)
+    args._beam_feedback_selected_score_total = float(
+        getattr(args, "_beam_feedback_selected_score_total", 0.0) or 0.0
+    ) + sum(float(score_by_code.get(code, 0.0) or 0.0) for code in scored)
+    args._beam_feedback_shorter_witness_selected_total = int(
+        getattr(args, "_beam_feedback_shorter_witness_selected_total", 0) or 0
+    ) + sum(
+        1
+        for code in scored
+        if int(parent_count_by_code.get(code, 0) or 0) >= min_alternatives
+        and float(relative_by_code.get(code, 0.0) or 0.0) <= 1e-12
+    )
+    pair_penalty = float(getattr(args, "beam_feedback_pair_signature_penalty", 0.0) or 0.0)
+    if pair_penalty > 0.0:
+        total = 0.0
+        for pos, left in enumerate(scored):
+            for right in scored[pos + 1 :]:
+                if (
+                    candidates[left][2] == candidates[right][2]
+                    and int(source_by_code.get(left, -1) or -1) >= 0
+                    and int(source_by_code.get(left, -1) or -1) == int(source_by_code.get(right, -1) or -1)
+                    and signature_by_code.get(left)
+                    and signature_by_code.get(left) == signature_by_code.get(right)
+                    and int(parent_count_by_code.get(left, 0) or 0) >= min_alternatives
+                    and int(parent_count_by_code.get(right, 0) or 0) >= min_alternatives
+                ):
+                    total += pair_penalty
+        args._beam_feedback_pair_penalty_total = float(
+            getattr(args, "_beam_feedback_pair_penalty_total", 0.0) or 0.0
+        ) + total
+    args._beam_feedback_pending_selected_by_code = {
+        code: (tuple(signature_by_code[code]), int(candidates[code][0]))
+        for code in scored
+        if signature_by_code.get(code)
+    }
 
 
 def _union_diversity_source_scarcity(parent_code: bytes, source_stack: int, args: argparse.Namespace) -> float:
@@ -6109,7 +6735,15 @@ def _union_diversity_macro_future_credit(
                 1.0,
                 float(getattr(args, "union_diversity_qubo_macro_witness_move_penalty_scale", 256) or 256),
             )
-            move_penalty += move_penalty_weight * _clamp01(float(feature.rollout_moves) / move_scale)
+            quality_relief = _clamp01(
+                float(getattr(args, "union_diversity_qubo_macro_witness_quality_relief", 0.0) or 0.0)
+            )
+            quality_factor = 1.0 - quality_relief * witness_quality
+            move_penalty += (
+                move_penalty_weight
+                * _clamp01(float(feature.rollout_moves) / move_scale)
+                * _clamp01(quality_factor)
+            )
     prefix_penalty_weight = max(
         0.0,
         float(getattr(args, "union_diversity_qubo_macro_prefix_penalty_weight", 0.0) or 0.0),
@@ -6122,6 +6756,16 @@ def _union_diversity_macro_future_credit(
         and int(feature.macro_edge_chain_length) > 0
     ):
         move_penalty += prefix_penalty_weight * _clamp01(float(feature.macro_edge_chain_penalty))
+    alt_relative_penalty_weight = max(
+        0.0,
+        float(getattr(args, "union_diversity_qubo_macro_alt_relative_move_penalty_weight", 0.0) or 0.0),
+    )
+    if (
+        alt_relative_penalty_weight > 0.0
+        and int(feature.macro_alt_parent_alternative_count) > 1
+        and float(feature.macro_alt_relative_move_penalty) > 0.0
+    ):
+        move_penalty += alt_relative_penalty_weight * _clamp01(float(feature.macro_alt_relative_move_penalty))
     if min_witness_quality > 0.0 and evidence_quality < min_witness_quality:
         positive_credit = 0.0
         move_penalty = 0.0
@@ -6148,6 +6792,12 @@ def _quality_reservoir_qubo_linear_energy(
     energy = float(feature.energy)
     if bool(getattr(args, "quality_reservoir_enabled", False)):
         energy -= float(feature.quality_reservoir_quality)
+    if bool(getattr(args, "beam_feedback_enabled", False)):
+        feedback_credit = max(0.0, float(feature.beam_feedback_score))
+        min_credit = max(0.0, float(getattr(args, "beam_feedback_min_credit_score", 0.0) or 0.0))
+        if feedback_credit < min_credit:
+            feedback_credit = 0.0
+        energy -= float(getattr(args, "beam_feedback_linear_weight", 0.0) or 0.0) * feedback_credit
     return energy - _union_diversity_macro_future_credit(feature, args)
 
 
@@ -6637,7 +7287,7 @@ def _layout_path_from_moves(layout, moves: tuple[Move, ...], max_height: int) ->
         if int(move.box) != box:
             return []
         stacks[target].append(stacks[source].pop())
-        layout_path.append(SimpleNamespace(stacks=tuple(tuple(stack) for stack in stacks)))
+        layout_path.append(_as_bs_frg_layout(SimpleNamespace(stacks=tuple(tuple(stack) for stack in stacks))))
     return layout_path
 
 
@@ -6926,10 +7576,26 @@ def _ensure_macro_chain_witness_counters(args: argparse.Namespace) -> None:
         args._macro_chain_witness_generated = 0
     if not hasattr(args, "_macro_chain_witness_added_total"):
         args._macro_chain_witness_added_total = 0
+    if not hasattr(args, "_macro_chain_witness_replaced_total"):
+        args._macro_chain_witness_replaced_total = 0
     if not hasattr(args, "_macro_chain_witness_selected_total"):
         args._macro_chain_witness_selected_total = 0
     if not hasattr(args, "_macro_chain_witness_codes"):
         args._macro_chain_witness_codes = set()
+    if not hasattr(args, "_macro_chain_witness_alternative_codes"):
+        args._macro_chain_witness_alternative_codes = set()
+    if not hasattr(args, "_macro_chain_witness_alternative_calls"):
+        args._macro_chain_witness_alternative_calls = 0
+    if not hasattr(args, "_macro_chain_witness_alternative_added_total"):
+        args._macro_chain_witness_alternative_added_total = 0
+    if not hasattr(args, "_macro_chain_witness_alternative_replaced_total"):
+        args._macro_chain_witness_alternative_replaced_total = 0
+    if not hasattr(args, "_macro_chain_witness_alternative_selected_total"):
+        args._macro_chain_witness_alternative_selected_total = 0
+    if not hasattr(args, "_macro_chain_witness_alternative_selected_witness_moves_total"):
+        args._macro_chain_witness_alternative_selected_witness_moves_total = 0
+    if not hasattr(args, "_macro_chain_witness_alternative_shorter_selected_total"):
+        args._macro_chain_witness_alternative_shorter_selected_total = 0
     if not hasattr(args, "_frg_macro_edge_recorded_total"):
         args._frg_macro_edge_recorded_total = 0
 
@@ -6986,6 +7652,358 @@ def _macro_chain_witness_active(
     return True
 
 
+class _MacroChainWitnessRow(NamedTuple):
+    moves: tuple[Move, ...]
+    feasible: bool
+    final_n: int
+    status: str
+    generated: int
+    runtime_sec: float
+    is_alternative: bool
+
+
+def _macro_alt_signature(
+    parent_code: bytes,
+    child_code: bytes,
+    *,
+    stack_count: int,
+    max_height: int,
+    child_n: int,
+    prefix_moves: tuple[Move, ...],
+    witness_moves: tuple[Move, ...],
+) -> tuple[int, int, int, int]:
+    source_stack = _transition_source_stack(parent_code, child_code, stack_count, max_height)
+    return (
+        min(15, max(-1, int(source_stack))),
+        min(15, max(0, int(len(prefix_moves)))),
+        min(15, max(0, int(child_n))),
+        min(15, max(0, int(math.ceil(max(0, len(witness_moves)) / 64.0)))),
+    )
+
+
+def _refresh_macro_alt_parent_metadata(args: argparse.Namespace, codes: Iterable[bytes]) -> None:
+    union_cache = getattr(args, "_union_rollout_probe_cache", {}) or {}
+    unique_codes = [code for code in dict.fromkeys(codes) if code in union_cache]
+    if not unique_codes:
+        return
+    parent_count = len(unique_codes)
+    witness_moves = {
+        code: max(0, int(getattr(union_cache[code], "moves", 0) or 0))
+        for code in unique_codes
+    }
+    best_moves = min((moves for moves in witness_moves.values() if moves > 0), default=0)
+    if not hasattr(args, "_macro_alt_parent_count_by_code"):
+        args._macro_alt_parent_count_by_code = {}
+    if not hasattr(args, "_macro_alt_best_witness_moves_by_code"):
+        args._macro_alt_best_witness_moves_by_code = {}
+    if not hasattr(args, "_macro_alt_relative_move_penalty_by_code"):
+        args._macro_alt_relative_move_penalty_by_code = {}
+    for code in unique_codes:
+        moves = witness_moves[code]
+        relative = 0.0
+        if parent_count > 1 and best_moves > 0 and moves > best_moves:
+            relative = _clamp01(float(moves - best_moves) / float(best_moves))
+        args._macro_alt_parent_count_by_code[code] = parent_count
+        args._macro_alt_best_witness_moves_by_code[code] = best_moves
+        args._macro_alt_relative_move_penalty_by_code[code] = float(relative)
+
+
+def _record_macro_chain_witness_candidate(
+    candidates: dict[bytes, tuple[int, int, bytes]],
+    args: argparse.Namespace,
+    *,
+    parent_code: bytes,
+    parent_n: int,
+    parent_depth: int,
+    layout_path: tuple[object, ...],
+    prefix_moves: tuple[Move, ...],
+    witness_moves: tuple[Move, ...],
+    rollout_final_n: int,
+    rollout_feasible: bool,
+    rollout_status: str,
+    rollout_runtime_sec: float,
+    depth_cap: int,
+    best_depth: dict[bytes, int] | None,
+    parent_chain: dict[bytes, bytes | None] | None,
+    stack_count: int,
+    max_height: int,
+    is_alternative: bool = False,
+) -> bytes | None:
+    if not layout_path or not prefix_moves or not witness_moves:
+        return None
+    child_layout = layout_path[-1]
+    child_stacks = [list(stack) for stack in getattr(child_layout, "stacks", ()) or ()]
+    if len(child_stacks) != stack_count:
+        return None
+    child_code, child_n = _encode(child_stacks, stack_count, max_height)
+    child_depth = int(parent_depth) + len(layout_path)
+    if child_code == parent_code:
+        return None
+    if not (bool(rollout_feasible) or int(rollout_final_n) < int(parent_n) or int(child_n) < int(parent_n)):
+        return None
+    if _parent_chain_would_cycle(parent_chain, child_code, parent_code):
+        return None
+    if child_depth + int(child_n) > int(depth_cap):
+        return None
+
+    macro_paths = getattr(args, "_frg_macro_edge_path_by_code", None)
+    if macro_paths is None:
+        macro_paths = {}
+        args._frg_macro_edge_path_by_code = macro_paths
+    macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", None)
+    if macro_parent_by_code is None:
+        macro_parent_by_code = {}
+        args._frg_macro_edge_parent_by_code = macro_parent_by_code
+    macro_moves_by_code = getattr(args, "_frg_macro_edge_moves_by_code", None)
+    if macro_moves_by_code is None:
+        macro_moves_by_code = {}
+        args._frg_macro_edge_moves_by_code = macro_moves_by_code
+    union_cache = getattr(args, "_union_rollout_probe_cache", None)
+    if union_cache is None:
+        union_cache = {}
+        args._union_rollout_probe_cache = union_cache
+    if not hasattr(args, "_macro_alt_signature_by_code"):
+        args._macro_alt_signature_by_code = {}
+
+    macro_path_codes: list[bytes] = []
+    for prefix_layout in layout_path:
+        prefix_stacks = [list(stack) for stack in getattr(prefix_layout, "stacks", ()) or ()]
+        if len(prefix_stacks) != stack_count:
+            return None
+        prefix_code, _prefix_n = _encode(prefix_stacks, stack_count, max_height)
+        macro_path_codes.append(prefix_code)
+    if not macro_path_codes or macro_path_codes[-1] != child_code:
+        return None
+
+    existing_rollout = union_cache.get(child_code)
+    new_rollout = UnionRolloutProbeResult(
+        feasible=bool(rollout_feasible),
+        final_n=int(rollout_final_n),
+        moves=len(witness_moves),
+        status=str(rollout_status),
+        runtime_sec=float(rollout_runtime_sec),
+        move_path=tuple(witness_moves),
+    )
+    old = candidates.get(child_code)
+    old_best_depth = best_depth.get(child_code) if best_depth is not None else None
+    metadata_is_better = (
+        existing_rollout is not None
+        and (
+            (new_rollout.feasible and not bool(existing_rollout.feasible))
+            or int(new_rollout.moves) < int(getattr(existing_rollout, "moves", 0) or 0)
+        )
+    )
+    if old is not None and old[1] <= child_depth:
+        if not metadata_is_better:
+            return None
+        union_cache[child_code] = new_rollout
+        macro_paths[child_code] = tuple(macro_path_codes)
+        macro_parent_by_code[child_code] = parent_code
+        macro_moves_by_code[child_code] = tuple(prefix_moves)
+        args._macro_alt_signature_by_code[child_code] = _macro_alt_signature(
+            parent_code,
+            child_code,
+            stack_count=stack_count,
+            max_height=max_height,
+            child_n=int(child_n),
+            prefix_moves=prefix_moves,
+            witness_moves=witness_moves,
+        )
+        _ensure_macro_chain_witness_counters(args)
+        if is_alternative:
+            args._macro_chain_witness_alternative_codes.add(child_code)
+        args._macro_chain_witness_replaced_total += 1
+        if is_alternative:
+            args._macro_chain_witness_alternative_replaced_total += 1
+        return child_code
+    if old_best_depth is not None and child_depth >= old_best_depth:
+        return None
+
+    if not hasattr(args, "_frg_macro_edge_recorded_total"):
+        args._frg_macro_edge_recorded_total = 0
+    candidates[child_code] = (int(child_n), child_depth, parent_code)
+    macro_paths[child_code] = tuple(macro_path_codes)
+    macro_parent_by_code[child_code] = parent_code
+    macro_moves_by_code[child_code] = tuple(prefix_moves)
+    args._macro_alt_signature_by_code[child_code] = _macro_alt_signature(
+        parent_code,
+        child_code,
+        stack_count=stack_count,
+        max_height=max_height,
+        child_n=int(child_n),
+        prefix_moves=prefix_moves,
+        witness_moves=witness_moves,
+    )
+    _record_frg_macro_edge_ancestry(args, child_code, parent_code)
+    args._macro_chain_witness_codes.add(child_code)
+    if is_alternative:
+        args._macro_chain_witness_alternative_codes.add(child_code)
+    args._frg_macro_edge_recorded_total += 1
+    union_cache[child_code] = new_rollout
+    if is_alternative:
+        args._macro_chain_witness_alternative_added_total += 1
+    return child_code
+
+
+def _record_macro_chain_witness_alternative_selected_telemetry(
+    selected_codes: Iterable[bytes],
+    args: argparse.Namespace,
+) -> None:
+    _ensure_macro_chain_witness_counters(args)
+    alternative_codes = getattr(args, "_macro_chain_witness_alternative_codes", set()) or set()
+    if not alternative_codes:
+        return
+    macro_moves_by_code = getattr(args, "_frg_macro_edge_moves_by_code", {}) or {}
+    union_cache = getattr(args, "_union_rollout_probe_cache", {}) or {}
+    parent_count_by_code = getattr(args, "_macro_alt_parent_count_by_code", {}) or {}
+    relative_penalty_by_code = getattr(args, "_macro_alt_relative_move_penalty_by_code", {}) or {}
+    for code in selected_codes:
+        if code not in alternative_codes:
+            continue
+        witness_moves = int(getattr(union_cache.get(code), "moves", 0) or 0)
+        if witness_moves <= 0:
+            witness_moves = len(tuple(macro_moves_by_code.get(code, ()) or ()))
+        args._macro_chain_witness_alternative_selected_total += 1
+        args._macro_chain_witness_alternative_selected_witness_moves_total += max(0, witness_moves)
+        if (
+            int(parent_count_by_code.get(code, 0) or 0) > 1
+            and float(relative_penalty_by_code.get(code, 0.0) or 0.0) <= 1e-12
+        ):
+            args._macro_chain_witness_alternative_shorter_selected_total += 1
+
+
+def _macro_chain_witness_completion_row(
+    layout,
+    max_height: int,
+    *,
+    start_step: int,
+    max_steps: int,
+    deadline: float,
+    cache: dict,
+    paper_pure: bool,
+    args: argparse.Namespace,
+    max_generated_attr: str,
+    is_alternative: bool,
+) -> _MacroChainWitnessRow | None:
+    if time.perf_counter() >= deadline:
+        return None
+    completion_kwargs = {
+        "start_step": int(start_step),
+        "max_steps": max(1, int(max_steps)),
+        "deadline": deadline,
+        "cache": cache,
+        "paper_pure": paper_pure,
+    }
+    max_generated = _frg_rollout_max_generated(args, max_generated_attr)
+    if max_generated is not None:
+        completion_kwargs["max_generated"] = max_generated
+    started = time.perf_counter()
+    rollout = _bs_frg_completion_cached(_as_bs_frg_layout(layout), max_height, **completion_kwargs)
+    moves = tuple(getattr(rollout, "moves", ()) or ())
+    if not moves:
+        return None
+    return _MacroChainWitnessRow(
+        moves=moves,
+        feasible=bool(getattr(rollout, "feasible", False)) and int(getattr(rollout, "final_n", 0) or 0) <= 0,
+        final_n=int(getattr(rollout, "final_n", 0) or 0),
+        status=str(getattr(rollout, "status", "")),
+        generated=int(getattr(rollout, "generated", 0) or 0),
+        runtime_sec=time.perf_counter() - started,
+        is_alternative=bool(is_alternative),
+    )
+
+
+def _macro_chain_witness_alternative_rows(
+    layout,
+    max_height: int,
+    *,
+    depth: int,
+    max_steps: int,
+    deadline: float,
+    cache: dict,
+    paper_pure: bool,
+    args: argparse.Namespace,
+    remaining_slots: int,
+) -> list[_MacroChainWitnessRow]:
+    if remaining_slots <= 0 or time.perf_counter() >= deadline:
+        return []
+    _ensure_macro_chain_witness_counters(args)
+    rows: list[_MacroChainWitnessRow] = []
+    child_limit = max(0, int(getattr(args, "macro_chain_witness_alternative_first_child_limit", 0) or 0))
+    if child_limit <= 0:
+        return rows
+    args._macro_chain_witness_alternative_calls += 1
+
+    children = _bs_frg_step_children(
+        layout,
+        max_height,
+        int(depth),
+        limit=child_limit,
+        paper_pure=paper_pure,
+    )
+    for child in children:
+        if len(rows) >= remaining_slots or time.perf_counter() >= deadline:
+            break
+        first_moves = tuple(getattr(child, "moves", ()) or ())
+        if not first_moves:
+            continue
+        remaining_steps = max(1, int(max_steps) - len(first_moves))
+        completion = _macro_chain_witness_completion_row(
+            child.layout,
+            max_height,
+            start_step=int(depth) + len(first_moves),
+            max_steps=remaining_steps,
+            deadline=deadline,
+            cache=cache,
+            paper_pure=paper_pure,
+            args=args,
+            max_generated_attr="macro_chain_witness_alternative_max_generated",
+            is_alternative=True,
+        )
+        if completion is None:
+            continue
+        rows.append(
+            completion._replace(
+                moves=first_moves + completion.moves,
+                generated=int(getattr(child, "generated", 0) or 0) + completion.generated,
+            )
+        )
+
+    if len(rows) >= remaining_slots or time.perf_counter() >= deadline:
+        return rows[:remaining_slots]
+    compound_rows = _frg_frontier_compound_source_children(
+        layout,
+        max_height,
+        int(depth),
+        args,
+        child_limit=child_limit,
+        max_steps=max(1, min(int(max_steps), int(getattr(args, "macro_chain_witness_prefix_steps", 1) or 1))),
+    )
+    for child_layout, first_moves, _layout_path in compound_rows:
+        if len(rows) >= remaining_slots or time.perf_counter() >= deadline:
+            break
+        first_moves = tuple(first_moves)
+        if not first_moves:
+            continue
+        remaining_steps = max(1, int(max_steps) - len(first_moves))
+        completion = _macro_chain_witness_completion_row(
+            child_layout,
+            max_height,
+            start_step=int(depth) + len(first_moves),
+            max_steps=remaining_steps,
+            deadline=deadline,
+            cache=cache,
+            paper_pure=paper_pure,
+            args=args,
+            max_generated_attr="macro_chain_witness_alternative_max_generated",
+            is_alternative=True,
+        )
+        if completion is None:
+            continue
+        rows.append(completion._replace(moves=first_moves + completion.moves))
+    return rows[:remaining_slots]
+
+
 def _inject_macro_chain_witness_candidates(
     frontier: list[tuple[bytes, int, int]],
     candidates: dict[bytes, tuple[int, int, bytes]],
@@ -7017,7 +8035,7 @@ def _inject_macro_chain_witness_candidates(
         macro_paths = getattr(args, "_frg_macro_edge_path_by_code", None)
     if macro_paths is None:
         macro_paths = {}
-        args._frg_macro_edge_path_by_code = macro_paths
+    args._frg_macro_edge_path_by_code = macro_paths
     macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", None)
     if macro_parent_by_code is None:
         macro_parent_by_code = {}
@@ -7051,76 +8069,113 @@ def _inject_macro_chain_witness_candidates(
             respect_attr="macro_chain_witness_respect_time_limit",
         )
         args._macro_chain_witness_calls += 1
-        completion_kwargs = {
-            "start_step": int(depth),
-            "max_steps": max_steps,
-            "deadline": deadline,
-            "cache": completion_cache,
-            "paper_pure": paper_pure,
-        }
-        max_generated = _frg_rollout_max_generated(args, "macro_chain_witness_max_generated")
-        if max_generated is not None:
-            completion_kwargs["max_generated"] = max_generated
-        rollout = _bs_frg_completion_cached(layout, max_height, **completion_kwargs)
-        args._macro_chain_witness_generated += int(getattr(rollout, "generated", 0) or 0)
-        moves = tuple(getattr(rollout, "moves", ()) or ())
-        if not moves:
-            continue
-        rollout_final_n_raw = getattr(rollout, "final_n", None)
-        rollout_final_n = int(parent_n) if rollout_final_n_raw is None else int(rollout_final_n_raw)
-        rollout_feasible = bool(getattr(rollout, "feasible", False)) and rollout_final_n <= 0
-        prefix_moves = moves[: min(prefix_steps, len(moves))]
-        layout_path = _layout_path_from_moves(layout, prefix_moves, max_height)
-        if not layout_path:
-            continue
-        child_layout = layout_path[-1]
-        child_stacks = [list(stack) for stack in getattr(child_layout, "stacks", ()) or ()]
-        if len(child_stacks) != stack_count:
-            continue
-        child_code, child_n = _encode(child_stacks, stack_count, max_height)
-        child_depth = int(depth) + len(layout_path)
-        if child_code == code:
-            continue
-        if not (rollout_feasible or rollout_final_n < int(parent_n) or int(child_n) < int(parent_n)):
-            continue
-        if _parent_chain_would_cycle(parent_chain, child_code, code):
-            continue
-        if child_depth + int(child_n) > int(depth_cap):
-            continue
-        old_best_depth = best_depth.get(child_code) if best_depth is not None else None
-        if old_best_depth is not None and child_depth >= old_best_depth:
-            continue
-        old = candidates.get(child_code)
-        if old is not None and old[1] <= child_depth:
-            continue
-
-        macro_path_codes: list[bytes] = []
-        for prefix_layout in layout_path:
-            prefix_stacks = [list(stack) for stack in getattr(prefix_layout, "stacks", ()) or ()]
-            if len(prefix_stacks) != stack_count:
-                macro_path_codes = []
-                break
-            prefix_code, _prefix_n = _encode(prefix_stacks, stack_count, max_height)
-            macro_path_codes.append(prefix_code)
-        if not macro_path_codes or macro_path_codes[-1] != child_code:
-            continue
-
-        candidates[child_code] = (int(child_n), child_depth, code)
-        macro_paths[child_code] = tuple(macro_path_codes)
-        macro_parent_by_code[child_code] = code
-        macro_moves_by_code[child_code] = tuple(prefix_moves)
-        _record_frg_macro_edge_ancestry(args, child_code, code)
-        args._macro_chain_witness_codes.add(child_code)
-        added.add(child_code)
-        args._frg_macro_edge_recorded_total += 1
-        union_cache[child_code] = UnionRolloutProbeResult(
-            feasible=rollout_feasible,
-            final_n=rollout_final_n,
-            moves=len(moves),
-            status=str(getattr(rollout, "status", "")),
-            runtime_sec=time.perf_counter() - started,
-            move_path=moves,
-        )
+        rows: list[_MacroChainWitnessRow] = []
+        if bool(getattr(args, "macro_chain_witness_beam_enabled", False)) and time.perf_counter() < deadline:
+            solver = BsFrgSolver(paper_pure=paper_pure)
+            beam_started = time.perf_counter()
+            solution = solver.solve(
+                instance,
+                SolverConfig(
+                    max_depth=max_steps,
+                    beam_width=max(1, int(getattr(args, "macro_chain_witness_beam_width", 96) or 96)),
+                    candidate_limit_per_state=max(
+                        1,
+                        int(getattr(args, "macro_chain_witness_beam_candidate_limit_per_state", 3) or 3),
+                    ),
+                    enable_visited_pruning=True,
+                    time_limit_sec=max(0.001, deadline - time.perf_counter()),
+                ),
+            )
+            rollout_generated = int(getattr(solution, "generated_states", 0) or 0)
+            if bool(getattr(solution, "feasible", False)) and getattr(solution, "moves", ()):
+                rows.append(
+                    _MacroChainWitnessRow(
+                        moves=tuple(solution.moves),
+                        feasible=True,
+                        final_n=0,
+                        status=str(getattr(solution, "status", "BS_FRG_BEAM_FEASIBLE")),
+                        generated=rollout_generated,
+                        runtime_sec=time.perf_counter() - beam_started,
+                        is_alternative=False,
+                    )
+                )
+        if not rows:
+            completion = _macro_chain_witness_completion_row(
+                layout,
+                max_height,
+                start_step=int(depth),
+                max_steps=max_steps,
+                deadline=deadline,
+                cache=completion_cache,
+                paper_pure=paper_pure,
+                args=args,
+                max_generated_attr="macro_chain_witness_max_generated",
+                is_alternative=False,
+            )
+            if completion is not None:
+                rows.append(completion)
+        if bool(getattr(args, "macro_chain_witness_alternatives_enabled", False)):
+            total_limit = max(1, int(getattr(args, "macro_chain_witness_alternatives_per_parent", 1) or 1))
+            remaining = max(0, total_limit - len(rows))
+            if remaining > 0:
+                alt_limit = max(
+                    0.0,
+                    float(getattr(args, "macro_chain_witness_alternative_time_limit", 0.0) or 0.0),
+                )
+                alt_started = time.perf_counter()
+                alt_deadline = _frg_rollout_deadline(
+                    alt_started,
+                    alt_limit,
+                    args,
+                    respect_attr="macro_chain_witness_respect_time_limit",
+                )
+                rows.extend(
+                    _macro_chain_witness_alternative_rows(
+                        layout,
+                        max_height,
+                        depth=int(depth),
+                        max_steps=max_steps,
+                        deadline=min(deadline, alt_deadline),
+                        cache=completion_cache,
+                        paper_pure=paper_pure,
+                        args=args,
+                        remaining_slots=remaining,
+                    )
+                )
+        parent_recorded_codes: list[bytes] = []
+        for row in rows:
+            args._macro_chain_witness_generated += int(row.generated)
+            prefix_moves = row.moves[: min(prefix_steps, len(row.moves))]
+            layout_path = tuple(_layout_path_from_moves(layout, prefix_moves, max_height))
+            if not layout_path:
+                continue
+            before_count = len(candidates)
+            recorded = _record_macro_chain_witness_candidate(
+                candidates,
+                args,
+                parent_code=code,
+                parent_n=int(parent_n),
+                parent_depth=int(depth),
+                layout_path=layout_path,
+                prefix_moves=prefix_moves,
+                witness_moves=row.moves,
+                rollout_final_n=int(row.final_n),
+                rollout_feasible=bool(row.feasible),
+                rollout_status=str(row.status),
+                rollout_runtime_sec=float(row.runtime_sec),
+                depth_cap=depth_cap,
+                best_depth=best_depth,
+                parent_chain=parent_chain,
+                stack_count=stack_count,
+                max_height=max_height,
+                is_alternative=bool(row.is_alternative),
+            )
+            if recorded is None:
+                continue
+            parent_recorded_codes.append(recorded)
+            if len(candidates) > before_count:
+                added.add(recorded)
+        _refresh_macro_alt_parent_metadata(args, parent_recorded_codes)
     args._macro_chain_witness_added_total += len(added)
     return added
 
@@ -7613,6 +8668,14 @@ def _union_diversity_qubo_features(
                 * (1.0 - _clamp01(float(completion_witness_quality)))
             )
     reservoir_feature = (getattr(args, "_quality_reservoir_last_features_by_code", {}) or {}).get(code)
+    macro_alt_parent_count = int((getattr(args, "_macro_alt_parent_count_by_code", {}) or {}).get(code, 0) or 0)
+    macro_alt_best_witness_moves = int(
+        (getattr(args, "_macro_alt_best_witness_moves_by_code", {}) or {}).get(code, 0) or 0
+    )
+    macro_alt_relative_move_penalty = float(
+        (getattr(args, "_macro_alt_relative_move_penalty_by_code", {}) or {}).get(code, 0.0) or 0.0
+    )
+    macro_alt_signature = tuple((getattr(args, "_macro_alt_signature_by_code", {}) or {}).get(code, ()) or ())
     macro_quality_bonus = float(getattr(args, "union_diversity_qubo_macro_quality_bonus", 0.0) or 0.0)
     if is_frg_macro and macro_quality_bonus > 0.0:
         macro_probe = UnionDiversityQuboFeatures(
@@ -7629,6 +8692,10 @@ def _union_diversity_qubo_features(
             is_frg_macro=True,
             source_scarcity=float(source_scarcity),
             completion_witness_quality=float(completion_witness_quality),
+            macro_alt_parent_alternative_count=int(macro_alt_parent_count),
+            macro_alt_best_witness_moves=int(macro_alt_best_witness_moves),
+            macro_alt_relative_move_penalty=float(macro_alt_relative_move_penalty),
+            macro_alt_signature=tuple(macro_alt_signature),
         )
         energy -= macro_quality_bonus * _union_diversity_macro_pressure_score(macro_probe, args)
     features = UnionDiversityQuboFeatures(
@@ -7673,6 +8740,10 @@ def _union_diversity_qubo_features(
         macro_edge_chain_penalty=float(macro_edge_chain_penalty),
         macro_edge_ancestry_depth=int(macro_edge_ancestry_depth),
         macro_edge_ancestry_penalty=float(macro_edge_ancestry_penalty),
+        macro_alt_parent_alternative_count=int(macro_alt_parent_count),
+        macro_alt_best_witness_moves=int(macro_alt_best_witness_moves),
+        macro_alt_relative_move_penalty=float(macro_alt_relative_move_penalty),
+        macro_alt_signature=tuple(macro_alt_signature),
         quality_reservoir_quality=float(reservoir_feature.reservoir_quality) if reservoir_feature is not None else 0.0,
         quality_reservoir_witness_quality=float(reservoir_feature.witness_quality)
         if reservoir_feature is not None
@@ -7684,6 +8755,21 @@ def _union_diversity_qubo_features(
         else 0.0,
         quality_reservoir_macro_signature=reservoir_feature.macro_signature if reservoir_feature is not None else (),
         quality_reservoir_n_delta=int(reservoir_feature.n_delta) if reservoir_feature is not None else 0,
+        beam_feedback_score=float(reservoir_feature.beam_feedback_score)
+        if reservoir_feature is not None
+        else float((getattr(args, "_beam_feedback_score_by_code", {}) or {}).get(code, 0.0) or 0.0),
+        beam_feedback_signature=tuple(reservoir_feature.beam_feedback_signature)
+        if reservoir_feature is not None
+        else tuple((getattr(args, "_beam_feedback_signature_by_code", {}) or {}).get(code, ()) or ()),
+        beam_feedback_parent_alternative_count=int(reservoir_feature.beam_feedback_parent_alternative_count)
+        if reservoir_feature is not None
+        else int((getattr(args, "_beam_feedback_parent_count_by_code", {}) or {}).get(code, 0) or 0),
+        beam_feedback_relative_witness_cost=float(reservoir_feature.beam_feedback_relative_witness_cost)
+        if reservoir_feature is not None
+        else float((getattr(args, "_beam_feedback_relative_witness_cost_by_code", {}) or {}).get(code, 0.0) or 0.0),
+        beam_feedback_survival_credit=float(reservoir_feature.beam_feedback_survival_credit)
+        if reservoir_feature is not None
+        else float((getattr(args, "_beam_feedback_survival_credit_by_code", {}) or {}).get(code, 0.0) or 0.0),
     )
     if micro is not None or receiver is not None or debt_basin is not None:
         trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", None)
@@ -7765,6 +8851,41 @@ def _quality_reservoir_pair_penalty(
         and str(right.origin) == "unified_macro_supply"
     ):
         value += unified_macro_pair_penalty
+    macro_alt_pair_penalty = float(
+        getattr(args, "union_diversity_qubo_macro_alt_same_parent_pair_penalty", 0.0) or 0.0
+    )
+    if (
+        macro_alt_pair_penalty > 0.0
+        and left.parent_code == right.parent_code
+        and left.source_stack >= 0
+        and left.source_stack == right.source_stack
+        and left.macro_alt_signature
+        and left.macro_alt_signature == right.macro_alt_signature
+        and int(left.macro_alt_parent_alternative_count) > 1
+        and int(right.macro_alt_parent_alternative_count) > 1
+        and float(left.macro_alt_relative_move_penalty) > 0.0
+        and float(right.macro_alt_relative_move_penalty) > 0.0
+    ):
+        value += macro_alt_pair_penalty
+    beam_feedback_pair_penalty = float(getattr(args, "beam_feedback_pair_signature_penalty", 0.0) or 0.0)
+    if (
+        bool(getattr(args, "beam_feedback_enabled", False))
+        and beam_feedback_pair_penalty > 0.0
+        and left.parent_code == right.parent_code
+        and left.source_stack >= 0
+        and left.source_stack == right.source_stack
+        and left.beam_feedback_signature
+        and left.beam_feedback_signature == right.beam_feedback_signature
+        and int(left.beam_feedback_parent_alternative_count) >= max(
+            1,
+            int(getattr(args, "beam_feedback_min_parent_alternatives", 2) or 2),
+        )
+        and int(right.beam_feedback_parent_alternative_count) >= max(
+            1,
+            int(getattr(args, "beam_feedback_min_parent_alternatives", 2) or 2),
+        )
+    ):
+        value += beam_feedback_pair_penalty
     return float(value)
 
 
@@ -7908,6 +9029,8 @@ def _select_union_diversity_qubo_supplement(
     if target <= 0:
         return [], 0, 0.0
     rollout_by_code = _union_rollout_probe_results(usable, args)
+    if bool(getattr(args, "beam_feedback_enabled", False)):
+        _prepare_beam_feedback_layer(dict(usable), args)
     features = [
         _union_diversity_qubo_features(
             code,
@@ -8859,6 +9982,7 @@ def _frg_seed_cache_key(case: str, instance: Instance, args: argparse.Namespace)
         f"height={instance.max_height}",
         f"containers={instance.container_count}",
         f"time={float(getattr(args, 'frg_seed_time_limit', 0.0) or 0.0):.6g}",
+        f"margin={float(getattr(args, 'frg_seed_time_limit_margin', 0.0) or 0.0):.6g}",
         f"min_steps={int(getattr(args, 'frg_seed_min_max_steps', 0) or 0)}",
         f"mult={int(getattr(args, 'frg_seed_max_steps_multiplier', 0) or 0)}",
         f"cap={int(getattr(args, 'frg_seed_max_steps_cap', 0) or 0)}",
@@ -8887,6 +10011,7 @@ def _frg_seed_record_from_result(
         "profile": str(getattr(args, "solver_profile", "")),
         "alpha": float(getattr(args, "alpha", 0.0) or 0.0),
         "frg_seed_time_limit": float(getattr(args, "frg_seed_time_limit", 0.0) or 0.0),
+        "frg_seed_time_limit_margin": float(getattr(args, "frg_seed_time_limit_margin", 0.0) or 0.0),
         "frg_seed_min_max_steps": int(getattr(args, "frg_seed_min_max_steps", 0) or 0),
         "frg_seed_max_steps_multiplier": int(getattr(args, "frg_seed_max_steps_multiplier", 0) or 0),
         "frg_seed_max_steps_cap": int(getattr(args, "frg_seed_max_steps_cap", 0) or 0),
@@ -8973,6 +10098,11 @@ def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: 
     if remaining <= 0:
         return None
     configured_limit = float(getattr(args, "frg_seed_time_limit", 0.0) or 0.0)
+    margin = max(0.0, float(getattr(args, "frg_seed_time_limit_margin", 0.0) or 0.0))
+    if margin > 0.0:
+        remaining = max(0.0, remaining - margin)
+        if remaining <= 0:
+            return None
     beam_seed_enabled = bool(getattr(args, "frg_seed_beam_enabled", False))
     if beam_seed_enabled and bool(getattr(args, "frg_seed_beam_large_only", False)) and not _frg_seed_beam_allowed(
         instance,
@@ -9053,6 +10183,274 @@ def _frg_seed_incumbent(instance: Instance, args: argparse.Namespace, deadline: 
         runtime_sec=runtime_sec,
         status=rollout.status,
         cap_ok=cap_ok,
+    )
+
+
+def _bs_frg_postcompress_layout_allowed(instance: Instance, args: argparse.Namespace) -> bool:
+    min_stack_count = max(0, int(getattr(args, "bs_frg_postcompress_min_stack_count", 0) or 0))
+    min_height = max(0, int(getattr(args, "bs_frg_postcompress_min_height", 0) or 0))
+    if min_stack_count <= 0 and min_height <= 0:
+        return True
+    return (
+        (min_stack_count > 0 and instance.stack_count >= min_stack_count)
+        or (min_height > 0 and instance.max_height >= min_height)
+    )
+
+
+def _bs_frg_postcompress_should_run(
+    instance: Instance,
+    moves: list[Move],
+    n0: int,
+    args: argparse.Namespace,
+    deadline: float,
+) -> bool:
+    if not bool(getattr(args, "bs_frg_postcompress_enabled", False)):
+        return False
+    if not moves:
+        return False
+    if not _bs_frg_postcompress_layout_allowed(instance, args):
+        return False
+    if not bool(getattr(args, "bs_frg_postcompress_respect_cap", True)) and not bool(
+        getattr(args, "bs_frg_postcompress_allow_large_over_cap", False)
+    ):
+        return False
+    min_moves = max(0, int(getattr(args, "bs_frg_postcompress_min_moves", 0) or 0))
+    min_ratio = max(0.0, float(getattr(args, "bs_frg_postcompress_min_ratio", 0.0) or 0.0))
+    ratio_gate = n0 > 0 and len(moves) >= int(math.ceil(float(n0) * min_ratio))
+    if len(moves) < min_moves and not ratio_gate:
+        return False
+    if not math.isinf(deadline) and deadline - time.perf_counter() <= 0:
+        return False
+    return float(getattr(args, "bs_frg_postcompress_time_limit", 0.0) or 0.0) > 0.0
+
+
+def _bs_frg_postcompress_remaining_budget(args: argparse.Namespace, deadline: float) -> float:
+    configured = max(0.0, float(getattr(args, "bs_frg_postcompress_time_limit", 0.0) or 0.0))
+    if configured <= 0.0:
+        return 0.0
+    if math.isinf(deadline):
+        return configured
+    remaining = deadline - time.perf_counter()
+    margin = max(0.0, float(getattr(args, "bs_frg_postcompress_time_limit_margin", 0.0) or 0.0))
+    remaining = max(0.0, remaining - margin)
+    return min(configured, remaining)
+
+
+def _bs_frg_postcompress_max_steps(instance: Instance, args: argparse.Namespace, limit: int) -> int:
+    initial_n = future_disorder_count_stacks(instance.stacks)
+    multiplier = max(1, int(getattr(args, "bs_frg_postcompress_max_steps_multiplier", 20) or 20))
+    min_steps = max(1, int(getattr(args, "bs_frg_postcompress_min_max_steps", 1000) or 1000))
+    max_steps = max(min_steps, initial_n * multiplier)
+    max_steps_cap = max(0, int(getattr(args, "bs_frg_postcompress_max_steps_cap", 0) or 0))
+    if max_steps_cap > 0:
+        max_steps = min(max_steps, max_steps_cap)
+    return max(1, min(max_steps, max(1, int(limit))))
+
+
+def _bs_frg_postcompress_run_solver(
+    instance: Instance,
+    args: argparse.Namespace,
+    *,
+    max_depth: int,
+    time_limit: float,
+) -> Solution:
+    solver = BsFrgSolver(paper_pure=bool(getattr(args, "bs_frg_postcompress_paper_pure", True)))
+    return solver.solve(
+        instance,
+        SolverConfig(
+            max_depth=max(1, int(max_depth)),
+            beam_width=max(1, int(getattr(args, "bs_frg_postcompress_beam_width", 1000) or 1000)),
+            candidate_limit_per_state=max(
+                1,
+                int(getattr(args, "bs_frg_postcompress_candidate_limit_per_state", 3) or 3),
+            ),
+            enable_visited_pruning=True,
+            time_limit_sec=max(0.001, float(time_limit)),
+        ),
+    )
+
+
+def _state_after_moves(instance: Instance, moves: list[Move]) -> State | None:
+    state = State(stacks=[list(stack) for stack in instance.stacks])
+    try:
+        for move in moves:
+            state = apply_move(instance, state, move)
+    except Exception:
+        return None
+    return state
+
+
+def _rebase_moves(moves: Iterable[Move], start_step: int) -> list[Move]:
+    return [
+        Move(
+            step=int(start_step) + offset,
+            box=move.box,
+            from_stack=move.from_stack,
+            to_stack=move.to_stack,
+            from_level=move.from_level,
+            to_level=move.to_level,
+        )
+        for offset, move in enumerate(moves)
+    ]
+
+
+def _bs_frg_postcompress_suffix_indices(moves: list[Move], args: argparse.Namespace) -> list[int]:
+    suffix_points = max(0, int(getattr(args, "bs_frg_postcompress_suffix_points", 0) or 0))
+    min_suffix = max(1, int(getattr(args, "bs_frg_postcompress_suffix_min_moves", 120) or 120))
+    if suffix_points <= 0 or len(moves) <= min_suffix + 1:
+        return []
+    upper = len(moves) - min_suffix
+    raw = {
+        max(1, min(upper, int(round(len(moves) * fraction / float(suffix_points + 1)))))
+        for fraction in range(1, suffix_points + 1)
+    }
+    return sorted(raw)
+
+
+def _bs_frg_postcompress(
+    instance: Instance,
+    moves: list[Move],
+    n0: int,
+    args: argparse.Namespace,
+    *,
+    cap: int,
+    deadline: float,
+) -> BsFrgPostCompressResult:
+    start = time.perf_counter()
+    if not _bs_frg_postcompress_should_run(instance, moves, n0, args, deadline):
+        return BsFrgPostCompressResult(tuple(moves), 0, 0, 0, 0.0, "", "", 0)
+
+    respect_cap = bool(getattr(args, "bs_frg_postcompress_respect_cap", True))
+    validation_cap = int(cap) if respect_cap else 1_000_000_000
+    budget = _bs_frg_postcompress_remaining_budget(args, deadline)
+    if budget <= 0.0:
+        return BsFrgPostCompressResult(tuple(moves), 0, 0, 0, 0.0, "", "NO_TIME", 0)
+
+    attempts = 0
+    generated = 0
+    best_moves = list(moves)
+    best_source = ""
+    best_status = ""
+    accepted = 0
+    total_saved = 0
+    original_len = len(best_moves)
+
+    def remaining_global_budget() -> float:
+        remaining = budget - (time.perf_counter() - start)
+        if not math.isinf(deadline):
+            remaining = min(remaining, max(0.0, deadline - time.perf_counter()))
+        return max(0.0, remaining)
+
+    def early_stop_reached() -> bool:
+        saved = original_len - len(best_moves)
+        max_moves = max(0, int(getattr(args, "bs_frg_postcompress_early_stop_max_moves", 0) or 0))
+        if max_moves > 0 and len(best_moves) <= max_moves:
+            return True
+        saved_ratio = max(
+            0.0,
+            float(getattr(args, "bs_frg_postcompress_early_stop_saved_ratio", 0.0) or 0.0),
+        )
+        return saved_ratio > 0.0 and original_len > 0 and (saved / float(original_len)) >= saved_ratio
+
+    def run_full_phase(phase_budget: float) -> bool:
+        nonlocal attempts, generated, best_moves, best_source, best_status, accepted, total_saved
+        phase_budget = min(max(0.0, phase_budget), remaining_global_budget())
+        if phase_budget <= 0.001 or len(best_moves) <= 1:
+            return False
+        attempts += 1
+        max_depth = _bs_frg_postcompress_max_steps(instance, args, len(best_moves) - 1)
+        solution = _bs_frg_postcompress_run_solver(instance, args, max_depth=max_depth, time_limit=phase_budget)
+        generated += int(getattr(solution, "generated_states", 0) or 0)
+        best_status = str(getattr(solution, "status", best_status))
+        if not solution.feasible or not solution.moves or len(solution.moves) >= len(best_moves):
+            return False
+        candidate = list(solution.moves)
+        if not _moves_reach_n0_with_cap(instance, candidate, validation_cap):
+            return False
+        total_saved += len(best_moves) - len(candidate)
+        best_moves = candidate
+        best_source = "full"
+        accepted += 1
+        return early_stop_reached()
+
+    def run_suffix_phase(phase_budget: float) -> bool:
+        nonlocal attempts, generated, best_moves, best_source, best_status, accepted, total_saved
+        phase_start = time.perf_counter()
+        for idx in _bs_frg_postcompress_suffix_indices(best_moves, args):
+            remaining_budget = min(max(0.0, phase_budget - (time.perf_counter() - phase_start)), remaining_global_budget())
+            if remaining_budget <= 0.001:
+                break
+            prefix = best_moves[:idx]
+            suffix_old_len = len(best_moves) - idx
+            if suffix_old_len <= 1:
+                continue
+            prefix_state = _state_after_moves(instance, prefix)
+            if prefix_state is None:
+                continue
+            suffix_instance = Instance(
+                instance_id=f"{instance.instance_id}_postcompress_{idx}",
+                variant=instance.variant,
+                stack_count=instance.stack_count,
+                max_height=instance.max_height,
+                container_count=instance.container_count,
+                stacks=[list(stack) for stack in prefix_state.stacks],
+            )
+            attempts += 1
+            max_depth = _bs_frg_postcompress_max_steps(suffix_instance, args, suffix_old_len - 1)
+            solution = _bs_frg_postcompress_run_solver(
+                suffix_instance,
+                args,
+                max_depth=max_depth,
+                time_limit=remaining_budget,
+            )
+            generated += int(getattr(solution, "generated_states", 0) or 0)
+            best_status = str(getattr(solution, "status", best_status))
+            if not solution.feasible or not solution.moves or len(solution.moves) >= suffix_old_len:
+                continue
+            candidate = prefix + _rebase_moves(solution.moves, len(prefix))
+            if not _moves_reach_n0_with_cap(instance, candidate, validation_cap):
+                continue
+            total_saved += len(best_moves) - len(candidate)
+            best_moves = candidate
+            best_source = f"suffix@{idx}"
+            accepted += 1
+            if early_stop_reached():
+                return True
+        return False
+
+    full_share = min(1.0, max(0.0, float(getattr(args, "bs_frg_postcompress_full_time_share", 0.75) or 0.75)))
+    suffix_first = bool(getattr(args, "bs_frg_postcompress_suffix_first", False))
+    if suffix_first:
+        suffix_budget = budget * (1.0 - full_share) if full_share > 0.0 else budget
+        if run_suffix_phase(suffix_budget):
+            return BsFrgPostCompressResult(
+                moves=tuple(best_moves),
+                attempts=attempts,
+                accepted=accepted,
+                moves_saved=total_saved,
+                runtime_sec=time.perf_counter() - start,
+                source=best_source,
+                status=best_status,
+                generated=generated,
+            )
+        if full_share > 0.0:
+            run_full_phase(budget * full_share)
+    else:
+        full_budget = budget * full_share if full_share > 0.0 else budget
+        if not run_full_phase(full_budget):
+            run_suffix_phase(remaining_global_budget())
+        elif not early_stop_reached():
+            run_suffix_phase(remaining_global_budget())
+
+    return BsFrgPostCompressResult(
+        moves=tuple(best_moves),
+        attempts=attempts,
+        accepted=accepted,
+        moves_saved=total_saved,
+        runtime_sec=time.perf_counter() - start,
+        source=best_source,
+        status=best_status,
+        generated=generated,
     )
 
 
@@ -9802,14 +11200,30 @@ def _candidate_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.N
         focus_n = int(getattr(args, "target_guided_focus_n", 8))
         layer_best_n = int(getattr(args, "_layer_best_n", n_value))
         if focus_n >= 0 and layer_best_n > focus_n:
-            ledger_score = _candidate_feature_ledger_score(code, (n_value, depth, parent_code), args)
-            return (n_value, depth, ledger_score, parent_code, code)
+            return _candidate_n_depth_rank(item, args)
         target_gap = _candidate_target_gap(code, args)
         weighted_gap = float(getattr(args, "target_guided_weight", 0.0)) * target_gap
         return (n_value, depth, weighted_gap, target_gap, parent_code, code)
     else:
         primary = float(n_value * 1_000_000 + depth)
     return (primary, n_value, depth, parent_code, code)
+
+
+def _candidate_n_depth_rank(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
+    code, (n_value, depth, parent_code) = item
+    effective_depth = _candidate_effective_depth_for_sort(code, (n_value, depth, parent_code), args)
+    ledger_score = _candidate_feature_ledger_score(code, (n_value, depth, parent_code), args)
+    if _frg_rank_tiebreak_active(item, args):
+        return (
+            n_value,
+            effective_depth,
+            depth,
+            ledger_score,
+            _frg_rank_tiebreak_value(item, args),
+            parent_code,
+            code,
+        )
+    return (n_value, effective_depth, depth, ledger_score, parent_code, code)
 
 
 def _frg_rank_tiebreak_active(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> bool:
@@ -9930,13 +11344,127 @@ def _candidate_primary_key_func(args: argparse.Namespace):
         if getattr(args, "frg_rank_tiebreak_enabled", False):
             return lambda item: (
                 item[1][0],
+                _candidate_effective_depth_for_sort(item[0], item[1], args),
                 item[1][1],
                 _frg_rank_tiebreak_value(item, args),
                 item[1][2],
                 item[0],
-            ) if _frg_rank_tiebreak_active(item, args) else (item[1][0], item[1][1], item[1][2], item[0])
-        return lambda item: (item[1][0], item[1][1], item[1][2], item[0])
+            ) if _frg_rank_tiebreak_active(item, args) else (
+                item[1][0],
+                _candidate_effective_depth_for_sort(item[0], item[1], args),
+                item[1][1],
+                item[1][2],
+                item[0],
+            )
+        return lambda item: (
+            item[1][0],
+            _candidate_effective_depth_for_sort(item[0], item[1], args),
+            item[1][1],
+            item[1][2],
+            item[0],
+        )
     return lambda item: _candidate_rank(item, args)
+
+
+def _candidate_effective_depth_for_sort(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+) -> int:
+    weight = float(getattr(args, "macro_witness_effective_depth_weight", 0.0) or 0.0)
+    return _candidate_effective_depth_for_sort_with_weight(code, data, args, weight)
+
+
+def _candidate_effective_depth_for_sort_with_weight(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+    weight: float,
+) -> int:
+    _n_value, depth, _parent_code = data
+    if weight <= 0.0:
+        return int(depth)
+    macro_path = tuple((getattr(args, "_frg_macro_edge_path_by_code", {}) or {}).get(code, ()) or ())
+    if not macro_path:
+        return int(depth)
+    rollout = (getattr(args, "_union_rollout_probe_cache", {}) or {}).get(code)
+    rollout_moves = int(getattr(rollout, "moves", 0) or 0) if rollout is not None else 0
+    if rollout_moves <= 0:
+        return int(depth)
+    parent_depth = max(0, int(depth) - len(macro_path))
+    witness_depth = parent_depth + rollout_moves
+    if witness_depth <= int(depth):
+        return int(depth)
+    adjusted_depth = int(depth) + int(round((witness_depth - int(depth)) * weight))
+    return max(int(depth), adjusted_depth)
+
+
+def _macro_edge_move_cost_for_sort(parent_code: bytes | None, code: bytes, args: argparse.Namespace) -> int:
+    if parent_code is None:
+        return 1
+    macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
+    if macro_parent_by_code.get(code) != parent_code:
+        return 1
+    macro_moves_by_code = getattr(args, "_frg_macro_edge_moves_by_code", {}) or {}
+    macro_moves = tuple(macro_moves_by_code.get(code, ()) or ())
+    if macro_moves:
+        return max(1, len(macro_moves))
+    macro_paths = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
+    macro_path = tuple(macro_paths.get(code, ()) or ())
+    if macro_path:
+        return max(1, len(macro_path) - 1)
+    return 1
+
+
+def _candidate_path_effective_depth_for_sort(
+    code: bytes,
+    data: tuple[int, int, bytes],
+    args: argparse.Namespace,
+    parent: dict[bytes, bytes | None] | None,
+    weight: float,
+) -> int:
+    raw_depth = int(data[1])
+    if weight <= 0.0:
+        return raw_depth
+    if parent is None:
+        return _candidate_effective_depth_for_sort_with_weight(code, data, args, weight)
+    parent_code = data[2]
+    expanded_depth = _macro_edge_move_cost_for_sort(parent_code, code, args)
+    cursor = parent_code
+    guard = 0
+    while cursor in parent:
+        previous = parent.get(cursor)
+        if previous is None:
+            break
+        expanded_depth += _macro_edge_move_cost_for_sort(previous, cursor, args)
+        cursor = previous
+        guard += 1
+        if guard > raw_depth + 4096:
+            break
+    expanded_depth = max(raw_depth, expanded_depth)
+    return raw_depth + int(round((expanded_depth - raw_depth) * weight))
+
+
+def _goal_candidate_key_func(
+    args: argparse.Namespace,
+    parent: dict[bytes, bytes | None] | None = None,
+):
+    weight = float(getattr(args, "macro_witness_goal_effective_depth_weight", 0.0) or 0.0)
+    if weight <= 0.0:
+        return _candidate_key_func(args)
+    if args.priority == "target_guided":
+        return _candidate_key_func(args)
+    if args.priority != "n_then_depth":
+        return _candidate_key_func(args)
+    return lambda item: (
+        item[1][0],
+        _candidate_path_effective_depth_for_sort(item[0], item[1], args, parent, weight),
+        _candidate_effective_depth_for_sort(item[0], item[1], args),
+        item[1][1],
+        _candidate_feature_ledger_score(item[0], item[1], args),
+        item[1][2],
+        item[0],
+    )
 
 
 def _candidate_sort_key(item: tuple[bytes, tuple[int, int, bytes]], args: argparse.Namespace) -> tuple:
@@ -9945,10 +11473,11 @@ def _candidate_sort_key(item: tuple[bytes, tuple[int, int, bytes]], args: argpar
     if args.priority != "n_then_depth":
         return _candidate_rank(item, args)
     code, (n_value, depth, parent_code) = item
+    effective_depth = _candidate_effective_depth_for_sort(code, (n_value, depth, parent_code), args)
     ledger_score = _candidate_feature_ledger_score(code, (n_value, depth, parent_code), args)
     if _frg_rank_tiebreak_active(item, args):
-        return (n_value, depth, ledger_score, _frg_rank_tiebreak_value(item, args), parent_code, code)
-    return (n_value, depth, ledger_score, parent_code, code)
+        return (n_value, effective_depth, depth, ledger_score, _frg_rank_tiebreak_value(item, args), parent_code, code)
+    return (n_value, effective_depth, depth, ledger_score, parent_code, code)
 
 
 def _candidate_key_func(args: argparse.Namespace):
@@ -9958,6 +11487,7 @@ def _candidate_key_func(args: argparse.Namespace):
         if getattr(args, "frg_rank_tiebreak_enabled", False):
             return lambda item: (
                 item[1][0],
+                _candidate_effective_depth_for_sort(item[0], item[1], args),
                 item[1][1],
                 _candidate_feature_ledger_score(item[0], item[1], args),
                 _frg_rank_tiebreak_value(item, args),
@@ -9965,6 +11495,7 @@ def _candidate_key_func(args: argparse.Namespace):
                 item[0],
             ) if _frg_rank_tiebreak_active(item, args) else (
                 item[1][0],
+                _candidate_effective_depth_for_sort(item[0], item[1], args),
                 item[1][1],
                 _candidate_feature_ledger_score(item[0], item[1], args),
                 item[1][2],
@@ -9972,6 +11503,7 @@ def _candidate_key_func(args: argparse.Namespace):
             )
         return lambda item: (
             item[1][0],
+            _candidate_effective_depth_for_sort(item[0], item[1], args),
             item[1][1],
             _candidate_feature_ledger_score(item[0], item[1], args),
             item[1][2],
@@ -14386,8 +15918,20 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._macro_chain_witness_calls = 0
     args._macro_chain_witness_generated = 0
     args._macro_chain_witness_added_total = 0
+    args._macro_chain_witness_replaced_total = 0
     args._macro_chain_witness_selected_total = 0
+    args._macro_chain_witness_alternative_calls = 0
+    args._macro_chain_witness_alternative_added_total = 0
+    args._macro_chain_witness_alternative_replaced_total = 0
+    args._macro_chain_witness_alternative_selected_total = 0
+    args._macro_chain_witness_alternative_selected_witness_moves_total = 0
+    args._macro_chain_witness_alternative_shorter_selected_total = 0
     args._macro_chain_witness_codes = set()
+    args._macro_chain_witness_alternative_codes = set()
+    args._macro_alt_parent_count_by_code = {}
+    args._macro_alt_best_witness_moves_by_code = {}
+    args._macro_alt_relative_move_penalty_by_code = {}
+    args._macro_alt_signature_by_code = {}
     args._unified_macro_supply_calls = 0
     args._unified_macro_supply_generated = 0
     args._unified_macro_supply_added_total = 0
@@ -14405,10 +15949,25 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._micro_rollout_candidates = 0
     args._micro_rollout_selected_total = 0
     args._receiver_safety_scored_total = 0
+    args._receiver_safety_score_cache = {}
     args._micro_rollout_cache = {}
     args._micro_rollout_feature_trace_by_code = {}
     args._quality_reservoir_selected_total = 0
     args._quality_reservoir_pair_penalty_total = 0.0
+    args._beam_feedback_candidates_total = 0
+    args._beam_feedback_parent_groups_total = 0
+    args._beam_feedback_selected_total = 0
+    args._beam_feedback_selected_score_total = 0.0
+    args._beam_feedback_shorter_witness_selected_total = 0
+    args._beam_feedback_survival_credit_hits = 0
+    args._beam_feedback_pair_penalty_total = 0.0
+    args._beam_feedback_survival_credit_by_signature = {}
+    args._beam_feedback_pending_selected_by_code = {}
+    args._beam_feedback_score_by_code = {}
+    args._beam_feedback_signature_by_code = {}
+    args._beam_feedback_parent_count_by_code = {}
+    args._beam_feedback_relative_witness_cost_by_code = {}
+    args._beam_feedback_survival_credit_by_code = {}
     args._feasibility_escape_calls_done = 0
     args._feasibility_escape_added_total = 0
     args._feasibility_escape_active_layers = 0
@@ -14656,7 +16215,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             rejected_goal_codes: list[bytes] = []
             macro_edge_paths_for_lift = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
             macro_parent_by_code_for_lift = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
-            for goal_code, data in sorted(goals.items(), key=_candidate_key_func(args)):
+            for goal_code, data in sorted(goals.items(), key=_goal_candidate_key_func(args, parent)):
                 if _compact_lift_edge_was_rejected(args, goal_code, data[2]):
                     continue
                 if not _try_accept_liftable_target(
@@ -14841,6 +16400,8 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
                 depth_cap = min(depth_cap, max(0, len(grafted) - 1))
         args._frg_frontier_child_codes = set(frg_frontier_child_codes)
         args._macro_chain_witness_codes = set(macro_chain_witness_codes)
+        if getattr(args, "beam_feedback_enabled", False):
+            _update_beam_feedback_survival_credit(candidates, args)
         if getattr(args, "quality_reservoir_enabled", False):
             kept_codes = _apply_quality_reservoir_candidates(candidates, args)
             candidate_origin_by_code = {
@@ -14854,6 +16415,11 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             unified_macro_supply_codes &= kept_codes
             args._frg_frontier_child_codes = set(frg_frontier_child_codes)
             args._macro_chain_witness_codes = set(macro_chain_witness_codes)
+            args._macro_chain_witness_alternative_codes = {
+                code
+                for code in (getattr(args, "_macro_chain_witness_alternative_codes", set()) or set())
+                if code in candidates
+            }
             args._unified_macro_supply_codes = set(unified_macro_supply_codes)
             if frg_macro_edge_paths:
                 args._frg_macro_edge_path_by_code = {
@@ -14892,11 +16458,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
             args._macro_chain_witness_selected_total += sum(
                 1 for code in selected_codes if code in macro_chain_witness_codes
             )
+            _record_macro_chain_witness_alternative_selected_telemetry(selected_codes, args)
         if unified_macro_supply_codes:
             args._unified_macro_supply_selected_total += sum(
                 1 for code in selected_codes if code in unified_macro_supply_codes
             )
         _record_quality_reservoir_selected_telemetry(selected_codes, args)
+        _record_beam_feedback_selected_telemetry(selected_codes, candidates, args)
         qcalls += add_qcalls
         qvars += add_qvars
         qtime += add_qtime
@@ -15082,6 +16650,7 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     frg_terminal_witness_used = False
     compact_lift_repair_inserted = 0
     search_path_codes: list[bytes] = []
+    bs_frg_postcompress_result = BsFrgPostCompressResult(tuple(), 0, 0, 0, 0.0, "", "", 0)
     if target is not None:
         macro_edge_paths = getattr(args, "_frg_macro_edge_path_by_code", {}) or {}
         macro_parent_by_code = getattr(args, "_frg_macro_edge_parent_by_code", {}) or {}
@@ -15254,6 +16823,28 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         else:
             union_rollout_terminal_graft_used = True
         status = "ok"
+    if moves:
+        bs_frg_postcompress_result = _bs_frg_postcompress(
+            instance,
+            list(moves),
+            n0,
+            args,
+            cap=cap,
+            deadline=deadline,
+        )
+        if (
+            bs_frg_postcompress_result.accepted > 0
+            and bs_frg_postcompress_result.moves
+            and len(bs_frg_postcompress_result.moves) < len(moves)
+        ):
+            moves = list(bs_frg_postcompress_result.moves)
+            status += (
+                f"; bs_frg_postcompress_used=True; "
+                f"bs_frg_postcompress_source={bs_frg_postcompress_result.source}; "
+                f"bs_frg_postcompress_moves_saved={bs_frg_postcompress_result.moves_saved}; "
+                f"bs_frg_postcompress_runtime_sec={bs_frg_postcompress_result.runtime_sec:.6f}; "
+                f"bs_frg_postcompress_status={bs_frg_postcompress_result.status}"
+            )
     if frg_seed is not None and frg_seed_accepted and (not moves or len(frg_seed.moves) < len(moves)):
         moves = list(frg_seed.moves)
         frg_seed_used = True
@@ -15411,6 +17002,16 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         quality_reservoir_pair_penalty_total=float(
             getattr(args, "_quality_reservoir_pair_penalty_total", 0.0) or 0.0
         ),
+        beam_feedback_candidates_total=int(getattr(args, "_beam_feedback_candidates_total", 0) or 0),
+        beam_feedback_parent_groups_total=int(getattr(args, "_beam_feedback_parent_groups_total", 0) or 0),
+        beam_feedback_selected_total=int(getattr(args, "_beam_feedback_selected_total", 0) or 0),
+        beam_feedback_avg_selected_score=float(getattr(args, "_beam_feedback_selected_score_total", 0.0) or 0.0)
+        / max(1, int(getattr(args, "_beam_feedback_selected_total", 0) or 0)),
+        beam_feedback_shorter_witness_selected_total=int(
+            getattr(args, "_beam_feedback_shorter_witness_selected_total", 0) or 0
+        ),
+        beam_feedback_survival_credit_hits=int(getattr(args, "_beam_feedback_survival_credit_hits", 0) or 0),
+        beam_feedback_pair_penalty_total=float(getattr(args, "_beam_feedback_pair_penalty_total", 0.0) or 0.0),
         micro_rollout_calls=args._micro_rollout_calls,
         micro_rollout_cache_hits=args._micro_rollout_cache_hits,
         micro_rollout_candidates=args._micro_rollout_candidates,
@@ -15436,7 +17037,27 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         macro_chain_witness_calls=int(getattr(args, "_macro_chain_witness_calls", 0) or 0),
         macro_chain_witness_generated=int(getattr(args, "_macro_chain_witness_generated", 0) or 0),
         macro_chain_witness_added_total=int(getattr(args, "_macro_chain_witness_added_total", 0) or 0),
+        macro_chain_witness_replaced_total=int(getattr(args, "_macro_chain_witness_replaced_total", 0) or 0),
         macro_chain_witness_selected_total=int(getattr(args, "_macro_chain_witness_selected_total", 0) or 0),
+        macro_chain_witness_alternative_calls=int(
+            getattr(args, "_macro_chain_witness_alternative_calls", 0) or 0
+        ),
+        macro_chain_witness_alternative_added_total=int(
+            getattr(args, "_macro_chain_witness_alternative_added_total", 0) or 0
+        ),
+        macro_chain_witness_alternative_replaced_total=int(
+            getattr(args, "_macro_chain_witness_alternative_replaced_total", 0) or 0
+        ),
+        macro_chain_witness_alternative_selected_total=int(
+            getattr(args, "_macro_chain_witness_alternative_selected_total", 0) or 0
+        ),
+        macro_chain_witness_alternative_avg_witness_moves=float(
+            getattr(args, "_macro_chain_witness_alternative_selected_witness_moves_total", 0) or 0
+        )
+        / max(1, int(getattr(args, "_macro_chain_witness_alternative_selected_total", 0) or 0)),
+        macro_chain_witness_alternative_shorter_selected_total=int(
+            getattr(args, "_macro_chain_witness_alternative_shorter_selected_total", 0) or 0
+        ),
         unified_macro_supply_calls=int(getattr(args, "_unified_macro_supply_calls", 0) or 0),
         unified_macro_supply_generated=int(getattr(args, "_unified_macro_supply_generated", 0) or 0),
         unified_macro_supply_added_total=int(getattr(args, "_unified_macro_supply_added_total", 0) or 0),
@@ -15460,6 +17081,13 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         frg_seed_cache_key=frg_seed_cache_key,
         frg_seed_cache_hit=frg_seed_cache_hit,
         frg_seed_cache_source=frg_seed_cache_source,
+        bs_frg_postcompress_attempts=bs_frg_postcompress_result.attempts,
+        bs_frg_postcompress_accepted=bs_frg_postcompress_result.accepted,
+        bs_frg_postcompress_moves_saved=bs_frg_postcompress_result.moves_saved,
+        bs_frg_postcompress_runtime_sec=bs_frg_postcompress_result.runtime_sec,
+        bs_frg_postcompress_source=bs_frg_postcompress_result.source,
+        bs_frg_postcompress_status=bs_frg_postcompress_result.status,
+        bs_frg_postcompress_generated=bs_frg_postcompress_result.generated,
         frg_candidate_selected_total=args._frg_candidate_selected_total,
         frg_compound_appended_total=args._frg_compound_appended_total,
         dlts_value_selected_total=args._dlts_value_selected_total,
@@ -15902,9 +17530,24 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 "union_diversity_qubo_macro_witness_move_penalty_scale",
                 256,
             ),
+            "union_diversity_qubo_macro_witness_quality_relief": getattr(
+                args,
+                "union_diversity_qubo_macro_witness_quality_relief",
+                0.0,
+            ),
             "union_diversity_qubo_macro_prefix_penalty_weight": getattr(
                 args,
                 "union_diversity_qubo_macro_prefix_penalty_weight",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_alt_relative_move_penalty_weight": getattr(
+                args,
+                "union_diversity_qubo_macro_alt_relative_move_penalty_weight",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_alt_same_parent_pair_penalty": getattr(
+                args,
+                "union_diversity_qubo_macro_alt_same_parent_pair_penalty",
                 0.0,
             ),
             "union_diversity_qubo_macro_witness_move_penalty_min_stack_count": getattr(
@@ -15921,6 +17564,16 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 args,
                 "union_diversity_qubo_macro_witness_move_penalty_max_stack_count",
                 0,
+            ),
+            "macro_witness_effective_depth_weight": getattr(
+                args,
+                "macro_witness_effective_depth_weight",
+                0.0,
+            ),
+            "macro_witness_goal_effective_depth_weight": getattr(
+                args,
+                "macro_witness_goal_effective_depth_weight",
+                0.0,
             ),
             "union_diversity_qubo_macro_future_credit_min_witness_quality": getattr(
                 args,
@@ -15985,6 +17638,28 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "quality_reservoir_avg_receiver_debt": getattr(result, "quality_reservoir_avg_receiver_debt", 0.0),
             "quality_reservoir_avg_height_risk": getattr(result, "quality_reservoir_avg_height_risk", 0.0),
             "quality_reservoir_pair_penalty_total": getattr(result, "quality_reservoir_pair_penalty_total", 0.0),
+            "beam_feedback_enabled": getattr(args, "beam_feedback_enabled", False),
+            "beam_feedback_linear_weight": getattr(args, "beam_feedback_linear_weight", 0.0),
+            "beam_feedback_survival_credit_weight": getattr(args, "beam_feedback_survival_credit_weight", 0.0),
+            "beam_feedback_pair_signature_penalty": getattr(args, "beam_feedback_pair_signature_penalty", 0.0),
+            "beam_feedback_min_parent_alternatives": getattr(args, "beam_feedback_min_parent_alternatives", 0),
+            "beam_feedback_witness_relative_penalty_weight": getattr(
+                args,
+                "beam_feedback_witness_relative_penalty_weight",
+                0.0,
+            ),
+            "beam_feedback_min_credit_score": getattr(args, "beam_feedback_min_credit_score", 0.0),
+            "beam_feedback_candidates_total": getattr(result, "beam_feedback_candidates_total", 0),
+            "beam_feedback_parent_groups_total": getattr(result, "beam_feedback_parent_groups_total", 0),
+            "beam_feedback_selected_total": getattr(result, "beam_feedback_selected_total", 0),
+            "beam_feedback_avg_selected_score": getattr(result, "beam_feedback_avg_selected_score", 0.0),
+            "beam_feedback_shorter_witness_selected_total": getattr(
+                result,
+                "beam_feedback_shorter_witness_selected_total",
+                0,
+            ),
+            "beam_feedback_survival_credit_hits": getattr(result, "beam_feedback_survival_credit_hits", 0),
+            "beam_feedback_pair_penalty_total": getattr(result, "beam_feedback_pair_penalty_total", 0.0),
             "pareto_union_enabled": getattr(args, "pareto_union_enabled", False),
             "pareto_union_candidate_window": getattr(args, "pareto_union_candidate_window", 128),
             "pareto_union_seed_width": getattr(args, "pareto_union_seed_width", 0),
@@ -16207,14 +17882,59 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "macro_chain_witness_max_steps": getattr(args, "macro_chain_witness_max_steps", 0),
             "macro_chain_witness_time_limit": getattr(args, "macro_chain_witness_time_limit", 0.0),
             "macro_chain_witness_max_generated": getattr(args, "macro_chain_witness_max_generated", 0),
+            "macro_chain_witness_beam_enabled": getattr(args, "macro_chain_witness_beam_enabled", False),
+            "macro_chain_witness_beam_width": getattr(args, "macro_chain_witness_beam_width", 0),
+            "macro_chain_witness_beam_candidate_limit_per_state": getattr(
+                args,
+                "macro_chain_witness_beam_candidate_limit_per_state",
+                0,
+            ),
             "macro_chain_witness_min_stack_count": getattr(args, "macro_chain_witness_min_stack_count", 0),
             "macro_chain_witness_min_height": getattr(args, "macro_chain_witness_min_height", 0),
             "macro_chain_witness_min_n": getattr(args, "macro_chain_witness_min_n", 0),
             "macro_chain_witness_min_candidates": getattr(args, "macro_chain_witness_min_candidates", 0),
+            "macro_chain_witness_alternatives_enabled": getattr(
+                args,
+                "macro_chain_witness_alternatives_enabled",
+                False,
+            ),
+            "macro_chain_witness_alternatives_per_parent": getattr(
+                args,
+                "macro_chain_witness_alternatives_per_parent",
+                1,
+            ),
+            "macro_chain_witness_alternative_first_child_limit": getattr(
+                args,
+                "macro_chain_witness_alternative_first_child_limit",
+                0,
+            ),
+            "macro_chain_witness_alternative_time_limit": getattr(
+                args,
+                "macro_chain_witness_alternative_time_limit",
+                0.0,
+            ),
+            "macro_chain_witness_alternative_max_generated": getattr(
+                args,
+                "macro_chain_witness_alternative_max_generated",
+                0,
+            ),
             "macro_chain_witness_calls": result.macro_chain_witness_calls,
             "macro_chain_witness_generated": result.macro_chain_witness_generated,
             "macro_chain_witness_added_total": result.macro_chain_witness_added_total,
+            "macro_chain_witness_replaced_total": result.macro_chain_witness_replaced_total,
             "macro_chain_witness_selected_total": result.macro_chain_witness_selected_total,
+            "macro_chain_witness_alternative_calls": result.macro_chain_witness_alternative_calls,
+            "macro_chain_witness_alternative_added_total": result.macro_chain_witness_alternative_added_total,
+            "macro_chain_witness_alternative_replaced_total": (
+                result.macro_chain_witness_alternative_replaced_total
+            ),
+            "macro_chain_witness_alternative_selected_total": result.macro_chain_witness_alternative_selected_total,
+            "macro_chain_witness_alternative_avg_witness_moves": (
+                result.macro_chain_witness_alternative_avg_witness_moves
+            ),
+            "macro_chain_witness_alternative_shorter_selected_total": (
+                result.macro_chain_witness_alternative_shorter_selected_total
+            ),
             "unified_macro_supply_enabled": getattr(args, "unified_macro_supply_enabled", False),
             "unified_macro_supply_respect_time_limit": getattr(
                 args,
@@ -16273,6 +17993,7 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "candidate_ledger_rank_window": getattr(args, "candidate_ledger_rank_window", 0),
             "frg_seed_enabled": getattr(args, "frg_seed_enabled", False),
             "frg_seed_time_limit": getattr(args, "frg_seed_time_limit", 0.0),
+            "frg_seed_time_limit_margin": getattr(args, "frg_seed_time_limit_margin", 0.0),
             "frg_seed_min_max_steps": getattr(args, "frg_seed_min_max_steps", 0),
             "frg_seed_max_steps_multiplier": getattr(args, "frg_seed_max_steps_multiplier", 0),
             "frg_seed_max_steps_cap": getattr(args, "frg_seed_max_steps_cap", 0),
@@ -16298,6 +18019,58 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_seed_generated": result.frg_seed_generated,
             "frg_seed_cap_ok": result.frg_seed_cap_ok,
             "frg_seed_large_layout_ok": result.frg_seed_large_layout_ok,
+            "bs_frg_postcompress_enabled": getattr(args, "bs_frg_postcompress_enabled", False),
+            "bs_frg_postcompress_time_limit": getattr(args, "bs_frg_postcompress_time_limit", 0.0),
+            "bs_frg_postcompress_time_limit_margin": getattr(
+                args,
+                "bs_frg_postcompress_time_limit_margin",
+                0.0,
+            ),
+            "bs_frg_postcompress_min_moves": getattr(args, "bs_frg_postcompress_min_moves", 0),
+            "bs_frg_postcompress_min_ratio": getattr(args, "bs_frg_postcompress_min_ratio", 0.0),
+            "bs_frg_postcompress_min_stack_count": getattr(args, "bs_frg_postcompress_min_stack_count", 0),
+            "bs_frg_postcompress_min_height": getattr(args, "bs_frg_postcompress_min_height", 0),
+            "bs_frg_postcompress_min_max_steps": getattr(args, "bs_frg_postcompress_min_max_steps", 0),
+            "bs_frg_postcompress_max_steps_multiplier": getattr(
+                args,
+                "bs_frg_postcompress_max_steps_multiplier",
+                0,
+            ),
+            "bs_frg_postcompress_max_steps_cap": getattr(args, "bs_frg_postcompress_max_steps_cap", 0),
+            "bs_frg_postcompress_respect_cap": getattr(args, "bs_frg_postcompress_respect_cap", True),
+            "bs_frg_postcompress_allow_large_over_cap": getattr(
+                args,
+                "bs_frg_postcompress_allow_large_over_cap",
+                False,
+            ),
+            "bs_frg_postcompress_paper_pure": getattr(args, "bs_frg_postcompress_paper_pure", True),
+            "bs_frg_postcompress_beam_width": getattr(args, "bs_frg_postcompress_beam_width", 0),
+            "bs_frg_postcompress_candidate_limit_per_state": getattr(
+                args,
+                "bs_frg_postcompress_candidate_limit_per_state",
+                0,
+            ),
+            "bs_frg_postcompress_suffix_points": getattr(args, "bs_frg_postcompress_suffix_points", 0),
+            "bs_frg_postcompress_suffix_min_moves": getattr(args, "bs_frg_postcompress_suffix_min_moves", 0),
+            "bs_frg_postcompress_full_time_share": getattr(args, "bs_frg_postcompress_full_time_share", 0.0),
+            "bs_frg_postcompress_suffix_first": getattr(args, "bs_frg_postcompress_suffix_first", False),
+            "bs_frg_postcompress_early_stop_saved_ratio": getattr(
+                args,
+                "bs_frg_postcompress_early_stop_saved_ratio",
+                0.0,
+            ),
+            "bs_frg_postcompress_early_stop_max_moves": getattr(
+                args,
+                "bs_frg_postcompress_early_stop_max_moves",
+                0,
+            ),
+            "bs_frg_postcompress_attempts": result.bs_frg_postcompress_attempts,
+            "bs_frg_postcompress_accepted": result.bs_frg_postcompress_accepted,
+            "bs_frg_postcompress_moves_saved": result.bs_frg_postcompress_moves_saved,
+            "bs_frg_postcompress_runtime_sec": result.bs_frg_postcompress_runtime_sec,
+            "bs_frg_postcompress_source": result.bs_frg_postcompress_source,
+            "bs_frg_postcompress_status": result.bs_frg_postcompress_status,
+            "bs_frg_postcompress_generated": result.bs_frg_postcompress_generated,
             "frg_candidate_supplement_enabled": getattr(args, "frg_candidate_supplement_enabled", False),
             "frg_candidate_supplement_width": getattr(args, "frg_candidate_supplement_width", 0),
             "frg_candidate_focus_n": getattr(args, "frg_candidate_focus_n", -1),
@@ -16823,6 +18596,16 @@ def _add_quality_reservoir_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--quality-reservoir-pair-macro-signature-penalty", type=float, default=0.0)
 
 
+def _add_beam_feedback_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--beam-feedback-enabled", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--beam-feedback-linear-weight", type=float, default=0.0)
+    parser.add_argument("--beam-feedback-survival-credit-weight", type=float, default=0.0)
+    parser.add_argument("--beam-feedback-pair-signature-penalty", type=float, default=0.0)
+    parser.add_argument("--beam-feedback-min-parent-alternatives", type=int, default=2)
+    parser.add_argument("--beam-feedback-witness-relative-penalty-weight", type=float, default=0.0)
+    parser.add_argument("--beam-feedback-min-credit-score", type=float, default=0.0)
+
+
 class _CompactProfileArgumentParser(argparse.ArgumentParser):
     def parse_args(self, args: list[str] | None = None, namespace: argparse.Namespace | None = None) -> argparse.Namespace:
         parsed = super().parse_args(args, namespace)
@@ -16855,6 +18638,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--inner-jobs", type=int, default=1)
     _add_quality_reservoir_arguments(parser)
+    _add_beam_feedback_arguments(parser)
     return parser
 
 
@@ -17003,7 +18787,10 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-macro-future-credit-cap", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-unified-macro-future-credit-scale", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-unified-macro-pair-penalty", type=float, default=None)
+    parser.add_argument("--macro-witness-effective-depth-weight", type=float, default=None)
+    parser.add_argument("--macro-witness-goal-effective-depth-weight", type=float, default=None)
     _add_quality_reservoir_arguments(parser)
+    _add_beam_feedback_arguments(parser)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
     parser.add_argument("--w-escape-potential", type=float, default=None)
@@ -17108,12 +18895,16 @@ def main() -> int:
     parser.add_argument("--macro-chain-witness-max-steps", type=int, default=None)
     parser.add_argument("--macro-chain-witness-time-limit", type=float, default=None)
     parser.add_argument("--macro-chain-witness-max-generated", type=int, default=None)
+    parser.add_argument("--macro-chain-witness-beam-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--macro-chain-witness-beam-width", type=int, default=None)
+    parser.add_argument("--macro-chain-witness-beam-candidate-limit-per-state", type=int, default=None)
     parser.add_argument("--macro-chain-witness-min-stack-count", type=int, default=None)
     parser.add_argument("--macro-chain-witness-min-height", type=int, default=None)
     parser.add_argument("--macro-chain-witness-min-n", type=int, default=None)
     parser.add_argument("--macro-chain-witness-min-candidates", type=int, default=None)
     parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-time-limit", type=float, default=None)
+    parser.add_argument("--frg-seed-time-limit-margin", type=float, default=None)
     parser.add_argument("--frg-seed-min-max-steps", type=int, default=None)
     parser.add_argument("--frg-seed-max-steps-multiplier", type=int, default=None)
     parser.add_argument("--frg-seed-max-steps-cap", type=int, default=None)
@@ -17129,6 +18920,27 @@ def main() -> int:
     parser.add_argument("--frg-seed-beam-min-height", type=int, default=None)
     parser.add_argument("--frg-seed-small-time-limit", type=float, default=None)
     parser.add_argument("--frg-seed-cache-input", type=Path, default=None)
+    parser.add_argument("--bs-frg-postcompress-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-postcompress-time-limit", type=float, default=None)
+    parser.add_argument("--bs-frg-postcompress-time-limit-margin", type=float, default=None)
+    parser.add_argument("--bs-frg-postcompress-min-moves", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-min-ratio", type=float, default=None)
+    parser.add_argument("--bs-frg-postcompress-min-stack-count", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-min-height", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-min-max-steps", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-max-steps-multiplier", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-max-steps-cap", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-respect-cap", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-postcompress-allow-large-over-cap", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-postcompress-paper-pure", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-postcompress-beam-width", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-candidate-limit-per-state", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-suffix-points", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-suffix-min-moves", type=int, default=None)
+    parser.add_argument("--bs-frg-postcompress-full-time-share", type=float, default=None)
+    parser.add_argument("--bs-frg-postcompress-suffix-first", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--bs-frg-postcompress-early-stop-saved-ratio", type=float, default=None)
+    parser.add_argument("--bs-frg-postcompress-early-stop-max-moves", type=int, default=None)
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int, default=None)
     parser.add_argument("--frg-candidate-focus-n", type=int, default=None)

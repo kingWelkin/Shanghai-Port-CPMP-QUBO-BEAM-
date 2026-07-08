@@ -3120,6 +3120,76 @@ def test_apply_quality_reservoir_includes_origin_witness_outside_base_window(mon
     assert set(candidates) == kept
 
 
+def test_beam_feedback_quality_reservoir_preserves_baseline_beam_window(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    codes = [f"safe-rank-{idx}".encode() for idx in range(5)]
+    candidates = {code: (idx + 1, 1, b"parent") for idx, code in enumerate(codes)}
+
+    def fake_ranked(candidates_arg, args_arg):
+        return [(code, candidates_arg[code]) for code in codes]
+
+    def fake_feature(code, data, args_arg):
+        quality = 10.0 if code in {codes[3], codes[4]} else -10.0
+        return bench.QualityReservoirCandidate(
+            code=code,
+            n_value=data[0],
+            depth=data[1],
+            parent_code=data[2],
+            origin="core",
+            n_delta=0,
+            witness_quality=0.0,
+            source_scarcity_gain=0.0,
+            receiver_debt=0.0,
+            height_risk=0.0,
+            chain_length_penalty=0.0,
+            source_signature=-1,
+            receiver_signature=-1,
+            macro_signature=(),
+            n_band=0,
+            reservoir_quality=quality,
+        )
+
+    monkeypatch.setattr(bench, "_rank_next_frontier_candidates", fake_ranked)
+    monkeypatch.setattr(bench, "_quality_reservoir_feature", fake_feature)
+    args = _compact_args(
+        quality_reservoir_enabled=True,
+        beam_feedback_enabled=True,
+        quality_reservoir_max_candidates=2,
+        quality_reservoir_top_quality=2,
+        quality_reservoir_origin_reserve=0,
+        quality_reservoir_witness_reserve=0,
+        quality_reservoir_progress_reserve=0,
+        beam_width=3,
+        core_width=3,
+    )
+
+    kept = bench._apply_quality_reservoir_candidates(candidates, args)
+
+    assert set(codes[:3]) <= kept
+
+
+def test_receiver_safety_score_reuses_cache(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    calls = {"safe_receiver_count": 0}
+
+    def fake_safe_receiver_count(code, stack_count, max_height):
+        calls["safe_receiver_count"] += 1
+        return 1
+
+    monkeypatch.setattr(bench, "_safe_receiver_count", fake_safe_receiver_count)
+    args = _compact_args(_stack_count=2, _max_height=2, _receiver_safety_score_cache={})
+    parent = bytes([2, 1, 0, 0])
+    child = bytes([1, 0, 2, 0])
+
+    first = bench._receiver_safety_score(parent, child, args)
+    second = bench._receiver_safety_score(parent, child, args)
+
+    assert first == second
+    assert calls["safe_receiver_count"] == 2
+
+
 def test_quality_reservoir_result_fields_store_task3_telemetry():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -3823,6 +3893,10 @@ def _union_feature_for_macro_quota(
     rollout_moves=0,
     macro_edge_chain_length=0,
     macro_edge_chain_penalty=0.0,
+    macro_alt_parent_alternative_count=0,
+    macro_alt_best_witness_moves=0,
+    macro_alt_relative_move_penalty=0.0,
+    macro_alt_signature=(),
 ):
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -3842,6 +3916,10 @@ def _union_feature_for_macro_quota(
         rollout_moves=rollout_moves,
         macro_edge_chain_length=macro_edge_chain_length,
         macro_edge_chain_penalty=macro_edge_chain_penalty,
+        macro_alt_parent_alternative_count=macro_alt_parent_alternative_count,
+        macro_alt_best_witness_moves=macro_alt_best_witness_moves,
+        macro_alt_relative_move_penalty=macro_alt_relative_move_penalty,
+        macro_alt_signature=macro_alt_signature,
     )
 
 
@@ -4022,6 +4100,196 @@ def test_union_diversity_qubo_macro_future_credit_prefers_witnessed_macro(monkey
     assert selected == [b"macro"]
 
 
+def test_macro_witness_effective_depth_prefers_short_complete_witness():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        macro_witness_effective_depth_weight=1.0,
+        candidate_ledger_score_enabled=False,
+        priority="n_then_depth",
+    )
+    short = b"macro-short"
+    long = b"macro-long"
+    parent = b"parent"
+    args._frg_macro_edge_path_by_code = {
+        short: (b"s1", b"s2"),
+        long: (b"l1", b"l2"),
+    }
+    args._union_rollout_probe_cache = {
+        short: bench.UnionRolloutProbeResult(True, 0, 20, "ok"),
+        long: bench.UnionRolloutProbeResult(True, 0, 200, "ok"),
+    }
+
+    candidates = [
+        (long, (0, 3, parent)),
+        (short, (0, 4, parent)),
+    ]
+
+    assert [code for code, _data in sorted(candidates, key=bench._candidate_key_func(args))] == [short, long]
+
+
+def test_macro_witness_goal_effective_depth_can_be_goal_only():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        macro_witness_effective_depth_weight=0.0,
+        macro_witness_goal_effective_depth_weight=1.0,
+        candidate_ledger_score_enabled=False,
+        priority="n_then_depth",
+    )
+    short = b"macro-short-goal"
+    long = b"macro-long-goal"
+    parent = b"parent"
+    args._frg_macro_edge_path_by_code = {
+        short: (b"s1", b"s2"),
+        long: (b"l1", b"l2"),
+    }
+    args._union_rollout_probe_cache = {
+        short: bench.UnionRolloutProbeResult(True, 0, 20, "ok"),
+        long: bench.UnionRolloutProbeResult(True, 0, 200, "ok"),
+    }
+
+    candidates = [
+        (long, (0, 3, parent)),
+        (short, (0, 4, parent)),
+    ]
+
+    assert [code for code, _data in sorted(candidates, key=bench._candidate_key_func(args))] == [long, short]
+    assert [code for code, _data in sorted(candidates, key=bench._goal_candidate_key_func(args))] == [short, long]
+
+
+def test_macro_witness_goal_effective_depth_counts_ancestor_macro_edges():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        macro_witness_effective_depth_weight=0.0,
+        macro_witness_goal_effective_depth_weight=1.0,
+        candidate_ledger_score_enabled=False,
+        priority="n_then_depth",
+    )
+    root = b"root"
+    macro_parent = b"macro-parent"
+    long_goal = b"long-goal"
+    short_goal = b"short-goal"
+    args._frg_macro_edge_parent_by_code = {macro_parent: root}
+    args._frg_macro_edge_moves_by_code = {macro_parent: tuple(range(200))}
+    parent = {macro_parent: root}
+
+    candidates = [
+        (long_goal, (0, 3, macro_parent)),
+        (short_goal, (0, 10, root)),
+    ]
+
+    assert [code for code, _data in sorted(candidates, key=bench._goal_candidate_key_func(args, parent))] == [
+        short_goal,
+        long_goal,
+    ]
+
+
+def test_macro_chain_witness_replay_layout_path_keeps_hashable_frg_layouts():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.core import Move
+
+    layout = bench._as_bs_frg_layout(SimpleNamespace(stacks=((2, 1), (), ())))
+    moves = (Move(step=0, box=1, from_stack=0, to_stack=1),)
+
+    path = bench._layout_path_from_moves(layout, moves, max_height=3)
+
+    assert len(path) == 1
+    assert isinstance(path[0], bench._BsFrgLayout)
+    assert hash(path[0]) is not None
+
+
+def test_macro_chain_witness_alternative_selected_counts_beam_survivors():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.core import Move
+
+    args = _compact_args()
+    code = b"alt"
+    args._macro_chain_witness_alternative_codes = {code}
+    args._frg_macro_edge_moves_by_code = {code: (Move(step=0, box=1, from_stack=0, to_stack=1),)}
+    args._union_rollout_probe_cache = {code: SimpleNamespace(moves=9)}
+    args._macro_alt_parent_count_by_code = {code: 2}
+    args._macro_alt_relative_move_penalty_by_code = {code: 0.0}
+
+    bench._record_macro_chain_witness_alternative_selected_telemetry([b"other", code], args)
+
+    assert args._macro_chain_witness_alternative_selected_total == 1
+    assert args._macro_chain_witness_alternative_selected_witness_moves_total == 9
+    assert args._macro_chain_witness_alternative_shorter_selected_total == 1
+
+
+def test_macro_chain_witness_record_replaces_same_layout_with_shorter_witness_metadata():
+    from types import SimpleNamespace
+
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.core import Move
+
+    stack_count = 3
+    max_height = 3
+    parent_code, parent_n = bench._encode([[3, 1], [2], []], stack_count, max_height)
+    child_layout = SimpleNamespace(stacks=((3,), (2,), (1,)))
+    prefix_moves = (Move(0, 1, 0, 2),)
+    long_witness = tuple(Move(step, 1, 0, 2) for step in range(10))
+    short_witness = tuple(Move(step, 1, 0, 2) for step in range(4))
+    candidates: dict[bytes, tuple[int, int, bytes]] = {}
+    best_depth: dict[bytes, int] = {}
+    args = _compact_args()
+    args._macro_chain_witness_codes = set()
+    args._frg_macro_edge_path_by_code = {}
+    args._frg_macro_edge_parent_by_code = {}
+    args._frg_macro_edge_moves_by_code = {}
+    args._union_rollout_probe_cache = {}
+    args._macro_chain_witness_replaced_total = 0
+
+    first_code = bench._record_macro_chain_witness_candidate(
+        candidates,
+        args,
+        parent_code=parent_code,
+        parent_n=parent_n,
+        parent_depth=0,
+        layout_path=(child_layout,),
+        prefix_moves=prefix_moves,
+        witness_moves=long_witness,
+        rollout_final_n=0,
+        rollout_feasible=True,
+        rollout_status="LONG",
+        rollout_runtime_sec=0.01,
+        depth_cap=100,
+        best_depth=best_depth,
+        parent_chain={},
+        stack_count=stack_count,
+        max_height=max_height,
+    )
+    second_code = bench._record_macro_chain_witness_candidate(
+        candidates,
+        args,
+        parent_code=parent_code,
+        parent_n=parent_n,
+        parent_depth=0,
+        layout_path=(child_layout,),
+        prefix_moves=prefix_moves,
+        witness_moves=short_witness,
+        rollout_final_n=0,
+        rollout_feasible=True,
+        rollout_status="SHORT",
+        rollout_runtime_sec=0.02,
+        depth_cap=100,
+        best_depth=best_depth,
+        parent_chain={},
+        stack_count=stack_count,
+        max_height=max_height,
+    )
+
+    assert first_code == second_code
+    assert first_code in candidates
+    assert candidates[first_code][1] == 1
+    assert args._union_rollout_probe_cache[first_code].moves == 4
+    assert args._union_rollout_probe_cache[first_code].status == "SHORT"
+    assert args._frg_macro_edge_moves_by_code[first_code] == prefix_moves
+    assert args._macro_chain_witness_replaced_total == 1
+
+
 def test_union_diversity_qubo_macro_future_credit_v2_gates_debt_and_caps_credit():
     import benchmark_compact_beam_qubo_n0 as bench
 
@@ -4090,6 +4358,52 @@ def test_macro_chain_quality_credit_penalizes_long_completion_witness():
 
     assert bench._union_diversity_macro_future_credit(short_witness, args) > (
         bench._union_diversity_macro_future_credit(long_witness, args) + 18.0
+    )
+
+
+def test_macro_chain_quality_relief_protects_high_quality_long_witness():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        union_diversity_qubo_macro_future_credit_enabled=True,
+        union_diversity_qubo_completion_witness_credit_weight=48.0,
+        union_diversity_qubo_macro_path_credit_weight=12.0,
+        union_diversity_qubo_macro_future_credit_min_witness_quality=0.1,
+        union_diversity_qubo_macro_future_credit_cap=64.0,
+        union_diversity_qubo_macro_witness_move_penalty_weight=24.0,
+        union_diversity_qubo_macro_witness_move_penalty_scale=200,
+        union_diversity_qubo_macro_witness_quality_relief=1.0,
+    )
+    short_strong = _union_feature_for_macro_quota(
+        origin="frg_macro_chain_witness",
+        completion_witness_quality=0.9,
+        rollout_moves=40,
+        macro_edge_chain_length=8,
+        macro_edge_chain_penalty=0.05,
+    )
+    long_strong = _union_feature_for_macro_quota(
+        origin="frg_macro_chain_witness",
+        completion_witness_quality=0.9,
+        rollout_moves=320,
+        macro_edge_chain_length=8,
+        macro_edge_chain_penalty=0.05,
+    )
+    long_weak = _union_feature_for_macro_quota(
+        origin="frg_macro_chain_witness",
+        completion_witness_quality=0.2,
+        rollout_moves=320,
+        macro_edge_chain_length=8,
+        macro_edge_chain_penalty=0.05,
+    )
+
+    assert bench._union_diversity_macro_future_credit(short_strong, args) > (
+        bench._union_diversity_macro_future_credit(long_strong, args) + 1.5
+    )
+    assert bench._union_diversity_macro_future_credit(short_strong, args) < (
+        bench._union_diversity_macro_future_credit(long_strong, args) + 6.0
+    )
+    assert bench._union_diversity_macro_future_credit(short_strong, args) > (
+        bench._union_diversity_macro_future_credit(long_weak, args) + 18.0
     )
 
 
@@ -4267,6 +4581,229 @@ def test_macro_chain_quality_move_penalty_can_require_large_stack_layouts():
     assert bench._union_diversity_macro_future_credit(short_witness, args) > (
         bench._union_diversity_macro_future_credit(long_witness, args) + 18.0
     )
+
+
+def test_macro_alt_relative_move_penalty_only_compares_same_parent_alternatives():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        union_diversity_qubo_macro_future_credit_enabled=True,
+        union_diversity_qubo_completion_witness_credit_weight=48.0,
+        union_diversity_qubo_macro_path_credit_weight=12.0,
+        union_diversity_qubo_macro_future_credit_min_witness_quality=0.1,
+        union_diversity_qubo_macro_future_credit_cap=64.0,
+        union_diversity_qubo_macro_witness_move_penalty_weight=0.0,
+        union_diversity_qubo_macro_alt_relative_move_penalty_weight=18.0,
+    )
+    short = _union_feature_for_macro_quota(
+        origin="frg_macro_chain_witness",
+        parent=b"p",
+        completion_witness_quality=0.9,
+        rollout_moves=40,
+        macro_edge_chain_length=8,
+        macro_edge_chain_penalty=0.05,
+        macro_alt_parent_alternative_count=2,
+        macro_alt_best_witness_moves=40,
+        macro_alt_relative_move_penalty=0.0,
+    )
+    long_same_parent = short._replace(
+        rollout_moves=220,
+        macro_alt_best_witness_moves=40,
+        macro_alt_relative_move_penalty=0.75,
+    )
+    long_unique = short._replace(
+        parent_code=b"unique",
+        rollout_moves=220,
+        macro_alt_parent_alternative_count=1,
+        macro_alt_best_witness_moves=220,
+        macro_alt_relative_move_penalty=0.0,
+    )
+
+    assert bench._union_diversity_macro_future_credit(short, args) > (
+        bench._union_diversity_macro_future_credit(long_same_parent, args) + 12.0
+    )
+    assert bench._union_diversity_macro_future_credit(short, args) == pytest.approx(
+        bench._union_diversity_macro_future_credit(long_unique, args)
+    )
+
+
+def test_macro_alt_pair_penalty_charges_redundant_same_parent_long_witnesses():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(union_diversity_qubo_macro_alt_same_parent_pair_penalty=0.25)
+    left = _union_feature_for_macro_quota(
+        origin="frg_macro_chain_witness",
+        parent=b"p",
+        source_stack=1,
+        macro_alt_parent_alternative_count=3,
+        macro_alt_relative_move_penalty=0.4,
+        macro_alt_signature=(1, 4, 8),
+    )
+    right = left._replace(macro_alt_relative_move_penalty=0.7)
+    different_signature = right._replace(macro_alt_signature=(2, 4, 8))
+    short_peer = right._replace(macro_alt_relative_move_penalty=0.0)
+
+    assert bench._quality_reservoir_pair_penalty(left, right, args) == pytest.approx(0.25)
+    assert bench._quality_reservoir_pair_penalty(left, different_signature, args) == pytest.approx(0.0)
+    assert bench._quality_reservoir_pair_penalty(left, short_peer, args) == pytest.approx(0.0)
+
+
+def test_beam_feedback_same_parent_prefers_shorter_witness():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent = b"parent"
+    short = b"short-witness"
+    long = b"long-witness"
+    candidates = {
+        short: (5, 2, parent),
+        long: (5, 2, parent),
+    }
+    args = _compact_args(
+        beam_feedback_enabled=True,
+        beam_feedback_min_parent_alternatives=2,
+        beam_feedback_witness_relative_penalty_weight=16.0,
+        union_rollout_probe_max_steps=512,
+        _union_rollout_probe_current_results={
+            short: bench.UnionRolloutProbeResult(True, 0, 24, "FRG_FEASIBLE"),
+            long: bench.UnionRolloutProbeResult(True, 0, 192, "FRG_FEASIBLE"),
+        },
+    )
+
+    bench._prepare_beam_feedback_layer(candidates, args)
+    short_feature = bench._quality_reservoir_feature(short, candidates[short], args)
+    long_feature = bench._quality_reservoir_feature(long, candidates[long], args)
+
+    assert short_feature.beam_feedback_parent_alternative_count == 2
+    assert long_feature.beam_feedback_parent_alternative_count == 2
+    assert short_feature.beam_feedback_relative_witness_cost == pytest.approx(0.0)
+    assert long_feature.beam_feedback_relative_witness_cost > 0.0
+    assert short_feature.beam_feedback_score > long_feature.beam_feedback_score
+
+
+def test_beam_feedback_unique_long_witness_is_not_relative_penalized():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent = b"parent"
+    code = b"unique-long-witness"
+    candidates = {code: (5, 2, parent)}
+    args = _compact_args(
+        beam_feedback_enabled=True,
+        beam_feedback_min_parent_alternatives=2,
+        _union_rollout_probe_current_results={
+            code: bench.UnionRolloutProbeResult(True, 0, 220, "FRG_FEASIBLE"),
+        },
+    )
+
+    bench._prepare_beam_feedback_layer(candidates, args)
+    feature = bench._quality_reservoir_feature(code, candidates[code], args)
+
+    assert feature.beam_feedback_parent_alternative_count == 1
+    assert feature.beam_feedback_relative_witness_cost == pytest.approx(0.0)
+
+
+def test_beam_feedback_receiver_debt_and_height_risk_reduce_score():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(
+        beam_feedback_enabled=True,
+        beam_feedback_survival_credit_weight=8.0,
+        beam_feedback_witness_relative_penalty_weight=16.0,
+    )
+
+    safe_score = bench._beam_feedback_score(
+        witness_quality=0.8,
+        progress_score=0.4,
+        source_scarcity=0.3,
+        survival_credit=0.0,
+        receiver_debt=0.0,
+        relative_witness_cost=0.0,
+        height_risk=0.0,
+        args=args,
+    )
+    risky_score = bench._beam_feedback_score(
+        witness_quality=0.8,
+        progress_score=0.4,
+        source_scarcity=0.3,
+        survival_credit=0.0,
+        receiver_debt=0.8,
+        relative_witness_cost=0.0,
+        height_risk=0.9,
+        args=args,
+    )
+
+    assert safe_score > risky_score
+
+
+def test_beam_feedback_survival_credit_is_one_layer_delayed():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    parent = b"selected-parent"
+    child = b"progress-child"
+    unrelated_child = b"unrelated-child"
+    signature = (1, 2, 3, 4)
+    args = _compact_args(
+        beam_feedback_enabled=True,
+        _beam_feedback_pending_selected_by_code={parent: (signature, 7)},
+        _union_rollout_probe_current_results={
+            child: bench.UnionRolloutProbeResult(False, 5, 32, "PARTIAL"),
+            unrelated_child: bench.UnionRolloutProbeResult(False, 8, 32, "PARTIAL"),
+        },
+    )
+    candidates = {
+        child: (6, 2, parent),
+        unrelated_child: (8, 2, b"other-parent"),
+    }
+
+    bench._update_beam_feedback_survival_credit(candidates, args)
+
+    assert args._beam_feedback_survival_credit_by_signature[signature] > 0.0
+    assert args._beam_feedback_pending_selected_by_code == {}
+
+
+def test_beam_feedback_qubo_linear_energy_rewards_high_feedback_candidate():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(beam_feedback_enabled=True, beam_feedback_linear_weight=24.0)
+    low = _union_feature_for_macro_quota(energy=10.0)._replace(beam_feedback_score=0.1)
+    high = low._replace(beam_feedback_score=0.8)
+
+    assert bench._quality_reservoir_qubo_linear_energy(high, args) < bench._quality_reservoir_qubo_linear_energy(
+        low, args
+    )
+
+
+def test_beam_feedback_qubo_linear_energy_does_not_penalize_negative_feedback():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(beam_feedback_enabled=True, beam_feedback_linear_weight=4.0)
+    neutral = _union_feature_for_macro_quota(energy=10.0)._replace(beam_feedback_score=0.0)
+    risky = neutral._replace(beam_feedback_score=-0.5)
+    good = neutral._replace(beam_feedback_score=0.5)
+
+    assert bench._quality_reservoir_qubo_linear_energy(risky, args) == pytest.approx(
+        bench._quality_reservoir_qubo_linear_energy(neutral, args)
+    )
+    assert bench._quality_reservoir_qubo_linear_energy(good, args) < bench._quality_reservoir_qubo_linear_energy(
+        neutral,
+        args,
+    )
+
+
+def test_beam_feedback_pair_penalty_discourages_same_parent_source_signature_redundancy():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    args = _compact_args(beam_feedback_enabled=True, beam_feedback_pair_signature_penalty=0.18)
+    left = _union_feature_for_macro_quota(parent=b"p", source_stack=2)._replace(
+        beam_feedback_signature=(3, 2, 5),
+        beam_feedback_parent_alternative_count=3,
+    )
+    right = left._replace(energy=1.0)
+    different_signature = right._replace(beam_feedback_signature=(4, 2, 5))
+    different_source = right._replace(source_stack=3)
+
+    assert bench._quality_reservoir_pair_penalty(left, right, args) == pytest.approx(0.18)
+    assert bench._quality_reservoir_pair_penalty(left, different_signature, args) == pytest.approx(0.0)
+    assert bench._quality_reservoir_pair_penalty(left, different_source, args) == pytest.approx(0.0)
 
 
 def test_macro_chain_quality_profile_penalty_targets_low_height_medium_cv_layouts():
@@ -4950,6 +5487,474 @@ def test_solver_profile_for_frg_evaluated_union_is_opt_in():
         ).solver_profile
         == "scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish"
     )
+
+
+def test_solver_profile_for_chainaware_full_seed_enables_complete_bs_frg_witness():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    baseline = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"
+    )
+    args = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish"
+    )
+    bench._apply_solver_profile(baseline)
+    bench._apply_solver_profile(args)
+
+    assert baseline.frg_seed_enabled is False
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish"
+    assert args.frg_seed_enabled is True
+    assert args.frg_seed_beam_enabled is True
+    assert args.frg_seed_paper_pure is True
+    assert args.frg_seed_time_limit == pytest.approx(110.0)
+    assert args.frg_seed_time_limit_margin == pytest.approx(5.0)
+    assert args.frg_seed_beam_width >= 1000
+    assert args.frg_seed_candidate_limit_per_state == 3
+    assert args.frg_seed_beam_large_only is False
+    assert args.frg_seed_respect_cap is False
+    assert args.frg_seed_prune_to_incumbent is False
+    assert args.frg_seed_allow_large_over_cap is True
+
+
+def test_open_and_paper_runners_accept_chainaware_full_seed_variant():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    bench._apply_solver_profile(args)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish"
+    assert paper_args.solver_profile == args.solver_profile
+    assert args.frg_seed_enabled is True
+    assert paper_args.frg_seed_enabled is True
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_solver_profile_for_bs_frg_postcompress_is_late_path_compressor():
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    baseline = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"
+    )
+    args = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    )
+    bench._apply_solver_profile(baseline)
+    bench._apply_solver_profile(args)
+
+    assert baseline.bs_frg_postcompress_enabled is False
+    assert args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    )
+    assert args.frg_seed_enabled is False
+    assert args.bs_frg_postcompress_enabled is True
+    assert args.bs_frg_postcompress_paper_pure is True
+    assert args.bs_frg_postcompress_beam_width >= 1000
+    assert args.bs_frg_postcompress_candidate_limit_per_state == 3
+    assert args.bs_frg_postcompress_min_moves >= 200
+    assert args.bs_frg_postcompress_min_ratio >= 1.0
+    assert args.bs_frg_postcompress_respect_cap is False
+
+
+def test_open_and_paper_runners_accept_bs_frg_postcompress_variant():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    bench._apply_solver_profile(args)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    )
+    assert paper_args.solver_profile == args.solver_profile
+    assert args.bs_frg_postcompress_enabled is True
+    assert paper_args.bs_frg_postcompress_enabled is True
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_chainaware_quality_mode_is_runner_visible_postcompress_profile():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    fast_variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"
+    quality_variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish"
+    quality_profile = "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish"
+
+    fast_outer = build_parser().parse_args(["--variant", fast_variant])
+    fast_args = _args_for_variant(fast_outer, fast_variant)
+    bench._apply_solver_profile(fast_args)
+
+    quality_outer = build_parser().parse_args(["--variant", quality_variant])
+    quality_args = _args_for_variant(quality_outer, quality_variant)
+    bench._apply_solver_profile(quality_args)
+    paper_outer = build_paper_parser().parse_args(["--variant", quality_variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert fast_args.bs_frg_postcompress_enabled is False
+    assert quality_args.solver_profile == quality_profile
+    assert paper_args.solver_profile == quality_profile
+    assert quality_args.bs_frg_postcompress_enabled is True
+    assert paper_args.bs_frg_postcompress_enabled is True
+    assert quality_args.bs_frg_postcompress_time_limit == 35.0
+    assert quality_args.bs_frg_postcompress_respect_cap is False
+    assert quality_variant in _variant_names("wang_research_all")
+
+
+def test_chainaware_quality_fast_mode_prefers_short_suffix_budget():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    quality_variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish"
+    fast_variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish"
+    fast_profile = "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish"
+
+    quality_outer = build_parser().parse_args(["--variant", quality_variant])
+    quality_args = _args_for_variant(quality_outer, quality_variant)
+    bench._apply_solver_profile(quality_args)
+    fast_outer = build_parser().parse_args(["--variant", fast_variant])
+    fast_args = _args_for_variant(fast_outer, fast_variant)
+    bench._apply_solver_profile(fast_args)
+    paper_outer = build_paper_parser().parse_args(["--variant", fast_variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert fast_args.solver_profile == fast_profile
+    assert paper_args.solver_profile == fast_profile
+    assert fast_args.bs_frg_postcompress_enabled is True
+    assert fast_args.bs_frg_postcompress_suffix_first is True
+    assert fast_args.bs_frg_postcompress_time_limit < quality_args.bs_frg_postcompress_time_limit
+    assert fast_args.bs_frg_postcompress_full_time_share < quality_args.bs_frg_postcompress_full_time_share
+    assert fast_args.bs_frg_postcompress_early_stop_saved_ratio >= 0.45
+    assert fast_args.bs_frg_postcompress_early_stop_max_moves > 0
+    assert fast_variant in _variant_names("wang_research_all")
+
+
+def test_chainaware_beam_quality_mode_is_beam_native_not_postcompress():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish"
+    profile = "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish"
+
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    bench._apply_solver_profile(args)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert args.solver_profile == profile
+    assert paper_args.solver_profile == profile
+    assert args.bs_frg_postcompress_enabled is False
+    assert paper_args.bs_frg_postcompress_enabled is False
+    assert args.macro_chain_witness_enabled is True
+    assert args.macro_chain_witness_alternatives_enabled is True
+    assert args.macro_chain_witness_alternatives_per_parent == 3
+    assert args.macro_chain_witness_alternative_first_child_limit == 4
+    assert args.macro_chain_witness_alternative_time_limit == pytest.approx(0.03)
+    assert args.macro_chain_witness_alternative_max_generated == 768
+    assert args.union_diversity_qubo_macro_alt_relative_move_penalty_weight == pytest.approx(18.0)
+    assert args.union_diversity_qubo_macro_alt_same_parent_pair_penalty == pytest.approx(0.25)
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_chainaware_feedback_v41_profile_is_beam_native_and_runner_visible():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish"
+    profile = "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish"
+
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    bench._apply_solver_profile(args)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert args.solver_profile == profile
+    assert paper_args.solver_profile == profile
+    assert args.bs_frg_postcompress_enabled is False
+    assert paper_args.bs_frg_postcompress_enabled is False
+    assert args.beam_feedback_enabled is True
+    assert args.beam_feedback_linear_weight == pytest.approx(4.0)
+    assert args.beam_feedback_survival_credit_weight == pytest.approx(8.0)
+    assert args.beam_feedback_pair_signature_penalty == pytest.approx(0.0)
+    assert args.beam_feedback_min_parent_alternatives == 2
+    assert args.beam_feedback_witness_relative_penalty_weight == pytest.approx(16.0)
+    assert args.beam_feedback_min_credit_score == pytest.approx(0.60)
+    assert args.quality_reservoir_enabled is False
+    assert args.quality_reservoir_max_candidates == 2200
+    assert args.quality_reservoir_top_quality == 900
+    assert args.quality_reservoir_origin_reserve == 96
+    assert args.quality_reservoir_witness_reserve == 128
+    assert args.quality_reservoir_progress_reserve == 128
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_row_dict_exposes_beam_feedback_metrics():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_result
+
+    result = CompactBeamResult(
+        case="A1_01_single",
+        status="TARGET_REACHABLE",
+        moves=[],
+        runtime_sec=0.123,
+        expanded=10,
+        generated=20,
+        visited=15,
+        open_count=7,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=3,
+        peak_candidates=4,
+        depth_reached=5,
+        beam_feedback_candidates_total=101,
+        beam_feedback_parent_groups_total=7,
+        beam_feedback_selected_total=5,
+        beam_feedback_avg_selected_score=0.42,
+        beam_feedback_shorter_witness_selected_total=3,
+        beam_feedback_survival_credit_hits=2,
+        beam_feedback_pair_penalty_total=0.54,
+    )
+    args = _compact_args(
+        beam_feedback_enabled=True,
+        beam_feedback_linear_weight=24.0,
+        beam_feedback_survival_credit_weight=8.0,
+        beam_feedback_pair_signature_penalty=0.18,
+        beam_feedback_min_parent_alternatives=2,
+        beam_feedback_witness_relative_penalty_weight=16.0,
+        beam_feedback_min_credit_score=0.35,
+    )
+
+    row = _row_dict_from_result(result, "A1", "01", args)
+
+    expected = {
+        "beam_feedback_enabled": True,
+        "beam_feedback_linear_weight": 24.0,
+        "beam_feedback_survival_credit_weight": 8.0,
+        "beam_feedback_pair_signature_penalty": 0.18,
+        "beam_feedback_min_parent_alternatives": 2,
+        "beam_feedback_witness_relative_penalty_weight": 16.0,
+        "beam_feedback_min_credit_score": 0.35,
+        "beam_feedback_candidates_total": 101,
+        "beam_feedback_parent_groups_total": 7,
+        "beam_feedback_selected_total": 5,
+        "beam_feedback_avg_selected_score": 0.42,
+        "beam_feedback_shorter_witness_selected_total": 3,
+        "beam_feedback_survival_credit_hits": 2,
+        "beam_feedback_pair_penalty_total": 0.54,
+    }
+    for field, value in expected.items():
+        assert field in bench.COMPACT_RESULT_FIELDS
+        if isinstance(value, float):
+            assert row[field] == pytest.approx(value)
+        else:
+            assert row[field] == value
+
+
+def test_row_dict_exposes_bs_frg_postcompress_metrics():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult, _row_dict_from_result
+
+    result = CompactBeamResult(
+        case="A1_01_single",
+        status="TARGET_REACHABLE",
+        moves=[],
+        runtime_sec=0.123,
+        expanded=10,
+        generated=20,
+        visited=15,
+        open_count=7,
+        pruned_bound=1,
+        pruned_business=2,
+        dominated=3,
+        peak_frontier=4,
+        peak_candidates=5,
+        depth_reached=6,
+        bs_frg_postcompress_attempts=2,
+        bs_frg_postcompress_accepted=1,
+        bs_frg_postcompress_moves_saved=37,
+        bs_frg_postcompress_runtime_sec=1.25,
+        bs_frg_postcompress_source="full",
+        bs_frg_postcompress_status="FEASIBLE_BS_FRG_ROLLOUT",
+        bs_frg_postcompress_generated=1234,
+    )
+    args = _compact_args(
+        solver_profile="scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish"
+    )
+    bench._apply_solver_profile(args)
+
+    row = _row_dict_from_result(result, "A1", "01", args)
+
+    assert row["bs_frg_postcompress_enabled"] is True
+    assert row["bs_frg_postcompress_attempts"] == 2
+    assert row["bs_frg_postcompress_accepted"] == 1
+    assert row["bs_frg_postcompress_moves_saved"] == 37
+    assert row["bs_frg_postcompress_runtime_sec"] == pytest.approx(1.25)
+    assert row["bs_frg_postcompress_source"] == "full"
+    assert row["bs_frg_postcompress_status"] == "FEASIBLE_BS_FRG_ROLLOUT"
+    assert row["bs_frg_postcompress_generated"] == 1234
+
+
+def test_bs_frg_postcompress_accepts_shorter_valid_full_witness(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.core import Instance, Move, ProblemVariant
+
+    instance = Instance(
+        instance_id="tiny_postcompress",
+        variant=ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=2,
+        stacks=[[1, 2], [], []],
+    )
+    short = [Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1)]
+    long = [
+        Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1),
+        Move(step=1, box=2, from_stack=1, to_stack=2, from_level=1, to_level=1),
+        Move(step=2, box=2, from_stack=2, to_stack=1, from_level=1, to_level=1),
+    ]
+    args = bench.make_compact_args(
+        bs_frg_postcompress_enabled=True,
+        bs_frg_postcompress_time_limit=1.0,
+        bs_frg_postcompress_min_moves=1,
+        bs_frg_postcompress_min_ratio=0.0,
+        bs_frg_postcompress_min_stack_count=0,
+        bs_frg_postcompress_min_height=0,
+        bs_frg_postcompress_respect_cap=True,
+        bs_frg_postcompress_suffix_points=0,
+    )
+
+    monkeypatch.setattr(
+        bench,
+        "_bs_frg_postcompress_run_solver",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            feasible=True,
+            moves=short,
+            generated_states=7,
+            status="FAKE_FEASIBLE",
+        ),
+    )
+
+    result = bench._bs_frg_postcompress(
+        instance,
+        long,
+        n0=1,
+        args=args,
+        cap=99,
+        deadline=float("inf"),
+    )
+
+    assert list(result.moves) == short
+    assert result.accepted == 1
+    assert result.attempts == 1
+    assert result.moves_saved == 2
+    assert result.source == "full"
+    assert result.status == "FAKE_FEASIBLE"
+    assert result.generated == 7
+
+
+def test_bs_frg_postcompress_suffix_first_stops_after_good_suffix(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.core import Instance, Move, ProblemVariant
+
+    instance = Instance(
+        instance_id="tiny_suffix_first",
+        variant=ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=2,
+        stacks=[[1, 2], [], []],
+    )
+    moves = [
+        Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1),
+        Move(step=1, box=2, from_stack=1, to_stack=2, from_level=1, to_level=1),
+        Move(step=2, box=2, from_stack=2, to_stack=1, from_level=1, to_level=1),
+        Move(step=3, box=2, from_stack=1, to_stack=2, from_level=1, to_level=1),
+        Move(step=4, box=2, from_stack=2, to_stack=1, from_level=1, to_level=1),
+    ]
+    suffix_solution = [
+        Move(step=0, box=2, from_stack=2, to_stack=1, from_level=1, to_level=1),
+    ]
+    calls: list[str] = []
+    args = bench.make_compact_args(
+        bs_frg_postcompress_enabled=True,
+        bs_frg_postcompress_time_limit=10.0,
+        bs_frg_postcompress_min_moves=1,
+        bs_frg_postcompress_min_ratio=0.0,
+        bs_frg_postcompress_min_stack_count=0,
+        bs_frg_postcompress_min_height=0,
+        bs_frg_postcompress_respect_cap=True,
+        bs_frg_postcompress_suffix_points=1,
+        bs_frg_postcompress_suffix_min_moves=1,
+        bs_frg_postcompress_suffix_first=True,
+        bs_frg_postcompress_full_time_share=0.35,
+        bs_frg_postcompress_early_stop_saved_ratio=0.3,
+        bs_frg_postcompress_early_stop_max_moves=3,
+    )
+
+    def fake_solver(call_instance, *_args, **_kwargs):
+        if "_postcompress_" in call_instance.instance_id:
+            calls.append("suffix")
+            return SimpleNamespace(
+                feasible=True,
+                moves=suffix_solution,
+                generated_states=11,
+                status="FAKE_SUFFIX",
+            )
+        calls.append("full")
+        return SimpleNamespace(
+            feasible=True,
+            moves=suffix_solution,
+            generated_states=17,
+            status="FAKE_FULL",
+        )
+
+    monkeypatch.setattr(bench, "_bs_frg_postcompress_run_solver", fake_solver)
+    monkeypatch.setattr(bench, "_moves_reach_n0_with_cap", lambda *_args, **_kwargs: True)
+
+    result = bench._bs_frg_postcompress(
+        instance,
+        moves,
+        n0=1,
+        args=args,
+        cap=99,
+        deadline=float("inf"),
+    )
+
+    assert calls == ["suffix"]
+    assert result.accepted == 1
+    assert result.attempts == 1
+    assert result.moves_saved == 2
+    assert result.source == "suffix@2"
+    assert result.status == "FAKE_SUFFIX"
+    assert len(result.moves) == 3
 
 
 def test_frg_frontier_child_candidate_injects_generated_bs_frg_child(monkeypatch):
@@ -12801,6 +13806,9 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     stable_quality_variant = (
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
     )
+    quality_relief_variant = (
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish"
+    )
     witness_outer = build_parser().parse_args(["--variant", witness_variant])
     outer = build_parser().parse_args(["--variant", variant])
     paper_outer = build_paper_parser().parse_args(["--variant", variant])
@@ -12810,6 +13818,8 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     chain_paper_outer = build_paper_parser().parse_args(["--variant", chain_variant])
     stable_quality_outer = build_parser().parse_args(["--variant", stable_quality_variant])
     stable_quality_paper_outer = build_paper_parser().parse_args(["--variant", stable_quality_variant])
+    quality_relief_outer = build_parser().parse_args(["--variant", quality_relief_variant])
+    quality_relief_paper_outer = build_paper_parser().parse_args(["--variant", quality_relief_variant])
     witness_args = _args_for_variant(witness_outer, witness_variant)
     args = _args_for_variant(outer, variant)
     paper_args = paper_args_for_variant(paper_outer, variant)
@@ -12819,6 +13829,8 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     chain_paper_args = paper_args_for_variant(chain_paper_outer, chain_variant)
     stable_quality_args = _args_for_variant(stable_quality_outer, stable_quality_variant)
     stable_quality_paper_args = paper_args_for_variant(stable_quality_paper_outer, stable_quality_variant)
+    quality_relief_args = _args_for_variant(quality_relief_outer, quality_relief_variant)
+    quality_relief_paper_args = paper_args_for_variant(quality_relief_paper_outer, quality_relief_variant)
     _apply_solver_profile(witness_args)
     _apply_solver_profile(args)
     _apply_solver_profile(paper_args)
@@ -12828,6 +13840,8 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     _apply_solver_profile(chain_paper_args)
     _apply_solver_profile(stable_quality_args)
     _apply_solver_profile(stable_quality_paper_args)
+    _apply_solver_profile(quality_relief_args)
+    _apply_solver_profile(quality_relief_paper_args)
 
     assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"
     assert paper_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish"
@@ -12844,6 +13858,12 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     )
     assert stable_quality_paper_args.solver_profile == (
         "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish"
+    )
+    assert quality_relief_args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish"
+    )
+    assert quality_relief_paper_args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish"
     )
     assert args.macro_chain_witness_enabled is True
     assert args.macro_chain_witness_respect_time_limit is True
@@ -12882,10 +13902,14 @@ def test_open_and_paper_runners_accept_unified_macro_supply_polish_variant():
     assert stable_quality_args.post_polish_accept == "better"
     assert stable_quality_args.post_polish_successor_cache is True
     assert stable_quality_args.post_polish_time_budget == pytest.approx(chain_args.post_polish_time_budget)
+    assert quality_relief_args.union_diversity_qubo_macro_witness_move_penalty_weight > 0.0
+    assert quality_relief_args.union_diversity_qubo_macro_witness_quality_relief == pytest.approx(1.0)
+    assert quality_relief_args.union_diversity_qubo_macro_prefix_penalty_weight > 0.0
     assert variant in _variant_names("wang_research_all")
     assert soft_variant in _variant_names("wang_research_all")
     assert chain_variant in _variant_names("wang_research_all")
     assert stable_quality_variant in _variant_names("wang_research_all")
+    assert quality_relief_variant in _variant_names("wang_research_all")
 
 
 def test_unified_macro_supply_uses_bounded_pass_and_restores_primary_settings(monkeypatch):
@@ -13862,7 +14886,14 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_beam_quality_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_feedback_v41_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_relief_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_full_seed_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
