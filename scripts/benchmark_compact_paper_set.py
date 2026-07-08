@@ -30,12 +30,15 @@ from open_cpmp_benchmarks import (  # noqa: E402
     OPEN_RESULT_FIELDS,
     _TERMINAL_ESCAPE_LAZY_PORTFOLIO_VARIANTS,
     _TERMINAL_ESCAPE_PORTFOLIO_VARIANTS,
+    _apply_post_polish_stability_guard_row,
     _args_for_variant as _open_args_for_variant,
+    _compact_args_without_post_polish,
     _open_full_quality_penalty,
     _open_row_dict_from_instance_result,
     _open_row_valid,
     _select_open_no_regret_row,
     _open_validate_instance_result,
+    _post_polish_stability_guard_enabled,
     _variant_names as _open_variant_names,
 )
 
@@ -292,37 +295,55 @@ def _run_paper_variant_row(
 ) -> dict[str, object]:
     if instance is None:
         instance = _load_paper_case(case)
+
+    def build_row(compact_args: argparse.Namespace) -> dict[str, object]:
+        result = run_compact_beam_instance(case.case_id, instance, compact_args)
+        result_row = _open_row_dict_from_instance_result(result, instance, compact_args)
+        business_cap_enabled = bool(getattr(compact_args, "business_cap_enabled", True))
+        business_ok, goal_ok, msg = _open_validate_instance_result(
+            result,
+            instance,
+            business_alpha=args.alpha,
+            business_cap_enabled=business_cap_enabled,
+        )
+        result_row.update(
+            {
+                "dataset": case.dataset,
+                "family": case.family,
+                "variant": variant,
+                "source_file": str(case.instance_path),
+                "reference_file": "",
+                "reference_moves": "",
+                "move_gap": "",
+                "reference_tiers": "",
+                "business_alpha": args.alpha,
+                "business_cap_enabled": business_cap_enabled,
+                "business_ok": business_ok,
+                "goal_validation_ok": goal_ok,
+                "validation_msg": msg,
+            }
+        )
+        result_row = _apply_paper_scorecard(
+            result_row,
+            time_limit=args.time_limit,
+            business_cap_enabled=business_cap_enabled,
+        )
+        result_row["full_quality_penalty"] = _open_full_quality_penalty(result_row)
+        return result_row
+
     compact_args = _args_for_variant(args, variant, instance)
-    result = run_compact_beam_instance(case.case_id, instance, compact_args)
-    row = _open_row_dict_from_instance_result(result, instance, compact_args)
-    business_cap_enabled = bool(getattr(compact_args, "business_cap_enabled", True))
-    business_ok, goal_ok, msg = _open_validate_instance_result(
-        result,
-        instance,
-        business_alpha=args.alpha,
-        business_cap_enabled=business_cap_enabled,
-    )
-    row.update(
-        {
-            "dataset": case.dataset,
-            "family": case.family,
-            "variant": variant,
-            "source_file": str(case.instance_path),
-            "reference_file": "",
-            "reference_moves": "",
-            "move_gap": "",
-            "reference_tiers": "",
-            "business_alpha": args.alpha,
-            "business_cap_enabled": business_cap_enabled,
-            "business_ok": business_ok,
-            "goal_validation_ok": goal_ok,
-            "validation_msg": msg,
-        }
-    )
-    row = _apply_paper_scorecard(
+    row = build_row(compact_args)
+    guard_enabled = _post_polish_stability_guard_enabled(args, compact_args)
+    fallback_row = None
+    attempted = False
+    if guard_enabled and not _open_row_valid(row):
+        attempted = True
+        fallback_row = build_row(_compact_args_without_post_polish(compact_args))
+    row = _apply_post_polish_stability_guard_row(
         row,
-        time_limit=args.time_limit,
-        business_cap_enabled=business_cap_enabled,
+        fallback_row,
+        enabled=guard_enabled,
+        attempted=attempted,
     )
     row["full_quality_penalty"] = _open_full_quality_penalty(row)
     return row
@@ -615,6 +636,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--macro-witness-effective-depth-weight", type=float)
     parser.add_argument("--macro-witness-goal-effective-depth-weight", type=float)
     parser.add_argument("--post-polish-qubo", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--post-polish-stability-guard", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--post-polish-respect-time-limit", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-max-attempts", type=int)
     parser.add_argument("--post-polish-time-budget", type=float)

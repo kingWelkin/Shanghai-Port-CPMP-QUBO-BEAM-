@@ -61,6 +61,16 @@ OPEN_EXTRA_FIELDS = [
     "portfolio_profiles",
     "portfolio_selected_profile",
     "portfolio_runtime_sec",
+    "post_polish_stability_guard_enabled",
+    "post_polish_stability_guard_attempted",
+    "post_polish_stability_guard_used",
+    "post_polish_stability_guard_selected_source",
+    "post_polish_stability_guard_original_final_n",
+    "post_polish_stability_guard_original_moves",
+    "post_polish_stability_guard_original_runtime_sec",
+    "post_polish_stability_guard_fallback_final_n",
+    "post_polish_stability_guard_fallback_moves",
+    "post_polish_stability_guard_fallback_runtime_sec",
 ]
 OPEN_RESULT_FIELDS = [field for field in OPEN_EXTRA_FIELDS if field not in COMPACT_RESULT_FIELDS] + COMPACT_RESULT_FIELDS
 
@@ -1288,6 +1298,61 @@ def _open_row_valid(row: dict[str, object]) -> bool:
     )
 
 
+def _post_polish_stability_guard_enabled(args: argparse.Namespace, compact_args: argparse.Namespace) -> bool:
+    return bool(getattr(args, "post_polish_stability_guard", True)) and bool(
+        getattr(compact_args, "post_polish_qubo", False)
+    )
+
+
+def _compact_args_without_post_polish(compact_args: argparse.Namespace) -> argparse.Namespace:
+    values = dict(vars(compact_args))
+    explicit = set(values.get("_profile_explicit_keys", set()) or set())
+    explicit.add("post_polish_qubo")
+    values["_profile_explicit_keys"] = explicit
+    values["post_polish_qubo"] = False
+    return argparse.Namespace(**values)
+
+
+def _runtime_text(value: object) -> str:
+    return f"{_numeric({'value': value}, 'value', 0.0):.6f}"
+
+
+def _apply_post_polish_stability_guard_row(
+    repaired_row: dict[str, object],
+    beam_fallback_row: dict[str, object] | None,
+    *,
+    enabled: bool,
+    attempted: bool,
+) -> dict[str, object]:
+    fallback_valid = beam_fallback_row is not None and _open_row_valid(beam_fallback_row)
+    repaired_valid = _open_row_valid(repaired_row)
+    use_fallback = enabled and attempted and fallback_valid and not repaired_valid
+    selected = dict(beam_fallback_row if use_fallback and beam_fallback_row is not None else repaired_row)
+    original_runtime = _numeric(repaired_row, "runtime_sec", 0.0)
+    fallback_runtime = _numeric(beam_fallback_row or {}, "runtime_sec", 0.0)
+    if attempted:
+        selected["runtime_sec"] = f"{original_runtime + fallback_runtime:.6f}"
+    selected.update(
+        {
+            "post_polish_stability_guard_enabled": enabled,
+            "post_polish_stability_guard_attempted": attempted,
+            "post_polish_stability_guard_used": use_fallback,
+            "post_polish_stability_guard_selected_source": "beam_fallback"
+            if use_fallback
+            else ("repaired" if repaired_valid else "repaired_failed"),
+            "post_polish_stability_guard_original_final_n": repaired_row.get("final_n", ""),
+            "post_polish_stability_guard_original_moves": repaired_row.get("moves", ""),
+            "post_polish_stability_guard_original_runtime_sec": _runtime_text(original_runtime),
+            "post_polish_stability_guard_fallback_final_n": (beam_fallback_row or {}).get("final_n", ""),
+            "post_polish_stability_guard_fallback_moves": (beam_fallback_row or {}).get("moves", ""),
+            "post_polish_stability_guard_fallback_runtime_sec": _runtime_text(fallback_runtime)
+            if attempted
+            else "",
+        }
+    )
+    return selected
+
+
 def _open_full_quality_penalty(row: dict[str, object], penalty_factor: int = 4) -> int:
     moves = _optional_int(row.get("moves"))
     if _open_row_valid(row) and moves is not None:
@@ -2319,32 +2384,51 @@ def _run_open_variant_row(
     args: argparse.Namespace,
     variant: str,
 ) -> dict[str, object]:
+    def build_row(compact_args: argparse.Namespace) -> dict[str, object]:
+        result = run_compact_beam_instance(case.case_id, instance, compact_args)
+        result_row = _open_row_dict_from_instance_result(result, instance, compact_args)
+        business_ok, goal_ok, msg = _open_validate_instance_result(
+            result,
+            instance,
+            business_alpha=args.alpha,
+            business_cap_enabled=getattr(compact_args, "business_cap_enabled", True),
+        )
+        reference_moves = case.reference.optimal_moves
+        moves = result_row.get("moves")
+        result_row.update(
+            {
+                "dataset": "DLTS",
+                "family": case.family,
+                "variant": variant,
+                "source_file": str(case.instance_path),
+                "reference_file": str(case.reference_path) if case.reference_path else "",
+                "reference_moves": reference_moves if reference_moves is not None else "",
+                "move_gap": (int(moves) - reference_moves)
+                if moves not in (None, "") and reference_moves is not None
+                else "",
+                "reference_tiers": case.reference.max_height if case.reference.max_height is not None else "",
+                "business_alpha": args.alpha,
+                "business_ok": business_ok,
+                "goal_validation_ok": goal_ok,
+                "validation_msg": msg,
+            }
+        )
+        result_row["full_quality_penalty"] = _open_full_quality_penalty(result_row)
+        return result_row
+
     compact_args = _args_for_variant(args, variant, instance)
-    result = run_compact_beam_instance(case.case_id, instance, compact_args)
-    row = _open_row_dict_from_instance_result(result, instance, compact_args)
-    business_ok, goal_ok, msg = _open_validate_instance_result(
-        result,
-        instance,
-        business_alpha=args.alpha,
-        business_cap_enabled=getattr(compact_args, "business_cap_enabled", True),
-    )
-    reference_moves = case.reference.optimal_moves
-    moves = row.get("moves")
-    row.update(
-        {
-            "dataset": "DLTS",
-            "family": case.family,
-            "variant": variant,
-            "source_file": str(case.instance_path),
-            "reference_file": str(case.reference_path) if case.reference_path else "",
-            "reference_moves": reference_moves if reference_moves is not None else "",
-            "move_gap": (int(moves) - reference_moves) if moves not in (None, "") and reference_moves is not None else "",
-            "reference_tiers": case.reference.max_height if case.reference.max_height is not None else "",
-            "business_alpha": args.alpha,
-            "business_ok": business_ok,
-            "goal_validation_ok": goal_ok,
-            "validation_msg": msg,
-        }
+    row = build_row(compact_args)
+    guard_enabled = _post_polish_stability_guard_enabled(args, compact_args)
+    fallback_row = None
+    attempted = False
+    if guard_enabled and not _open_row_valid(row):
+        attempted = True
+        fallback_row = build_row(_compact_args_without_post_polish(compact_args))
+    row = _apply_post_polish_stability_guard_row(
+        row,
+        fallback_row,
+        enabled=guard_enabled,
+        attempted=attempted,
     )
     row["full_quality_penalty"] = _open_full_quality_penalty(row)
     return row
@@ -2636,6 +2720,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--parent-core-cap", type=int)
     parser.add_argument("--hardness-route-light-threshold", type=float, default=0.65)
     parser.add_argument("--post-polish-qubo", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--post-polish-stability-guard", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--post-polish-shortcut-replay-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-shortcut-min-delete", type=int)
     parser.add_argument("--post-polish-shortcut-max-delete", type=int)
