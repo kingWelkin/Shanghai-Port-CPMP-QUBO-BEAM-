@@ -568,7 +568,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sample-per-family", type=int, default=10)
     parser.add_argument("--families", nargs="+")
     parser.add_argument("--max-total", type=int)
-    parser.add_argument("--variant", default="qubo_scheduler_state_v5_qubo_diversity_union_polish")
+    parser.add_argument(
+        "--variant",
+        default=(
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+            "wang_route_v43_polish"
+        ),
+    )
     parser.add_argument("--solver-profile", default="speed_v2")
     parser.add_argument("--time-limit", type=_strict_positive_time_limit, default=20.0)
     parser.add_argument("--alpha", type=float, default=10.0)
@@ -583,6 +589,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--beam-width", type=int)
     parser.add_argument("--core-width", type=int)
     parser.add_argument("--parent-core-cap", type=int)
+    parser.add_argument("--no-qubo-beam-width", type=int, default=1200)
     parser.add_argument("--union-diversity-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-diversity-qubo-supplement-width", type=int)
     parser.add_argument("--union-diversity-qubo-focus-n", type=int)

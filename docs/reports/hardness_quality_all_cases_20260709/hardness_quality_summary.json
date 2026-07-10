@@ -1,0 +1,174 @@
+{
+  "hardness_formula": {
+    "size_norm": 0.3,
+    "density": 0.25,
+    "bad_ratio": 0.3,
+    "initial_scarcity_risk": 0.15,
+    "scale": "0-100",
+    "solution_quality_axis": "moves / container_count",
+    "raw_solution_quality": "moves"
+  },
+  "totals": {
+    "cases": 1681,
+    "solved": 1681,
+    "moves": 114331.0,
+    "full_quality_penalty": 114331.0,
+    "median_hardness": 73.94152965972133
+  },
+  "polish_quality_totals": {
+    "cases": 1681,
+    "solved": 1678,
+    "moves": 113348.0,
+    "full_quality_penalty": 114471.0,
+    "median_hardness": 73.94152965972133,
+    "scope": "v4.0 polish/repaired mainline rows before stable guard patch synthesis"
+  },
+  "suite_summary": [
+    {
+      "suite": "BF",
+      "cases": 721,
+      "solved": 721,
+      "moves": 46435.0,
+      "full_quality_penalty": 46435,
+      "median_hardness": 70.01684330183198,
+      "p90_hardness": 79.75130791019993,
+      "median_relocations_per_container": 0.7625
+    },
+    {
+      "suite": "CV",
+      "cases": 840,
+      "solved": 840,
+      "moves": 60966.0,
+      "full_quality_penalty": 60966,
+      "median_hardness": 76.87730207590596,
+      "p90_hardness": 86.04785470792218,
+      "median_relocations_per_container": 1.369047619047619
+    },
+    {
+      "suite": "Open120",
+      "cases": 120,
+      "solved": 120,
+      "moves": 6930.0,
+      "full_quality_penalty": 6930,
+      "median_hardness": 79.4676932254271,
+      "p90_hardness": 82.74161529632143,
+      "median_relocations_per_container": 1.7514285714285713
+    }
+  ],
+  "advantage_summary": [
+    {
+      "suite": "Open120",
+      "both_solved_cases": 120,
+      "total_moves_saved": 1152.0,
+      "median_moves_saved": 5.0,
+      "improved_share": 0.8833333333333333,
+      "worsened_share": 0.03333333333333333
+    },
+    {
+      "suite": "BF",
+      "both_solved_cases": 719,
+      "total_moves_saved": 808.0,
+      "median_moves_saved": 0.0,
+      "improved_share": 0.3379694019471488,
+      "worsened_share": 0.11265646731571627
+    },
+    {
+      "suite": "CV",
+      "both_solved_cases": 839,
+      "total_moves_saved": 4320.0,
+      "median_moves_saved": 3.0,
+      "improved_share": 0.7520858164481525,
+      "worsened_share": 0.08820023837902265
+    }
+  ],
+  "coverage_summary": [
+    {
+      "algorithm": "V4.0 stable",
+      "Open120_rate": 1.0,
+      "Open120_label": "120/120",
+      "Open120_moves": 6930.0,
+      "Open120_moves_label": "polish moves 6930",
+      "Paper BF/CV_rate": 1.0,
+      "Paper BF/CV_label": "1561/1561",
+      "Paper BF/CV_moves": 106418.0,
+      "Paper BF/CV_moves_label": "polish moves 106418",
+      "Real30_rate": 1.0,
+      "Real30_label": "30/30",
+      "Real30_moves": 509,
+      "Real30_moves_label": "moves 509",
+      "note": "coverage uses stable all-solved; Open/Paper move totals use v4.0 polish/repaired mainline rows"
+    },
+    {
+      "algorithm": "BS-FRG pure",
+      "Open120_rate": 1.0,
+      "Open120_label": "120/120",
+      "Open120_moves": 4121.0,
+      "Open120_moves_label": "moves 4121",
+      "Paper BF/CV_rate": 0.9897501601537476,
+      "Paper BF/CV_label": "1545/1561",
+      "Paper BF/CV_moves": 97808.0,
+      "Paper BF/CV_moves_label": "moves 97808",
+      "Real30_rate": 1.0,
+      "Real30_label": "30/30",
+      "Real30_moves": 516,
+      "Real30_moves_label": "moves 516",
+      "note": "paper-style pure run, no QUBO mainline; Open/Paper/Real30 t20"
+    },
+    {
+      "algorithm": "Wang BS-B paper",
+      "Open120_rate": 1.0,
+      "Open120_label": "120/120",
+      "Open120_moves": 4569.0,
+      "Open120_moves_label": "moves 4569",
+      "Paper BF/CV_rate": 0.57847533632287,
+      "Paper BF/CV_label": "903/1561",
+      "Paper BF/CV_moves": 32650.0,
+      "Paper BF/CV_moves_label": "moves 32650",
+      "Real30_rate": 1.0,
+      "Real30_label": "30/30",
+      "Real30_moves": 757,
+      "Real30_moves_label": "moves 757",
+      "note": "adapted Wang-Jin-Lim BS-B baby-move beam baseline"
+    },
+    {
+      "algorithm": "Classic beam",
+      "Open120_rate": 0.7,
+      "Open120_label": "84/120",
+      "Open120_moves": 2711.0,
+      "Open120_moves_label": "moves 2711",
+      "Paper BF/CV_rate": 0.8392056374119155,
+      "Paper BF/CV_label": "1310/1561",
+      "Paper BF/CV_moves": 62492.0,
+      "Paper BF/CV_moves_label": "moves 62492",
+      "Real30_rate": 0.9333333333333333,
+      "Real30_label": "28/30",
+      "Real30_moves": 455,
+      "Real30_moves_label": "moves 455",
+      "note": "no-QUBO beam; Open/Paper t120; Real30 uses budget-best historical control"
+    },
+    {
+      "algorithm": "A* no-proof",
+      "Open120_rate": null,
+      "Open120_label": "not scalable",
+      "Open120_moves": null,
+      "Open120_moves_label": "",
+      "Paper BF/CV_rate": null,
+      "Paper BF/CV_label": "not scalable",
+      "Paper BF/CV_moves": null,
+      "Paper BF/CV_moves_label": "",
+      "Real30_rate": 1.0,
+      "Real30_label": "30/30",
+      "Real30_moves": 514,
+      "Real30_moves_label": "moves 514",
+      "note": "exact-search reference on 30 real single-bay cases only"
+    }
+  ],
+  "component_charts": {
+    "size_norm": "docs\\reports\\hardness_quality_all_cases_20260709\\hardness_component_size_norm.png",
+    "density": "docs\\reports\\hardness_quality_all_cases_20260709\\hardness_component_density.png",
+    "bad_ratio": "docs\\reports\\hardness_quality_all_cases_20260709\\hardness_component_bad_ratio.png",
+    "scarcity_risk": "docs\\reports\\hardness_quality_all_cases_20260709\\hardness_component_scarcity_risk.png",
+    "grid": "docs\\reports\\hardness_quality_all_cases_20260709\\hardness_component_scatter_grid.png",
+    "all_metrics_grid": "docs\\reports\\hardness_quality_all_cases_20260709\\hardness_all_metrics_grid.png"
+  }
+}

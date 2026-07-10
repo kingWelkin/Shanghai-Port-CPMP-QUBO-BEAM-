@@ -1,0 +1,22 @@
+{"kind":"deck","id":"pr/2aqijp","name":"Deck"}
+{"kind":"layout","layoutId":"078de4fd-1b42-4fe4-964d-28f5ce10ada9","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"e5ee1542-261d-4f39-9bcf-239bd2350964","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/gloh2o","slide":1,"title":"CPMP V4.0 FULL SNAPSHOT · OPEN120 + BF + CV","textShapes":12}
+{"kind":"shape","id":"sh/3m94fu18","slide":1,"name":"top-rule","bbox":[42,94,1196,1]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":1,"name":"eyebrow","text":"CPMP V4.0 FULL SNAPSHOT · OPEN120 + BF + CV","textPreview":"CPMP V4.0 FULL SNAPSHOT · OPEN120 + BF + CV","textChars":43,"textLines":1,"bbox":[42,28,420,22]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":1,"name":"title","text":"Hardness shows quality pressure after full coverage","textPreview":"Hardness shows quality pressure after full coverage","textChars":51,"textLines":1,"bbox":[42,51,1120,46]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":1,"name":"subtitle","text":"V4.0 stable solves all 1,681 benchmark cases; the hard CV tail now appears as path-quality pressure rather than feasibility failure.","textPreview":"V4.0 stable solves all 1,681 benchmark cases; the hard CV tail now appears as path-quality pressure rather than feasibility failure.","textChars":132,"textLines":1,"bbox":[42,111,1040,32]}
+{"kind":"shape","id":"sh/sji5snel","slide":1,"name":"right-rail-bg","bbox":[826,154,412,478]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":1,"name":"right-rail-title","text":"Coverage against classic references","textPreview":"Coverage against classic references","textChars":35,"textLines":1,"bbox":[848,176,350,28]}
+{"kind":"shape","id":"sh/za1gvy90","slide":1,"name":"metric-rule","bbox":[848,448,348,1]}
+{"kind":"textbox","id":"sh/z61032ls","slide":1,"name":"metric-1","text":"1681/1681 solved","textPreview":"1681/1681 solved","textChars":16,"textLines":1,"bbox":[848,462,340,40]}
+{"kind":"textbox","id":"sh/al87ed8b","slide":1,"name":"metric-1-label","text":"solved under the stable all-solved reporting standard","textPreview":"solved under the stable all-solved reporting standard","textChars":53,"textLines":1,"bbox":[848,503,330,22]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":1,"name":"metric-2","text":"BS-FRG pure: 1545/1561","textPreview":"BS-FRG pure: 1545/1561","textChars":22,"textLines":1,"bbox":[848,532,320,24]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":1,"name":"metric-2-label","text":"same paper BF/CV scope, no QUBO mainline","textPreview":"same paper BF/CV scope, no QUBO mainline","textChars":40,"textLines":1,"bbox":[848,557,330,22]}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":1,"name":"metric-3","text":"Classic beam: 84/120 open · full too slow paper","textPreview":"Classic beam: 84/120 open · full too slow paper","textChars":47,"textLines":1,"bbox":[848,585,340,22]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":1,"name":"metric-3-label","text":"A*: 30/30 Real30 only","textPreview":"A*: 30/30 Real30 only","textChars":21,"textLines":1,"bbox":[848,608,340,18]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":1,"name":"suite-note","text":"Open120 120/120 · BF 721/721 · CV 840/840","textPreview":"Open120 120/120 · BF 721/721 · CV 840/840","textChars":41,"textLines":1,"bbox":[42,602,520,24]}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":1,"name":"method-note","text":"Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. Solution quality = relocations per container for the scatter; raw moves remain the same-case quality metric. Coverage is reported separately.","textPreview":"Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. Solution quality = relocations per container for the scatte...","textChars":219,"textLines":1,"bbox":[42,632,1110,42]}
+{"kind":"image","id":"im/i5sneloj","slide":1,"name":"","alt":"Scatter plot of hardness versus relocation quality across all cases","bbox":[34,154,770,420]}
+{"kind":"image","id":"im/7ed8bat4","slide":1,"name":"","alt":"Coverage matrix comparing V4 stable, pure BS-FRG, classic beam, and A star references with explicit unavailable states","bbox":[842,210,378,226]}
+{"kind":"notes","id":"nt/gloh2o","slide":1,"text":""}

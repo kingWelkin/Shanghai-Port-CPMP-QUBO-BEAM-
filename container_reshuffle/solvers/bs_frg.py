@@ -904,6 +904,33 @@ class BsFrgSolver(Solver):
         completion_cache: dict[_FrgLayout, _RolloutResult] = {}
         best_moves: tuple[Move, ...] | None = None
         best_status = "NO_SOLUTION"
+        incumbent_move_count = (
+            len(config.exact_incumbent_moves)
+            if config.exact_incumbent_moves is not None and len(config.exact_incumbent_moves) > 0
+            else None
+        )
+        stop_on_incumbent_improvement = bool(getattr(config, "exact_stop_on_incumbent_improvement", False))
+
+        def incumbent_improved() -> bool:
+            return (
+                incumbent_move_count is not None
+                and best_moves is not None
+                and len(best_moves) < int(incumbent_move_count)
+            )
+
+        def build_feasible_solution() -> Solution:
+            return Solution(
+                solver_name=self.name,
+                feasible=True,
+                optimal=False,
+                objective=float(len(best_moves or ())),
+                runtime_sec=time.perf_counter() - start,
+                moves=list(best_moves or ()),
+                status=best_status,
+                expanded_states=expanded,
+                generated_states=generated,
+                visited_states=len(visited_depths),
+            )
 
         if self.paper_pure:
             initial_rollout = _frg_completion_cached(
@@ -928,6 +955,8 @@ class BsFrgSolver(Solver):
         if initial_rollout.feasible:
             best_moves = initial_rollout.moves
             best_status = "FEASIBLE_FRG_INITIAL"
+            if stop_on_incumbent_improvement and incumbent_improved():
+                return build_feasible_solution()
 
         frontier = [_BeamNode(initial, tuple())]
         while frontier and time.perf_counter() < deadline:
@@ -936,6 +965,8 @@ class BsFrgSolver(Solver):
                 if len(node.moves) >= max_depth or time.perf_counter() >= deadline:
                     continue
                 if not self.paper_pure and best_moves is not None and len(node.moves) >= len(best_moves):
+                    continue
+                if incumbent_move_count is not None and len(node.moves) >= int(incumbent_move_count):
                     continue
                 expanded += 1
                 children = _generate_candidates(
@@ -964,6 +995,8 @@ class BsFrgSolver(Solver):
                         if best_moves is None or len(child_moves) < len(best_moves):
                             best_moves = child_moves
                             best_status = "FEASIBLE_BEAM_GOAL"
+                            if stop_on_incumbent_improvement and incumbent_improved():
+                                return build_feasible_solution()
                     remaining_depth = _candidate_rollout_budget(
                         max_depth,
                         len(child_moves),
@@ -994,6 +1027,8 @@ class BsFrgSolver(Solver):
                         if best_moves is None or len(full_moves) < len(best_moves):
                             best_moves = full_moves
                             best_status = "FEASIBLE_BS_FRG_ROLLOUT"
+                            if stop_on_incumbent_improvement and incumbent_improved():
+                                return build_feasible_solution()
                     estimated_total = len(child_moves) + len(rollout.moves)
                     if self.paper_pure:
                         score = _paper_pure_evaluation_score(
@@ -1029,18 +1064,7 @@ class BsFrgSolver(Solver):
 
         runtime = time.perf_counter() - start
         if best_moves is not None:
-            return Solution(
-                solver_name=self.name,
-                feasible=True,
-                optimal=False,
-                objective=float(len(best_moves)),
-                runtime_sec=runtime,
-                moves=list(best_moves),
-                status=best_status,
-                expanded_states=expanded,
-                generated_states=generated,
-                visited_states=len(visited_depths),
-            )
+            return build_feasible_solution()
         status = "TIME_LIMIT" if time.perf_counter() >= deadline else best_status
         return Solution(
             solver_name=self.name,

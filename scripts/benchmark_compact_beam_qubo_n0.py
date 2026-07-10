@@ -493,6 +493,8 @@ COMPACT_EXTRA_FIELDS = [
     "bs_frg_postcompress_suffix_first",
     "bs_frg_postcompress_early_stop_saved_ratio",
     "bs_frg_postcompress_early_stop_max_moves",
+    "bs_frg_postcompress_incumbent_bound_enabled",
+    "bs_frg_postcompress_stop_on_incumbent_improvement",
     "bs_frg_postcompress_attempts",
     "bs_frg_postcompress_accepted",
     "bs_frg_postcompress_moves_saved",
@@ -1685,6 +1687,8 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "bs_frg_postcompress_suffix_first": False,
         "bs_frg_postcompress_early_stop_saved_ratio": 0.0,
         "bs_frg_postcompress_early_stop_max_moves": 0,
+        "bs_frg_postcompress_incumbent_bound_enabled": False,
+        "bs_frg_postcompress_stop_on_incumbent_improvement": False,
         "frg_candidate_supplement_enabled": False,
         "frg_candidate_supplement_width": 0,
         "frg_candidate_focus_n": -1,
@@ -3171,6 +3175,35 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_c
     "bs_frg_postcompress_early_stop_max_moves": 220,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "frg_seed_enabled": False,
+    "frg_seed_prune_to_incumbent": False,
+    "bs_frg_postcompress_enabled": True,
+    "bs_frg_postcompress_time_limit": 4.0,
+    "bs_frg_postcompress_time_limit_margin": 0.25,
+    "bs_frg_postcompress_min_moves": 120,
+    "bs_frg_postcompress_min_ratio": 0.0,
+    "bs_frg_postcompress_min_stack_count": 0,
+    "bs_frg_postcompress_min_height": 0,
+    "bs_frg_postcompress_min_max_steps": 1000,
+    "bs_frg_postcompress_max_steps_multiplier": 20,
+    "bs_frg_postcompress_max_steps_cap": 0,
+    "bs_frg_postcompress_respect_cap": False,
+    "bs_frg_postcompress_allow_large_over_cap": True,
+    "bs_frg_postcompress_paper_pure": True,
+    "bs_frg_postcompress_beam_width": 1000,
+    "bs_frg_postcompress_candidate_limit_per_state": 3,
+    "bs_frg_postcompress_suffix_points": 0,
+    "bs_frg_postcompress_suffix_min_moves": 1,
+    "bs_frg_postcompress_full_time_share": 1.0,
+    "bs_frg_postcompress_suffix_first": False,
+    "bs_frg_postcompress_early_stop_saved_ratio": 0.0,
+    "bs_frg_postcompress_early_stop_max_moves": 0,
+    "bs_frg_postcompress_incumbent_bound_enabled": True,
+    "bs_frg_postcompress_stop_on_incumbent_improvement": False,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -4652,6 +4685,14 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         ),
         "bs_frg_postcompress_early_stop_saved_ratio": "--bs-frg-postcompress-early-stop-saved-ratio",
         "bs_frg_postcompress_early_stop_max_moves": "--bs-frg-postcompress-early-stop-max-moves",
+        "bs_frg_postcompress_incumbent_bound_enabled": (
+            "--bs-frg-postcompress-incumbent-bound-enabled",
+            "--no-bs-frg-postcompress-incumbent-bound-enabled",
+        ),
+        "bs_frg_postcompress_stop_on_incumbent_improvement": (
+            "--bs-frg-postcompress-stop-on-incumbent-improvement",
+            "--no-bs-frg-postcompress-stop-on-incumbent-improvement",
+        ),
         "frg_candidate_supplement_enabled": (
             "--frg-candidate-supplement-enabled",
             "--no-frg-candidate-supplement-enabled",
@@ -10216,7 +10257,7 @@ def _bs_frg_postcompress_should_run(
         return False
     min_moves = max(0, int(getattr(args, "bs_frg_postcompress_min_moves", 0) or 0))
     min_ratio = max(0.0, float(getattr(args, "bs_frg_postcompress_min_ratio", 0.0) or 0.0))
-    ratio_gate = n0 > 0 and len(moves) >= int(math.ceil(float(n0) * min_ratio))
+    ratio_gate = min_ratio > 0.0 and n0 > 0 and len(moves) >= int(math.ceil(float(n0) * min_ratio))
     if len(moves) < min_moves and not ratio_gate:
         return False
     if not math.isinf(deadline) and deadline - time.perf_counter() <= 0:
@@ -10253,8 +10294,10 @@ def _bs_frg_postcompress_run_solver(
     *,
     max_depth: int,
     time_limit: float,
+    incumbent_moves: list[Move] | tuple[Move, ...] | None = None,
 ) -> Solution:
     solver = BsFrgSolver(paper_pure=bool(getattr(args, "bs_frg_postcompress_paper_pure", True)))
+    use_incumbent = bool(getattr(args, "bs_frg_postcompress_incumbent_bound_enabled", False))
     return solver.solve(
         instance,
         SolverConfig(
@@ -10266,6 +10309,10 @@ def _bs_frg_postcompress_run_solver(
             ),
             enable_visited_pruning=True,
             time_limit_sec=max(0.001, float(time_limit)),
+            exact_incumbent_moves=list(incumbent_moves) if use_incumbent and incumbent_moves else None,
+            exact_stop_on_incumbent_improvement=bool(
+                getattr(args, "bs_frg_postcompress_stop_on_incumbent_improvement", False)
+            ),
         ),
     )
 
@@ -10359,7 +10406,13 @@ def _bs_frg_postcompress(
             return False
         attempts += 1
         max_depth = _bs_frg_postcompress_max_steps(instance, args, len(best_moves) - 1)
-        solution = _bs_frg_postcompress_run_solver(instance, args, max_depth=max_depth, time_limit=phase_budget)
+        solution = _bs_frg_postcompress_run_solver(
+            instance,
+            args,
+            max_depth=max_depth,
+            time_limit=phase_budget,
+            incumbent_moves=best_moves,
+        )
         generated += int(getattr(solution, "generated_states", 0) or 0)
         best_status = str(getattr(solution, "status", best_status))
         if not solution.feasible or not solution.moves or len(solution.moves) >= len(best_moves):
@@ -10402,6 +10455,7 @@ def _bs_frg_postcompress(
                 args,
                 max_depth=max_depth,
                 time_limit=remaining_budget,
+                incumbent_moves=best_moves[idx:],
             )
             generated += int(getattr(solution, "generated_states", 0) or 0)
             best_status = str(getattr(solution, "status", best_status))
@@ -18064,6 +18118,16 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
                 "bs_frg_postcompress_early_stop_max_moves",
                 0,
             ),
+            "bs_frg_postcompress_incumbent_bound_enabled": getattr(
+                args,
+                "bs_frg_postcompress_incumbent_bound_enabled",
+                False,
+            ),
+            "bs_frg_postcompress_stop_on_incumbent_improvement": getattr(
+                args,
+                "bs_frg_postcompress_stop_on_incumbent_improvement",
+                False,
+            ),
             "bs_frg_postcompress_attempts": result.bs_frg_postcompress_attempts,
             "bs_frg_postcompress_accepted": result.bs_frg_postcompress_accepted,
             "bs_frg_postcompress_moves_saved": result.bs_frg_postcompress_moves_saved,
@@ -18941,6 +19005,16 @@ def main() -> int:
     parser.add_argument("--bs-frg-postcompress-suffix-first", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--bs-frg-postcompress-early-stop-saved-ratio", type=float, default=None)
     parser.add_argument("--bs-frg-postcompress-early-stop-max-moves", type=int, default=None)
+    parser.add_argument(
+        "--bs-frg-postcompress-incumbent-bound-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument(
+        "--bs-frg-postcompress-stop-on-incumbent-improvement",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     parser.add_argument("--frg-candidate-supplement-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-candidate-supplement-width", type=int, default=None)
     parser.add_argument("--frg-candidate-focus-n", type=int, default=None)

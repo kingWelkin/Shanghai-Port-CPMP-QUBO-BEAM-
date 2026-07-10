@@ -1,0 +1,7 @@
+step,box_rank,from_stack,to_stack,reason,n_before,n_after,g_after,max_g_after,bad_after,dirty_after,inversions_after,settled_after
+1,9,7,3,DIRECT_DROP_N,5,4,5,5,4,4,6,16
+2,1,2,8,SAFE_STAGING_SLOT,4,4,6,6,4,4,6,16
+3,20,1,2,DIRECT_DROP_N,4,3,6,6,3,3,5,17
+4,18,A,2,DIRECT_DROP_N,3,2,6,6,2,2,3,18
+5,16,6,2,DIRECT_DROP_N,2,1,6,6,1,1,1,19
+6,15,5,2,DIRECT_DROP_N,1,0,6,6,0,0,0,20

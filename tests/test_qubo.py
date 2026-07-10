@@ -738,6 +738,61 @@ def test_open_priority_group_row_serializes_frg_seed_cache_fields():
     assert row["frg_seed_status"] == "FRG_FEASIBLE"
 
 
+def test_open_priority_group_row_serializes_bs_frg_postcompress_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_postcompress_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        bs_frg_postcompress_attempts=2,
+        bs_frg_postcompress_accepted=1,
+        bs_frg_postcompress_moves_saved=13,
+        bs_frg_postcompress_runtime_sec=0.75,
+        bs_frg_postcompress_source="full",
+        bs_frg_postcompress_status="FEASIBLE_BS_FRG_ROLLOUT",
+        bs_frg_postcompress_generated=321,
+    )
+    args = _compact_args(
+        bs_frg_postcompress_enabled=True,
+        bs_frg_postcompress_incumbent_bound_enabled=True,
+    )
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert row["bs_frg_postcompress_enabled"] is True
+    assert row["bs_frg_postcompress_incumbent_bound_enabled"] is True
+    assert row["bs_frg_postcompress_attempts"] == 2
+    assert row["bs_frg_postcompress_accepted"] == 1
+    assert row["bs_frg_postcompress_moves_saved"] == 13
+    assert row["bs_frg_postcompress_runtime_sec"] == pytest.approx(0.75)
+    assert row["bs_frg_postcompress_source"] == "full"
+    assert row["bs_frg_postcompress_status"] == "FEASIBLE_BS_FRG_ROLLOUT"
+    assert row["bs_frg_postcompress_generated"] == 321
+
+
 def test_open_priority_group_row_serializes_frg_frontier_soft_supply_fields():
     from benchmark_compact_beam_qubo_n0 import CompactBeamResult
     from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
@@ -5586,6 +5641,145 @@ def test_open_and_paper_runners_accept_bs_frg_postcompress_variant():
     assert variant in _variant_names("wang_research_all")
 
 
+def test_v42_short_incumbent_profile_wires_open_and_paper_runners():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish"
+    profile = "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish"
+
+    outer = build_parser().parse_args(["--variant", variant])
+    args = _args_for_variant(outer, variant)
+    bench._apply_solver_profile(args)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_args = paper_args_for_variant(paper_outer, paper_outer.variant)
+    bench._apply_solver_profile(paper_args)
+
+    assert args.solver_profile == profile
+    assert paper_args.solver_profile == profile
+    assert args.bs_frg_postcompress_enabled is True
+    assert paper_args.bs_frg_postcompress_enabled is True
+    assert args.bs_frg_postcompress_time_limit == 4.0
+    assert args.bs_frg_postcompress_min_moves == 120
+    assert args.bs_frg_postcompress_min_ratio == 0.0
+    assert args.bs_frg_postcompress_min_stack_count == 0
+    assert args.bs_frg_postcompress_min_height == 0
+    assert args.bs_frg_postcompress_incumbent_bound_enabled is True
+    assert paper_args.bs_frg_postcompress_incumbent_bound_enabled is True
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_v43_light_route_uses_wang_short_profile_and_protects_paper_unique_overlap():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import _args_for_variant, _variant_names, build_parser
+
+    variant = (
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+        "wang_route_v43_polish"
+    )
+    light_instance = Instance(
+        "light_route_v43",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=5,
+        max_height=7,
+        container_count=25,
+        stacks=[
+            [4, 2, 10, 11, 1],
+            [1, 11, 12, 12, 7],
+            [9, 9, 4, 2, 3],
+            [7, 8, 8, 12, 5],
+            [6, 3, 10, 6, 5],
+        ],
+    )
+    hard_instance = Instance(
+        "hard_route_v43",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=5,
+        max_height=7,
+        container_count=25,
+        stacks=[
+            [14, 7, 12, 20, 5],
+            [18, 3, 25, 23, 17],
+            [9, 19, 15, 11, 21],
+            [24, 2, 13, 4, 8],
+            [1, 16, 10, 22, 6],
+        ],
+    )
+    low_score_unique_instance = Instance(
+        "low_score_unique_route_v43",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=5,
+        max_height=7,
+        container_count=25,
+        stacks=[
+            [16, 19, 7, 18, 12],
+            [22, 24, 14, 20, 4],
+            [2, 9, 1, 6, 15],
+            [23, 25, 21, 10, 8],
+            [17, 3, 5, 13, 11],
+        ],
+    )
+
+    outer = build_parser().parse_args(["--variant", variant])
+    strict_outer = build_parser().parse_args(
+        [
+            "--variant",
+            variant,
+            "--hardness-route-light-threshold",
+            "0.99",
+        ]
+    )
+    light_args = _args_for_variant(outer, variant, light_instance)
+    hard_args = _args_for_variant(outer, variant, hard_instance)
+    low_score_args = _args_for_variant(outer, variant, low_score_unique_instance)
+    strict_low_score_args = _args_for_variant(strict_outer, variant, low_score_unique_instance)
+    bench._apply_solver_profile(light_args)
+    bench._apply_solver_profile(hard_args)
+    bench._apply_solver_profile(low_score_args)
+    bench._apply_solver_profile(strict_low_score_args)
+    paper_outer = build_paper_parser().parse_args(["--variant", variant])
+    paper_light_args = paper_args_for_variant(paper_outer, paper_outer.variant, light_instance)
+    paper_unique_args = paper_args_for_variant(paper_outer, paper_outer.variant, hard_instance)
+    paper_low_score_args = paper_args_for_variant(paper_outer, paper_outer.variant, low_score_unique_instance)
+    bench._apply_solver_profile(paper_light_args)
+    bench._apply_solver_profile(paper_unique_args)
+    bench._apply_solver_profile(paper_low_score_args)
+
+    assert light_args.solver_profile == "scheduler_state_v5_wang_rescue_successor_cache_polish"
+    assert light_args.wang_pair_qubo_enabled is True
+    assert light_args.wang_pair_qubo_focus_n == -1
+    assert light_args.post_polish_successor_cache is True
+    assert hard_args.solver_profile == "scheduler_state_v5_wang_rescue_successor_cache_polish"
+    assert low_score_args.solver_profile == "scheduler_state_v5_wang_rescue_successor_cache_polish"
+    assert strict_low_score_args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish"
+    )
+    assert paper_light_args.solver_profile == light_args.solver_profile
+    assert paper_unique_args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish"
+    )
+    assert paper_low_score_args.solver_profile == paper_unique_args.solver_profile
+    assert paper_unique_args.bs_frg_postcompress_enabled is True
+    assert variant in _variant_names("wang_research_all")
+
+
+def test_v43_is_the_default_variant_for_open_and_paper_runners():
+    from benchmark_compact_paper_set import build_parser as build_paper_parser
+    from open_cpmp_benchmarks import build_parser as build_open_parser
+
+    expected = (
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+        "wang_route_v43_polish"
+    )
+
+    assert build_open_parser().parse_args([]).variant == expected
+    assert build_paper_parser().parse_args([]).variant == expected
+
+
 def test_chainaware_quality_mode_is_runner_visible_postcompress_profile():
     import benchmark_compact_beam_qubo_n0 as bench
     from benchmark_compact_paper_set import _args_for_variant as paper_args_for_variant
@@ -5820,6 +6014,38 @@ def test_row_dict_exposes_bs_frg_postcompress_metrics():
     assert row["bs_frg_postcompress_source"] == "full"
     assert row["bs_frg_postcompress_status"] == "FEASIBLE_BS_FRG_ROLLOUT"
     assert row["bs_frg_postcompress_generated"] == 1234
+
+
+def test_bs_frg_postcompress_zero_ratio_does_not_bypass_min_moves():
+    import math
+
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    instance = Instance(
+        instance_id="tiny_postcompress_gate",
+        variant=ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=2,
+        stacks=[[1, 2], [], []],
+    )
+    moves = [Move(step=0, box=2, from_stack=0, to_stack=1, from_level=2, to_level=1)]
+    args = _compact_args(
+        bs_frg_postcompress_enabled=True,
+        bs_frg_postcompress_time_limit=1.0,
+        bs_frg_postcompress_min_moves=120,
+        bs_frg_postcompress_min_ratio=0.0,
+        bs_frg_postcompress_respect_cap=False,
+        bs_frg_postcompress_allow_large_over_cap=True,
+    )
+
+    assert not bench._bs_frg_postcompress_should_run(
+        instance,
+        moves,
+        n0=10,
+        args=args,
+        deadline=math.inf,
+    )
 
 
 def test_bs_frg_postcompress_accepts_shorter_valid_full_witness(monkeypatch):
@@ -7736,25 +7962,37 @@ def test_quality_reservoir_profile_can_disable_reservoir_by_cli_override():
     assert args.quality_reservoir_max_candidates == 1600
 
 
-def test_open_runner_default_variant_is_diversity_union_mainline():
+def test_open_runner_default_variant_is_v43_mainline():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
     outer = build_parser().parse_args([])
     args = _args_for_variant(outer, outer.variant)
 
-    assert outer.variant == "qubo_scheduler_state_v5_qubo_diversity_union_polish"
-    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_polish"
+    assert outer.variant == (
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+        "wang_route_v43_polish"
+    )
+    assert args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+        "short_incumbent_v42_polish"
+    )
 
 
-def test_paper_set_runner_default_variant_is_diversity_union_mainline():
+def test_paper_set_runner_default_variant_is_v43_mainline():
     from benchmark_compact_paper_set import build_parser as build_paper_parser
     from open_cpmp_benchmarks import _args_for_variant
 
     outer = build_paper_parser().parse_args([])
     args = _args_for_variant(outer, outer.variant)
 
-    assert outer.variant == "qubo_scheduler_state_v5_qubo_diversity_union_polish"
-    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_polish"
+    assert outer.variant == (
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+        "wang_route_v43_polish"
+    )
+    assert args.solver_profile == (
+        "scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_"
+        "short_incumbent_v42_polish"
+    )
 
 
 def test_open_runner_accepts_pareto_union_variant():
@@ -14894,6 +15132,8 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_bs_frg_postcompress_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_quality_fast_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",

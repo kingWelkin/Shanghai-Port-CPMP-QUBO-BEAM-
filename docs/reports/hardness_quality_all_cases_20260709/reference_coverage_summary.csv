@@ -1,0 +1,6 @@
+﻿algorithm,Open120_rate,Open120_label,Open120_moves,Open120_moves_label,Paper BF/CV_rate,Paper BF/CV_label,Paper BF/CV_moves,Paper BF/CV_moves_label,Real30_rate,Real30_label,Real30_moves,Real30_moves_label,note
+V4.0 stable,1.0,120/120,6930.0,polish moves 6930,1.0,1561/1561,106418.0,polish moves 106418,1.0,30/30,509,moves 509,coverage uses stable all-solved; Open/Paper move totals use v4.0 polish/repaired mainline rows
+BS-FRG pure,1.0,120/120,4121.0,moves 4121,0.9897501601537476,1545/1561,97808.0,moves 97808,1.0,30/30,516,moves 516,"paper-style pure run, no QUBO mainline; Open/Paper/Real30 t20"
+Wang BS-B paper,1.0,120/120,4569.0,moves 4569,0.57847533632287,903/1561,32650.0,moves 32650,1.0,30/30,757,moves 757,adapted Wang-Jin-Lim BS-B baby-move beam baseline
+Classic beam,0.7,84/120,2711.0,moves 2711,0.8392056374119155,1310/1561,62492.0,moves 62492,0.9333333333333333,28/30,455,moves 455,no-QUBO beam; Open/Paper t120; Real30 uses budget-best historical control
+A* no-proof,,not scalable,,,,not scalable,,,1.0,30/30,514,moves 514,exact-search reference on 30 real single-bay cases only

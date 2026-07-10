@@ -1,0 +1,2 @@
+family,case,solver,moves,final_n,reference_moves,move_gap,runtime_sec,expanded_states,generated_states,visited_states,goal_validation_ok,validation_msg,status
+3-3,data3-3-1,wang_bs_b,14,0,,,0.022997800027951598,252,752,380,True,ok,FEASIBLE; paper=Wang2015; algorithm=BS-B; baby_moves

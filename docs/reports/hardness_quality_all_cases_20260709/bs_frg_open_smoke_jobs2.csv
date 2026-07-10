@@ -1,0 +1,2 @@
+family,case,solver,moves,final_n,reference_moves,move_gap,runtime_sec,expanded_states,generated_states,visited_states,goal_validation_ok,validation_msg,status
+5x5_cv1_test,5x5_cv1_test_0,bs_frg,36,0,26,10,2.000226699979976,22,50043,358,True,ok,FEASIBLE_BS_FRG_ROLLOUT

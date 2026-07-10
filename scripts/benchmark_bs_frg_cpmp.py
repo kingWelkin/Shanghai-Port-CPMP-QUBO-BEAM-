@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-depth", type=int, default=160)
     parser.add_argument("--beam-width", type=int, default=1000)
     parser.add_argument("--k", type=int, default=3, help="candidate moves kept per beam node")
+    parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "experiments" / "bs_frg_open_cpmp.csv")
     return parser
 
@@ -61,45 +63,66 @@ def _write_summary(output: Path, rows: list[dict[str, object]]) -> None:
     output.with_name(output.stem + "_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _run_case(case: object, args: argparse.Namespace) -> dict[str, object]:
+    instance = load_dlts_dat(case.instance_path, max_height=case.reference.max_height)
+    try:
+        validate_instance(instance)
+        allow_priority_groups = False
+    except ValueError:
+        allow_priority_groups = True
+    config = SolverConfig(
+        max_depth=args.max_depth,
+        beam_width=args.beam_width,
+        candidate_limit_per_state=args.k,
+        time_limit_sec=args.time_limit,
+        entropy_alpha=10.0,
+    )
+    solution = BsFrgSolver().solve(instance, config)
+    return row_from_solution(
+        instance,
+        case.family,
+        case.case_id,
+        solution,
+        reference_moves=case.reference.optimal_moves,
+        allow_priority_groups=allow_priority_groups,
+    )
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
     source = args.source if args.source.is_absolute() else ROOT / args.source
     output = args.output if args.output.is_absolute() else ROOT / args.output
     cases = discover_dlts_cases(source, families=args.families, limit_per_family=args.limit_per_family)
-    solver = BsFrgSolver()
-    rows: list[dict[str, object]] = []
+    rows_by_index: dict[int, dict[str, object]] = {}
 
-    for case in cases:
-        instance = load_dlts_dat(case.instance_path, max_height=case.reference.max_height)
-        try:
-            validate_instance(instance)
-            allow_priority_groups = False
-        except ValueError:
-            allow_priority_groups = True
-        config = SolverConfig(
-            max_depth=args.max_depth,
-            beam_width=args.beam_width,
-            candidate_limit_per_state=args.k,
-            time_limit_sec=args.time_limit,
-            entropy_alpha=10.0,
-        )
-        print(f"CASE_START {case.case_id}", flush=True)
-        solution = solver.solve(instance, config)
-        row = row_from_solution(
-            instance,
-            case.family,
-            case.case_id,
-            solution,
-            reference_moves=case.reference.optimal_moves,
-            allow_priority_groups=allow_priority_groups,
-        )
-        rows.append(row)
-        print(
-            f"CASE_DONE {case.case_id} final_n={row['final_n']} moves={row['moves']} "
-            f"runtime={float(row['runtime_sec']):.3f}s status={row['status']}",
-            flush=True,
-        )
+    if args.jobs <= 1:
+        for idx, case in enumerate(cases, start=1):
+            print(f"CASE_START {idx}/{len(cases)} {case.case_id}", flush=True)
+            row = _run_case(case, args)
+            rows_by_index[idx - 1] = row
+            print(
+                f"CASE_DONE {case.case_id} final_n={row['final_n']} moves={row['moves']} "
+                f"runtime={float(row['runtime_sec']):.3f}s status={row['status']}",
+                flush=True,
+            )
+    else:
+        with ProcessPoolExecutor(max_workers=max(1, int(args.jobs))) as executor:
+            futures = {}
+            for idx, case in enumerate(cases, start=1):
+                print(f"CASE_START {idx}/{len(cases)} {case.case_id}", flush=True)
+                futures[executor.submit(_run_case, case, args)] = (idx - 1, case.case_id)
+            for future in as_completed(futures):
+                row_index, case_id = futures[future]
+                row = future.result()
+                rows_by_index[row_index] = row
+                print(
+                    f"CASE_DONE {case_id} final_n={row['final_n']} moves={row['moves']} "
+                    f"runtime={float(row['runtime_sec']):.3f}s status={row['status']}",
+                    flush=True,
+                )
+
+    rows = [rows_by_index[idx] for idx in range(len(cases))]
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8", newline="") as f:

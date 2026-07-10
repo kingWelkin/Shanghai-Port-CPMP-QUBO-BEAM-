@@ -1,7 +1,7 @@
 # Algorithm Profile Status
 
-Date: 2026-07-07
-Version: v4.0
+Date: 2026-07-10
+Version: v4.3
 
 This guide separates the promoted default, still-useful baselines, and opt-in
 ablation profiles for the compact CPMP / QUBO beam work.
@@ -11,7 +11,7 @@ ablation profiles for the compact CPMP / QUBO beam work.
 Current promoted mainline:
 
 ```text
-qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish
 ```
 
 Opt-in quality mode for long-path CV compression:
@@ -63,7 +63,8 @@ algorithm family has three separate roles:
 
 | Role | Profile family | Decision |
 |---|---|---|
-| Default solver | `...chainaware_polish` | Promoted v4.0 mainline for fast, stable open120 plus BF/CV coverage |
+| Default solver | `...wang_route_v43_polish` | Promoted v4.3 mainline: Open120 `120/120`, BF `721/721`, CV `840/840`, combined moves `105530` |
+| Single-profile baseline | `...chainaware_polish` | Previous v4.0 default; retained for clean ablation of the v4.3 routing contribution |
 | Quality compression | `...chainaware_quality*_polish` | Opt-in post-compress modes for shorter paths, especially long CV paths |
 | Beam-native research | `...chainaware_beam_quality_polish`, `...chainaware_feedback_v41_polish`, and related witness selectors | Experimental; useful for learning, not promoted until full paired evidence beats v4.0 without solved-count loss |
 
@@ -77,7 +78,8 @@ compression quality can eventually move inside the beam.
 
 | Profile or solver | Role | Current status | Evidence summary |
 |---|---|---|---|
-| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish` | v4.0 open120 plus full BF/CV mainline | Promoted default | Same-commit no-cap t120: open120 `120/120`, moves `6928`; paper BF/CV full1561 `1561/1561`, moves `106903`, avg runtime `3.933s`. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish` | v4.3 full-surface route | Promoted default | No-cap t120: Open120 `120/120`, moves `3759`; BF `721/721`, moves `45906`; CV `840/840`, moves `55865`; combined `1681/1681`, moves `105530`. |
+| `qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish` | v4.0 single-profile baseline | Demoted baseline | Same-commit no-cap t120 reference: Open120 `120/120`, paper BF/CV full1561 `1561/1561`; retained for ablation. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_macro_chain_witness_polish` | Previous macro-chain mainline | Demoted baseline | Strong bridge from macro credit to chain candidates, but latest v4.0 direct full rerun is cleaner and stronger on full BF/CV coverage. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_macro_credit_v2_polish` | Previous combined-evidence baseline | Demoted baseline | Useful for showing that future witness credit matters, but it remains too shallow for hard BF/CV recovery. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` | Open120 macro-edge reference | Reference, not default | Useful for direct macro-edge ablation and path-quality comparison. Not the current combined-surface mainline. |
@@ -120,10 +122,10 @@ v4.0 is still a QUBO beam selector, not a solver portfolio:
 
 ## Promotion Rule
 
-A new profile can replace v4.0 only after a paired comparison against:
+A new profile can replace v4.3 only after a paired comparison against:
 
 ```text
-qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish
 ```
 
 Minimum evidence:
@@ -139,6 +141,9 @@ Minimum evidence:
 
 ## Source Evidence
 
+- `docs/experiments/v43_wang_reintegration_20260709/v43_wang_route_open120_t120_all_dlts_j8_summary.md`
+- `docs/experiments/v43_full_gate_20260709/v43_wang_route_paper_bf_cv_t120_j8_summary.md`
+- `docs/experiments/v43_full_gate_20260709/v43_real30_mainline_branch_t120_summary.md`
 - `docs/experiments/chainaware_commit411da4b_open120_t120_20260703_summary.md`
 - `docs/experiments/chainaware_commit411da4b_paper_bf_cv_full1561_t120_20260703_summary.md`
 - `docs/experiments/v41_feedback_open120_t120_nocap_20260707_fullgate_summary.md`

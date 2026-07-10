@@ -1,0 +1,22 @@
+{"kind":"deck","id":"pr/ea1hpd","name":"Deck"}
+{"kind":"layout","layoutId":"24eae124-4b67-4a77-b1ee-675aeca042a5","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"93529366-e894-4089-bd92-7bb56c7e3dfc","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/jeyc3z","slide":1,"title":"CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV","textShapes":12}
+{"kind":"shape","id":"sh/6dcbulwv","slide":1,"name":"top-rule","bbox":[42,94,1196,1]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":1,"name":"eyebrow","text":"CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV","textPreview":"CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV","textChars":43,"textLines":1,"bbox":[42,28,520,22]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":1,"name":"title","text":"Hardness components expose remaining quality pressure","textPreview":"Hardness components expose remaining quality pressure","textChars":53,"textLines":1,"bbox":[42,51,1120,46]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":1,"name":"subtitle","text":"V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality.","textPreview":"V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality.","textChars":132,"textLines":1,"bbox":[42,111,1040,32]}
+{"kind":"shape","id":"sh/dsji5sne","slide":1,"name":"right-rail-bg","bbox":[826,154,412,478]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":1,"name":"right-rail-title","text":"Coverage and path length","textPreview":"Coverage and path length","textChars":24,"textLines":1,"bbox":[848,176,350,28]}
+{"kind":"shape","id":"sh/6tovahoz","slide":1,"name":"metric-rule","bbox":[848,456,348,1]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":1,"name":"metric-1","text":"1681/1681 solved","textPreview":"1681/1681 solved","textChars":16,"textLines":1,"bbox":[848,466,340,40]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":1,"name":"metric-1-label","text":"113,348 polish moves before stable guard patches","textPreview":"113,348 polish moves before stable guard patches","textChars":48,"textLines":1,"bbox":[848,506,350,30]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":1,"name":"metric-2","text":"BS-FRG: 1545/1561, moves 97808","textPreview":"BS-FRG: 1545/1561, moves 97808","textChars":30,"textLines":1,"bbox":[848,540,350,22]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":1,"name":"metric-2-label","text":"Real30 30/30, moves 516; t20 reference","textPreview":"Real30 30/30, moves 516; t20 reference","textChars":38,"textLines":1,"bbox":[848,562,350,18]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":1,"name":"metric-3","text":"Wang BS-B: 903/1561, moves 32650","textPreview":"Wang BS-B: 903/1561, moves 32650","textChars":32,"textLines":1,"bbox":[848,586,350,20]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":1,"name":"metric-3-label","text":"Classic 1310/1561; A* Real30 30/30, moves 514","textPreview":"Classic 1310/1561; A* Real30 30/30, moves 514","textChars":45,"textLines":1,"bbox":[848,606,350,18]}
+{"kind":"textbox","id":"sh/ulwval87","slide":1,"name":"suite-note","text":"Open120 120/120 / BF 721/721 / CV 840/840","textPreview":"Open120 120/120 / BF 721/721 / CV 840/840","textChars":41,"textLines":1,"bbox":[42,602,520,24]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":1,"name":"method-note","text":"Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length reports polish/repaired mainline moves before guard patches.","textPreview":"Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length...","textChars":198,"textLines":1,"bbox":[42,632,1110,42]}
+{"kind":"image","id":"im/3m94fu18","slide":1,"name":"","alt":"Small-multiple scatter plots of total hardness, size, density, bad ratio, and scarcity versus relocation quality","bbox":[34,154,770,420]}
+{"kind":"image","id":"im/a1gvy90j","slide":1,"name":"","alt":"Coverage and solved-move matrix comparing V4 stable, pure BS-FRG, Wang BS-B, classic beam, and A star references","bbox":[842,207,378,242]}
+{"kind":"notes","id":"nt/jeyc3z","slide":1,"text":""}

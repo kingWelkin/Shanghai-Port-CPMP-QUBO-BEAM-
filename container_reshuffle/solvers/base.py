@@ -24,6 +24,7 @@ class SolverConfig:
     time_limit_sec: float = 3600.0
     exact_max_visited_states: Optional[int] = None
     exact_incumbent_moves: Optional[list[Move]] = None
+    exact_stop_on_incumbent_improvement: bool = False
 
     max_qubo_vars: int = 1000
     qubo_penalty_a: float = 10.0

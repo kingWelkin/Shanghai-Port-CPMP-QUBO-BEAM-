@@ -1,0 +1,6 @@
+step,box_rank,from_stack,to_stack,reason,n_before,n_after,g_after,max_g_after,bad_after,dirty_after,inversions_after,settled_after
+1,6,A,8,DIRECT_DROP_N,5,4,5,5,4,3,5,16
+2,10,9,3,DIRECT_DROP_N,4,3,5,5,3,2,4,17
+3,9,5,3,DIRECT_DROP_N,3,2,5,5,2,2,3,18
+4,17,5,4,DIRECT_DROP_N,2,1,5,5,1,1,2,19
+5,15,1,4,DIRECT_DROP_N,1,0,5,5,0,0,0,20

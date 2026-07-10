@@ -1,0 +1,890 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/jeyc3z",
+    "id": "jeyc3z",
+    "slide": 1,
+    "layoutId": "93529366-e894-4089-bd92-7bb56c7e3dfc",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "24eae124-4b67-4a77-b1ee-675aeca042a5",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "93529366-e894-4089-bd92-7bb56c7e3dfc",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "24eae124-4b67-4a77-b1ee-675aeca042a5",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "24eae124-4b67-4a77-b1ee-675aeca042a5",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dcbulwv",
+      "id": "1",
+      "name": "top-rule",
+      "bbox": [
+        42,
+        94,
+        1196,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#B8BCC4",
+      "lineColor": "#B8BCC4",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d4vmtwra",
+      "id": "2",
+      "name": "eyebrow",
+      "bbox": [
+        42,
+        28,
+        520,
+        22
+      ],
+      "geometry": "rect",
+      "text": "CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV",
+      "textPreview": "CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#555555",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#555555",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CPMP V4.0 FULL SNAPSHOT | OPEN120 + BF + CV",
+              "fontSize": 14,
+              "color": "#555555",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/oj2t83it",
+      "id": "3",
+      "name": "title",
+      "bbox": [
+        42,
+        51,
+        1120,
+        46
+      ],
+      "geometry": "rect",
+      "text": "Hardness components expose remaining quality pressure",
+      "textPreview": "Hardness components expose remaining quality pressure",
+      "resolvedFontSize": 35,
+      "resolvedTextStyle": {
+        "fontSize": 35,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Hardness components expose remaining quality pressure"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Hardness components expose remaining quality pressure",
+          "resolvedTextStyle": {
+            "fontSize": 35,
+            "color": "#000000",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Hardness components expose remaining quality pressure",
+              "fontSize": 35,
+              "color": "#000000",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vmtwra5g",
+      "id": "4",
+      "name": "subtitle",
+      "bbox": [
+        42,
+        111,
+        1040,
+        32
+      ],
+      "geometry": "rect",
+      "text": "V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality.",
+      "textPreview": "V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality.",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#555555",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality.",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#555555"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "V4.0 stable solves all 1,681 benchmark cases; total hardness and its components separate layout difficulty from path-length quality.",
+              "fontSize": 16,
+              "color": "#555555"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/3m94fu18",
+      "id": "5",
+      "bbox": [
+        34,
+        154,
+        770,
+        420
+      ],
+      "alt": "Small-multiple scatter plots of total hardness, size, density, bad ratio, and scarcity versus relocation quality",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "asset": {
+        "assetId": "14d4ef74-c466-40db-bfed-fa95f00d4165",
+        "contentType": "image/png",
+        "byteLength": 405197
+      }
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dsji5sne",
+      "id": "6",
+      "name": "right-rail-bg",
+      "bbox": [
+        826,
+        154,
+        412,
+        478
+      ],
+      "geometry": "rect",
+      "fillColor": "#F2F2F2",
+      "lineColor": "#D4D4D4",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o7qpg3ex",
+      "id": "7",
+      "name": "right-rail-title",
+      "bbox": [
+        848,
+        176,
+        350,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Coverage and path length",
+      "textPreview": "Coverage and path length",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Coverage and path length"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Coverage and path length",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#000000",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Coverage and path length",
+              "fontSize": 22,
+              "color": "#000000",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/a1gvy90j",
+      "id": "8",
+      "bbox": [
+        842,
+        207,
+        378,
+        242
+      ],
+      "alt": "Coverage and solved-move matrix comparing V4 stable, pure BS-FRG, Wang BS-B, classic beam, and A star references",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "asset": {
+        "assetId": "750d08d5-853d-42f0-ba7c-a686bbe353d9",
+        "contentType": "image/png",
+        "byteLength": 132725
+      }
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6tovahoz",
+      "id": "9",
+      "name": "metric-rule",
+      "bbox": [
+        848,
+        456,
+        348,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#B8BCC4",
+      "lineColor": "#B8BCC4",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/c3ylc7u5",
+      "id": "10",
+      "name": "metric-1",
+      "bbox": [
+        848,
+        466,
+        340,
+        40
+      ],
+      "geometry": "rect",
+      "text": "1681/1681 solved",
+      "textPreview": "1681/1681 solved",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1681/1681 solved"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1681/1681 solved",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#000000",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "1681/1681 solved",
+              "fontSize": 30,
+              "color": "#000000",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1kre1w7m",
+      "id": "11",
+      "name": "metric-1-label",
+      "bbox": [
+        848,
+        506,
+        350,
+        30
+      ],
+      "geometry": "rect",
+      "text": "113,348 polish moves before stable guard patches",
+      "textPreview": "113,348 polish moves before stable guard patches",
+      "resolvedFontSize": 12.51,
+      "resolvedTextStyle": {
+        "fontSize": 12.51,
+        "typeface": "+mn-lt",
+        "color": "#555555",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "113,348 polish moves before stable guard patches"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "113,348 polish moves before stable guard patches",
+          "resolvedTextStyle": {
+            "fontSize": 12.51,
+            "color": "#555555"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "113,348 polish moves before stable guard patches",
+              "fontSize": 12.51,
+              "color": "#555555"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/uxc3ylc7",
+      "id": "12",
+      "name": "metric-2",
+      "bbox": [
+        848,
+        540,
+        350,
+        22
+      ],
+      "geometry": "rect",
+      "text": "BS-FRG: 1545/1561, moves 97808",
+      "textPreview": "BS-FRG: 1545/1561, moves 97808",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BS-FRG: 1545/1561, moves 97808"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BS-FRG: 1545/1561, moves 97808",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#000000",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "BS-FRG: 1545/1561, moves 97808",
+              "fontSize": 16,
+              "color": "#000000",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ji5snelo",
+      "id": "13",
+      "name": "metric-2-label",
+      "bbox": [
+        848,
+        562,
+        350,
+        18
+      ],
+      "geometry": "rect",
+      "text": "Real30 30/30, moves 516; t20 reference",
+      "textPreview": "Real30 30/30, moves 516; t20 reference",
+      "resolvedFontSize": 12.2,
+      "resolvedTextStyle": {
+        "fontSize": 12.2,
+        "typeface": "+mn-lt",
+        "color": "#555555",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Real30 30/30, moves 516; t20 reference"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Real30 30/30, moves 516; t20 reference",
+          "resolvedTextStyle": {
+            "fontSize": 12.2,
+            "color": "#555555"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Real30 30/30, moves 516; t20 reference",
+              "fontSize": 12.2,
+              "color": "#555555"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/crmhk3q5",
+      "id": "14",
+      "name": "metric-3",
+      "bbox": [
+        848,
+        586,
+        350,
+        20
+      ],
+      "geometry": "rect",
+      "text": "Wang BS-B: 903/1561, moves 32650",
+      "textPreview": "Wang BS-B: 903/1561, moves 32650",
+      "resolvedFontSize": 15.51,
+      "resolvedTextStyle": {
+        "fontSize": 15.51,
+        "typeface": "+mn-lt",
+        "color": "#FF6B35",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Wang BS-B: 903/1561, moves 32650"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Wang BS-B: 903/1561, moves 32650",
+          "resolvedTextStyle": {
+            "fontSize": 15.51,
+            "color": "#FF6B35",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Wang BS-B: 903/1561, moves 32650",
+              "fontSize": 15.51,
+              "color": "#FF6B35",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1cfa9w3m",
+      "id": "15",
+      "name": "metric-3-label",
+      "bbox": [
+        848,
+        606,
+        350,
+        18
+      ],
+      "geometry": "rect",
+      "text": "Classic 1310/1561; A* Real30 30/30, moves 514",
+      "textPreview": "Classic 1310/1561; A* Real30 30/30, moves 514",
+      "resolvedFontSize": 11.6,
+      "resolvedTextStyle": {
+        "fontSize": 11.6,
+        "typeface": "+mn-lt",
+        "color": "#555555",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Classic 1310/1561; A* Real30 30/30, moves 514"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Classic 1310/1561; A* Real30 30/30, moves 514",
+          "resolvedTextStyle": {
+            "fontSize": 11.6,
+            "color": "#555555"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Classic 1310/1561; A* Real30 30/30, moves 514",
+              "fontSize": 11.6,
+              "color": "#555555"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ulwval87",
+      "id": "16",
+      "name": "suite-note",
+      "bbox": [
+        42,
+        602,
+        520,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Open120 120/120 / BF 721/721 / CV 840/840",
+      "textPreview": "Open120 120/120 / BF 721/721 / CV 840/840",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "fontSize": 15,
+        "typeface": "+mn-lt",
+        "color": "#000000",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Open120 120/120 / BF 721/721 / CV 840/840"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Open120 120/120 / BF 721/721 / CV 840/840",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "color": "#000000",
+            "bold": true
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Open120 120/120 / BF 721/721 / CV 840/840",
+              "fontSize": 15,
+              "color": "#000000",
+              "bold": true
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/j6tovaho",
+      "id": "17",
+      "name": "method-note",
+      "bbox": [
+        42,
+        632,
+        1110,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length reports polish/repaired mainline moves before guard patches.",
+      "textPreview": "Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length...",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#555555",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length reports polish/repaired mainline moves before guard patches."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length reports polish/repaired mainline moves before guard patches.",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#555555"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Hardness = 0.30 size + 0.25 density + 0.30 initial bad ratio + 0.15 scarcity. V4.0 coverage uses stable all-solved rows; V4.0 path length reports polish/repaired mainline moves before guard patches.",
+              "fontSize": 13,
+              "color": "#555555"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

@@ -4,6 +4,7 @@ __pycache__/
 .Python
 .pytest_cache/
 .pytest_tmp*/
+.tmp_pytest*/
 .codex-remote-attachments/
 .mypy_cache/
 .ruff_cache/
@@ -38,6 +39,7 @@ docs/experiments/**/*.err.txt
 docs/experiments/**/*.txt
 docs/experiments/**/*.pid
 docs/experiments/**/*.json
+docs/experiments/**/*.db
 docs/experiments/**/*_moves/
 
 # Curated current N=0 reports kept as repository documentation.

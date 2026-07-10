@@ -42,6 +42,98 @@ def test_bs_frg_solver_solves_direct_fill_instance():
     assert solution.status.startswith("FEASIBLE")
 
 
+def test_bs_frg_solver_stops_after_initial_rollout_improves_incumbent(monkeypatch):
+    import container_reshuffle.solvers.bs_frg as bs_frg
+
+    instance = Instance(
+        "tiny_direct_fill_with_incumbent",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        3,
+        3,
+        3,
+        [[1, 3], [2], []],
+    )
+    incumbent = [
+        Move(0, 3, 0, 2, 2, 1),
+        Move(1, 3, 2, 1, 1, 2),
+        Move(2, 3, 1, 2, 2, 1),
+    ]
+
+    def fail_if_beam_expands(*_args, **_kwargs):
+        raise AssertionError("BS-FRG should stop after the initial FRG rollout beats the incumbent")
+
+    monkeypatch.setattr(bs_frg, "_generate_candidates", fail_if_beam_expands)
+
+    solution = bs_frg.BsFrgSolver(paper_pure=True).solve(
+        instance,
+        SolverConfig(
+            max_depth=8,
+            beam_width=4,
+            candidate_limit_per_state=3,
+            time_limit_sec=1.0,
+            exact_incumbent_moves=incumbent,
+            exact_stop_on_incumbent_improvement=True,
+        ),
+    )
+
+    assert solution.feasible is True
+    assert len(solution.moves) == 1
+    assert solution.status == "FEASIBLE_FRG_INITIAL"
+
+
+def test_bs_frg_postcompress_run_solver_passes_current_moves_as_incumbent(monkeypatch):
+    import argparse
+
+    import benchmark_compact_beam_qubo_n0 as compact
+    from container_reshuffle.core import Solution
+
+    instance = Instance(
+        "postcompress_incumbent",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        3,
+        3,
+        3,
+        [[1, 3], [2], []],
+    )
+    current_moves = [
+        Move(0, 3, 0, 2, 2, 1),
+        Move(1, 3, 2, 1, 1, 2),
+    ]
+    captured: dict[str, object] = {}
+
+    class FakeBsFrgSolver:
+        def __init__(self, *, paper_pure: bool = False):
+            captured["paper_pure"] = paper_pure
+
+        def solve(self, solver_instance, config):
+            captured["instance"] = solver_instance
+            captured["exact_incumbent_moves"] = config.exact_incumbent_moves
+            captured["exact_stop_on_incumbent_improvement"] = config.exact_stop_on_incumbent_improvement
+            return Solution("fake_bs_frg", False, False, float("inf"), 0.0, [], "NO_SOLUTION")
+
+    monkeypatch.setattr(compact, "BsFrgSolver", FakeBsFrgSolver)
+    args = argparse.Namespace(
+        bs_frg_postcompress_paper_pure=True,
+        bs_frg_postcompress_beam_width=1000,
+        bs_frg_postcompress_candidate_limit_per_state=3,
+        bs_frg_postcompress_incumbent_bound_enabled=True,
+        bs_frg_postcompress_stop_on_incumbent_improvement=True,
+    )
+
+    compact._bs_frg_postcompress_run_solver(
+        instance,
+        args,
+        max_depth=8,
+        time_limit=0.01,
+        incumbent_moves=current_moves,
+    )
+
+    assert captured["instance"] is instance
+    assert captured["paper_pure"] is True
+    assert captured["exact_incumbent_moves"] == current_moves
+    assert captured["exact_stop_on_incumbent_improvement"] is True
+
+
 def test_bs_frg_solver_supports_priority_group_instances():
     from benchmark_classical_cpmp_baselines import row_from_solution
     from container_reshuffle.solvers.bs_frg import BsFrgSolver
