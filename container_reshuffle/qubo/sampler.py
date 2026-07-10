@@ -10,9 +10,10 @@ import random
 import subprocess
 import sys
 import time
+import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .model import QuboModel
 
@@ -30,6 +31,15 @@ class QuboSamplerConfig:
     sa_iterations: int = 5000
     initial_temperature: float = 5.0
     final_temperature: float = 0.01
+    sampler_name: str = "sa"
+    api_base_url: Optional[str] = None
+    api_endpoint: Optional[str] = None
+    api_gear: Optional[int] = None
+    api_problem_type: str = "binary"
+    api_timeout_sec: float = 0.0
+    api_working_dir: Optional[str] = None
+    api_project_src: Optional[str] = None
+    api_fallback: bool = True
 
 
 @dataclass
@@ -235,11 +245,77 @@ class ExternalPythonDimodSampler(IQuboSampler):
             return self.fallback.sample(model, config)
 
 
-class IsingMatrixApiQuboSampler(IQuboSampler):
-    """Sampler bridge to the sibling ``ising_matrix_synthetic_project`` API.
+class _HttpCsvApiClient:
+    """Small CSV API client used when the legacy package is unavailable."""
 
-    The hardware/API sample is intentionally only a QUBO sample. Downstream
-    builders still decode, repair, and validate through the classical engine.
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        endpoint: str,
+        gear: int,
+        problem_type: str,
+        timeout_sec: float,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.endpoint = "/" + endpoint.lstrip("/")
+        self.gear = int(gear)
+        self.problem_type = problem_type
+        self.timeout_sec = max(0.001, float(timeout_sec))
+
+    def submit_csv_file(self, csv_path: Path) -> Any:
+        """Submit a matrix CSV with a requests client when available."""
+
+        url = f"{self.base_url}{self.endpoint}"
+        try:
+            import requests  # type: ignore
+
+            csv_text = csv_path.read_text(encoding="utf-8")
+            response = requests.post(
+                url,
+                files={"data": csv_text},
+                params={"gear": self.gear, "type": self.problem_type},
+                timeout=self.timeout_sec,
+            )
+            try:
+                response.raise_for_status()
+            except Exception as exc:
+                body = response.text[:500].replace("\n", " ")
+                raise RuntimeError(f"API HTTP {response.status_code}: {body}") from exc
+            return response.json()
+        except ImportError:
+            return self._submit_with_urllib(url, csv_path)
+
+    def _submit_with_urllib(self, url: str, csv_path: Path) -> Any:
+        boundary = f"----container-reshuffle-{int(time.time() * 1000)}"
+        csv_bytes = csv_path.read_text(encoding="utf-8").encode("utf-8")
+        parts = [
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="data"; filename="data"\r\n'
+                "Content-Type: application/octet-stream\r\n\r\n"
+            ).encode("utf-8"),
+            csv_bytes,
+            f"\r\n--{boundary}--\r\n".encode("utf-8"),
+        ]
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}gear={self.gear}&type={self.problem_type}"
+        request = urllib.request.Request(
+            url,
+            data=b"".join(parts),
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout_sec) as response:
+            body = response.read().decode("utf-8")
+        return json.loads(body)
+
+
+class IsingMatrixApiQuboSampler(IQuboSampler):
+    """Sampler bridge to the Ising matrix API.
+
+    The API sample is intentionally only a QUBO sample. Downstream builders
+    still decode, repair, and validate through the classical engine.
     """
 
     name = "ising_matrix_api"
@@ -266,7 +342,8 @@ class IsingMatrixApiQuboSampler(IQuboSampler):
 
         start = time.perf_counter()
         try:
-            modules = self._load_modules()
+            project_src = config.api_project_src or self.project_src
+            modules = self._load_modules(project_src)
             Q_float = _qubo_model_to_dense_upper(model)
             terms = modules["QuboTerms"](Q=Q_float, offset=model.offset, name="container_reshuffle_qubo")
             compiler_cfg = modules["Int8CompilerConfig"](
@@ -276,58 +353,109 @@ class IsingMatrixApiQuboSampler(IQuboSampler):
                 probe_count=min(512, max(64, 8 * max(1, len(model.var_index)))),
             )
             compiled = modules["compile_qubo_int8"](terms, compiler_cfg)
-            work = Path(config.working_dir or "tmp/ising_api_qubo").resolve()
+            work = Path(config.api_working_dir or config.working_dir or "tmp/ising_api_qubo").resolve()
             work.mkdir(parents=True, exist_ok=True)
             csv_path = work / f"qubo_{int(time.time() * 1000)}.csv"
             _write_matrix_csv(csv_path, compiled.Q_int)
+            timeout_sec = float(config.api_timeout_sec or config.time_limit_sec)
             client = modules["IsingApiClient"](
-                base_url=self.base_url,
-                endpoint=self.endpoint,
-                gear=self.gear,
-                problem_type=self.problem_type,
-                timeout_sec=float(config.time_limit_sec),
+                base_url=config.api_base_url or self.base_url,
+                endpoint=config.api_endpoint or self.endpoint,
+                gear=int(config.api_gear if config.api_gear is not None else self.gear),
+                problem_type=config.api_problem_type or self.problem_type,
+                timeout_sec=timeout_sec,
             )
             response = client.submit_csv_file(csv_path)
             raw_results = modules["extract_api_results"](response)
-            samples: List[QuboSample] = []
-            n = len(model.var_index)
-            for item in raw_results:
-                raw = list(item.get("sample", []))
-                if len(raw) < n:
-                    continue
-                values = _api_sample_to_binary(raw[:n])
-                samples.append(QuboSample(values, model.evaluate(values)))
+            samples = _api_results_to_samples(raw_results, model)
             if not samples:
                 raise RuntimeError("API returned no usable sample")
+            sampler_name = self.name
+            if bool(config.api_fallback):
+                fallback_set = self.fallback.sample(model, config)
+                samples.extend(fallback_set.samples)
+                sampler_name = f"{self.name}_shadow_{fallback_set.sampler_name}"
             samples.sort(key=lambda s: s.energy)
-            return QuboSampleSet(samples, self.name, time.perf_counter() - start)
+            return QuboSampleSet(samples, sampler_name, time.perf_counter() - start)
         except Exception:
+            if not bool(config.api_fallback):
+                raise
             fallback_set = self.fallback.sample(model, config)
             fallback_set.sampler_name = f"{self.name}_fallback_{fallback_set.sampler_name}"
             return fallback_set
 
-    def _load_modules(self) -> Dict[str, object]:
-        src = self.project_src
-        if src is None:
-            candidate = Path(__file__).resolve().parents[2].parent / "ising_matrix_synthetic_project" / "src"
-            src = str(candidate)
-        if src and src not in sys.path:
-            sys.path.insert(0, src)
-        from ising_matrix_synthetic import (  # type: ignore
-            Int8CompilerConfig,
-            IsingApiClient,
-            QuboTerms,
-            compile_qubo_int8,
-            extract_api_results,
-        )
+    def _load_modules(self, project_src: Optional[str] = None) -> Dict[str, object]:
+        errors: List[Exception] = []
+        for src in _candidate_api_project_sources(project_src):
+            if src and src not in sys.path:
+                sys.path.insert(0, src)
+            try:
+                from ising_matrix_synthetic import (  # type: ignore
+                    Int8CompilerConfig,
+                    IsingApiClient,
+                    QuboTerms,
+                    compile_qubo_int8,
+                    extract_api_results,
+                )
 
-        return {
-            "Int8CompilerConfig": Int8CompilerConfig,
-            "IsingApiClient": IsingApiClient,
-            "QuboTerms": QuboTerms,
-            "compile_qubo_int8": compile_qubo_int8,
-            "extract_api_results": extract_api_results,
-        }
+                return {
+                    "Int8CompilerConfig": Int8CompilerConfig,
+                    "IsingApiClient": IsingApiClient,
+                    "QuboTerms": QuboTerms,
+                    "compile_qubo_int8": compile_qubo_int8,
+                    "extract_api_results": extract_api_results,
+                }
+            except Exception as exc:
+                errors.append(exc)
+                try:
+                    from qubo_matrix_compiler._runtime.compiler import (  # type: ignore
+                        Int8CompilerConfig,
+                        compile_qubo_int8,
+                    )
+                    from qubo_matrix_compiler._runtime.qubo import QuboTerms  # type: ignore
+
+                    return {
+                        "Int8CompilerConfig": Int8CompilerConfig,
+                        "IsingApiClient": _HttpCsvApiClient,
+                        "QuboTerms": QuboTerms,
+                        "compile_qubo_int8": compile_qubo_int8,
+                        "extract_api_results": _extract_api_results,
+                    }
+                except Exception as split_exc:
+                    errors.append(split_exc)
+        if errors:
+            raise errors[-1]
+        raise ImportError("no Ising API compiler modules found")
+
+
+def _candidate_api_project_sources(project_src: Optional[str]) -> List[str]:
+    candidates = [
+        project_src,
+        os.getenv("ISING_MATRIX_PROJECT_SRC"),
+        os.getenv("QUBO_MATRIX_COMPILER_SRC"),
+        os.getenv("QUBO_PIPELINE_CONTRACTS_SRC"),
+    ]
+    root = Path(__file__).resolve().parents[2]
+    desktop = Path.home() / "Desktop"
+    candidates.extend(
+        [
+            str(root.parent / "ising_matrix_synthetic_project" / "src"),
+            str(root.parent / "qubo-matrix-compiler" / "src"),
+            str(root.parent.parent / "qubo-matrix-compiler" / "src"),
+            str(desktop / "qubo-matrix-compiler" / "src"),
+            str(root.parent / "qubo-pipeline-contracts" / "src"),
+            str(root.parent.parent / "qubo-pipeline-contracts" / "src"),
+            str(desktop / "qubo-pipeline-contracts" / "src"),
+        ]
+    )
+    out: List[str] = []
+    for item in candidates:
+        if not item:
+            continue
+        text = str(Path(item).resolve())
+        if text not in out:
+            out.append(text)
+    return out
 
 
 def _qubo_model_to_dense_upper(model: QuboModel):
@@ -347,6 +475,58 @@ def _write_matrix_csv(path: Path, matrix) -> None:
         writer = csv.writer(f)
         for row in matrix:
             writer.writerow([int(v) for v in row])
+
+
+def _extract_api_results(response: Any) -> List[Dict[str, Any]]:
+    if isinstance(response, str):
+        response = json.loads(response)
+    results: List[Dict[str, Any]] = []
+
+    def visit(obj: Any) -> None:
+        if isinstance(obj, dict):
+            sample = None
+            for key in ("sample", "solution", "bits", "spins", "spin_config", "x", "state", "binary_values"):
+                if key in obj:
+                    sample = obj[key]
+                    break
+            if sample is not None:
+                results.append(
+                    {
+                        "sample": _api_raw_sample_to_list(sample),
+                        "energy": obj.get("energy", obj.get("objective", obj.get("cost"))),
+                        "runtime_sec": obj.get("runtime_sec", obj.get("runtime")),
+                    }
+                )
+            for key in ("samples", "results", "solutions", "data", "result", "outputs", "candidates"):
+                if key in obj:
+                    visit(obj[key])
+        elif isinstance(obj, list):
+            if obj and all(isinstance(v, (bool, int, float)) for v in obj):
+                results.append({"sample": _api_raw_sample_to_list(obj)})
+            else:
+                for item in obj:
+                    visit(item)
+
+    visit(response)
+    return [item for item in results if item.get("sample")]
+
+
+def _api_raw_sample_to_list(sample: Any) -> List[int]:
+    if isinstance(sample, dict):
+        return [int(v) for _k, v in sorted(sample.items(), key=lambda kv: int(kv[0]))]
+    return [int(v) for v in list(sample)]
+
+
+def _api_results_to_samples(raw_results: Any, model: QuboModel) -> List[QuboSample]:
+    samples: List[QuboSample] = []
+    n = len(model.var_index)
+    for item in raw_results:
+        raw = _api_raw_sample_to_list(item.get("sample", []))
+        if len(raw) < n:
+            continue
+        values = _api_sample_to_binary(raw[:n])
+        samples.append(QuboSample(values, model.evaluate(values)))
+    return samples
 
 
 def _api_sample_to_binary(sample: List[int]) -> Dict[int, int]:

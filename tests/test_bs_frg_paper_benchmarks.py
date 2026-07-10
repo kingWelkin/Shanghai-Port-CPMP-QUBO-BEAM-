@@ -487,6 +487,64 @@ def test_paper_parser_accepts_frontier_trace_output_and_forwards_to_compact(tmp_
     assert compact_args.frontier_trace_top_k == 23
 
 
+def test_paper_runner_accepts_large_api_qubo_variant_and_overrides():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant, build_parser
+
+    parsed = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_qubo_diversity_union_large_api_polish",
+            "--qubo-api-base-url",
+            "http://solver.local:5001",
+            "--large-api-qubo-max-vars",
+            "1000",
+            "--large-api-qubo-min-vars",
+            "512",
+            "--qubo-first",
+            "--large-api-qubo-max-calls",
+            "3",
+            "--large-api-qubo-api-timeout",
+            "0.75",
+            "--no-large-api-qubo-api-fallback",
+        ]
+    )
+
+    compact_args = _args_for_variant(parsed, parsed.variant)
+    bench._apply_solver_profile(compact_args)
+
+    assert compact_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_large_api_polish"
+    assert compact_args.qubo_api_base_url == "http://solver.local:5001"
+    assert compact_args.large_api_qubo_enabled is True
+    assert compact_args.qubo_first is True
+    assert compact_args.large_api_qubo_min_vars == 512
+    assert compact_args.large_api_qubo_max_vars == 1000
+    assert compact_args.large_api_qubo_max_calls == 3
+    assert compact_args.large_api_qubo_api_timeout == 0.75
+    assert compact_args.large_api_qubo_api_fallback is False
+
+
+def test_paper_runner_accepts_large_api_reservoir_variant():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from benchmark_compact_paper_set import _args_for_variant, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_large_api_reservoir_polish"
+    parsed = build_parser().parse_args(["--variant", variant])
+
+    compact_args = _args_for_variant(parsed, variant)
+    bench._apply_solver_profile(compact_args)
+
+    assert compact_args.solver_profile == "scheduler_state_v5_qubo_diversity_union_large_api_reservoir_polish"
+    assert compact_args.qubo_first is False
+    assert compact_args.large_api_qubo_enabled is True
+    assert compact_args.large_api_qubo_n_window == 999
+    assert compact_args.large_api_qubo_min_vars == 64
+    assert compact_args.large_api_qubo_min_height == 0
+    assert compact_args.large_api_qubo_min_capacity == 50
+    assert compact_args.large_api_qubo_max_vars == 128
+    assert compact_args.large_api_qubo_select == 4
+
+
 def test_paper_runner_materializes_frg_seed_cache_before_collecting_rows(monkeypatch, tmp_path: Path):
     from argparse import Namespace
 

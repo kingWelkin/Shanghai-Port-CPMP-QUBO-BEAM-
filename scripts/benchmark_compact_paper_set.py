@@ -39,11 +39,16 @@ from open_cpmp_benchmarks import (  # noqa: E402
     _variant_names as _open_variant_names,
 )
 
+_EXPLICIT_PAPER_QUBO_VARIANTS = {
+    "qubo_scheduler_state_v5_qubo_diversity_union_large_api_polish",
+}
+
 
 def _known_open_qubo_variants() -> set[str]:
     variants: set[str] = set()
     for name in ("both", "all", "wang_all", "wang_research_all"):
         variants.update(_open_variant_names(name))
+    variants.update(_EXPLICIT_PAPER_QUBO_VARIANTS)
     return variants
 
 
@@ -562,6 +567,30 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--beam-width", type=int)
     parser.add_argument("--core-width", type=int)
     parser.add_argument("--parent-core-cap", type=int)
+    parser.add_argument("--qubo-sampler", choices=["sa", "simulated_annealing", "ising_api"], default=None)
+    parser.add_argument("--qubo-api-base-url", default=None)
+    parser.add_argument("--qubo-api-endpoint", default=None)
+    parser.add_argument("--qubo-api-gear", type=int)
+    parser.add_argument("--qubo-api-type", default=None)
+    parser.add_argument("--qubo-api-timeout", type=float)
+    parser.add_argument("--qubo-api-working-dir", default=None)
+    parser.add_argument("--qubo-api-project-src", default=None)
+    parser.add_argument("--qubo-api-fallback", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--qubo-first", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--large-api-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--large-api-qubo-supplement-width", type=int)
+    parser.add_argument("--large-api-qubo-focus-n", type=int)
+    parser.add_argument("--large-api-qubo-n-window", type=int)
+    parser.add_argument("--large-api-qubo-min-candidates", type=int)
+    parser.add_argument("--large-api-qubo-min-vars", type=int)
+    parser.add_argument("--large-api-qubo-min-height", type=int)
+    parser.add_argument("--large-api-qubo-min-capacity", type=int)
+    parser.add_argument("--large-api-qubo-max-vars", type=int)
+    parser.add_argument("--large-api-qubo-select", type=int)
+    parser.add_argument("--large-api-qubo-max-calls", type=int)
+    parser.add_argument("--large-api-qubo-sampler", choices=["sa", "simulated_annealing", "ising_api"], default=None)
+    parser.add_argument("--large-api-qubo-api-timeout", type=float)
+    parser.add_argument("--large-api-qubo-api-fallback", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--union-diversity-qubo-origin-similarity-penalty", type=float)
     parser.add_argument("--union-diversity-qubo-same-origin-parent-n-band-penalty", type=float)
     parser.add_argument(

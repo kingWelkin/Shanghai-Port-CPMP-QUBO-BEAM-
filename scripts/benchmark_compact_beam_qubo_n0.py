@@ -48,7 +48,11 @@ from container_reshuffle.core import (  # noqa: E402
 )
 from container_reshuffle.features import disorder_box_count, entropy_limit, max_entropy_along_moves  # noqa: E402
 from container_reshuffle.qubo.model import QuboModel  # noqa: E402
-from container_reshuffle.qubo.sampler import QuboSamplerConfig, SimulatedAnnealingQuboSampler  # noqa: E402
+from container_reshuffle.qubo.sampler import (  # noqa: E402
+    IsingMatrixApiQuboSampler,
+    QuboSamplerConfig,
+    SimulatedAnnealingQuboSampler,
+)
 from container_reshuffle.solvers.feasibility_signals import (  # noqa: E402
     FeasibilitySignals,
     compute_feasibility_signals,
@@ -99,6 +103,10 @@ COMPACT_EXTRA_FIELDS = [
     "selection_policy",
     "priority",
     "deterministic_qubo_sampler",
+    "qubo_sampler",
+    "qubo_api_fallback",
+    "qubo_api_gear",
+    "qubo_api_type",
     "frg_rollout_respect_time_limit",
     "frg_rollout_max_generated",
     "target_guided_weight",
@@ -259,6 +267,24 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_vars",
     "union_diversity_qubo_time_sec",
     "union_diversity_qubo_selected_total",
+    "large_api_qubo_enabled",
+    "large_api_qubo_supplement_width",
+    "large_api_qubo_focus_n",
+    "large_api_qubo_n_window",
+    "large_api_qubo_min_candidates",
+    "large_api_qubo_min_vars",
+    "large_api_qubo_min_height",
+    "large_api_qubo_min_capacity",
+    "large_api_qubo_max_vars",
+    "large_api_qubo_select",
+    "large_api_qubo_max_calls",
+    "large_api_qubo_sampler",
+    "large_api_qubo_api_timeout",
+    "large_api_qubo_api_fallback",
+    "large_api_qubo_calls",
+    "large_api_qubo_vars",
+    "large_api_qubo_time_sec",
+    "large_api_qubo_selected_total",
     "quality_reservoir_enabled",
     "quality_reservoir_max_candidates",
     "quality_reservoir_top_quality",
@@ -1460,6 +1486,20 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_macro_future_credit_cap": 0.0,
         "union_diversity_qubo_unified_macro_future_credit_scale": 1.0,
         "union_diversity_qubo_unified_macro_pair_penalty": 0.0,
+        "large_api_qubo_enabled": False,
+        "large_api_qubo_supplement_width": 0,
+        "large_api_qubo_focus_n": -1,
+        "large_api_qubo_n_window": 2,
+        "large_api_qubo_min_candidates": 512,
+        "large_api_qubo_min_vars": 1,
+        "large_api_qubo_min_height": 0,
+        "large_api_qubo_min_capacity": 0,
+        "large_api_qubo_max_vars": 1000,
+        "large_api_qubo_select": 32,
+        "large_api_qubo_max_calls": 2,
+        "large_api_qubo_sampler": "ising_api",
+        "large_api_qubo_api_timeout": 8.0,
+        "large_api_qubo_api_fallback": True,
         "quality_reservoir_enabled": False,
         "quality_reservoir_max_candidates": 0,
         "quality_reservoir_top_quality": 0,
@@ -1677,6 +1717,15 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "qubo_stack_sim_weight": 0.35,
         "qubo_sim_threshold": 0.80,
         "deterministic_qubo_sampler": False,
+        "qubo_sampler": "sa",
+        "qubo_api_base_url": None,
+        "qubo_api_endpoint": None,
+        "qubo_api_gear": 2,
+        "qubo_api_type": "binary",
+        "qubo_api_timeout": 0.0,
+        "qubo_api_working_dir": None,
+        "qubo_api_project_src": None,
+        "qubo_api_fallback": True,
         "group_qubo_supplement": False,
         "max_group_qubo_calls": 32,
         "qubo_group_max_vars": 96,
@@ -2968,6 +3017,41 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_c
     "post_polish_successor_cache": True,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_large_api_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "large_api_qubo_enabled": True,
+    "large_api_qubo_supplement_width": 24,
+    "large_api_qubo_focus_n": -1,
+    "large_api_qubo_n_window": 4,
+    "large_api_qubo_min_candidates": 1000,
+    "large_api_qubo_min_vars": 512,
+    "large_api_qubo_max_vars": 1000,
+    "large_api_qubo_select": 24,
+    "large_api_qubo_max_calls": 2,
+    "large_api_qubo_sampler": "ising_api",
+    "large_api_qubo_api_timeout": 8.0,
+    "large_api_qubo_api_fallback": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_large_api_reservoir_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish"],
+    "qubo_first": False,
+    "large_api_qubo_enabled": True,
+    "large_api_qubo_supplement_width": 4,
+    "large_api_qubo_focus_n": -1,
+    "large_api_qubo_n_window": 999,
+    "large_api_qubo_min_candidates": 1000,
+    "large_api_qubo_min_vars": 64,
+    "large_api_qubo_min_height": 0,
+    "large_api_qubo_min_capacity": 50,
+    "large_api_qubo_max_vars": 128,
+    "large_api_qubo_select": 4,
+    "large_api_qubo_max_calls": 1,
+    "large_api_qubo_sampler": "ising_api",
+    "large_api_qubo_api_timeout": 8.0,
+    "large_api_qubo_api_fallback": True,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "frg_frontier_child_enabled": True,
@@ -3519,6 +3603,10 @@ class CompactBeamResult:
     union_diversity_qubo_vars: int = 0
     union_diversity_qubo_time_sec: float = 0.0
     union_diversity_qubo_selected_total: int = 0
+    large_api_qubo_calls: int = 0
+    large_api_qubo_vars: int = 0
+    large_api_qubo_time_sec: float = 0.0
+    large_api_qubo_selected_total: int = 0
     pareto_union_layers: int = 0
     pareto_union_seed_selected_total: int = 0
     pareto_union_qubo_calls: int = 0
@@ -4485,6 +4573,35 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
             "--deterministic-qubo-sampler",
             "--no-deterministic-qubo-sampler",
         ),
+        "qubo_sampler": "--qubo-sampler",
+        "qubo_api_base_url": "--qubo-api-base-url",
+        "qubo_api_endpoint": "--qubo-api-endpoint",
+        "qubo_api_gear": "--qubo-api-gear",
+        "qubo_api_type": "--qubo-api-type",
+        "qubo_api_timeout": "--qubo-api-timeout",
+        "qubo_api_working_dir": "--qubo-api-working-dir",
+        "qubo_api_project_src": "--qubo-api-project-src",
+        "qubo_api_fallback": (
+            "--qubo-api-fallback",
+            "--no-qubo-api-fallback",
+        ),
+        "large_api_qubo_enabled": ("--large-api-qubo-enabled", "--no-large-api-qubo-enabled"),
+        "large_api_qubo_supplement_width": "--large-api-qubo-supplement-width",
+        "large_api_qubo_focus_n": "--large-api-qubo-focus-n",
+        "large_api_qubo_n_window": "--large-api-qubo-n-window",
+        "large_api_qubo_min_candidates": "--large-api-qubo-min-candidates",
+        "large_api_qubo_min_vars": "--large-api-qubo-min-vars",
+        "large_api_qubo_min_height": "--large-api-qubo-min-height",
+        "large_api_qubo_min_capacity": "--large-api-qubo-min-capacity",
+        "large_api_qubo_max_vars": "--large-api-qubo-max-vars",
+        "large_api_qubo_select": "--large-api-qubo-select",
+        "large_api_qubo_max_calls": "--large-api-qubo-max-calls",
+        "large_api_qubo_sampler": "--large-api-qubo-sampler",
+        "large_api_qubo_api_timeout": "--large-api-qubo-api-timeout",
+        "large_api_qubo_api_fallback": (
+            "--large-api-qubo-api-fallback",
+            "--no-large-api-qubo-api-fallback",
+        ),
         "group_qubo_risk_gate": ("--group-qubo-risk-gate", "--no-group-qubo-risk-gate"),
         "dynamic_min_frontier": "--dynamic-min-frontier",
         "dynamic_core_frontier": "--dynamic-core-frontier",
@@ -4847,7 +4964,43 @@ def _qubo_sampler_config(
         time_limit_sec=max(0.001, float(time_limit_sec)),
         sa_iterations=max(1, int(sa_iterations)),
         respect_time_limit=not bool(getattr(args, "deterministic_qubo_sampler", False)),
+        sampler_name=_canonical_qubo_sampler_name(args),
+        api_base_url=getattr(args, "qubo_api_base_url", None),
+        api_endpoint=getattr(args, "qubo_api_endpoint", None),
+        api_gear=getattr(args, "qubo_api_gear", None),
+        api_problem_type=str(getattr(args, "qubo_api_type", "binary") or "binary"),
+        api_timeout_sec=max(0.0, float(getattr(args, "qubo_api_timeout", 0.0) or 0.0)),
+        api_working_dir=getattr(args, "qubo_api_working_dir", None),
+        api_project_src=getattr(args, "qubo_api_project_src", None),
+        api_fallback=bool(getattr(args, "qubo_api_fallback", True)),
     )
+
+
+def _canonical_qubo_sampler_name(args: argparse.Namespace) -> str:
+    name = str(getattr(args, "qubo_sampler", "sa") or "sa").strip().lower()
+    aliases = {
+        "local": "sa",
+        "simulated_annealing": "sa",
+        "simulated-annealing": "sa",
+        "ising": "ising_api",
+        "api": "ising_api",
+        "ising_matrix_api": "ising_api",
+        "hardware_api": "ising_api",
+    }
+    return aliases.get(name, name)
+
+
+def _make_qubo_sampler(args: argparse.Namespace):
+    name = _canonical_qubo_sampler_name(args)
+    if name == "sa":
+        return SimulatedAnnealingQuboSampler()
+    if name == "ising_api":
+        return IsingMatrixApiQuboSampler(fallback=SimulatedAnnealingQuboSampler())
+    raise ValueError(f"unknown QUBO sampler: {name}")
+
+
+def _sample_qubo(model: QuboModel, args: argparse.Namespace, config: QuboSamplerConfig):
+    return _make_qubo_sampler(args).sample(model, config)
 
 
 def _frg_rollout_deadline(
@@ -7985,8 +8138,9 @@ def _select_union_diversity_qubo_supplement(
                 model.add_quadratic(vars_[i], vars_[j], reservoir_pair_penalty)
     _add_union_diversity_adaptive_macro_quota_terms(model, vars_, features, target, args)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=int(getattr(args, "qubo_reads", 2) or 2),
@@ -8062,6 +8216,38 @@ def _select_union_diversity_qubo_supplement(
             if features[idx].micro_best_n >= 0 or features[idx].receiver_safe_delta != 0
         )
     return [usable[idx][0] for idx in ordered], len(model.var_index), sample_set.runtime_sec
+
+
+def _select_large_api_qubo_supplement(
+    ranked: list[tuple[bytes, tuple[int, int, bytes]]],
+    args: argparse.Namespace,
+    target: int,
+) -> tuple[list[bytes], int, float]:
+    target = max(0, int(target))
+    if target <= 0 or not ranked:
+        return [], 0, 0.0
+
+    qargs = SimpleNamespace(**vars(args))
+    qargs.union_diversity_qubo_max_vars = max(
+        1,
+        int(getattr(args, "large_api_qubo_max_vars", 1000) or 1000),
+    )
+    qargs.union_diversity_qubo_select = max(
+        1,
+        int(getattr(args, "large_api_qubo_select", target) or target),
+    )
+    qargs.qubo_sampler = str(getattr(args, "large_api_qubo_sampler", "ising_api") or "ising_api")
+    qargs.qubo_api_timeout = float(
+        getattr(
+            args,
+            "large_api_qubo_api_timeout",
+            getattr(args, "qubo_api_timeout", 0.0),
+        )
+        or 0.0
+    )
+    qargs.qubo_api_fallback = bool(getattr(args, "large_api_qubo_api_fallback", True))
+    qargs._union_diversity_qubo_calls_done = int(getattr(args, "_large_api_qubo_calls_done", 0) or 0)
+    return _select_union_diversity_qubo_supplement(ranked, qargs, target)
 
 
 class ParetoUnionFeatures(NamedTuple):
@@ -8394,8 +8580,9 @@ def _select_pareto_union_qubo_supplement(
             if penalties["risk"] > 0.0 and _risk_bucket(features[i].risk_score) == _risk_bucket(features[j].risk_score):
                 model.add_quadratic(vars_[i], vars_[j], penalties["risk"])
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=int(getattr(args, "qubo_reads", 2) or 2),
@@ -8646,8 +8833,9 @@ def _select_bs_frg_qubo_supplement(
             if n_band_penalty > 0.0 and features[i].n_value // n_band_size == features[j].n_value // n_band_size:
                 model.add_quadratic(vars_[i], vars_[j], n_band_penalty)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=int(getattr(args, "qubo_reads", 2) or 2),
@@ -9244,8 +9432,9 @@ def _select_wang_pair_qubo_supplement(
                 if parent_i == usable[j][3][2]:
                     model.add_quadratic(vars_[i], vars_[j], same_parent_penalty)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0)))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=int(getattr(args, "qubo_reads", 2) or 2),
@@ -9326,8 +9515,9 @@ def _select_unified_wang_qubo_supplement(
                 model.add_quadratic(vars_[i], vars_[j], -complement_bonus)
 
     model.add_exactly_k_penalty(vars_, target, _float_attr("qubo_penalty_a", 30.0))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=_int_attr("qubo_reads", 2),
@@ -10238,8 +10428,9 @@ def _select_group_qubo_supplement(
             if ni == nj:
                 model.add_quadratic(vars_[i], vars_[j], args.qubo_group_same_n_penalty)
     model.add_exactly_k_penalty(vars_, target_groups, args.qubo_penalty_a)
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=args.qubo_reads,
@@ -10330,8 +10521,9 @@ def _select_dynamic_qubo_frontier(
             if ni == nj:
                 model.add_quadratic(vars_[i], vars_[j], args.qubo_group_same_n_penalty)
 
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=args.qubo_reads,
@@ -10873,6 +11065,71 @@ def _select_enhanced_qubo_frontier(
                     else:
                         selected_source_by_code.setdefault(code, "pareto_union_seed")
                 selected.setdefault(code, None)
+                if len(selected) >= effective_beam:
+                    break
+    large_api_width = max(0, int(getattr(args, "large_api_qubo_supplement_width", 0) or 0))
+    large_api_focus_n = int(getattr(args, "large_api_qubo_focus_n", -1) or -1)
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    min_height = max(0, int(getattr(args, "large_api_qubo_min_height", 0) or 0))
+    min_capacity = max(0, int(getattr(args, "large_api_qubo_min_capacity", 0) or 0))
+    capacity = stack_count * max_height
+    if (
+        getattr(args, "large_api_qubo_enabled", False)
+        and args.use_qubo
+        and large_api_width > 0
+        and len(selected) < effective_beam
+        and candidate_count >= max(1, int(getattr(args, "large_api_qubo_min_candidates", 512) or 512))
+        and max_height >= min_height
+        and (min_capacity <= 0 or capacity >= min_capacity)
+        and int(getattr(args, "_large_api_qubo_calls_done", 0) or 0)
+        < max(0, int(getattr(args, "large_api_qubo_max_calls", 0) or 0))
+        and (large_api_focus_n < 0 or int(best_n) <= large_api_focus_n)
+    ):
+        n_window = max(0, int(getattr(args, "large_api_qubo_n_window", 2) or 0))
+        remaining = [
+            (code, data)
+            for code, data in ranked
+            if code not in selected and data[0] <= int(best_n) + n_window
+        ]
+        api_vars = min(
+            len(remaining),
+            max(1, int(getattr(args, "large_api_qubo_max_vars", 1000) or 1000)),
+        )
+        min_api_vars = max(1, int(getattr(args, "large_api_qubo_min_vars", 1) or 1))
+        target = min(
+            large_api_width,
+            effective_beam - len(selected),
+            int(getattr(args, "large_api_qubo_select", large_api_width) or large_api_width),
+            len(remaining),
+        )
+        if target > 0 and api_vars >= min_api_vars:
+            boosted, add_qvars, add_qtime = _select_large_api_qubo_supplement(remaining, args, target)
+        else:
+            boosted, add_qvars, add_qtime = [], 0, 0.0
+        if add_qvars:
+            if not hasattr(args, "_large_api_qubo_calls_done"):
+                args._large_api_qubo_calls_done = 0
+            if not hasattr(args, "_large_api_qubo_vars"):
+                args._large_api_qubo_vars = 0
+            if not hasattr(args, "_large_api_qubo_time"):
+                args._large_api_qubo_time = 0.0
+            if not hasattr(args, "_large_api_qubo_selected_total"):
+                args._large_api_qubo_selected_total = 0
+            qcalls += 1
+            qvars += add_qvars
+            qtime += add_qtime
+            args._large_api_qubo_calls_done += 1
+            args._large_api_qubo_vars += add_qvars
+            args._large_api_qubo_time += add_qtime
+            for code in boosted:
+                if code not in selected:
+                    selected_by_qubo.add(code)
+                    selected_source_by_code.setdefault(code, "large_api_qubo")
+                before = len(selected)
+                selected.setdefault(code, None)
+                if len(selected) > before:
+                    args._large_api_qubo_selected_total += 1
                 if len(selected) >= effective_beam:
                     break
     union_width = max(0, int(getattr(args, "union_diversity_qubo_supplement_width", 0) or 0))
@@ -12635,8 +12892,9 @@ def _select_post_polish_suffixes_qubo(
             if distance <= int(getattr(args, "post_polish_suffix_near_gap", 2)):
                 model.add_quadratic(vars_[i], vars_[j], float(getattr(args, "post_polish_suffix_near_penalty", 0.30)))
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "post_polish_penalty_a", 18.0)))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=int(getattr(args, "post_polish_qubo_reads", 2)),
@@ -12876,8 +13134,9 @@ def _select_post_polish_windows_qubo(
                 if distance <= args.post_polish_near_window_gap:
                     model.add_quadratic(vars_[i], vars_[j], 0.15)
     model.add_exactly_k_penalty(vars_, target, args.post_polish_penalty_a)
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=args.post_polish_qubo_reads,
@@ -13010,8 +13269,9 @@ def _select_post_polish_windows_v2_qubo(
                 model.add_quadratic(vars_[i], vars_[j], 0.10)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "post_polish_penalty_a", 18.0)))
     time_limit = float(getattr(args, "post_polish_window_time_limit", getattr(args, "post_polish_qubo_time_limit", 0.001)))
-    sample_set = SimulatedAnnealingQuboSampler().sample(
+    sample_set = _sample_qubo(
         model,
+        args,
         _qubo_sampler_config(
             args,
             num_reads=int(getattr(args, "post_polish_qubo_reads", 2)),
@@ -14350,6 +14610,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
     args._union_diversity_qubo_vars = 0
     args._union_diversity_qubo_time = 0.0
     args._union_diversity_qubo_selected_total = 0
+    args._large_api_qubo_calls_done = 0
+    args._large_api_qubo_vars = 0
+    args._large_api_qubo_time = 0.0
+    args._large_api_qubo_selected_total = 0
     args._receiver_debt_selected_total = 0.0
     args._receiver_debt_selected_count = 0
     args._escape_potential_selected_total = 0.0
@@ -15370,6 +15634,10 @@ def run_compact_beam_instance(case: str, instance: Instance, args: argparse.Name
         union_diversity_qubo_vars=args._union_diversity_qubo_vars,
         union_diversity_qubo_time_sec=args._union_diversity_qubo_time,
         union_diversity_qubo_selected_total=args._union_diversity_qubo_selected_total,
+        large_api_qubo_calls=args._large_api_qubo_calls_done,
+        large_api_qubo_vars=args._large_api_qubo_vars,
+        large_api_qubo_time_sec=args._large_api_qubo_time,
+        large_api_qubo_selected_total=args._large_api_qubo_selected_total,
         pareto_union_layers=args._pareto_union_layers,
         pareto_union_seed_selected_total=args._pareto_union_seed_selected_total,
         pareto_union_qubo_calls=args._pareto_union_qubo_calls_done,
@@ -15724,6 +15992,10 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "selection_policy": getattr(args, "selection_policy", "enhanced"),
             "priority": args.priority,
             "deterministic_qubo_sampler": getattr(args, "deterministic_qubo_sampler", False),
+            "qubo_sampler": _canonical_qubo_sampler_name(args),
+            "qubo_api_fallback": getattr(args, "qubo_api_fallback", True),
+            "qubo_api_gear": getattr(args, "qubo_api_gear", 2),
+            "qubo_api_type": getattr(args, "qubo_api_type", "binary"),
             "target_guided_weight": getattr(args, "target_guided_weight", 0.0),
             "target_guided_focus_n": getattr(args, "target_guided_focus_n", 8),
             "target_guided_supplement_width": getattr(args, "target_guided_supplement_width", 0),
@@ -15951,6 +16223,24 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
             "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
             "union_diversity_qubo_selected_total": result.union_diversity_qubo_selected_total,
+            "large_api_qubo_enabled": getattr(args, "large_api_qubo_enabled", False),
+            "large_api_qubo_supplement_width": getattr(args, "large_api_qubo_supplement_width", 0),
+            "large_api_qubo_focus_n": getattr(args, "large_api_qubo_focus_n", -1),
+            "large_api_qubo_n_window": getattr(args, "large_api_qubo_n_window", 2),
+            "large_api_qubo_min_candidates": getattr(args, "large_api_qubo_min_candidates", 512),
+            "large_api_qubo_min_vars": getattr(args, "large_api_qubo_min_vars", 1),
+            "large_api_qubo_min_height": getattr(args, "large_api_qubo_min_height", 0),
+            "large_api_qubo_min_capacity": getattr(args, "large_api_qubo_min_capacity", 0),
+            "large_api_qubo_max_vars": getattr(args, "large_api_qubo_max_vars", 1000),
+            "large_api_qubo_select": getattr(args, "large_api_qubo_select", 32),
+            "large_api_qubo_max_calls": getattr(args, "large_api_qubo_max_calls", 2),
+            "large_api_qubo_sampler": getattr(args, "large_api_qubo_sampler", "ising_api"),
+            "large_api_qubo_api_timeout": getattr(args, "large_api_qubo_api_timeout", 8.0),
+            "large_api_qubo_api_fallback": getattr(args, "large_api_qubo_api_fallback", True),
+            "large_api_qubo_calls": result.large_api_qubo_calls,
+            "large_api_qubo_vars": result.large_api_qubo_vars,
+            "large_api_qubo_time_sec": result.large_api_qubo_time_sec,
+            "large_api_qubo_selected_total": result.large_api_qubo_selected_total,
             "quality_reservoir_enabled": getattr(args, "quality_reservoir_enabled", False),
             "quality_reservoir_max_candidates": getattr(args, "quality_reservoir_max_candidates", 0),
             "quality_reservoir_top_quality": getattr(args, "quality_reservoir_top_quality", 0),
@@ -17413,6 +17703,38 @@ def main() -> int:
     parser.add_argument("--qubo-reads", type=int, default=2)
     parser.add_argument("--qubo-iterations", type=int, default=20)
     parser.add_argument("--deterministic-qubo-sampler", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--qubo-sampler",
+        choices=["sa", "simulated_annealing", "ising_api"],
+        default="sa",
+        help="QUBO backend for beam-selection QUBOs; default keeps the local simulated annealer.",
+    )
+    parser.add_argument("--qubo-api-base-url", default=None)
+    parser.add_argument("--qubo-api-endpoint", default=None)
+    parser.add_argument("--qubo-api-gear", type=int, default=2)
+    parser.add_argument("--qubo-api-type", default="binary")
+    parser.add_argument("--qubo-api-timeout", type=float, default=0.0)
+    parser.add_argument("--qubo-api-working-dir", default=None)
+    parser.add_argument("--qubo-api-project-src", default=None)
+    parser.add_argument("--qubo-api-fallback", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--large-api-qubo-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--large-api-qubo-supplement-width", type=int, default=None)
+    parser.add_argument("--large-api-qubo-focus-n", type=int, default=None)
+    parser.add_argument("--large-api-qubo-n-window", type=int, default=None)
+    parser.add_argument("--large-api-qubo-min-candidates", type=int, default=None)
+    parser.add_argument("--large-api-qubo-min-vars", type=int, default=None)
+    parser.add_argument("--large-api-qubo-min-height", type=int, default=None)
+    parser.add_argument("--large-api-qubo-min-capacity", type=int, default=None)
+    parser.add_argument("--large-api-qubo-max-vars", type=int, default=None)
+    parser.add_argument("--large-api-qubo-select", type=int, default=None)
+    parser.add_argument("--large-api-qubo-max-calls", type=int, default=None)
+    parser.add_argument(
+        "--large-api-qubo-sampler",
+        choices=["sa", "simulated_annealing", "ising_api"],
+        default=None,
+    )
+    parser.add_argument("--large-api-qubo-api-timeout", type=float, default=None)
+    parser.add_argument("--large-api-qubo-api-fallback", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--post-polish-qubo", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--post-polish-mode", choices=["legacy", "qubo_windows_v2"], default="legacy")
     parser.add_argument("--post-polish-accept", choices=["better", "equal_or_better"], default="better")

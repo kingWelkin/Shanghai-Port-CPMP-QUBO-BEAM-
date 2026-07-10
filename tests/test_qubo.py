@@ -106,6 +106,185 @@ def test_compact_qubo_sampler_config_disables_wall_clock_limit_when_requested():
     assert config.respect_time_limit is False
 
 
+def test_compact_qubo_sampler_config_carries_api_options():
+    from benchmark_compact_beam_qubo_n0 import _qubo_sampler_config
+
+    args = _compact_args(
+        qubo_sampler="ising_api",
+        qubo_api_base_url="http://solver.local:5001",
+        qubo_api_endpoint="/api/v1/job/",
+        qubo_api_gear=3,
+        qubo_api_type="binary",
+        qubo_api_timeout=0.25,
+        qubo_api_working_dir="tmp/api-qubo",
+        qubo_api_project_src="C:/solver/src",
+        qubo_api_fallback=False,
+    )
+
+    config = _qubo_sampler_config(
+        args,
+        num_reads=2,
+        random_seed=37,
+        time_limit_sec=0.001,
+        sa_iterations=20,
+    )
+
+    assert config.sampler_name == "ising_api"
+    assert config.api_base_url == "http://solver.local:5001"
+    assert config.api_endpoint == "/api/v1/job/"
+    assert config.api_gear == 3
+    assert config.api_problem_type == "binary"
+    assert config.api_timeout_sec == 0.25
+    assert config.api_working_dir == "tmp/api-qubo"
+    assert config.api_project_src == "C:/solver/src"
+    assert config.api_fallback is False
+
+
+def test_compact_qubo_sample_uses_configured_api_sampler(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+
+    captured: dict[str, object] = {}
+
+    class FakeApiSampler:
+        def __init__(self, fallback=None):
+            captured["fallback"] = fallback
+
+        def sample(self, model, config):
+            captured["config"] = config
+            return QuboSampleSet(
+                samples=[QuboSample({0: 1}, model.evaluate({0: 1}))],
+                sampler_name="fake_api",
+                runtime_sec=0.01,
+            )
+
+    monkeypatch.setattr(bench, "IsingMatrixApiQuboSampler", FakeApiSampler)
+
+    model = QuboModel()
+    x = model.add_binary_var("x")
+    model.add_linear(x, -1.0)
+    args = _compact_args(qubo_sampler="ising_api")
+    config = bench._qubo_sampler_config(args, num_reads=1, random_seed=1, time_limit_sec=0.01, sa_iterations=1)
+
+    sample_set = bench._sample_qubo(model, args, config)
+
+    assert sample_set.sampler_name == "fake_api"
+    assert captured["config"] is config
+    assert captured["fallback"] is not None
+
+
+def test_ising_api_sampler_falls_back_when_api_is_unavailable():
+    from container_reshuffle.qubo.sampler import IsingMatrixApiQuboSampler
+
+    model = QuboModel()
+    x = model.add_binary_var("x")
+    model.add_linear(x, -1.0)
+
+    sample_set = IsingMatrixApiQuboSampler(base_url="http://127.0.0.1:9").sample(
+        model,
+        QuboSamplerConfig(
+            sampler_name="ising_api",
+            api_base_url="http://127.0.0.1:9",
+            api_timeout_sec=0.001,
+            api_fallback=True,
+            num_reads=1,
+            sa_iterations=1,
+        ),
+    )
+
+    assert sample_set.samples
+    assert sample_set.sampler_name.startswith("ising_matrix_api_fallback_")
+
+
+def test_ising_api_sampler_shadows_successful_api_with_local_fallback(monkeypatch):
+    from container_reshuffle.qubo.sampler import IsingMatrixApiQuboSampler, QuboSampleSet, _extract_api_results
+
+    model = QuboModel()
+    x = model.add_binary_var("x")
+    model.add_linear(x, -1.0)
+
+    class FakeFallback:
+        def sample(self, model, config):
+            return QuboSampleSet(
+                samples=[QuboSample({0: 1}, model.evaluate({0: 1}))],
+                sampler_name="fake_local",
+                runtime_sec=0.0,
+            )
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            del kwargs
+
+        def submit_csv_file(self, csv_path):
+            assert csv_path.exists()
+            return {"result": {"spin_config": [0], "energy": 0.0}}
+
+    def fake_load_modules(self, project_src=None):
+        del self, project_src
+        return {
+            "QuboTerms": lambda **kwargs: SimpleNamespace(**kwargs),
+            "Int8CompilerConfig": lambda **kwargs: SimpleNamespace(**kwargs),
+            "compile_qubo_int8": lambda terms, cfg: SimpleNamespace(Q_int=[[0]]),
+            "IsingApiClient": FakeClient,
+            "extract_api_results": _extract_api_results,
+        }
+
+    monkeypatch.setattr(IsingMatrixApiQuboSampler, "_load_modules", fake_load_modules)
+
+    sample_set = IsingMatrixApiQuboSampler(fallback=FakeFallback()).sample(
+        model,
+        QuboSamplerConfig(
+            sampler_name="ising_api",
+            api_fallback=True,
+            api_working_dir="tmp/test-api-shadow",
+        ),
+    )
+
+    assert sample_set.sampler_name == "ising_matrix_api_shadow_fake_local"
+    assert sample_set.samples[0].binary_values == {0: 1}
+
+
+def test_open_runner_passes_qubo_api_flags_to_compact_args():
+    import open_cpmp_benchmarks as open_runner
+
+    parser = open_runner.build_parser()
+    parsed = parser.parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
+            "--qubo-sampler",
+            "ising_api",
+            "--qubo-api-base-url",
+            "http://solver.local:5001",
+            "--qubo-api-endpoint",
+            "/api/v1/job/",
+            "--qubo-api-gear",
+            "4",
+            "--qubo-api-type",
+            "binary",
+            "--qubo-api-timeout",
+            "0.5",
+            "--qubo-api-working-dir",
+            "tmp/open-api-qubo",
+            "--qubo-api-project-src",
+            "C:/solver/src",
+            "--no-qubo-api-fallback",
+        ]
+    )
+
+    compact_args = open_runner._args_for_variant(parsed, parsed.variant)
+
+    assert compact_args.qubo_sampler == "ising_api"
+    assert compact_args.qubo_api_base_url == "http://solver.local:5001"
+    assert compact_args.qubo_api_endpoint == "/api/v1/job/"
+    assert compact_args.qubo_api_gear == 4
+    assert compact_args.qubo_api_type == "binary"
+    assert compact_args.qubo_api_timeout == 0.5
+    assert compact_args.qubo_api_working_dir == "tmp/open-api-qubo"
+    assert compact_args.qubo_api_project_src == "C:/solver/src"
+    assert compact_args.qubo_api_fallback is False
+
+
 def test_generic_qubo_boosted_respects_deterministic_sampler_flag(monkeypatch):
     import benchmark_target_astar_memory_n0 as target
     from benchmark_compact_beam_qubo_n0 import make_compact_args
@@ -736,6 +915,61 @@ def test_open_priority_group_row_serializes_frg_seed_cache_fields():
     assert row["frg_seed_used"] is True
     assert row["frg_seed_moves"] == 3
     assert row["frg_seed_status"] == "FRG_FEASIBLE"
+
+
+def test_open_priority_group_row_serializes_large_api_qubo_fields():
+    from benchmark_compact_beam_qubo_n0 import CompactBeamResult
+    from open_cpmp_benchmarks import _open_row_dict_from_instance_result, requires_priority_group_semantics
+
+    instance = Instance(
+        "tiny_priority_group_large_api_row",
+        ProblemVariant.PREMARSHALLING_CPMP,
+        stack_count=3,
+        max_height=3,
+        container_count=3,
+        stacks=[[1, 2], [1], []],
+    )
+    result = CompactBeamResult(
+        case=instance.instance_id,
+        status="ok",
+        moves=[],
+        runtime_sec=0.0,
+        expanded=0,
+        generated=0,
+        visited=0,
+        open_count=0,
+        pruned_bound=0,
+        pruned_business=0,
+        dominated=0,
+        peak_frontier=0,
+        peak_candidates=0,
+        depth_reached=0,
+        large_api_qubo_calls=2,
+        large_api_qubo_vars=789,
+        large_api_qubo_time_sec=0.33,
+        large_api_qubo_selected_total=12,
+    )
+    args = _compact_args(
+        large_api_qubo_enabled=True,
+        large_api_qubo_supplement_width=24,
+        large_api_qubo_min_candidates=1000,
+        large_api_qubo_min_vars=512,
+        large_api_qubo_max_vars=1000,
+        large_api_qubo_select=24,
+        large_api_qubo_max_calls=2,
+    )
+
+    assert requires_priority_group_semantics(instance)
+
+    row = _open_row_dict_from_instance_result(result, instance, args)
+
+    assert row["large_api_qubo_enabled"] is True
+    assert row["large_api_qubo_min_vars"] == 512
+    assert row["large_api_qubo_max_vars"] == 1000
+    assert row["large_api_qubo_calls"] == 2
+    assert row["large_api_qubo_vars"] == 789
+    assert row["large_api_qubo_time_sec"] == 0.33
+    assert row["large_api_qubo_selected_total"] == 12
 
 
 def test_open_priority_group_row_serializes_frg_frontier_soft_supply_fields():
@@ -2373,6 +2607,243 @@ def test_union_diversity_qubo_selects_quality_diverse_candidates(monkeypatch):
     assert qtime == 0.31
     assert len(selected) == 2
     assert len(selected_parents) == 2
+
+
+def test_large_api_qubo_selector_uses_api_without_mutating_global_sampler(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+    from container_reshuffle.qubo.sampler import QuboSampleSet
+    from run_business_exact_target_search_sqlite import _encode
+
+    stack_count = 4
+    max_height = 3
+    parent_a, _ = _encode([[9, 1, 6], [8, 7], [], []], stack_count, max_height)
+    child_a, n_a = _encode([[9, 1], [8, 7, 6], [], []], stack_count, max_height)
+    parent_b, _ = _encode([[5, 2, 4], [8, 7], [], []], stack_count, max_height)
+    child_b, n_b = _encode([[5, 2], [8, 7, 4], [], []], stack_count, max_height)
+    parent_c, _ = _encode([[6, 3, 5], [8, 7], [], []], stack_count, max_height)
+    child_c, n_c = _encode([[6, 3], [8, 7, 5], [], []], stack_count, max_height)
+    ranked = [
+        (child_a, (n_a, 4, parent_a)),
+        (child_b, (n_b, 4, parent_b)),
+        (child_c, (n_c, 4, parent_c)),
+    ]
+    args = _compact_args(
+        _stack_count=stack_count,
+        _max_height=max_height,
+        qubo_sampler="sa",
+        large_api_qubo_max_vars=3,
+        large_api_qubo_select=2,
+        large_api_qubo_sampler="ising_api",
+        large_api_qubo_api_timeout=0.25,
+        large_api_qubo_api_fallback=True,
+    )
+    captured: dict[str, object] = {}
+
+    def fake_sample_qubo(model, sampled_args, config):
+        captured["sampled_args"] = sampled_args
+        captured["sampler_name"] = config.sampler_name
+        captured["api_timeout"] = config.api_timeout_sec
+        captured["api_fallback"] = config.api_fallback
+        values = {0: 1, 1: 1, 2: 0}
+        return QuboSampleSet(
+            samples=[QuboSample(values, model.evaluate(values))],
+            sampler_name="fake_large_api",
+            runtime_sec=0.42,
+        )
+
+    monkeypatch.setattr(bench, "_sample_qubo", fake_sample_qubo)
+
+    selected, qvars, qtime = bench._select_large_api_qubo_supplement(ranked, args, target=2)
+
+    assert len(selected) == 2
+    assert qvars == 3
+    assert qtime == 0.42
+    assert captured["sampler_name"] == "ising_api"
+    assert captured["api_timeout"] == 0.25
+    assert captured["api_fallback"] is True
+    assert captured["sampled_args"] is not args
+    assert args.qubo_sampler == "sa"
+
+
+def test_enhanced_frontier_records_large_api_qubo_telemetry(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (bytes([idx + 1]), (3 + idx // 3, idx, bytes([100 + idx])))
+        for idx in range(9)
+    ]
+    args = _compact_args(
+        use_qubo=True,
+        beam_width=4,
+        core_width=0,
+        max_qubo_calls=0,
+        union_diversity_qubo_enabled=False,
+        large_api_qubo_enabled=True,
+        large_api_qubo_supplement_width=2,
+        large_api_qubo_min_candidates=4,
+        large_api_qubo_max_calls=1,
+        large_api_qubo_focus_n=-1,
+        large_api_qubo_n_window=0,
+    )
+
+    def fake_large_api(remaining, sampled_args, target):
+        assert sampled_args is args
+        assert target == 2
+        return [remaining[0][0], remaining[1][0]], 777, 1.25
+
+    monkeypatch.setattr(bench, "_select_large_api_qubo_supplement", fake_large_api)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=4,
+        core_width=0,
+        qubo_supplement_width=0,
+    )
+
+    assert qcalls == 1
+    assert qvars == 777
+    assert qtime == 1.25
+    assert args._large_api_qubo_calls_done == 1
+    assert args._large_api_qubo_vars == 777
+    assert args._large_api_qubo_time == 1.25
+    assert args._large_api_qubo_selected_total == 2
+    assert selected_by_qubo == {ranked[0][0], ranked[1][0]}
+    assert selected[:2] == [ranked[0][0], ranked[1][0]]
+
+
+def test_enhanced_frontier_skips_large_api_qubo_for_small_remaining_pool(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (bytes([idx + 1]), (3 + idx // 3, idx, bytes([100 + idx])))
+        for idx in range(9)
+    ]
+    args = _compact_args(
+        use_qubo=True,
+        beam_width=4,
+        core_width=0,
+        max_qubo_calls=0,
+        union_diversity_qubo_enabled=False,
+        large_api_qubo_enabled=True,
+        large_api_qubo_supplement_width=2,
+        large_api_qubo_min_candidates=4,
+        large_api_qubo_min_vars=8,
+        large_api_qubo_max_calls=1,
+        large_api_qubo_focus_n=-1,
+        large_api_qubo_n_window=0,
+    )
+
+    def fail_large_api(_remaining, _sampled_args, _target):
+        raise AssertionError("large API QUBO should not run on small filtered pools")
+
+    monkeypatch.setattr(bench, "_select_large_api_qubo_supplement", fail_large_api)
+
+    selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=4,
+        core_width=0,
+        qubo_supplement_width=0,
+    )
+
+    assert selected == [code for code, _data in ranked[:4]]
+    assert selected_by_qubo == set()
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+    assert getattr(args, "_large_api_qubo_calls_done", 0) == 0
+
+
+def test_enhanced_frontier_skips_large_api_qubo_below_min_height(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (bytes([idx + 1]), (3, idx, bytes([100 + idx])))
+        for idx in range(9)
+    ]
+    args = _compact_args(
+        use_qubo=True,
+        beam_width=4,
+        core_width=0,
+        max_qubo_calls=0,
+        union_diversity_qubo_enabled=False,
+        _max_height=5,
+        large_api_qubo_enabled=True,
+        large_api_qubo_supplement_width=2,
+        large_api_qubo_min_candidates=4,
+        large_api_qubo_min_vars=1,
+        large_api_qubo_min_height=6,
+        large_api_qubo_max_calls=1,
+        large_api_qubo_focus_n=-1,
+        large_api_qubo_n_window=999,
+    )
+
+    def fail_large_api(_remaining, _sampled_args, _target):
+        raise AssertionError("large API QUBO should not run below the configured height gate")
+
+    monkeypatch.setattr(bench, "_select_large_api_qubo_supplement", fail_large_api)
+
+    _selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=4,
+        core_width=0,
+        qubo_supplement_width=0,
+    )
+
+    assert selected_by_qubo == set()
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
+
+
+def test_enhanced_frontier_skips_large_api_qubo_below_min_capacity(monkeypatch):
+    import benchmark_compact_beam_qubo_n0 as bench
+
+    ranked = [
+        (bytes([idx + 1]), (3, idx, bytes([100 + idx])))
+        for idx in range(9)
+    ]
+    args = _compact_args(
+        use_qubo=True,
+        beam_width=4,
+        core_width=0,
+        max_qubo_calls=0,
+        union_diversity_qubo_enabled=False,
+        _stack_count=7,
+        _max_height=7,
+        large_api_qubo_enabled=True,
+        large_api_qubo_supplement_width=2,
+        large_api_qubo_min_candidates=4,
+        large_api_qubo_min_vars=1,
+        large_api_qubo_min_capacity=50,
+        large_api_qubo_max_calls=1,
+        large_api_qubo_focus_n=-1,
+        large_api_qubo_n_window=999,
+    )
+
+    def fail_large_api(_remaining, _sampled_args, _target):
+        raise AssertionError("large API QUBO should not run below the configured capacity gate")
+
+    monkeypatch.setattr(bench, "_select_large_api_qubo_supplement", fail_large_api)
+
+    _selected, selected_by_qubo, qcalls, qvars, qtime = bench._select_enhanced_qubo_frontier(
+        ranked,
+        candidate_count=len(ranked),
+        args=args,
+        beam_width=4,
+        core_width=0,
+        qubo_supplement_width=0,
+    )
+
+    assert selected_by_qubo == set()
+    assert qcalls == 0
+    assert qvars == 0
+    assert qtime == 0.0
 
 
 def test_union_diversity_qubo_penalizes_same_origin_parent_and_n_band():
@@ -8408,6 +8879,68 @@ def test_open_runner_passes_bs_frg_qubo_overrides():
     assert args.bs_frg_qubo_same_parent_penalty == 0.7
 
 
+def test_open_runner_passes_large_api_qubo_variant_and_overrides():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    outer = build_parser().parse_args(
+        [
+            "--variant",
+            "qubo_scheduler_state_v5_qubo_diversity_union_large_api_polish",
+            "--large-api-qubo-max-vars",
+            "999",
+            "--large-api-qubo-min-vars",
+            "256",
+            "--qubo-first",
+            "--large-api-qubo-max-calls",
+            "3",
+            "--large-api-qubo-api-timeout",
+            "0.75",
+            "--no-large-api-qubo-api-fallback",
+        ]
+    )
+
+    args = _args_for_variant(
+        outer,
+        "qubo_scheduler_state_v5_qubo_diversity_union_large_api_polish",
+    )
+    bench._apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_large_api_polish"
+    assert args.large_api_qubo_enabled is True
+    assert args.qubo_first is True
+    assert args.large_api_qubo_min_vars == 256
+    assert args.large_api_qubo_max_vars == 999
+    assert args.large_api_qubo_max_calls == 3
+    assert args.large_api_qubo_api_timeout == 0.75
+    assert args.large_api_qubo_api_fallback is False
+    assert args.large_api_qubo_sampler == "ising_api"
+    assert args.qubo_sampler != "ising_api"
+
+
+def test_open_runner_accepts_large_api_reservoir_profile():
+    import benchmark_compact_beam_qubo_n0 as bench
+    from open_cpmp_benchmarks import _args_for_variant, build_parser
+
+    variant = "qubo_scheduler_state_v5_qubo_diversity_union_large_api_reservoir_polish"
+    outer = build_parser().parse_args(["--variant", variant])
+
+    args = _args_for_variant(outer, variant)
+    bench._apply_solver_profile(args)
+
+    assert args.solver_profile == "scheduler_state_v5_qubo_diversity_union_large_api_reservoir_polish"
+    assert args.qubo_first is False
+    assert args.large_api_qubo_enabled is True
+    assert args.large_api_qubo_n_window == 999
+    assert args.large_api_qubo_min_vars == 64
+    assert args.large_api_qubo_min_height == 0
+    assert args.large_api_qubo_min_capacity == 50
+    assert args.large_api_qubo_max_vars == 128
+    assert args.large_api_qubo_supplement_width == 4
+    assert args.large_api_qubo_select == 4
+    assert args.large_api_qubo_max_calls == 1
+
+
 def test_open_runner_passes_qubo_start_layer_overrides():
     from open_cpmp_benchmarks import _args_for_variant, build_parser
 
@@ -13863,6 +14396,7 @@ def test_open_runner_wang_all_expands_current_and_wang_variants():
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_softcredit_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_stable_quality_polish",
+        "qubo_scheduler_state_v5_qubo_diversity_union_large_api_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_frg_terminal_witness_qubo_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_quality_reservoir_polish",
         "qubo_scheduler_state_v5_qubo_diversity_union_micro_trace_polish",
