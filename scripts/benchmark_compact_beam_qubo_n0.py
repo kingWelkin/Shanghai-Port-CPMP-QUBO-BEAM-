@@ -221,6 +221,16 @@ COMPACT_EXTRA_FIELDS = [
     "union_diversity_qubo_n_band_size",
     "union_diversity_qubo_origin_similarity_penalty",
     "union_diversity_qubo_same_origin_parent_n_band_penalty",
+    "union_diversity_qubo_frg_witness_signature_penalty",
+    "union_diversity_qubo_adaptive_macro_quota_enabled",
+    "union_diversity_qubo_macro_quota_penalty",
+    "union_diversity_qubo_macro_quota_base_share",
+    "union_diversity_qubo_macro_quota_min_share",
+    "union_diversity_qubo_macro_quota_max_share",
+    "union_diversity_qubo_macro_quota_debt_weight",
+    "union_diversity_qubo_macro_quota_scarcity_weight",
+    "union_diversity_qubo_macro_quota_witness_weight",
+    "union_diversity_qubo_macro_quality_bonus",
     "union_diversity_qubo_calls",
     "union_diversity_qubo_vars",
     "union_diversity_qubo_time_sec",
@@ -302,6 +312,16 @@ COMPACT_EXTRA_FIELDS = [
     "frg_frontier_child_adaptive_min_n",
     "frg_frontier_child_adaptive_small_stack_max",
     "frg_frontier_child_adaptive_min_container_count",
+    "frg_frontier_child_soft_supply_enabled",
+    "frg_frontier_child_soft_supply_parent_width",
+    "frg_frontier_child_soft_supply_limit",
+    "frg_frontier_child_soft_supply_max_steps",
+    "frg_frontier_child_soft_supply_pressure_threshold",
+    "frg_frontier_child_soft_supply_min_n",
+    "frg_frontier_child_soft_supply_plateau_window",
+    "frg_frontier_child_soft_supply_plateau_delta",
+    "frg_frontier_child_soft_supply_last_pressure",
+    "frg_frontier_child_soft_supply_active_layers",
     "frg_frontier_child_calls",
     "frg_frontier_child_generated",
     "frg_frontier_child_added_total",
@@ -1312,6 +1332,16 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "union_diversity_qubo_n_band_size": 1,
         "union_diversity_qubo_origin_similarity_penalty": 0.0,
         "union_diversity_qubo_same_origin_parent_n_band_penalty": 0.0,
+        "union_diversity_qubo_frg_witness_signature_penalty": 0.0,
+        "union_diversity_qubo_adaptive_macro_quota_enabled": False,
+        "union_diversity_qubo_macro_quota_penalty": 0.0,
+        "union_diversity_qubo_macro_quota_base_share": 0.0,
+        "union_diversity_qubo_macro_quota_min_share": 0.0,
+        "union_diversity_qubo_macro_quota_max_share": 0.5,
+        "union_diversity_qubo_macro_quota_debt_weight": 0.35,
+        "union_diversity_qubo_macro_quota_scarcity_weight": 0.35,
+        "union_diversity_qubo_macro_quota_witness_weight": 0.30,
+        "union_diversity_qubo_macro_quality_bonus": 0.0,
         "debt_basin_enabled": False,
         "w_receiver_debt": 0.0,
         "w_escape_potential": 0.0,
@@ -1370,6 +1400,14 @@ _SOLVER_PROFILES: dict[str, dict[str, int | float | bool | str]] = {
         "frg_frontier_child_adaptive_min_n": 0,
         "frg_frontier_child_adaptive_small_stack_max": 0,
         "frg_frontier_child_adaptive_min_container_count": 0,
+        "frg_frontier_child_soft_supply_enabled": False,
+        "frg_frontier_child_soft_supply_parent_width": 0,
+        "frg_frontier_child_soft_supply_limit": 0,
+        "frg_frontier_child_soft_supply_max_steps": 1,
+        "frg_frontier_child_soft_supply_pressure_threshold": 0.65,
+        "frg_frontier_child_soft_supply_min_n": 0,
+        "frg_frontier_child_soft_supply_plateau_window": 2,
+        "frg_frontier_child_soft_supply_plateau_delta": 0,
         "frg_seed_enabled": False,
         "frg_seed_time_limit": 0.0,
         "frg_seed_min_max_steps": 256,
@@ -2342,6 +2380,25 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_rollout_score_poli
     "frg_frontier_child_enabled": False,
 }
 
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_witness_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "frg_seed_enabled": False,
+    "frg_seed_time_limit": 0.0,
+    "frg_frontier_child_enabled": False,
+    "union_rollout_terminal_graft": False,
+    "union_rollout_probe_enabled": True,
+    "union_rollout_probe_max_candidates": 32,
+    "union_rollout_probe_time_limit": 0.002,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.06,
+    "union_rollout_probe_final_n_weight": 0.10,
+    "union_rollout_probe_moves_weight": 0.003,
+    "union_rollout_probe_dead_end_penalty": 0.08,
+    "union_rollout_probe_evaluator_enabled": False,
+    "union_rollout_probe_evaluator_weight": 0.0,
+    "union_diversity_qubo_frg_witness_signature_penalty": 0.18,
+}
+
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_micro_trace_polish"] = {
     **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
     "micro_rollout_enabled": True,
@@ -2484,6 +2541,82 @@ _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_certified
     "union_rollout_probe_final_n_weight": 0.12,
     "union_rollout_probe_moves_weight": 0.006,
     "union_rollout_probe_dead_end_penalty": 0.10,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_macro_witness_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_compound_certified_polish"],
+    "frg_seed_enabled": False,
+    "frg_seed_time_limit": 0.0,
+    "union_rollout_terminal_graft": False,
+    "union_rollout_probe_evaluator_enabled": False,
+    "union_rollout_probe_evaluator_weight": 0.0,
+    "union_rollout_probe_feasible_bonus": 0.06,
+    "union_rollout_probe_final_n_weight": 0.10,
+    "union_rollout_probe_moves_weight": 0.003,
+    "union_rollout_probe_dead_end_penalty": 0.08,
+    "union_diversity_qubo_frg_witness_signature_penalty": 0.18,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_completion_macro_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_polish"],
+    "frg_seed_enabled": False,
+    "frg_seed_time_limit": 0.0,
+    "frg_frontier_child_enabled": True,
+    "frg_frontier_child_parent_width": 1,
+    "frg_frontier_child_limit": 1,
+    "frg_frontier_child_max_steps": 512,
+    "frg_frontier_child_append_only": False,
+    "frg_frontier_child_completion_prefix_enabled": True,
+    "frg_frontier_child_completion_max_stack_count": 0,
+    "frg_frontier_child_completion_time_limit": 0.01,
+    "frg_frontier_child_adaptive_enabled": False,
+    "union_rollout_terminal_graft": False,
+    "debt_basin_reduction_chain_enabled": True,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_completion_macro_qubo_polish"],
+    "frg_frontier_child_mode": "hybrid_macro",
+    "frg_frontier_child_limit": 3,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_hybrid_macro_qubo_polish"],
+    "union_rollout_probe_enabled": True,
+    "union_rollout_probe_max_candidates": 32,
+    "union_rollout_probe_time_limit": 0.002,
+    "union_rollout_probe_max_steps": 512,
+    "union_rollout_probe_feasible_bonus": 0.04,
+    "union_rollout_probe_final_n_weight": 0.08,
+    "union_rollout_probe_moves_weight": 0.002,
+    "union_rollout_probe_dead_end_penalty": 0.08,
+    "union_diversity_qubo_adaptive_macro_quota_enabled": True,
+    "union_diversity_qubo_macro_quota_penalty": 0.40,
+    "union_diversity_qubo_macro_quota_base_share": 0.0,
+    "union_diversity_qubo_macro_quota_min_share": 0.0,
+    "union_diversity_qubo_macro_quota_max_share": 0.5,
+    "union_diversity_qubo_macro_quota_debt_weight": 0.35,
+    "union_diversity_qubo_macro_quota_scarcity_weight": 0.35,
+    "union_diversity_qubo_macro_quota_witness_weight": 0.30,
+    "union_diversity_qubo_macro_quality_bonus": 0.08,
+}
+
+_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_soft_supply_qubo_polish"] = {
+    **_SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_adaptive_macro_qubo_polish"],
+    "frg_frontier_child_append_only": False,
+    "frg_frontier_child_certify_enabled": True,
+    "frg_frontier_child_certify_max_steps": 512,
+    "frg_frontier_child_certify_time_limit": 0.002,
+    "frg_frontier_child_soft_supply_enabled": True,
+    "frg_frontier_child_soft_supply_parent_width": 8,
+    "frg_frontier_child_soft_supply_limit": 24,
+    "frg_frontier_child_soft_supply_max_steps": 512,
+    "frg_frontier_child_soft_supply_pressure_threshold": 0.50,
+    "frg_frontier_child_soft_supply_min_n": 8,
+    "frg_frontier_child_soft_supply_plateau_window": 2,
+    "frg_frontier_child_soft_supply_plateau_delta": 0,
+    "union_rollout_probe_max_candidates": 48,
+    "union_diversity_qubo_macro_quota_max_share": 0.45,
 }
 
 _SOLVER_PROFILES["scheduler_state_v5_qubo_diversity_union_frg_evaluated_polish"] = {
@@ -3397,6 +3530,19 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "candidate_ledger_frg_assignment_weight": "--candidate-ledger-frg-assignment-weight",
         "candidate_ledger_rollout_bonus": "--candidate-ledger-rollout-bonus",
         "candidate_ledger_rank_window": "--candidate-ledger-rank-window",
+        "union_diversity_qubo_frg_witness_signature_penalty": "--union-diversity-qubo-frg-witness-signature-penalty",
+        "union_diversity_qubo_adaptive_macro_quota_enabled": (
+            "--union-diversity-qubo-adaptive-macro-quota-enabled",
+            "--no-union-diversity-qubo-adaptive-macro-quota-enabled",
+        ),
+        "union_diversity_qubo_macro_quota_penalty": "--union-diversity-qubo-macro-quota-penalty",
+        "union_diversity_qubo_macro_quota_base_share": "--union-diversity-qubo-macro-quota-base-share",
+        "union_diversity_qubo_macro_quota_min_share": "--union-diversity-qubo-macro-quota-min-share",
+        "union_diversity_qubo_macro_quota_max_share": "--union-diversity-qubo-macro-quota-max-share",
+        "union_diversity_qubo_macro_quota_debt_weight": "--union-diversity-qubo-macro-quota-debt-weight",
+        "union_diversity_qubo_macro_quota_scarcity_weight": "--union-diversity-qubo-macro-quota-scarcity-weight",
+        "union_diversity_qubo_macro_quota_witness_weight": "--union-diversity-qubo-macro-quota-witness-weight",
+        "union_diversity_qubo_macro_quality_bonus": "--union-diversity-qubo-macro-quality-bonus",
         "debt_basin_enabled": (
             "--debt-basin-enabled",
             "--no-debt-basin-enabled",
@@ -3506,6 +3652,23 @@ def _apply_solver_profile(args: argparse.Namespace) -> None:
         "frg_frontier_child_adaptive_min_n": "--frg-frontier-child-adaptive-min-n",
         "frg_frontier_child_adaptive_small_stack_max": "--frg-frontier-child-adaptive-small-stack-max",
         "frg_frontier_child_adaptive_min_container_count": "--frg-frontier-child-adaptive-min-container-count",
+        "frg_frontier_child_soft_supply_enabled": (
+            "--frg-frontier-child-soft-supply-enabled",
+            "--no-frg-frontier-child-soft-supply-enabled",
+        ),
+        "frg_frontier_child_soft_supply_parent_width": "--frg-frontier-child-soft-supply-parent-width",
+        "frg_frontier_child_soft_supply_limit": "--frg-frontier-child-soft-supply-limit",
+        "frg_frontier_child_soft_supply_max_steps": "--frg-frontier-child-soft-supply-max-steps",
+        "frg_frontier_child_soft_supply_pressure_threshold": (
+            "--frg-frontier-child-soft-supply-pressure-threshold"
+        ),
+        "frg_frontier_child_soft_supply_min_n": "--frg-frontier-child-soft-supply-min-n",
+        "frg_frontier_child_soft_supply_plateau_window": (
+            "--frg-frontier-child-soft-supply-plateau-window"
+        ),
+        "frg_frontier_child_soft_supply_plateau_delta": (
+            "--frg-frontier-child-soft-supply-plateau-delta"
+        ),
         "frg_seed_enabled": ("--frg-seed-enabled", "--no-frg-seed-enabled"),
         "frg_seed_time_limit": "--frg-seed-time-limit",
         "frg_seed_min_max_steps": "--frg-seed-min-max-steps",
@@ -4295,6 +4458,7 @@ class UnionDiversityQuboFeatures(NamedTuple):
     rollout_final_n: int = -1
     rollout_moves: int = 0
     rollout_status: str = ""
+    frg_witness_signature: tuple[int, ...] = ()
     micro_first_children_count: int = 0
     micro_second_children_count: int = 0
     micro_best_delta_n: int = 0
@@ -4316,6 +4480,9 @@ class UnionDiversityQuboFeatures(NamedTuple):
     reduction_chain_origin: str = ""
     reduction_chain_depth: int = 0
     debt_basin_linear_adjustment: float = 0.0
+    is_frg_macro: bool = False
+    source_scarcity: float = 0.0
+    completion_witness_quality: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -4770,6 +4937,173 @@ def _union_rollout_probe_evaluator_blend(
     return float((1.0 - weight) * float(base_energy) + weight * evaluator_energy)
 
 
+def _union_rollout_probe_witness_signature(result: UnionRolloutProbeResult | None) -> tuple[int, ...]:
+    if result is None:
+        return ()
+    if bool(result.feasible) and int(result.final_n) <= 0:
+        status_bucket = 0
+    elif str(result.status) in {"FRG_CYCLE_OR_DEAD_END", "NO_SOLUTION", "ERROR"}:
+        status_bucket = 2
+    else:
+        status_bucket = 1
+    final_bucket = min(15, max(0, int(result.final_n)))
+    if result.move_path:
+        first = result.move_path[0]
+        second = result.move_path[1] if len(result.move_path) > 1 else None
+        if second is None:
+            return (
+                status_bucket,
+                final_bucket,
+                min(15, max(-1, int(first.from_stack))),
+                min(15, max(-1, int(first.to_stack))),
+            )
+        return (
+            status_bucket,
+            final_bucket,
+            min(15, max(-1, int(first.from_stack))),
+            min(15, max(-1, int(first.to_stack))),
+            min(15, max(-1, int(second.from_stack))),
+            min(15, max(-1, int(second.to_stack))),
+        )
+    moves_bucket = min(15, max(0, int(result.moves)) // 16)
+    return (status_bucket, final_bucket, moves_bucket)
+
+
+def _union_diversity_is_macro_feature(feature: UnionDiversityQuboFeatures) -> bool:
+    return bool(feature.is_frg_macro) or str(feature.origin) == "frg_frontier_child"
+
+
+def _union_diversity_macro_origin(origin: str) -> bool:
+    return str(origin or "") == "frg_frontier_child"
+
+
+def _union_diversity_completion_witness_quality(
+    result: UnionRolloutProbeResult | None,
+    args: argparse.Namespace,
+    *,
+    n_value: int,
+) -> float:
+    if result is None:
+        return 0.0
+    if str(result.status) in {"FRG_CYCLE_OR_DEAD_END", "NO_SOLUTION", "ERROR"}:
+        return 0.0
+    max_steps = max(1, int(getattr(args, "union_rollout_probe_max_steps", 512) or 512))
+    move_discount = 0.35 * min(1.0, float(max(0, int(result.moves))) / float(max_steps))
+    if bool(result.feasible) and int(result.final_n) <= 0:
+        return _clamp01(1.0 - move_discount)
+    if int(result.final_n) >= 0:
+        start_n = max(1.0, float(max(1, int(n_value))))
+        progress = 1.0 - min(1.0, float(max(0, int(result.final_n))) / start_n)
+        return _clamp01(0.65 * progress - move_discount)
+    return 0.0
+
+
+def _union_diversity_source_scarcity(parent_code: bytes, source_stack: int, args: argparse.Namespace) -> float:
+    global_scarcity = _clamp01(float(getattr(args, "_initial_scarcity_risk", 0.0) or 0.0))
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    max_height = int(getattr(args, "_max_height", 0) or 0)
+    if source_stack < 0 or stack_count <= 0 or max_height <= 0 or not parent_code:
+        return global_scarcity
+    try:
+        chunks = _split(parent_code, stack_count, max_height)
+    except Exception:
+        return global_scarcity
+    if source_stack >= len(chunks):
+        return global_scarcity
+    source_height = float(_chunk_height_raw(chunks[source_stack])) / float(max(1, max_height))
+    local_pressure = _local_height_pressure(parent_code, stack_count, max_height)
+    return _clamp01(0.45 * global_scarcity + 0.35 * source_height + 0.20 * local_pressure)
+
+
+def _union_diversity_macro_pressure_score(
+    feature: UnionDiversityQuboFeatures,
+    args: argparse.Namespace,
+) -> float:
+    debt_score = _clamp01(float(feature.receiver_debt) / (1.0 + max(0.0, float(feature.receiver_debt))))
+    scarcity_score = _clamp01(float(feature.source_scarcity))
+    witness_score = _clamp01(float(feature.completion_witness_quality))
+    debt_weight = max(0.0, float(getattr(args, "union_diversity_qubo_macro_quota_debt_weight", 0.35) or 0.0))
+    scarcity_weight = max(
+        0.0,
+        float(getattr(args, "union_diversity_qubo_macro_quota_scarcity_weight", 0.35) or 0.0),
+    )
+    witness_weight = max(
+        0.0,
+        float(getattr(args, "union_diversity_qubo_macro_quota_witness_weight", 0.30) or 0.0),
+    )
+    total = debt_weight + scarcity_weight + witness_weight
+    if total <= 0.0:
+        return 0.0
+    return _clamp01(
+        (debt_weight * debt_score + scarcity_weight * scarcity_score + witness_weight * witness_score) / total
+    )
+
+
+def _union_diversity_adaptive_macro_quota_target(
+    features: list[UnionDiversityQuboFeatures],
+    target: int,
+    args: argparse.Namespace,
+) -> int:
+    target = max(0, int(target))
+    if target <= 0 or not bool(getattr(args, "union_diversity_qubo_adaptive_macro_quota_enabled", False)):
+        return 0
+    macro_features = [feature for feature in features if _union_diversity_is_macro_feature(feature)]
+    if not macro_features:
+        return 0
+    base_share = _clamp01(float(getattr(args, "union_diversity_qubo_macro_quota_base_share", 0.0) or 0.0))
+    min_share = _clamp01(float(getattr(args, "union_diversity_qubo_macro_quota_min_share", 0.0) or 0.0))
+    max_share = _clamp01(float(getattr(args, "union_diversity_qubo_macro_quota_max_share", 0.5) or 0.5))
+    if max_share < min_share:
+        min_share, max_share = max_share, min_share
+    pressure_scores = sorted(
+        (_union_diversity_macro_pressure_score(feature, args) for feature in macro_features),
+        reverse=True,
+    )
+    sample = pressure_scores[: max(1, min(target, len(pressure_scores)))]
+    pressure = sum(sample) / float(len(sample))
+    share = min(max_share, max(min_share, base_share + pressure))
+    quota = int(round(float(target) * share))
+    if share > 0.0 and quota <= 0:
+        quota = 1
+    return max(0, min(target, len(macro_features), quota))
+
+
+def _union_diversity_adaptive_macro_quota_penalty(
+    selected: set[int],
+    features: list[UnionDiversityQuboFeatures],
+    args: argparse.Namespace,
+) -> float:
+    penalty = float(getattr(args, "union_diversity_qubo_macro_quota_penalty", 0.0) or 0.0)
+    if penalty <= 0.0 or not bool(getattr(args, "union_diversity_qubo_adaptive_macro_quota_enabled", False)):
+        return 0.0
+    macro_target = _union_diversity_adaptive_macro_quota_target(features, len(selected), args)
+    selected_macro = sum(1 for idx in selected if 0 <= idx < len(features) and _union_diversity_is_macro_feature(features[idx]))
+    return float(penalty) * float((int(selected_macro) - int(macro_target)) ** 2)
+
+
+def _add_union_diversity_adaptive_macro_quota_terms(
+    model: QuboModel,
+    vars_: list[int],
+    features: list[UnionDiversityQuboFeatures],
+    target: int,
+    args: argparse.Namespace,
+) -> None:
+    penalty = float(getattr(args, "union_diversity_qubo_macro_quota_penalty", 0.0) or 0.0)
+    if penalty <= 0.0 or not bool(getattr(args, "union_diversity_qubo_adaptive_macro_quota_enabled", False)):
+        return
+    macro_target = _union_diversity_adaptive_macro_quota_target(features, target, args)
+    macro_indices = [idx for idx, feature in enumerate(features) if _union_diversity_is_macro_feature(feature)]
+    if not macro_indices:
+        return
+    linear_weight = penalty * (1.0 - 2.0 * float(macro_target))
+    pair_weight = 2.0 * penalty
+    for idx in macro_indices:
+        model.add_linear(vars_[idx], linear_weight)
+    for pos, i in enumerate(macro_indices):
+        for j in macro_indices[pos + 1 :]:
+            model.add_quadratic(vars_[i], vars_[j], pair_weight)
+
+
 def _union_rollout_probe_completion(
     code: bytes,
     data: tuple[int, int, bytes],
@@ -4963,12 +5297,90 @@ def _ensure_frg_frontier_child_counters(args: argparse.Namespace) -> None:
         args._frg_frontier_child_added_total = 0
 
 
+def _unit_interval(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _frg_frontier_child_soft_supply_pressure(args: argparse.Namespace) -> float:
+    history = [int(value) for value in getattr(args, "_best_n_history", []) if value is not None]
+    best_n = int(getattr(args, "_layer_best_n", history[-1] if history else 0) or 0)
+    min_n = max(0, int(getattr(args, "frg_frontier_child_soft_supply_min_n", 0) or 0))
+    if min_n > 0 and best_n < min_n:
+        return 0.0
+
+    beam_width = max(1, int(getattr(args, "beam_width", 1) or 1))
+    candidate_count = max(0, int(getattr(args, "_layer_candidate_count", 0) or 0))
+    candidate_pressure = _unit_interval((candidate_count / beam_width - 1.0) / 5.0)
+
+    stack_count = int(getattr(args, "_stack_count", 0) or 0)
+    available_stacks = int(getattr(args, "_frg_layout_available_stack_count", 0) or 0)
+    if stack_count <= 0:
+        scarcity_pressure = 0.0
+    elif available_stacks <= 1:
+        scarcity_pressure = 1.0
+    elif available_stacks == 2:
+        scarcity_pressure = 0.6
+    else:
+        scarcity_pressure = 0.0
+
+    height_pressure = _unit_interval(float(getattr(args, "_frg_layout_avg_height_pressure", 0.0) or 0.0))
+    ordered_risk = 1.0 if int(getattr(args, "_frg_layout_max_height_ordered_risk", 0) or 0) > 0 else 0.0
+    depth_slack = int(getattr(args, "_layer_depth_slack", 10**9) or 10**9)
+    if depth_slack <= 1:
+        slack_pressure = 1.0
+    elif depth_slack <= 3:
+        slack_pressure = 0.6
+    elif depth_slack <= 5:
+        slack_pressure = 0.3
+    else:
+        slack_pressure = 0.0
+
+    plateau_window = max(1, int(getattr(args, "frg_frontier_child_soft_supply_plateau_window", 2) or 2))
+    plateau_delta = max(0, int(getattr(args, "frg_frontier_child_soft_supply_plateau_delta", 0) or 0))
+    plateau_pressure = 1.0 if _plateau_active(history, plateau_window, plateau_delta) else 0.0
+
+    return _unit_interval(
+        0.22 * candidate_pressure
+        + 0.20 * scarcity_pressure
+        + 0.20 * height_pressure
+        + 0.16 * ordered_risk
+        + 0.14 * slack_pressure
+        + 0.08 * plateau_pressure
+    )
+
+
+def _frg_frontier_child_soft_supply_params(
+    args: argparse.Namespace,
+    parent_width: int,
+    child_limit: int,
+    max_steps: int,
+) -> tuple[int, int, int]:
+    if not bool(getattr(args, "frg_frontier_child_soft_supply_enabled", False)):
+        setattr(args, "_frg_frontier_child_soft_supply_last_pressure", 0.0)
+        return parent_width, child_limit, max_steps
+    pressure = _frg_frontier_child_soft_supply_pressure(args)
+    setattr(args, "_frg_frontier_child_soft_supply_last_pressure", pressure)
+    threshold = _unit_interval(
+        float(getattr(args, "frg_frontier_child_soft_supply_pressure_threshold", 0.65) or 0.65)
+    )
+    if pressure < threshold:
+        return parent_width, child_limit, max_steps
+    if not hasattr(args, "_frg_frontier_child_soft_supply_active_layers"):
+        args._frg_frontier_child_soft_supply_active_layers = 0
+    args._frg_frontier_child_soft_supply_active_layers += 1
+    return (
+        max(parent_width, int(getattr(args, "frg_frontier_child_soft_supply_parent_width", 0) or 0)),
+        max(child_limit, int(getattr(args, "frg_frontier_child_soft_supply_limit", 0) or 0)),
+        max(max_steps, int(getattr(args, "frg_frontier_child_soft_supply_max_steps", 1) or 1)),
+    )
+
+
 def _frg_frontier_child_effective_params(args: argparse.Namespace) -> tuple[int, int, int]:
     parent_width = max(0, int(getattr(args, "frg_frontier_child_parent_width", 0) or 0))
     child_limit = max(0, int(getattr(args, "frg_frontier_child_limit", 0) or 0))
     max_steps = max(1, int(getattr(args, "frg_frontier_child_max_steps", 1) or 1))
     if not getattr(args, "frg_frontier_child_adaptive_enabled", False):
-        return parent_width, child_limit, max_steps
+        return _frg_frontier_child_soft_supply_params(args, parent_width, child_limit, max_steps)
 
     adaptive_parent_width = max(
         parent_width,
@@ -5000,15 +5412,20 @@ def _frg_frontier_child_effective_params(args: argparse.Namespace) -> tuple[int,
     min_n = max(0, int(getattr(args, "frg_frontier_child_adaptive_min_n", 0) or 0))
     plateau_delta = max(0, int(getattr(args, "frg_frontier_child_adaptive_plateau_delta", 0) or 0))
     if len(history) < window:
-        return parent_width, child_limit, max_steps
+        return _frg_frontier_child_soft_supply_params(args, parent_width, child_limit, max_steps)
     recent = history[-window:]
     current_n = int(recent[-1])
     if current_n < min_n:
-        return parent_width, child_limit, max_steps
+        return _frg_frontier_child_soft_supply_params(args, parent_width, child_limit, max_steps)
     progress = int(recent[0]) - current_n
     if progress > plateau_delta:
-        return parent_width, child_limit, max_steps
-    return adaptive_parent_width, adaptive_child_limit, adaptive_max_steps
+        return _frg_frontier_child_soft_supply_params(args, parent_width, child_limit, max_steps)
+    return _frg_frontier_child_soft_supply_params(
+        args,
+        adaptive_parent_width,
+        adaptive_child_limit,
+        adaptive_max_steps,
+    )
 
 
 def _frg_frontier_child_rollout_children(
@@ -5162,6 +5579,63 @@ def _frg_frontier_compound_source_children(
         return outputs
     scored_outputs.sort(key=lambda item: (item[0], getattr(item[1], "stacks", ())))
     return [(layout, moves, layout_path) for _score, layout, moves, layout_path in scored_outputs[:child_limit]]
+
+
+def _frg_frontier_child_rows_for_mode(
+    layout,
+    max_height: int,
+    step: int,
+    args: argparse.Namespace,
+    *,
+    child_limit: int,
+    max_steps: int,
+    completion_prefix_enabled: bool,
+) -> list[tuple[object, tuple[Move, ...], tuple[object, ...]]]:
+    mode = str(getattr(args, "frg_frontier_child_mode", "rollout") or "rollout")
+    rows: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
+    if completion_prefix_enabled:
+        rows.extend(
+            _frg_frontier_completion_prefix_children(
+                layout,
+                max_height,
+                int(step),
+                args,
+                max_steps=max_steps,
+            )
+        )
+        if mode != "hybrid_macro":
+            return rows
+    if mode in {"compound_sources", "hybrid_macro"}:
+        rows.extend(
+            _frg_frontier_compound_source_children(
+                layout,
+                max_height,
+                int(step),
+                args,
+                child_limit=child_limit,
+                max_steps=max_steps,
+            )
+        )
+    elif not completion_prefix_enabled:
+        rows.extend(
+            _frg_frontier_child_rollout_children(
+                layout,
+                max_height,
+                int(step),
+                args,
+                child_limit=child_limit,
+                max_steps=max_steps,
+            )
+        )
+    seen: set[tuple[tuple[int, ...], ...]] = set()
+    unique_rows: list[tuple[object, tuple[Move, ...], tuple[object, ...]]] = []
+    for child_layout, moves, layout_path in rows:
+        key = tuple(tuple(int(box) for box in stack) for stack in (getattr(child_layout, "stacks", ()) or ()))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_rows.append((child_layout, moves, layout_path))
+    return unique_rows
 
 
 def _as_bs_frg_layout(layout) -> _BsFrgLayout:
@@ -5344,32 +5818,15 @@ def _inject_frg_frontier_child_candidates(
         )
         layout = _bs_frg_initial_layout(instance)
         mode = str(getattr(args, "frg_frontier_child_mode", "rollout") or "rollout")
-        if completion_prefix_enabled:
-            children = _frg_frontier_completion_prefix_children(
-                layout,
-                max_height,
-                int(depth),
-                args,
-                max_steps=max_steps,
-            )
-        elif mode == "compound_sources":
-            children = _frg_frontier_compound_source_children(
-                layout,
-                max_height,
-                int(depth),
-                args,
-                child_limit=child_limit,
-                max_steps=max_steps,
-            )
-        else:
-            children = _frg_frontier_child_rollout_children(
-                layout,
-                max_height,
-                int(depth),
-                args,
-                child_limit=child_limit,
-                max_steps=max_steps,
-            )
+        children = _frg_frontier_child_rows_for_mode(
+            layout,
+            max_height,
+            int(depth),
+            args,
+            child_limit=child_limit,
+            max_steps=max_steps,
+            completion_prefix_enabled=completion_prefix_enabled,
+        )
         for child_layout, moves, layout_path in children:
             if not moves:
                 continue
@@ -5408,7 +5865,7 @@ def _inject_frg_frontier_child_candidates(
             if old is not None and old[1] <= child_depth:
                 continue
             certification_rollout = None
-            if mode == "compound_sources":
+            if mode in {"compound_sources", "hybrid_macro"}:
                 certification_rollout = _frg_frontier_child_certification_rollout(
                     child_layout,
                     max_height,
@@ -5606,7 +6063,8 @@ def _union_diversity_qubo_features(
     debt_basin_linear_adjustment = 0.0
     debt_basin_window = max(0, int(getattr(args, "debt_basin_trace_window", 96) or 0))
     debt_basin_active = bool(getattr(args, "debt_basin_enabled", False))
-    if stack_count > 0 and max_height > 0 and rank < debt_basin_window and debt_basin_active:
+    adaptive_macro_active = bool(getattr(args, "union_diversity_qubo_adaptive_macro_quota_enabled", False))
+    if stack_count > 0 and max_height > 0 and rank < debt_basin_window and (debt_basin_active or adaptive_macro_active):
         parent_n = _code_n(parent_code, stack_count, max_height)
         debt_basin = _debt_basin_features(parent_code, code, parent_n, int(n_value), int(depth), args, origin=origin)
         debt_basin_linear_adjustment = (
@@ -5614,7 +6072,31 @@ def _union_diversity_qubo_features(
             - float(getattr(args, "w_escape_potential", 0.0) or 0.0) * float(debt_basin.escape_potential)
             + float(getattr(args, "w_debt_basin_chain_cost", 0.0) or 0.0) * float(debt_basin.reduction_chain_depth)
         )
-        energy += debt_basin_linear_adjustment
+        if debt_basin_active:
+            energy += debt_basin_linear_adjustment
+    is_frg_macro = _union_diversity_macro_origin(str(origin or "core"))
+    source_scarcity = _union_diversity_source_scarcity(parent_code, source_stack, args) if is_frg_macro else 0.0
+    completion_witness_quality = (
+        _union_diversity_completion_witness_quality(rollout, args, n_value=int(n_value)) if is_frg_macro else 0.0
+    )
+    macro_quality_bonus = float(getattr(args, "union_diversity_qubo_macro_quality_bonus", 0.0) or 0.0)
+    if is_frg_macro and macro_quality_bonus > 0.0:
+        macro_probe = UnionDiversityQuboFeatures(
+            energy=float(energy),
+            n_value=int(n_value),
+            depth=int(depth),
+            parent_code=parent_code,
+            source_stack=source_stack,
+            signature=signature,
+            reduce_signature=reduce_signature,
+            origin=str(origin or "core"),
+            receiver_debt=float(debt_basin.receiver_debt) if debt_basin is not None else 0.0,
+            escape_potential=float(debt_basin.escape_potential) if debt_basin is not None else 0.0,
+            is_frg_macro=True,
+            source_scarcity=float(source_scarcity),
+            completion_witness_quality=float(completion_witness_quality),
+        )
+        energy -= macro_quality_bonus * _union_diversity_macro_pressure_score(macro_probe, args)
     features = UnionDiversityQuboFeatures(
         energy=float(energy),
         n_value=int(n_value),
@@ -5628,6 +6110,7 @@ def _union_diversity_qubo_features(
         rollout_final_n=int(rollout.final_n) if rollout is not None else -1,
         rollout_moves=int(rollout.moves) if rollout is not None else 0,
         rollout_status=str(rollout.status) if rollout is not None else "",
+        frg_witness_signature=_union_rollout_probe_witness_signature(rollout),
         micro_first_children_count=int(micro.first_children_count) if micro is not None else 0,
         micro_second_children_count=int(micro.second_children_count) if micro is not None else 0,
         micro_best_delta_n=int(micro.best_delta_n) if micro is not None else 0,
@@ -5649,6 +6132,9 @@ def _union_diversity_qubo_features(
         reduction_chain_origin=str(debt_basin.reduction_chain_origin) if debt_basin is not None else "",
         reduction_chain_depth=int(debt_basin.reduction_chain_depth) if debt_basin is not None else 0,
         debt_basin_linear_adjustment=float(debt_basin_linear_adjustment),
+        is_frg_macro=bool(is_frg_macro),
+        source_scarcity=float(source_scarcity),
+        completion_witness_quality=float(completion_witness_quality),
     )
     if micro is not None or receiver is not None or debt_basin is not None:
         trace_features = getattr(args, "_micro_rollout_feature_trace_by_code", None)
@@ -5711,6 +6197,9 @@ def _union_diversity_objective(
     same_origin_parent_n_band_penalty = float(
         getattr(args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0) or 0.0
     )
+    frg_witness_signature_penalty = float(
+        getattr(args, "union_diversity_qubo_frg_witness_signature_penalty", 0.0) or 0.0
+    )
     basin_similarity_penalty = float(getattr(args, "union_diversity_qubo_basin_similarity_penalty", 0.0) or 0.0)
     ordered = sorted(selected)
     for pos, i in enumerate(ordered):
@@ -5742,6 +6231,13 @@ def _union_diversity_objective(
                 and features[i].parent_code == features[j].parent_code
             ):
                 value += same_origin_parent_n_band_penalty
+            if (
+                frg_witness_signature_penalty > 0.0
+                and features[i].frg_witness_signature
+                and features[i].frg_witness_signature == features[j].frg_witness_signature
+            ):
+                value += frg_witness_signature_penalty
+    value += _union_diversity_adaptive_macro_quota_penalty(selected, features, args)
     return float(value)
 
 
@@ -5849,6 +6345,9 @@ def _select_union_diversity_qubo_supplement(
     same_origin_parent_n_band_penalty = float(
         getattr(args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0) or 0.0
     )
+    frg_witness_signature_penalty = float(
+        getattr(args, "union_diversity_qubo_frg_witness_signature_penalty", 0.0) or 0.0
+    )
     basin_similarity_penalty = float(getattr(args, "union_diversity_qubo_basin_similarity_penalty", 0.0) or 0.0)
     for i in range(len(usable)):
         for j in range(i + 1, len(usable)):
@@ -5879,6 +6378,13 @@ def _select_union_diversity_qubo_supplement(
                 and features[i].parent_code == features[j].parent_code
             ):
                 model.add_quadratic(vars_[i], vars_[j], same_origin_parent_n_band_penalty)
+            if (
+                frg_witness_signature_penalty > 0.0
+                and features[i].frg_witness_signature
+                and features[i].frg_witness_signature == features[j].frg_witness_signature
+            ):
+                model.add_quadratic(vars_[i], vars_[j], frg_witness_signature_penalty)
+    _add_union_diversity_adaptive_macro_quota_terms(model, vars_, features, target, args)
     model.add_exactly_k_penalty(vars_, target, float(getattr(args, "qubo_penalty_a", 30.0) or 30.0))
     sample_set = SimulatedAnnealingQuboSampler().sample(
         model,
@@ -8445,7 +8951,9 @@ def _select_enhanced_qubo_frontier(
 
     core_target = effective_core
     candidate_origin_by_code = getattr(args, "_candidate_origin_by_code", None) or {}
-    exclude_compound_source_core = str(getattr(args, "frg_frontier_child_mode", "rollout") or "rollout") == "compound_sources"
+    exclude_compound_source_core = str(
+        getattr(args, "frg_frontier_child_mode", "rollout") or "rollout"
+    ) in {"compound_sources", "hybrid_macro"}
 
     def is_compound_source_candidate(code: bytes) -> bool:
         return exclude_compound_source_core and candidate_origin_by_code.get(code) == "frg_frontier_child"
@@ -12279,6 +12787,56 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "union_diversity_qubo_same_origin_parent_n_band_penalty": getattr(
                 args, "union_diversity_qubo_same_origin_parent_n_band_penalty", 0.0
             ),
+            "union_diversity_qubo_frg_witness_signature_penalty": getattr(
+                args,
+                "union_diversity_qubo_frg_witness_signature_penalty",
+                0.0,
+            ),
+            "union_diversity_qubo_adaptive_macro_quota_enabled": getattr(
+                args,
+                "union_diversity_qubo_adaptive_macro_quota_enabled",
+                False,
+            ),
+            "union_diversity_qubo_macro_quota_penalty": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_penalty",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_quota_base_share": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_base_share",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_quota_min_share": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_min_share",
+                0.0,
+            ),
+            "union_diversity_qubo_macro_quota_max_share": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_max_share",
+                0.5,
+            ),
+            "union_diversity_qubo_macro_quota_debt_weight": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_debt_weight",
+                0.35,
+            ),
+            "union_diversity_qubo_macro_quota_scarcity_weight": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_scarcity_weight",
+                0.35,
+            ),
+            "union_diversity_qubo_macro_quota_witness_weight": getattr(
+                args,
+                "union_diversity_qubo_macro_quota_witness_weight",
+                0.30,
+            ),
+            "union_diversity_qubo_macro_quality_bonus": getattr(
+                args,
+                "union_diversity_qubo_macro_quality_bonus",
+                0.0,
+            ),
             "union_diversity_qubo_calls": result.union_diversity_qubo_calls,
             "union_diversity_qubo_vars": result.union_diversity_qubo_vars,
             "union_diversity_qubo_time_sec": result.union_diversity_qubo_time_sec,
@@ -12430,6 +12988,48 @@ def _row_dict_from_instance_result(result: CompactBeamResult, instance: Instance
             "frg_frontier_child_adaptive_min_container_count": getattr(
                 args,
                 "frg_frontier_child_adaptive_min_container_count",
+                0,
+            ),
+            "frg_frontier_child_soft_supply_enabled": getattr(
+                args,
+                "frg_frontier_child_soft_supply_enabled",
+                False,
+            ),
+            "frg_frontier_child_soft_supply_parent_width": getattr(
+                args,
+                "frg_frontier_child_soft_supply_parent_width",
+                0,
+            ),
+            "frg_frontier_child_soft_supply_limit": getattr(args, "frg_frontier_child_soft_supply_limit", 0),
+            "frg_frontier_child_soft_supply_max_steps": getattr(
+                args,
+                "frg_frontier_child_soft_supply_max_steps",
+                1,
+            ),
+            "frg_frontier_child_soft_supply_pressure_threshold": getattr(
+                args,
+                "frg_frontier_child_soft_supply_pressure_threshold",
+                0.65,
+            ),
+            "frg_frontier_child_soft_supply_min_n": getattr(args, "frg_frontier_child_soft_supply_min_n", 0),
+            "frg_frontier_child_soft_supply_plateau_window": getattr(
+                args,
+                "frg_frontier_child_soft_supply_plateau_window",
+                2,
+            ),
+            "frg_frontier_child_soft_supply_plateau_delta": getattr(
+                args,
+                "frg_frontier_child_soft_supply_plateau_delta",
+                0,
+            ),
+            "frg_frontier_child_soft_supply_last_pressure": getattr(
+                args,
+                "_frg_frontier_child_soft_supply_last_pressure",
+                0.0,
+            ),
+            "frg_frontier_child_soft_supply_active_layers": getattr(
+                args,
+                "_frg_frontier_child_soft_supply_active_layers",
                 0,
             ),
             "frg_frontier_child_calls": result.frg_frontier_child_calls,
@@ -13094,6 +13694,20 @@ def main() -> int:
     parser.add_argument("--union-diversity-qubo-n-band-size", type=int, default=None)
     parser.add_argument("--union-diversity-qubo-origin-similarity-penalty", type=float, default=None)
     parser.add_argument("--union-diversity-qubo-same-origin-parent-n-band-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-frg-witness-signature-penalty", type=float, default=None)
+    parser.add_argument(
+        "--union-diversity-qubo-adaptive-macro-quota-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--union-diversity-qubo-macro-quota-penalty", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quota-base-share", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quota-min-share", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quota-max-share", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quota-debt-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quota-scarcity-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quota-witness-weight", type=float, default=None)
+    parser.add_argument("--union-diversity-qubo-macro-quality-bonus", type=float, default=None)
     parser.add_argument("--debt-basin-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--w-receiver-debt", type=float, default=None)
     parser.add_argument("--w-escape-potential", type=float, default=None)
@@ -13140,7 +13754,7 @@ def main() -> int:
     parser.add_argument("--frg-frontier-child-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument(
         "--frg-frontier-child-mode",
-        choices=["rollout", "compound_sources"],
+        choices=["rollout", "compound_sources", "hybrid_macro"],
         default=None,
     )
     parser.add_argument("--frg-frontier-child-min-stack-count", type=int, default=None)
@@ -13167,6 +13781,14 @@ def main() -> int:
     parser.add_argument("--frg-frontier-child-adaptive-min-n", type=int, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-small-stack-max", type=int, default=None)
     parser.add_argument("--frg-frontier-child-adaptive-min-container-count", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-enabled", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-parent-width", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-limit", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-max-steps", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-pressure-threshold", type=float, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-min-n", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-plateau-window", type=int, default=None)
+    parser.add_argument("--frg-frontier-child-soft-supply-plateau-delta", type=int, default=None)
     parser.add_argument("--frg-seed-enabled", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--frg-seed-time-limit", type=float, default=None)
     parser.add_argument("--frg-seed-min-max-steps", type=int, default=None)
