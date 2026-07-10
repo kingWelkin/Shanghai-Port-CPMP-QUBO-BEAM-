@@ -1,5 +1,8 @@
 # Wang-Jin-Lim Target-Guided Paper Audit
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 ## Paper Identity
 
 The paper under audit is Wang, Jin, and Lim, "Target-guided algorithms for the container pre-marshalling problem", Omega 53 (2015), pp. 67-77, DOI `10.1016/j.omega.2014.12.002`.

@@ -13,7 +13,7 @@ The promoted v4.3 variant is:
 qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish
 ```
 
-It supersedes v4.0 as the default runner variant:
+It supersedes the earlier v4.0 runner variant:
 
 ```text
 qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish
@@ -129,14 +129,14 @@ $env:PYTHONPATH='.'; python -m py_compile scripts\benchmark_compact_beam_qubo_n0
 ## Documentation
 
 - [v4.3 promoted mainline](docs/guides/v43-mainline-algorithm.md)
-- [v4.0 mainline algorithm](docs/guides/v4-mainline-chainaware-algorithm.md)
-- [v4.0 flow diagrams](docs/guides/v4-mainline-flow-diagrams.md)
-- [v4.0 scorecard and reproduction](docs/guides/v4-mainline-scorecard-and-reproduction.md)
-- [v4.1 beam feedback candidate](docs/guides/v41-beam-feedback-candidate.md)
+- [Documentation index](docs/index.md)
+- [Active guide index](docs/guides/README.md)
+- [v4.1 beam feedback candidate (historical)](docs/archive/guides/v41-beam-feedback-candidate.md)
 - [Current mainline algorithm](docs/guides/current-mainline-algorithm.md)
 - [Algorithm profile status](docs/guides/algorithm-profile-status.md)
 - [Current best algorithm note](docs/guides/current-best-algorithm.md)
 - [Current QUBO beam details](docs/guides/current-qubo-beam-algorithm.md)
+- [Historical documentation archive](docs/archive/README.md)
 
 ## Project Layout
 

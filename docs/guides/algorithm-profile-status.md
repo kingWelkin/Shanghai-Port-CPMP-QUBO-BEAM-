@@ -64,12 +64,12 @@ algorithm family has three separate roles:
 | Role | Profile family | Decision |
 |---|---|---|
 | Default solver | `...wang_route_v43_polish` | Promoted v4.3 mainline: Open120 `120/120`, BF `721/721`, CV `840/840`, combined moves `105530` |
-| Single-profile baseline | `...chainaware_polish` | Previous v4.0 default; retained for clean ablation of the v4.3 routing contribution |
+| Single-profile baseline | `...chainaware_polish` | Historical v4.0 baseline retained for clean ablation of the v4.3 routing contribution |
 | Quality compression | `...chainaware_quality*_polish` | Opt-in post-compress modes for shorter paths, especially long CV paths |
-| Beam-native research | `...chainaware_beam_quality_polish`, `...chainaware_feedback_v41_polish`, and related witness selectors | Experimental; useful for learning, not promoted until full paired evidence beats v4.0 without solved-count loss |
+| Beam-native research | `...chainaware_beam_quality_polish`, `...chainaware_feedback_v41_polish`, and related witness selectors | Experimental; useful for learning, not promoted until full paired evidence beats v4.3 without solved-count loss |
 
-Pure BS-FRG remains a reference and teacher for deep recovery chains. It is not
-the default solver and should not be described as a fallback in v4.0. The
+Pure BS-FRG remains a reference and teacher for deep recovery chains. The
+historical v4.0 core did not use it as a fallback. The
 accepted engineering split is: v4.0 finds valid solutions quickly, quality modes
 compress paths afterward, and beam-native witness work explores whether that
 compression quality can eventually move inside the beam.
@@ -85,7 +85,7 @@ compression quality can eventually move inside the beam.
 | `qubo_scheduler_state_v5_qubo_diversity_union_frg_macro_edge_qubo_polish` | Open120 macro-edge reference | Reference, not default | Useful for direct macro-edge ablation and path-quality comparison. Not the current combined-surface mainline. |
 | `qubo_scheduler_state_v5_qubo_diversity_union_polish` | Earlier union reference | Demoted reference | Often short on solved open120 rows, but it does not meet the full-surface coverage bar. |
 | `qubo_scheduler_state_v5_wang_rescue_polish` | Clean historical baseline | Keep as baseline | Interpretable Wang plus QUBO rescue baseline, important for paired historical comparisons. |
-| pure BS-FRG reproduction | Paper-algorithm reference | Reference, not default | Important source of deep recovery-chain ideas; not used as a fallback in v4.0. |
+| pure BS-FRG reproduction | Paper-algorithm reference | Paper reference | Important source of deep recovery-chain ideas; the historical v4.0 core did not use it as a fallback. |
 | `speed_v2` internal line | Historical internal 30-case speed line | Keep for internal regression context | Not the current open120/BF/CV promotion gate. |
 
 ## v4.0 Mechanism Summary
@@ -148,4 +148,4 @@ Minimum evidence:
 - `docs/experiments/chainaware_commit411da4b_paper_bf_cv_full1561_t120_20260703_summary.md`
 - `docs/experiments/v41_feedback_open120_t120_nocap_20260707_fullgate_summary.md`
 - `docs/experiments/v41_feedback_paper_bf_cv_full1561_t120_nocap_20260707_fullgate_summary.md`
-- [v4.0 scorecard and reproduction](v4-mainline-scorecard-and-reproduction.md)
+- [v4.0 scorecard and reproduction](../archive/guides/v4-mainline-scorecard-and-reproduction.md)

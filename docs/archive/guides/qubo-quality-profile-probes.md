@@ -1,5 +1,8 @@
 # QUBO 影响增强 profile 试验记录
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 本文记录 2026-06-12 对“扩大 QUBO 作用”路线的复现实验。结论先写清楚：当前上港 30 算例主线仍是 `speed_v2`，不建议把 frontier QUBO 全局放大作为默认方向；触发式 `light_rescue_qubo_v1` / `scheduler_v1` 可作为开放 7x5 硬例的解出率增强路线。
 
 ## 试验分支

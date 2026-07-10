@@ -7,7 +7,7 @@ Raw yard input files. Current data contains 15 zones, each with paired bay files
 - `{ZONE}_01_input.txt`
 - `{ZONE}_26_input.txt`
 
-The input format is documented in [`../docs/data-format.md`](../docs/data-format.md).
+The input format is documented in [`../docs/guides/data-format.md`](../docs/guides/data-format.md).
 
 ## `results/`
 

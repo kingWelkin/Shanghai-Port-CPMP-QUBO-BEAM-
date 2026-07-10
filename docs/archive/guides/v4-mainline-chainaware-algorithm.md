@@ -1,5 +1,8 @@
 # v4.0 Mainline Chain-Aware QUBO Beam Algorithm
 
+> [!IMPORTANT]
+> Historical v4.0 baseline. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 Date: 2026-07-03
 Commit used for the current scorecard: `411da4b`
 

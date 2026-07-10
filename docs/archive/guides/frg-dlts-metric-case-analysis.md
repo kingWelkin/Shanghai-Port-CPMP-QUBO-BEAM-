@@ -1,5 +1,8 @@
 # FRG/DLTS Metric Case Analysis
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 This note maps the metric definitions from
 `C:/Users/Donghao/Documents/xwechat_files/wxid_298p7qs1r88522_6ef2/temp/RWTemp/2026-06/27836c2772901586bc4014b757538896/metric_definition.md`
 onto the current CPMP engineering baseline.

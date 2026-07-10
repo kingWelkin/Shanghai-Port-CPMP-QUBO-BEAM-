@@ -1,5 +1,8 @@
 # scheduler_state v5 调参记录
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 日期：2026-06-12
 
 本文记录 `scheduler_state_v3/v4` 之后的调参结论。

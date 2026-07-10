@@ -1,43 +1,48 @@
 # Documentation Index
 
-This index points to the current decision documents first. Older experiment reports are kept for audit, but they should not override the current scorecard.
+## Current Mainline: v4.3
 
-## Current Decision Path
+The promoted default is:
 
-- [v4.3 promoted mainline](guides/v43-mainline-algorithm.md) - current deterministic Wang/QUBO-beam/BS-FRG routing policy and full-gate evidence.
-- [v4.0 mainline algorithm](guides/v4-mainline-chainaware-algorithm.md) - previous chain-aware QUBO beam baseline and mechanism explanation.
-- [v4.0 flow diagrams](guides/v4-mainline-flow-diagrams.md) - pipeline, candidate supply, QUBO selector, and promotion-gate diagrams.
-- [v4.0 scorecard and reproduction](guides/v4-mainline-scorecard-and-reproduction.md) - latest open120 plus full BF/CV t120 evidence and commands.
-- [Current mainline algorithm](guides/current-mainline-algorithm.md) - current default, evidence, promotion rules, and reproduction commands.
-- [Algorithm profile status](guides/algorithm-profile-status.md) - compact status table for defaults, baselines, and opt-in ablations.
-- [Current best algorithm note](guides/current-best-algorithm.md) - short explanation of what "best" means for open/paper versus internal 30-case runs.
-- [Debt/Basin selector analysis](guides/debt-basin-selector-analysis.md) - 2026-06-29 verdict on the latest debt/basin ablation.
-- [Paper hard-case trace report](experiments/paper_hard_case_trace_report_20260629.md) - mechanism split for BF/CV hard cases.
+```text
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish
+```
 
-## Experiment Entrypoints
+| Surface | Solved | Moves |
+|---|---:|---:|
+| Open120 | 120/120 | 3,759 |
+| BF | 721/721 | 45,906 |
+| CV | 840/840 | 55,865 |
+| Combined promotion gate | 1,681/1,681 | 105,530 |
+| Real30 regression | 30/30 | 525 |
 
-- [Experiments README](experiments/README.md) - current experiment-map and latest artifact list.
-- [QUBO diversity union experiment](experiments/qubo_diversity_union_experiment_20260621.md) - promotion record for the current union mainline.
-- [Strict hard-family union baseline](experiments/strict_hard_union_sample10_t20_20260626.md) - strict BF/CV hard-set baseline before debt/basin.
-- [BF seed cache concurrency smoke](experiments/bf_seed_cache_concurrency_smoke_20260626.md) - parent-process seed materialization and parallel consumption smoke.
+Read these first:
 
-## Mechanism Guides
+1. [Current best decision](guides/current-best-algorithm.md)
+2. [v4.3 algorithm and reproduction](guides/v43-mainline-algorithm.md)
+3. [Algorithm profile status](guides/algorithm-profile-status.md)
+4. [QUBO beam core used by v4.3](guides/current-qubo-beam-algorithm.md)
 
-- [Current QUBO beam algorithm details](guides/current-qubo-beam-algorithm.md)
-- [QUBO mechanism attribution](guides/qubo-mechanism-attribution.md)
-- [QUBO quality profile probes](guides/qubo-quality-profile-probes.md)
-- [Trace-first open residual audit](guides/trace-first-open-residual-audit.md)
-- [Wang target-guided paper audit](guides/wang-target-guided-paper-audit.md)
+## Project Operation
 
-## Project Basics
-
+- [Active guide index](guides/README.md)
 - [Usage](guides/usage.md)
 - [Data format](guides/data-format.md)
 - [Development](guides/development.md)
 - [Project structure](guides/project-structure.md)
 
-## Model Notes
+## Evidence And Reports
 
-- [Greedy model notes](models/greedy/chen_greedy_algorithm.md)
-- [MIP model notes](models/mip/mip.md)
-- [Hybrid MIP workflows](models/mip/hybrid_mip_workflows.md)
+- [Experiment evidence vault](experiments/README.md): benchmark summaries and
+  raw artifacts; historical results are evidence, not current recommendations.
+- [Current reports](reports/README.md): v4.3 presentation and hardness analysis.
+- [Model notes](models/greedy/chen_greedy_algorithm.md)
+- [MIP notes](models/mip/mip.md)
+
+## Archive
+
+- [Documentation archive](archive/README.md): v4.0-v4.2 guides, rejected
+  candidates, old reports, brainstorming briefs, and completed plans/specs.
+
+Only the v4.3 decision documents above define the current default. Archived
+documents retain the conclusion valid at their original date for auditability.

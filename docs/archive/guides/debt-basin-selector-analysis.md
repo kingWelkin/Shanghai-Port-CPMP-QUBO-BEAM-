@@ -1,5 +1,8 @@
 # Debt/Basin Selector Analysis - 2026-06-29
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 ## Decision
 
 Do not promote:

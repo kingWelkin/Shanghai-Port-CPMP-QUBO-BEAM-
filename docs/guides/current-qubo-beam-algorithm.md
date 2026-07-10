@@ -1,18 +1,25 @@
-# Current QUBO Beam Algorithm Details
+# QUBO Beam Core Used By v4.3
 
-Date: 2026-07-03
-Version: v4.0
+Date: 2026-07-10
+Version: v4.3 core reference
 
-This note describes the current QUBO beam mechanism behind:
+The promoted release is:
 
 ```text
-qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_polish
+qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish
 ```
 
-For the complete v4.0 architecture and flow diagrams, see:
+This note describes the chain-aware QUBO beam core used when the v4.3 pre-solve
+router selects its general route. That route is based on:
 
-- [v4.0 mainline algorithm](v4-mainline-chainaware-algorithm.md)
-- [v4.0 flow diagrams](v4-mainline-flow-diagrams.md)
+```text
+scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish
+```
+
+For the historical v4.0 architecture from which this core evolved, see:
+
+- [v4.0 mainline algorithm](../archive/guides/v4-mainline-chainaware-algorithm.md)
+- [v4.0 flow diagrams](../archive/guides/v4-mainline-flow-diagrams.md)
 
 ## QUBO Boundary
 

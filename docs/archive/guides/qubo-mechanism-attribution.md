@@ -1,5 +1,8 @@
 # QUBO 机制归因记录
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 本文只回答一个问题：当前代码里哪些 QUBO 介入真正产生了可见收益，哪些只是扩大了 QUBO 参与度但没有改善结果。
 
 结论先写在前面：`speed_v2` 仍是默认主线。QUBO 当前最稳的证据不是“越大越好”，而是两个较窄作用：

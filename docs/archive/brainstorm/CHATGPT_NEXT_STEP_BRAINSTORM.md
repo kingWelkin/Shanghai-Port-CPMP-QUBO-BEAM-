@@ -1,5 +1,8 @@
 # Brainstorm Brief For Next Algorithm Ideas
 
+> [!IMPORTANT]
+> Historical brainstorming input from before v4.3. Use the [current v4.3 guide](../../guides/v43-mainline-algorithm.md) for new algorithm work.
+
 Date: 2026-07-01
 
 Use this file as a prompt for an external ChatGPT-style brainstorming pass. The goal is to propose next algorithm improvements for the current compact beam + QUBO CPMP solver.

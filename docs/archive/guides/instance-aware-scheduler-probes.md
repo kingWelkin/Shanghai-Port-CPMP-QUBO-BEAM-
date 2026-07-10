@@ -1,5 +1,8 @@
 # 实例感知调度器试验记录
 
+> [!IMPORTANT]
+> Historical document. It does not define the current default. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 本文记录 2026-06-12 对三条后续路线的实现和小矩阵结果：
 
 - 实例感知 profile scheduler；

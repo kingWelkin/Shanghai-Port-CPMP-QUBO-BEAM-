@@ -1,5 +1,8 @@
 # v4.2 Short-Incumbent Probe - 2026-07-09
 
+> [!IMPORTANT]
+> Historical report. The promoted mainline is [v4.3](../../guides/v43-mainline-algorithm.md), validated at `1681/1681` with `105530` moves.
+
 ## Profile
 
 `scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_short_incumbent_v42_polish`

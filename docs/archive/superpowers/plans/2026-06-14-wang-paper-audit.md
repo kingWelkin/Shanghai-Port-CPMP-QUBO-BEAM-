@@ -78,7 +78,7 @@ Expected: either no output, or only a sentence explicitly saying this is not a Z
 Add this bullet near the existing QUBO / external CPMP guide links:
 
 ```markdown
-- [Wang-Jin-Lim target-guided paper audit](guides/wang-target-guided-paper-audit.md)：区分 Wang-Jin-Lim 2015、项目内 target-guided 信号、Wang classical baseline、以及 bounded-beam 负结果 probe。
+- [Wang-Jin-Lim target-guided paper audit](../../guides/wang-target-guided-paper-audit.md)：区分 Wang-Jin-Lim 2015、项目内 target-guided 信号、Wang classical baseline、以及 bounded-beam 负结果 probe。
 ```
 
 - [ ] **Step 2: Verify the link target exists**
