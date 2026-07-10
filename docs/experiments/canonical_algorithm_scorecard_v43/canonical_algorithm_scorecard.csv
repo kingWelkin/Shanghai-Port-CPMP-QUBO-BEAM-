@@ -1,0 +1,6 @@
+algorithm,real30_solved,real30_total,real30_moves_solved_sum,real30_applicability,open120_solved,open120_total,open120_moves_solved_sum,open120_applicability,bf_solved,bf_total,bf_moves_solved_sum,bf_applicability,cv_solved,cv_total,cv_moves_solved_sum,cv_applicability
+QUBO+Beam selector v4.3,30,30,525,measured,120,120,3759,measured,721,721,45906,measured,840,840,55865,measured
+Paper Wang BS-B,30,30,757,measured,120,120,4569,measured,141,721,5533,measured,762,840,27117,measured
+Paper BS-FRG,30,30,516,measured,120,120,4121,measured,719,721,51509,measured,826,840,46299,measured
+A* no-proof,30,30,514,measured,,,,not_applicable,,,,not_applicable,,,,not_applicable
+Classic beam,28,30,455,measured,84,120,2711,measured,642,721,37180,measured,668,840,25312,measured

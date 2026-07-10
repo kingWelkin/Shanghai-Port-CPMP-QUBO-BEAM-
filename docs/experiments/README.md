@@ -3,6 +3,13 @@
 This directory preserves generated benchmark summaries and raw artifacts. It is
 an evidence archive, not the source of truth for the current default solver.
 
+## Canonical Cross-Algorithm Scorecard
+
+**[立即查看：Real30 + Open120 + BF + CV 五算法历史对比](canonical_algorithm_scorecard_v43/README.md)**
+
+当前主线覆盖率为 **30/30、120/120、721/721、840/840**。该表同时展示
+已解算例的翻箱总步数，并逐项链接到历史证据；本次整理未重跑实验。
+
 ## Current Release Pointer
 
 The promoted v4.3 variant is:

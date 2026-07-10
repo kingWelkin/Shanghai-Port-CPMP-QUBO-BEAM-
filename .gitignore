@@ -86,6 +86,10 @@ external/
 !docs/experiments/v43_wang_reintegration_20260709/*.csv
 !docs/experiments/v43_wang_reintegration_20260709/*.md
 
+# Canonical cross-algorithm scorecard and its audit sources.
+!docs/experiments/canonical_algorithm_scorecard_v43/
+!docs/experiments/canonical_algorithm_scorecard_v43/**
+
 # Local reference artifact copied during exploration.
 crp_quantum_hardware_brief.pdf
 

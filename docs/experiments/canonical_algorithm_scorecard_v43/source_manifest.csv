@@ -1,0 +1,21 @@
+algorithm,suite,solved,total,moves_solved_sum,applicability,time_limit_sec,evidence_status,source_artifact,source_scope
+QUBO+Beam selector v4.3,Real30,30,30,525,measured,120,raw,docs/experiments/v43_full_gate_20260709/v43_real30_mainline_branch_t120.csv,promoted v4.3 raw result
+QUBO+Beam selector v4.3,Open120,120,120,3759,measured,120,raw,docs/experiments/v43_wang_reintegration_20260709/v43_wang_route_open120_t120_all_dlts_j8.csv,promoted v4.3 raw result
+QUBO+Beam selector v4.3,BF,721,721,45906,measured,120,raw,docs/experiments/v43_full_gate_20260709/v43_wang_route_paper_bf_cv_t120_j8.csv,promoted v4.3 raw result filtered to BF families
+QUBO+Beam selector v4.3,CV,840,840,55865,measured,120,raw,docs/experiments/v43_full_gate_20260709/v43_wang_route_paper_bf_cv_t120_j8.csv,promoted v4.3 raw result filtered to CV families
+Paper Wang BS-B,Real30,30,30,757,measured,20,raw,docs/reports/hardness_quality_all_cases_20260709/wang_bs_b_real30_t20_jobs8.csv,paper algorithm historical run
+Paper Wang BS-B,Open120,120,120,4569,measured,120,raw,docs/experiments/v43_wang_reintegration_20260709/paper_wang_bs_b_open120_t120.csv,paper algorithm historical run
+Paper Wang BS-B,BF,141,721,5533,measured,20,raw,docs/reports/hardness_quality_all_cases_20260709/wang_bs_b_paper_full_t20_jobs16.csv,paper algorithm t20 historical full run filtered to BF families
+Paper Wang BS-B,CV,762,840,27117,measured,20,raw,docs/reports/hardness_quality_all_cases_20260709/wang_bs_b_paper_full_t20_jobs16.csv,paper algorithm t20 historical full run filtered to CV families
+Paper BS-FRG,Real30,30,30,516,measured,20,raw,docs/reports/hardness_quality_all_cases_20260709/bs_frg_pure_real30_t20.csv,pure paper-style implementation
+Paper BS-FRG,Open120,120,120,4121,measured,20,raw,docs/reports/hardness_quality_all_cases_20260709/bs_frg_pure_open120_full_t20_jobs6.csv,pure paper-style implementation
+Paper BS-FRG,BF,719,721,51509,measured,20,raw,docs/experiments/canonical_algorithm_scorecard_v43/sources/bs_frg_pure_paper_full_20260618.csv,pure paper-style full run copied from ignored historical output and filtered to BF families
+Paper BS-FRG,CV,826,840,46299,measured,20,raw,docs/experiments/canonical_algorithm_scorecard_v43/sources/bs_frg_pure_paper_full_20260618.csv,pure paper-style full run copied from ignored historical output and filtered to CV families
+A* no-proof,Real30,30,30,514,measured,,raw,docs/experiments/astar_qubo_baseline_beam_comparison.csv,historical exact-search reference without optimality proof
+A* no-proof,Open120,,,,not_applicable,,frozen_reference,docs/experiments/astar_qubo_baseline_beam_comparison.csv,not extended beyond Real30 because the reference is not scalable
+A* no-proof,BF,,,,not_applicable,,frozen_reference,docs/experiments/astar_qubo_baseline_beam_comparison.csv,not extended beyond Real30 because the reference is not scalable
+A* no-proof,CV,,,,not_applicable,,frozen_reference,docs/experiments/astar_qubo_baseline_beam_comparison.csv,not extended beyond Real30 because the reference is not scalable
+Classic beam,Real30,28,30,455,measured,,raw,docs/experiments/astar_qubo_baseline_beam_comparison.csv,budget-best historical control
+Classic beam,Open120,84,120,2711,measured,120,raw,docs/reports/hardness_quality_all_cases_20260709/open120_classic_noqubo_t120.csv,no-QUBO classic beam
+Classic beam,BF,642,721,37180,measured,120,raw,docs/reports/hardness_quality_all_cases_20260709/paper_bfcv_classic_noqubo_full_t120_jobs16.csv,no-QUBO classic beam filtered to BF families
+Classic beam,CV,668,840,25312,measured,120,raw,docs/reports/hardness_quality_all_cases_20260709/paper_bfcv_classic_noqubo_full_t120_jobs16.csv,no-QUBO classic beam filtered to CV families

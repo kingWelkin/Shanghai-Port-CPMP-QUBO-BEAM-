@@ -1,7 +1,7 @@
 # Canonical Algorithm Scorecard Design
 
 Date: 2026-07-10
-Status: Approved approach, pending implementation
+Status: Implemented
 
 ## Goal
 
@@ -15,8 +15,8 @@ four benchmark surfaces used to judge the project:
 
 The scorecard compares the promoted QUBO+Beam mainline with paper Wang BS-B,
 paper BS-FRG, A*, and classic beam. Every cell reports solved coverage and the
-sum of relocation moves over solved cases. The scorecard is a comparison
-artifact, not a replacement for the raw per-case CSVs.
+sum of relocation moves over solved cases. This is a lightweight organization
+of existing historical results: no solver or benchmark is rerun.
 
 ## Canonical Values
 
@@ -57,7 +57,6 @@ docs/experiments/canonical_algorithm_scorecard_v43/
 |-- README.md
 |-- canonical_algorithm_scorecard.csv
 |-- source_manifest.csv
-|-- canonical_algorithm_scorecard_zh.png
 `-- sources/
     |-- bs_frg_pure_paper_full_20260618.csv
     `-- bs_frg_pure_paper_full_20260618_summary.md
@@ -75,10 +74,15 @@ existing tracked path and is referenced rather than duplicated.
   `v43_wang_route_paper_bf_cv_t120_j8.csv`.
 - v4.3 Real30: `docs/experiments/v43_full_gate_20260709/`
   `v43_real30_mainline_branch_t120.csv`.
-- Paper Wang Open120 and BF/CV: the tracked `paper_wang_bs_b_*` files under
+- Paper Wang Open120: the tracked `paper_wang_bs_b_open120_t120.csv` under
   `docs/experiments/v43_wang_reintegration_20260709/`.
-- Paper Wang Real30, paper BS-FRG Open120/Real30, classic Open120/BF/CV, and the
-  current comparison derivation: tracked files under
+- Paper Wang BF/CV: the tracked historical `t20` full run
+  `docs/reports/hardness_quality_all_cases_20260709/`
+  `wang_bs_b_paper_full_t20_jobs16.csv`. This is the source that produces the
+  canonical `141/721` BF and `762/840` CV values; the later `t120` rerun uses a
+  different result snapshot and must not be mixed into this scorecard.
+- Paper Wang Real30, paper BS-FRG Open120/Real30, and classic Open120/BF/CV:
+  tracked files under
   `docs/reports/hardness_quality_all_cases_20260709/`.
 - Paper BS-FRG BF/CV: copied raw full-run CSV and summary in the canonical
   package `sources/` directory.
@@ -87,33 +91,20 @@ existing tracked path and is referenced rather than duplicated.
   `astar_noproof_*` and `baseline_beam_budget_best_*` columns respectively.
   The manifest records the no-proof/historical-control boundary.
 
-## Generated Visual
+## Immediate Presentation
 
-Add a deterministic builder script that reads
-`canonical_algorithm_scorecard.csv` and generates the Chinese PNG. The PNG
-keeps the supplied layout semantics:
+`README.md` is the primary visual surface. It places the four-suite comparison
+table at the top so GitHub and local Markdown viewers show the result without
+opening a CSV or presentation. The promoted QUBO+Beam row is bold and followed
+by a short reading note explaining that coverage must be read before move sums.
 
-- algorithms as rows and Real30/Open120/BF/CV as columns;
-- solved coverage on the first line;
-- solved-case move sum on the second line;
-- green for `100%` coverage, yellow for `[98%, 100%)`, orange for
-  `[90%, 98%)`, red for below `90%`, and gray for N/A;
-- the promoted QUBO+Beam row visually emphasized without changing its values.
-
-The PNG must not contain independently hard-coded numbers. CSV is the only
-input, so table and image cannot drift.
+No PNG generator or presentation rewrite is added in this lightweight pass.
 
 ## Highlight Locations
 
-Add a compact scorecard or direct link near the top of:
-
-- root `README.md`;
-- `docs/index.md`;
-- `docs/experiments/README.md`;
-- `docs/reports/README.md`.
-
-The existing v4.3 mainline statement remains authoritative. The comparison
-cluster is the authoritative cross-algorithm evidence surface.
+Add a prominent link near the top of `docs/experiments/README.md`. The existing
+v4.3 mainline statement remains authoritative. The new folder is the
+authoritative cross-algorithm historical scorecard.
 
 ## Validation
 
@@ -121,15 +112,15 @@ cluster is the authoritative cross-algorithm evidence surface.
 - Assert the exact solved/moves values in the canonical CSV.
 - Assert all source-manifest paths exist and are Git tracked.
 - Assert the pure BS-FRG paper source copy matches the local source SHA-256.
-- Regenerate the PNG and visually inspect it for clipping and incorrect color
-  states.
-- Run Markdown local-link checks and the full test suite.
+- Check that the Markdown table and canonical CSV contain identical values.
+- Run Markdown local-link checks and focused data-integrity checks.
 - Confirm the canonical directory and every highlighted entry are tracked
   before commit and push.
 
 ## Non-Goals
 
 - Do not rerun the benchmark suites.
+- Do not add a plotting or presentation-generation pipeline.
 - Do not change the promoted v4.3 algorithm or solver parameters.
 - Do not promote paper baselines to mainline status.
 - Do not import the hundreds of unrelated historical scratch experiments.
