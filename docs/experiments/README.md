@@ -30,6 +30,12 @@ Primary v4.3 evidence:
 - [BF/CV full summary](v43_full_gate_20260709/v43_wang_route_paper_bf_cv_t120_j8_summary.md)
 - [Real30 summary](v43_full_gate_20260709/v43_real30_mainline_branch_t120_summary.md)
 
+The top-level CSV and Markdown files in `v43_full_gate_20260709/` and
+`v43_wang_reintegration_20260709/` are tracked release evidence. Large
+historical scratch outputs, logs, and per-case move folders remain ignored.
+The matching tracked inputs are described in
+[`benchmarks/README.md`](../../benchmarks/README.md).
+
 ## Reading Rules
 
 - A dated report describes the conclusion at that date; it does not override

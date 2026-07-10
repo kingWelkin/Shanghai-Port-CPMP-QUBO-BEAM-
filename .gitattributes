@@ -1,0 +1,5 @@
+# Preserve published benchmark instances and reference traces byte-for-byte.
+benchmarks/**/*.dat -text
+benchmarks/**/*.bay -text
+benchmarks/**/*.out -text
+benchmarks/open120/DLTS-LICENSE.txt -text

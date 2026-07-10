@@ -105,14 +105,19 @@ feasibility authority away from validator replay.
 Run the current open120 no-cap mainline:
 
 ```powershell
-python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_open120_t120.csv
+python scripts\open_cpmp_benchmarks.py --source benchmarks\open120 --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_open120_t120.csv
 ```
 
 Run the full paper BF/CV no-cap gate:
 
 ```powershell
-python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --sample-per-family 9999 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_paper_bf_cv_full1561_t120.csv
+python scripts\benchmark_compact_paper_set.py --source benchmarks\paper --datasets BF CV --sample-per-family 9999 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_paper_bf_cv_full1561_t120.csv
 ```
+
+The tracked [benchmark corpus](benchmarks/README.md) contains the exact
+Open120 inputs and references plus all 721 BF and 840 CV instances used by the
+v4.3 promotion gate. The larger upstream clones under `external/` remain local
+and ignored.
 
 Run focused regression tests:
 
@@ -143,6 +148,7 @@ $env:PYTHONPATH='.'; python -m py_compile scripts\benchmark_compact_beam_qubo_n0
 ```text
 .
 |-- config/          # runtime defaults and profile records
+|-- benchmarks/      # tracked Open120 and full paper BF/CV promotion corpus
 |-- data/            # local input and generated result folders
 |-- docs/            # guides, experiment summaries, plots, and plans
 |-- notebooks/       # exploratory analysis notebooks

@@ -25,6 +25,8 @@ Read these first:
 
 ## Project Operation
 
+- [Tracked promotion benchmark corpus](../benchmarks/README.md): exact Open120,
+  BF721, and CV840 inputs used by the v4.3 full gate.
 - [Active guide index](guides/README.md)
 - [Usage](guides/usage.md)
 - [Data format](guides/data-format.md)

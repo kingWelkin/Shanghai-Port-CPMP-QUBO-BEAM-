@@ -77,10 +77,13 @@ the validator.
 ## Reproduction
 
 ```powershell
-python scripts\open_cpmp_benchmarks.py --source external\DLTS --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_open120_t120.csv
+python scripts\open_cpmp_benchmarks.py --source benchmarks\open120 --no-auto-clone --families 5x5_cv1_test 5x5_cv2_test 5x5_cv3_test 7x5_cv1_test 7x5_cv2_test 7x5_cv3_test --limit-per-family 20 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_open120_t120.csv
 
-python scripts\benchmark_compact_paper_set.py --source external\paper_cpmp --datasets BF CV --sample-per-family 9999 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_paper_bf_cv_t120.csv
+python scripts\benchmark_compact_paper_set.py --source benchmarks\paper --datasets BF CV --sample-per-family 9999 --variant qubo_scheduler_state_v5_qubo_diversity_union_unified_macro_supply_chainaware_wang_route_v43_polish --time-limit 120 --alpha 10 --jobs 8 --no-business-cap --output docs\experiments\v43_paper_bf_cv_t120.csv
 ```
+
+The repository-tracked corpus and its provenance are documented in
+[`benchmarks/README.md`](../../benchmarks/README.md).
 
 ## Evidence Files
 

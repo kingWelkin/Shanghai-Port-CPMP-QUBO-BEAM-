@@ -80,6 +80,12 @@ tmp_*
 outputs/
 external/
 
+# Curated v4.3 release evidence. Historical scratch artifacts remain ignored.
+!docs/experiments/v43_full_gate_20260709/*.csv
+!docs/experiments/v43_full_gate_20260709/*.md
+!docs/experiments/v43_wang_reintegration_20260709/*.csv
+!docs/experiments/v43_wang_reintegration_20260709/*.md
+
 # Local reference artifact copied during exploration.
 crp_quantum_hardware_brief.pdf
 
