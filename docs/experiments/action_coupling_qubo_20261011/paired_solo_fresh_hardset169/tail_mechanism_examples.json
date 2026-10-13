@@ -1,0 +1,3735 @@
+{
+  "selection": "ALL originals with mean loss at least10 for paired-versus-soloQ or soloQ-versus-Pair; post-hoc descriptive traces only",
+  "rows": [
+    {
+      "case": "CV__10-6__data10-6-17",
+      "repeat": 0,
+      "remaining": 9.86288439999771,
+      "answers": {
+        "single_cycle": 232,
+        "pair_cycle": 227,
+        "qubo_cycle": 191,
+        "single_pair": 237,
+        "qubo_pair": 215
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 307,
+              "elapsed_sec": 10.142427200000384
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 237,
+              "elapsed_sec": 17.76980729999923
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 307,
+              "after": 237,
+              "elapsed_sec": 17.76977220000117
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.555102800004533,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "frg_descent",
+            "raw_source": "frg_descent",
+            "raw_moves": 232
+          },
+          "done": false
+        },
+        "pair_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 307,
+              "elapsed_sec": 10.141971900004137
+            }
+          ],
+          "ends": [],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.408605399999942,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 0
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "frg_descent",
+            "raw_source": "frg_descent",
+            "raw_moves": 227
+          },
+          "done": false
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 307,
+              "elapsed_sec": 10.143095400002494
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 215,
+              "elapsed_sec": 17.440626900002826
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 192,
+              "elapsed_sec": 18.76554159999796
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 307,
+              "after": 215,
+              "elapsed_sec": 17.440585100004682
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 215,
+              "after": 192,
+              "elapsed_sec": 18.765500300003623
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.97730330000195,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 9,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 270,
+            "seed_moves": 255,
+            "energy": 248.0,
+            "changed_groups_from_seed": 6,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 191
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 307,
+              "elapsed_sec": 10.141916200002015
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 307,
+              "elapsed_sec": 17.576580200002354
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 307,
+              "after": 215,
+              "elapsed_sec": 17.575705800001742
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 3,
+            "elapsed_sec": 19.984369999998307,
+            "trajectory_branch": 1,
+            "trajectory_round": 0,
+            "cycle": null
+          },
+          "joint_gains": 2,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 270,
+            "seed_moves": 255,
+            "energy": 248.0,
+            "changed_groups_from_seed": 6,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 0,
+            "trajectory_policy": "single_qubo",
+            "original_source": "frg_descent",
+            "raw_source": "branch0:frg_descent",
+            "raw_moves": 215
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-17",
+      "repeat": 1,
+      "remaining": 12.52446410000266,
+      "answers": {
+        "single_cycle": 230,
+        "pair_cycle": 224,
+        "qubo_cycle": 224,
+        "single_pair": 255,
+        "qubo_pair": 255
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 395,
+              "elapsed_sec": 7.482530900000711
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 257,
+              "elapsed_sec": 17.871886599998106
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 235,
+              "elapsed_sec": 19.456576000004134
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 395,
+              "after": 257,
+              "elapsed_sec": 17.87185160000081
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 257,
+              "after": 235,
+              "elapsed_sec": 19.45654430000286
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.69019030000345,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 230
+          },
+          "done": false
+        },
+        "pair_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 395,
+              "elapsed_sec": 7.481616099998064
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 257,
+              "elapsed_sec": 18.044703699997626
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 232,
+              "elapsed_sec": 19.683032300003106
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 395,
+              "after": 257,
+              "elapsed_sec": 18.044673000003968
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 257,
+              "after": 232,
+              "elapsed_sec": 19.683001900004456
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.973658100003377,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 224
+          },
+          "done": false
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 395,
+              "elapsed_sec": 7.482372400001623
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 257,
+              "elapsed_sec": 17.809102500003064
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 228,
+              "elapsed_sec": 19.3287627000027
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 395,
+              "after": 257,
+              "elapsed_sec": 17.809062899999844
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 257,
+              "after": 228,
+              "elapsed_sec": 19.32872309999948
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.5566947000043,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 5,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 257,
+            "seed_moves": 249,
+            "energy": 248.0,
+            "changed_groups_from_seed": 4,
+            "cycle": 1,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 224
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 395,
+              "elapsed_sec": 7.4812739999979385
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 395,
+              "elapsed_sec": 18.278239100000064
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 395,
+              "after": 257,
+              "elapsed_sec": 18.276964900003804
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 9,
+            "elapsed_sec": 19.570313299998816,
+            "trajectory_branch": 1,
+            "trajectory_round": 0,
+            "cycle": null
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 0,
+            "trajectory_policy": "single_qubo",
+            "original_source": "frg_descent",
+            "raw_source": "branch0:frg_descent",
+            "raw_moves": 275
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-26",
+      "repeat": 0,
+      "remaining": 11.226595700005419,
+      "answers": {
+        "single_cycle": 202,
+        "pair_cycle": 190,
+        "qubo_cycle": 186,
+        "single_pair": 220,
+        "qubo_pair": 211
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 313,
+              "elapsed_sec": 8.77855869999621
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 238,
+              "elapsed_sec": 14.859195799996087
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 202,
+              "elapsed_sec": 17.057607399998233
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 313,
+              "after": 238,
+              "elapsed_sec": 14.859158699997352
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 238,
+              "after": 202,
+              "elapsed_sec": 17.05756979999569
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 202,
+              "after": 202,
+              "elapsed_sec": 18.154103699998814
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 17.245701499996358,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "frg_descent",
+            "raw_source": "frg_descent",
+            "raw_moves": 210
+          },
+          "done": true
+        },
+        "pair_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 313,
+              "elapsed_sec": 8.778353499998047
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 234,
+              "elapsed_sec": 14.294734099996276
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 195,
+              "elapsed_sec": 16.286003399996844
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 190,
+              "elapsed_sec": 17.226157500001136
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 313,
+              "after": 234,
+              "elapsed_sec": 14.29469589999644
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 234,
+              "after": 195,
+              "elapsed_sec": 16.285964999995485
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 195,
+              "after": 190,
+              "elapsed_sec": 17.22612669999944
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 190,
+              "after": 190,
+              "elapsed_sec": 18.12906999999541
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 17.39757799999643,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 190
+          },
+          "done": true
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 313,
+              "elapsed_sec": 8.778494799997134
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 234,
+              "elapsed_sec": 14.386961299998802
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 198,
+              "elapsed_sec": 16.414777599995432
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 188,
+              "elapsed_sec": 18.00948889999563
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 4,
+              "before": 187,
+              "elapsed_sec": 18.856924699997762
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 5,
+              "before": 186,
+              "elapsed_sec": 19.707723399995302
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 313,
+              "after": 234,
+              "elapsed_sec": 14.386927699997614
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 234,
+              "after": 198,
+              "elapsed_sec": 16.414745299996866
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 198,
+              "after": 188,
+              "elapsed_sec": 18.00945249999495
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 188,
+              "after": 187,
+              "elapsed_sec": 18.85688719999598
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 4,
+              "before": 187,
+              "after": 186,
+              "elapsed_sec": 19.707683100001304
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.859454899997218,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 5
+          },
+          "joint_gains": 13,
+          "joint_cuts": 1,
+          "first_joint": {
+            "before": 308,
+            "seed_moves": 306,
+            "energy": 305.0,
+            "changed_groups_from_seed": 7,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 186
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 313,
+              "elapsed_sec": 8.779681200001505
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 313,
+              "elapsed_sec": 14.40203990000009
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 234,
+              "elapsed_sec": 19.80922979999741
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 313,
+              "after": 234,
+              "elapsed_sec": 14.401125799995498
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 313,
+              "after": 234,
+              "elapsed_sec": 19.808230700000422
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 8,
+            "elapsed_sec": 19.998441799994907,
+            "trajectory_branch": 0,
+            "trajectory_round": 1,
+            "cycle": null
+          },
+          "joint_gains": 9,
+          "joint_cuts": 1,
+          "first_joint": {
+            "before": 308,
+            "seed_moves": 306,
+            "energy": 305.0,
+            "changed_groups_from_seed": 7,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 1,
+            "trajectory_policy": "single_qubo",
+            "original_source": "qubo_joint",
+            "raw_source": "branch0:qubo_joint",
+            "raw_moves": 211
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-26",
+      "repeat": 1,
+      "remaining": 10.2825456999999,
+      "answers": {
+        "single_cycle": 160,
+        "pair_cycle": 159,
+        "qubo_cycle": 158,
+        "single_pair": 159,
+        "qubo_pair": 158
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 276,
+              "elapsed_sec": 9.723557400000573
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 209,
+              "elapsed_sec": 13.189117999994778
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 163,
+              "elapsed_sec": 14.13274470000033
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 160,
+              "elapsed_sec": 14.82609369999409
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 276,
+              "after": 209,
+              "elapsed_sec": 13.189078700001119
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 209,
+              "after": 163,
+              "elapsed_sec": 14.132709599994996
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 163,
+              "after": 160,
+              "elapsed_sec": 14.826055799996539
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 160,
+              "after": 160,
+              "elapsed_sec": 15.526742099995317
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 14.972635699996317,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 160
+          },
+          "done": true
+        },
+        "pair_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 276,
+              "elapsed_sec": 9.721848000001046
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 209,
+              "elapsed_sec": 13.36235289999604
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 161,
+              "elapsed_sec": 14.494049000000814
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 159,
+              "elapsed_sec": 15.219156599996495
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 276,
+              "after": 209,
+              "elapsed_sec": 13.36231240000052
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 209,
+              "after": 161,
+              "elapsed_sec": 14.49401389999548
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 161,
+              "after": 159,
+              "elapsed_sec": 15.219121499998437
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 159,
+              "after": 159,
+              "elapsed_sec": 15.946239899996726
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 15.370547599995916,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 159
+          },
+          "done": true
+        },
+        "qubo_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 276,
+              "elapsed_sec": 9.723420800000895
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 209,
+              "elapsed_sec": 13.200841799996851
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 159,
+              "elapsed_sec": 14.202838699995482
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 158,
+              "elapsed_sec": 14.891972699995677
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 276,
+              "after": 209,
+              "elapsed_sec": 13.200800999999046
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 209,
+              "after": 159,
+              "elapsed_sec": 14.202806299996155
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 159,
+              "after": 158,
+              "elapsed_sec": 14.891935899999226
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 158,
+              "after": 158,
+              "elapsed_sec": 15.587178199995833
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 15.027677099998982,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 8,
+          "joint_cuts": 1,
+          "first_joint": {
+            "before": 270,
+            "seed_moves": 257,
+            "energy": 254.0,
+            "changed_groups_from_seed": 4,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 158
+          },
+          "done": true
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 276,
+              "elapsed_sec": 9.723454899998615
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 276,
+              "elapsed_sec": 13.24575239999831
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 209,
+              "elapsed_sec": 16.8176667000007
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 209,
+              "elapsed_sec": 17.820171799998207
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 159,
+              "elapsed_sec": 18.9073470000003
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 161,
+              "elapsed_sec": 19.607245999999577
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 276,
+              "after": 209,
+              "elapsed_sec": 13.24491339999804
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 276,
+              "after": 209,
+              "elapsed_sec": 16.816748599994753
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 209,
+              "after": 159,
+              "elapsed_sec": 17.8194738999955
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 209,
+              "after": 161,
+              "elapsed_sec": 18.906733499999973
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 159,
+              "after": 158,
+              "elapsed_sec": 19.606448099999398
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.760176899995713,
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "cycle": null
+          },
+          "joint_gains": 8,
+          "joint_cuts": 1,
+          "first_joint": {
+            "before": 270,
+            "seed_moves": 257,
+            "energy": 254.0,
+            "changed_groups_from_seed": 4,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 2,
+            "trajectory_policy": "single_qubo",
+            "original_source": "single_seed",
+            "raw_source": "branch0:single_seed",
+            "raw_moves": 158
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-32",
+      "repeat": 0,
+      "remaining": 12.504795200002263,
+      "answers": {
+        "single_cycle": 187,
+        "pair_cycle": 184,
+        "qubo_cycle": 207,
+        "single_pair": 185,
+        "qubo_pair": 184
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "elapsed_sec": 7.501273300003959
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "elapsed_sec": 11.942649399999937
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 187,
+              "elapsed_sec": 12.985382099999697
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "after": 208,
+              "elapsed_sec": 11.942615699997987
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "after": 187,
+              "elapsed_sec": 12.985344400003669
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 187,
+              "after": 187,
+              "elapsed_sec": 13.999549600004684
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 13.165243499999633,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 189
+          },
+          "done": true
+        },
+        "pair_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "elapsed_sec": 7.500093700000434
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "elapsed_sec": 12.649200899999414
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 185,
+              "elapsed_sec": 13.773854899998696
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 184,
+              "elapsed_sec": 14.830810300001758
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "after": 208,
+              "elapsed_sec": 12.649163200003386
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "after": 185,
+              "elapsed_sec": 13.773818100002245
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 185,
+              "after": 184,
+              "elapsed_sec": 14.830774900001416
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 184,
+              "after": 184,
+              "elapsed_sec": 15.863946999998007
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 14.995782099998905,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 184
+          },
+          "done": true
+        },
+        "qubo_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "elapsed_sec": 7.499942399997963
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 216,
+              "elapsed_sec": 10.932406500003708
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 208,
+              "elapsed_sec": 12.212696000002325
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 207,
+              "elapsed_sec": 13.479275800003961
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "after": 216,
+              "elapsed_sec": 10.932369300004211
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 216,
+              "after": 208,
+              "elapsed_sec": 12.212664999999106
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 208,
+              "after": 207,
+              "elapsed_sec": 13.479240799999388
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 207,
+              "after": 207,
+              "elapsed_sec": 14.759040700002515
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 13.674595299999055,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 8,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 269,
+            "seed_moves": 263,
+            "energy": 262.0,
+            "changed_groups_from_seed": 5,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 207
+          },
+          "done": true
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "elapsed_sec": 7.501921100003528
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "elapsed_sec": 10.96527480000077
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 216,
+              "elapsed_sec": 15.943454200001725
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 208,
+              "elapsed_sec": 17.223338900003
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 208,
+              "elapsed_sec": 18.321061599999666
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 185,
+              "elapsed_sec": 19.625807299998996
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "after": 216,
+              "elapsed_sec": 10.964227199998277
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "after": 208,
+              "elapsed_sec": 15.942674300000363
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 216,
+              "after": 208,
+              "elapsed_sec": 17.22259800000029
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 208,
+              "after": 185,
+              "elapsed_sec": 18.320372599999246
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 208,
+              "after": 207,
+              "elapsed_sec": 19.62492700000439
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.807332600001246,
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "cycle": null
+          },
+          "joint_gains": 8,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 269,
+            "seed_moves": 263,
+            "energy": 262.0,
+            "changed_groups_from_seed": 5,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "trajectory_policy": "pair",
+            "original_source": "pair_seed",
+            "raw_source": "branch1:pair_seed",
+            "raw_moves": 184
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-32",
+      "repeat": 1,
+      "remaining": 12.089497299995855,
+      "answers": {
+        "single_cycle": 187,
+        "pair_cycle": 184,
+        "qubo_cycle": 207,
+        "single_pair": 185,
+        "qubo_pair": 184
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "elapsed_sec": 7.914823899998737
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "elapsed_sec": 12.512953899997228
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 187,
+              "elapsed_sec": 13.595857200001774
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "after": 208,
+              "elapsed_sec": 12.512915500003146
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "after": 187,
+              "elapsed_sec": 13.595822900002531
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 187,
+              "after": 187,
+              "elapsed_sec": 14.704618700001447
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 13.802683100002469,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 189
+          },
+          "done": true
+        },
+        "pair_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "elapsed_sec": 7.915174900001148
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "elapsed_sec": 12.930611100004171
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 185,
+              "elapsed_sec": 14.036960600002203
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 184,
+              "elapsed_sec": 15.074233999999706
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "after": 208,
+              "elapsed_sec": 12.930570800002897
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 208,
+              "after": 185,
+              "elapsed_sec": 14.036923799998476
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 185,
+              "after": 184,
+              "elapsed_sec": 15.07419910000317
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 184,
+              "after": 184,
+              "elapsed_sec": 16.07794880000438
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 15.238382100003946,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 184
+          },
+          "done": true
+        },
+        "qubo_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "elapsed_sec": 7.9156892000028165
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 216,
+              "elapsed_sec": 11.387318699999014
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 208,
+              "elapsed_sec": 12.706640800002788
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 207,
+              "elapsed_sec": 13.990796600002795
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 294,
+              "after": 216,
+              "elapsed_sec": 11.38728280000214
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 216,
+              "after": 208,
+              "elapsed_sec": 12.706603200000245
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 208,
+              "after": 207,
+              "elapsed_sec": 13.990757500003383
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 207,
+              "after": 207,
+              "elapsed_sec": 15.278369999999995
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 14.190898300003028,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 8,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 269,
+            "seed_moves": 263,
+            "energy": 262.0,
+            "changed_groups_from_seed": 5,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 207
+          },
+          "done": true
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "elapsed_sec": 7.917332600001828
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "elapsed_sec": 11.295645300000615
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 216,
+              "elapsed_sec": 16.169455499999458
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 208,
+              "elapsed_sec": 17.424643500002276
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 208,
+              "elapsed_sec": 18.497536700000637
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 185,
+              "elapsed_sec": 19.793795800003863
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "after": 216,
+              "elapsed_sec": 11.29457790000015
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 294,
+              "after": 208,
+              "elapsed_sec": 16.16859950000071
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 216,
+              "after": 208,
+              "elapsed_sec": 17.423871200000576
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 208,
+              "after": 185,
+              "elapsed_sec": 18.496798100000888
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 208,
+              "after": 207,
+              "elapsed_sec": 19.793077900001663
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.975412300002063,
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "cycle": null
+          },
+          "joint_gains": 8,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 269,
+            "seed_moves": 263,
+            "energy": 262.0,
+            "changed_groups_from_seed": 5,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "trajectory_policy": "pair",
+            "original_source": "pair_seed",
+            "raw_source": "branch1:pair_seed",
+            "raw_moves": 184
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-33",
+      "repeat": 0,
+      "remaining": 12.651359999996203,
+      "answers": {
+        "single_cycle": 260,
+        "pair_cycle": 254,
+        "qubo_cycle": 241,
+        "single_pair": 278,
+        "qubo_pair": 268
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "elapsed_sec": 7.353729000002204
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 278,
+              "elapsed_sec": 18.21271610000258
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "after": 278,
+              "elapsed_sec": 18.212676900002407
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.622458099998767,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 260
+          },
+          "done": false
+        },
+        "pair_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "elapsed_sec": 7.354067500004021
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 276,
+              "elapsed_sec": 18.695559899999353
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "after": 276,
+              "elapsed_sec": 18.69552079999994
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.315927000003285,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "frg_descent",
+            "raw_source": "frg_descent",
+            "raw_moves": 254
+          },
+          "done": false
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "elapsed_sec": 7.354742100003932
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 268,
+              "elapsed_sec": 17.668334800000594
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 246,
+              "elapsed_sec": 19.677386600000318
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "after": 268,
+              "elapsed_sec": 17.668294299997797
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 268,
+              "after": 246,
+              "elapsed_sec": 19.677348400000483
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.940833900000143,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 14,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 333,
+            "seed_moves": 329,
+            "energy": 323.0,
+            "changed_groups_from_seed": 6,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 241
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 353,
+              "elapsed_sec": 7.35508629999822
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 353,
+              "elapsed_sec": 18.03583179999987
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 353,
+              "after": 268,
+              "elapsed_sec": 18.03477810000186
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 0,
+            "elapsed_sec": 18.042562100003124,
+            "trajectory_branch": 1,
+            "trajectory_round": 0,
+            "cycle": null
+          },
+          "joint_gains": 8,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 333,
+            "seed_moves": 329,
+            "energy": 323.0,
+            "changed_groups_from_seed": 6,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 0,
+            "trajectory_policy": "single_qubo",
+            "original_source": "frg_descent",
+            "raw_source": "branch0:frg_descent",
+            "raw_moves": 270
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-33",
+      "repeat": 1,
+      "remaining": 12.664847899999586,
+      "answers": {
+        "single_cycle": 260,
+        "pair_cycle": 254,
+        "qubo_cycle": 246,
+        "single_pair": 278,
+        "qubo_pair": 268
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "elapsed_sec": 7.3415727999963565
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 278,
+              "elapsed_sec": 18.213915799999086
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "after": 278,
+              "elapsed_sec": 18.213879499999166
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.62877650000155,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 260
+          },
+          "done": false
+        },
+        "pair_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "elapsed_sec": 7.342061900002591
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 276,
+              "elapsed_sec": 18.383496900001774
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "after": 276,
+              "elapsed_sec": 18.38346289999754
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.001471999996284,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "frg_descent",
+            "raw_source": "frg_descent",
+            "raw_moves": 254
+          },
+          "done": false
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "elapsed_sec": 7.340151500000502
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 268,
+              "elapsed_sec": 17.960645999999542
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 353,
+              "after": 268,
+              "elapsed_sec": 17.960607100001653
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.32265109999571,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 12,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 333,
+            "seed_moves": 329,
+            "energy": 323.0,
+            "changed_groups_from_seed": 6,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 246
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 353,
+              "elapsed_sec": 7.341381899997941
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 353,
+              "elapsed_sec": 17.727916700001515
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 353,
+              "after": 268,
+              "elapsed_sec": 17.726845299999695
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 0,
+            "elapsed_sec": 17.734831800000393,
+            "trajectory_branch": 1,
+            "trajectory_round": 0,
+            "cycle": null
+          },
+          "joint_gains": 8,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 333,
+            "seed_moves": 329,
+            "energy": 323.0,
+            "changed_groups_from_seed": 6,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 0,
+            "trajectory_policy": "single_qubo",
+            "original_source": "frg_descent",
+            "raw_source": "branch0:frg_descent",
+            "raw_moves": 270
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-34",
+      "repeat": 0,
+      "remaining": 12.215405900002224,
+      "answers": {
+        "single_cycle": 244,
+        "pair_cycle": 223,
+        "qubo_cycle": 237,
+        "single_pair": 223,
+        "qubo_pair": 227
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "elapsed_sec": 7.789800599995942
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "elapsed_sec": 9.323623899996164
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "after": 244,
+              "elapsed_sec": 9.323588200000813
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "after": 244,
+              "elapsed_sec": 10.741420799997286
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 9.522434699996666,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 244
+          },
+          "done": true
+        },
+        "pair_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "elapsed_sec": 7.793117199995322
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 246,
+              "elapsed_sec": 9.34902829999919
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 241,
+              "elapsed_sec": 12.027423100000306
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 227,
+              "elapsed_sec": 14.56884309999441
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 4,
+              "before": 223,
+              "elapsed_sec": 15.864665099994454
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "after": 246,
+              "elapsed_sec": 9.348994899999525
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 246,
+              "after": 241,
+              "elapsed_sec": 12.027390899995225
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 241,
+              "after": 227,
+              "elapsed_sec": 14.568806600000244
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 227,
+              "after": 223,
+              "elapsed_sec": 15.864627899994957
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 4,
+              "before": 223,
+              "after": 223,
+              "elapsed_sec": 17.15090649999911
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 16.080535699999018,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 4
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 223
+          },
+          "done": true
+        },
+        "qubo_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "elapsed_sec": 7.788651899994875
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "elapsed_sec": 9.302129899995634
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 238,
+              "elapsed_sec": 11.908869399994728
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 237,
+              "elapsed_sec": 13.294708999994327
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "after": 244,
+              "elapsed_sec": 9.302097299994784
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "after": 238,
+              "elapsed_sec": 11.908833699999377
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 238,
+              "after": 237,
+              "elapsed_sec": 13.294678199999908
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 237,
+              "after": 237,
+              "elapsed_sec": 14.68457699999999
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 13.507378499998595,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 2,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 244,
+            "seed_moves": 244,
+            "energy": 243.0,
+            "changed_groups_from_seed": 6,
+            "cycle": 1,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 237
+          },
+          "done": true
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "elapsed_sec": 7.789281099998334
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "elapsed_sec": 9.267537299994729
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 244,
+              "elapsed_sec": 10.77092659999471
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 246,
+              "elapsed_sec": 13.248327000001154
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 238,
+              "elapsed_sec": 15.921052400000917
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 241,
+              "elapsed_sec": 17.267640599995502
+            },
+            {
+              "branch": 0,
+              "round": 3,
+              "cycle": null,
+              "before": 237,
+              "elapsed_sec": 19.871443199997884
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "after": 244,
+              "elapsed_sec": 9.266665199997078
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "after": 246,
+              "elapsed_sec": 10.770063600000867
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 244,
+              "after": 238,
+              "elapsed_sec": 13.247463299994706
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 246,
+              "after": 241,
+              "elapsed_sec": 15.920062400000461
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 238,
+              "after": 237,
+              "elapsed_sec": 17.26667869999801
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 241,
+              "after": 227,
+              "elapsed_sec": 19.87044469999819
+            }
+          ],
+          "last_phase": {
+            "phase": "single_seed",
+            "index": 6,
+            "elapsed_sec": 19.99936819999857,
+            "trajectory_branch": 0,
+            "trajectory_round": 3,
+            "cycle": null
+          },
+          "joint_gains": 2,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 244,
+            "seed_moves": 244,
+            "energy": 243.0,
+            "changed_groups_from_seed": 6,
+            "cycle": null,
+            "trajectory_round": 1
+          },
+          "final_provenance": {
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "trajectory_policy": "pair",
+            "original_source": "frg_descent",
+            "raw_source": "branch1:frg_descent",
+            "raw_moves": 227
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-34",
+      "repeat": 1,
+      "remaining": 12.039636499997869,
+      "answers": {
+        "single_cycle": 244,
+        "pair_cycle": 223,
+        "qubo_cycle": 237,
+        "single_pair": 223,
+        "qubo_pair": 227
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "elapsed_sec": 7.964344800006074
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "elapsed_sec": 9.45634820000123
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "after": 244,
+              "elapsed_sec": 9.456316800002242
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "after": 244,
+              "elapsed_sec": 10.896654600001057
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 9.651880299999902,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 244
+          },
+          "done": true
+        },
+        "pair_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "elapsed_sec": 7.964544599999499
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 246,
+              "elapsed_sec": 9.501090900004783
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 241,
+              "elapsed_sec": 12.263316500000656
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 227,
+              "elapsed_sec": 14.836119300001883
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 4,
+              "before": 223,
+              "elapsed_sec": 16.15512600000511
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "after": 246,
+              "elapsed_sec": 9.501059100002749
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 246,
+              "after": 241,
+              "elapsed_sec": 12.263272800002596
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 241,
+              "after": 227,
+              "elapsed_sec": 14.836083200003486
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 227,
+              "after": 223,
+              "elapsed_sec": 16.155095699999947
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 4,
+              "before": 223,
+              "after": 223,
+              "elapsed_sec": 17.48052070000267
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 16.37623000000167,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 4
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 223
+          },
+          "done": true
+        },
+        "qubo_cycle": {
+          "status": "COMPLETE",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "elapsed_sec": 7.9647091000006185
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "elapsed_sec": 9.455514100001892
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 238,
+              "elapsed_sec": 12.001070500002243
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 237,
+              "elapsed_sec": 13.370268500002567
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 260,
+              "after": 244,
+              "elapsed_sec": 9.45548210000561
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 244,
+              "after": 238,
+              "elapsed_sec": 12.001032799998939
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 238,
+              "after": 237,
+              "elapsed_sec": 13.370237700000871
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 3,
+              "before": 237,
+              "after": 237,
+              "elapsed_sec": 14.727263799999491
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 13.576148400003149,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 3
+          },
+          "joint_gains": 2,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 244,
+            "seed_moves": 244,
+            "energy": 243.0,
+            "changed_groups_from_seed": 6,
+            "cycle": 1,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 237
+          },
+          "done": true
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "elapsed_sec": 7.966233099999954
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "elapsed_sec": 9.397553300004802
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 244,
+              "elapsed_sec": 10.876676800005953
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 246,
+              "elapsed_sec": 13.34890770000493
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 238,
+              "elapsed_sec": 15.974926900002174
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 241,
+              "elapsed_sec": 17.29095159999997
+            },
+            {
+              "branch": 0,
+              "round": 3,
+              "cycle": null,
+              "before": 237,
+              "elapsed_sec": 19.774185000002035
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "after": 244,
+              "elapsed_sec": 9.396677600001567
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 260,
+              "after": 246,
+              "elapsed_sec": 10.875798799999757
+            },
+            {
+              "branch": 0,
+              "round": 1,
+              "cycle": null,
+              "before": 244,
+              "after": 238,
+              "elapsed_sec": 13.34805050000432
+            },
+            {
+              "branch": 1,
+              "round": 1,
+              "cycle": null,
+              "before": 246,
+              "after": 241,
+              "elapsed_sec": 15.973913100002392
+            },
+            {
+              "branch": 0,
+              "round": 2,
+              "cycle": null,
+              "before": 238,
+              "after": 237,
+              "elapsed_sec": 17.290089400004945
+            },
+            {
+              "branch": 1,
+              "round": 2,
+              "cycle": null,
+              "before": 241,
+              "after": 227,
+              "elapsed_sec": 19.773354200005997
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.965540600001987,
+            "trajectory_branch": 0,
+            "trajectory_round": 3,
+            "cycle": null
+          },
+          "joint_gains": 2,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 244,
+            "seed_moves": 244,
+            "energy": 243.0,
+            "changed_groups_from_seed": 6,
+            "cycle": null,
+            "trajectory_round": 1
+          },
+          "final_provenance": {
+            "trajectory_branch": 1,
+            "trajectory_round": 2,
+            "trajectory_policy": "pair",
+            "original_source": "frg_descent",
+            "raw_source": "branch1:frg_descent",
+            "raw_moves": 227
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-40",
+      "repeat": 0,
+      "remaining": 12.04002120000223,
+      "answers": {
+        "single_cycle": 310,
+        "pair_cycle": 346,
+        "qubo_cycle": 281,
+        "single_pair": 348,
+        "qubo_pair": 347
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 419,
+              "elapsed_sec": 7.966884100002062
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 348,
+              "elapsed_sec": 15.217108700002427
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 314,
+              "elapsed_sec": 19.839422600001853
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 419,
+              "after": 348,
+              "elapsed_sec": 15.2170729999998
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 348,
+              "after": 314,
+              "elapsed_sec": 19.839384099999734
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 1,
+            "elapsed_sec": 19.946929500001715,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 310
+          },
+          "done": false
+        },
+        "pair_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 419,
+              "elapsed_sec": 7.9672952000037185
+            }
+          ],
+          "ends": [],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.280572499999835,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 0
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "pair_seed",
+            "raw_source": "pair_seed",
+            "raw_moves": 346
+          },
+          "done": false
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 419,
+              "elapsed_sec": 7.96772190000047
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 347,
+              "elapsed_sec": 15.335103400000662
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 292,
+              "elapsed_sec": 19.372291899999254
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 419,
+              "after": 347,
+              "elapsed_sec": 15.335061800004041
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 347,
+              "after": 292,
+              "elapsed_sec": 19.37225340000441
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 8,
+            "elapsed_sec": 19.98073750000185,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 11,
+          "joint_cuts": 1,
+          "first_joint": {
+            "before": 374,
+            "seed_moves": 372,
+            "energy": 371.0,
+            "changed_groups_from_seed": 6,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 281
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 419,
+              "elapsed_sec": 7.967250699999568
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 419,
+              "elapsed_sec": 15.553690200002166
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 419,
+              "after": 347,
+              "elapsed_sec": 15.552387900002941
+            }
+          ],
+          "last_phase": {
+            "phase": "pair_seed",
+            "index": 5,
+            "elapsed_sec": 18.341190799998003,
+            "trajectory_branch": 1,
+            "trajectory_round": 0,
+            "cycle": null
+          },
+          "joint_gains": 4,
+          "joint_cuts": 0,
+          "first_joint": {
+            "before": 374,
+            "seed_moves": 372,
+            "energy": 371.0,
+            "changed_groups_from_seed": 6,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 0,
+            "trajectory_policy": "single_qubo",
+            "original_source": "qubo_joint",
+            "raw_source": "branch0:qubo_joint",
+            "raw_moves": 347
+          },
+          "done": false
+        }
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-40",
+      "repeat": 1,
+      "remaining": 12.153907600004459,
+      "answers": {
+        "single_cycle": 266,
+        "pair_cycle": 289,
+        "qubo_cycle": 283,
+        "single_pair": 292,
+        "qubo_pair": 318
+      },
+      "methods": {
+        "single_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 408,
+              "elapsed_sec": 7.851776199997403
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 312,
+              "elapsed_sec": 19.666147299998556
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 408,
+              "after": 312,
+              "elapsed_sec": 19.666111499995168
+            }
+          ],
+          "last_phase": {
+            "phase": "domain",
+            "index": 8,
+            "elapsed_sec": 19.99428469999839,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 1
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "single_seed",
+            "raw_source": "single_seed",
+            "raw_moves": 270
+          },
+          "done": false
+        },
+        "pair_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 408,
+              "elapsed_sec": 7.852219399996102
+            }
+          ],
+          "ends": [],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 13.28265389999433,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 0
+          },
+          "joint_gains": 0,
+          "joint_cuts": 0,
+          "first_joint": null,
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "frg_descent",
+            "raw_source": "frg_descent",
+            "raw_moves": 319
+          },
+          "done": false
+        },
+        "qubo_cycle": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 408,
+              "elapsed_sec": 7.85262579999835
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 318,
+              "elapsed_sec": 14.437656599999173
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 2,
+              "before": 290,
+              "elapsed_sec": 18.162368599994807
+            }
+          ],
+          "ends": [
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 0,
+              "before": 408,
+              "after": 318,
+              "elapsed_sec": 14.437617700001283
+            },
+            {
+              "branch": null,
+              "round": null,
+              "cycle": 1,
+              "before": 318,
+              "after": 290,
+              "elapsed_sec": 18.16233089999878
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 18.88982379999652,
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "cycle": 2
+          },
+          "joint_gains": 13,
+          "joint_cuts": 3,
+          "first_joint": {
+            "before": 378,
+            "seed_moves": 365,
+            "energy": 364.0,
+            "changed_groups_from_seed": 3,
+            "cycle": 0,
+            "trajectory_round": null
+          },
+          "final_provenance": {
+            "trajectory_branch": null,
+            "trajectory_round": null,
+            "trajectory_policy": null,
+            "original_source": "qubo_joint",
+            "raw_source": "qubo_joint",
+            "raw_moves": 283
+          },
+          "done": false
+        },
+        "qubo_pair": {
+          "status": "TIME_LIMIT",
+          "starts": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 408,
+              "elapsed_sec": 7.854487399999925
+            },
+            {
+              "branch": 1,
+              "round": 0,
+              "cycle": null,
+              "before": 408,
+              "elapsed_sec": 14.248417599999812
+            }
+          ],
+          "ends": [
+            {
+              "branch": 0,
+              "round": 0,
+              "cycle": null,
+              "before": 408,
+              "after": 318,
+              "elapsed_sec": 14.247189399997296
+            }
+          ],
+          "last_phase": {
+            "phase": "frg",
+            "index": null,
+            "elapsed_sec": 19.49670160000096,
+            "trajectory_branch": 1,
+            "trajectory_round": 0,
+            "cycle": null
+          },
+          "joint_gains": 6,
+          "joint_cuts": 2,
+          "first_joint": {
+            "before": 378,
+            "seed_moves": 365,
+            "energy": 364.0,
+            "changed_groups_from_seed": 3,
+            "cycle": null,
+            "trajectory_round": 0
+          },
+          "final_provenance": {
+            "trajectory_branch": 0,
+            "trajectory_round": 0,
+            "trajectory_policy": "single_qubo",
+            "original_source": "qubo_joint",
+            "raw_source": "branch0:qubo_joint",
+            "raw_moves": 318
+          },
+          "done": false
+        }
+      }
+    }
+  ],
+  "no_counterfactual_repair_claim": true
+}

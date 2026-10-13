@@ -1,0 +1,860 @@
+{
+  "cases": [
+    {
+      "entry": {
+        "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+        "dataset": "BF",
+        "family": "BF14",
+        "source_case": "cpmp_16_8_103_21_78_1",
+        "path": "benchmarks/paper/BF/BF/BF14/cpmp_16_8_103_21_78_1.bay",
+        "sha256": "1969f76c7176565fd4a436c78e74f64838f594c19a57c0a8868f52c34ca08919",
+        "max_height": 8,
+        "stacks": 16,
+        "containers": 103,
+        "initial_n": 78,
+        "priority_groups": true,
+        "canonical_instance_signature": "aaf7aa8a36f28ea624e72c234110b1737c338c4f6b3357087856c9c8fa467e6b",
+        "split": "development",
+        "diagnostic": true,
+        "family_index": 0,
+        "historical_case_key": "BF|BF14|cpmp_16_8_103_21_78_1"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+        "dataset": "BF",
+        "family": "BF16",
+        "source_case": "cpmp_16_8_103_42_78_3",
+        "path": "benchmarks/paper/BF/BF/BF16/cpmp_16_8_103_42_78_3.bay",
+        "sha256": "3aefac05eb5196f5f23d06535cef9f41bef67847825e8f4a54cf0e75b2988b09",
+        "max_height": 8,
+        "stacks": 16,
+        "containers": 103,
+        "initial_n": 78,
+        "priority_groups": true,
+        "canonical_instance_signature": "0f913d5011f7a532aded17b133102eec2d90230e54373681a6e237dff99a4101",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 2,
+        "historical_case_key": "BF|BF16|cpmp_16_8_103_42_78_3"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+        "dataset": "BF",
+        "family": "BF16",
+        "source_case": "cpmp_16_8_103_42_78_1",
+        "path": "benchmarks/paper/BF/BF/BF16/cpmp_16_8_103_42_78_1.bay",
+        "sha256": "3ec339c4b07c071f336fa5c00b367142bb32ba612011d3f54153096b7d352e42",
+        "max_height": 8,
+        "stacks": 16,
+        "containers": 103,
+        "initial_n": 78,
+        "priority_groups": true,
+        "canonical_instance_signature": "7fa456a660b182e82dec3350b47fdad0e8438bc9a420cfe99adc6fa8b148849f",
+        "split": "development",
+        "diagnostic": true,
+        "family_index": 0,
+        "historical_case_key": "BF|BF16|cpmp_16_8_103_42_78_1"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+        "dataset": "BF",
+        "family": "BF30",
+        "source_case": "cpmp_20_8_128_26_96_2",
+        "path": "benchmarks/paper/BF/BF/BF30/cpmp_20_8_128_26_96_2.bay",
+        "sha256": "44af2ad4f61534625968d1e9faf3ba3484d29b52020e1e7d7e4e0c4e66e1e2a0",
+        "max_height": 8,
+        "stacks": 20,
+        "containers": 128,
+        "initial_n": 96,
+        "priority_groups": true,
+        "canonical_instance_signature": "02a8629b348b3afca0173ee036af6818dabd1cdbd3d80cda5684eb505e5c2af7",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 1,
+        "historical_case_key": "BF|BF30|cpmp_20_8_128_26_96_2"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+        "dataset": "BF",
+        "family": "BF16",
+        "source_case": "cpmp_16_8_103_42_78_4",
+        "path": "benchmarks/paper/BF/BF/BF16/cpmp_16_8_103_42_78_4.bay",
+        "sha256": "4d33734844d16f844a21eba7e499d4ae130c67f4d107e1c519756fd763e92302",
+        "max_height": 8,
+        "stacks": 16,
+        "containers": 103,
+        "initial_n": 78,
+        "priority_groups": true,
+        "canonical_instance_signature": "d348141140ed02112636c717116b540db97ea20015f51d8b4d9573927f840171",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 3,
+        "historical_case_key": "BF|BF16|cpmp_16_8_103_42_78_4"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-3",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-3",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-3.dat",
+        "sha256": "08b240030480b2a073fd3940e9b6941fcc06d34f32cc863eb5c9f8533e2c04c2",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 50,
+        "priority_groups": false,
+        "canonical_instance_signature": "717e759547fcc0c20128249f8f14b13ae8304df13327087d639c47983b4daea5",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 2,
+        "historical_case_key": "CV|10-6|data10-6-3"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-2",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-2",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-2.dat",
+        "sha256": "0ce49777f080ee8cdcdfeccf75cb3b648c1c6e0a303cabbcc392e97c5f60e431",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 81,
+        "priority_groups": false,
+        "canonical_instance_signature": "5bc60e326af0b041df9c77223b6baf8495b0da8a60301839d18309691fd5b583",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 1,
+        "historical_case_key": "CV|10-10|data10-10-2"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__6-10__data6-10-1",
+        "dataset": "CV",
+        "family": "6-10",
+        "source_case": "data6-10-1",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data6-10-1.dat",
+        "sha256": "0e8f6ebd970365c9b70619b05fcb523ed1e819c21c9bb4407202bf9510b10637",
+        "max_height": 8,
+        "stacks": 10,
+        "containers": 60,
+        "initial_n": 44,
+        "priority_groups": false,
+        "canonical_instance_signature": "1307581de6da70859cfc81b769fa5d707cc07d76158ba24728cbe8130e5c9330",
+        "split": "development",
+        "diagnostic": true,
+        "family_index": 0,
+        "historical_case_key": "CV|6-10|data6-10-1"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-2",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-2",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-2.dat",
+        "sha256": "347e2f68043db6166587d7c2e9c76609ea4017f8b45fb97e5b822fa1493aceb0",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 47,
+        "priority_groups": false,
+        "canonical_instance_signature": "b34dc8fc9b5840bcf46de7b76cd0bbec3944148f00320267ef9026c9add1df39",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 1,
+        "historical_case_key": "CV|10-6|data10-6-2"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-8",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-8",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-8.dat",
+        "sha256": "3bce3caf690b687200c69f876fff60d6d7061c0d2ffa3196b5c5f45741cab15b",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 51,
+        "priority_groups": false,
+        "canonical_instance_signature": "d70cee7836f35ebb53650b3ccbf93d0d66292ef673265d9269e1bf7c82c706e7",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 7,
+        "historical_case_key": "CV|10-6|data10-6-8"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+        "dataset": "Open120",
+        "family": "7x5_cv2_test",
+        "source_case": "7x5_cv2_test_2",
+        "path": "benchmarks/open120/instances/7x5_cv2_test/2.dat",
+        "sha256": "9b7c7fe4762f5c677e4e22e9325d30947b016de834fe18f9cb8c5d526281530d",
+        "max_height": 7,
+        "stacks": 7,
+        "containers": 35,
+        "initial_n": 27,
+        "reference_moves": 37,
+        "priority_groups": true,
+        "canonical_instance_signature": "6672f48d48758aa13b45b932c73378ad404b1941c599fb7fc68d29332e8e9cc9",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 2,
+        "historical_case_key": "DLTS|7x5_cv2_test|7x5_cv2_test_2"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+        "dataset": "Open120",
+        "family": "7x5_cv1_test",
+        "source_case": "7x5_cv1_test_2",
+        "path": "benchmarks/open120/instances/7x5_cv1_test/2.dat",
+        "sha256": "b163830c2d60324d1ccfca61d0a6f590bb3b2f4420276661cb9bf87b1f33b842",
+        "max_height": 7,
+        "stacks": 7,
+        "containers": 35,
+        "initial_n": 27,
+        "reference_moves": 37,
+        "priority_groups": false,
+        "canonical_instance_signature": "5a2ba78ba6256caf10ff773c6b9c4a3c9ebd092de6b24ff078b0a6724a7e0b77",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 2,
+        "historical_case_key": "DLTS|7x5_cv1_test|7x5_cv1_test_2"
+      },
+      "cohorts": [
+        "primary"
+      ]
+    },
+    {
+      "entry": {
+        "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+        "dataset": "BF",
+        "family": "BF15",
+        "source_case": "cpmp_16_8_103_42_62_16",
+        "path": "benchmarks/paper/BF/BF/BF15/cpmp_16_8_103_42_62_16.bay",
+        "sha256": "b712ea87e9efe11437b5f63f0d6e7b881db5a6717d3b17fb38e15ac4e255ee38",
+        "max_height": 8,
+        "stacks": 16,
+        "containers": 103,
+        "initial_n": 62,
+        "priority_groups": true,
+        "canonical_instance_signature": "2503318d398ec1bf561f934b7ea6a6e41bea04582d7c9f93f7cbf810c3506bc5",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 15,
+        "historical_case_key": "BF|BF15|cpmp_16_8_103_42_62_16"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-11",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-11",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-11.dat",
+        "sha256": "25910c4099a105197165152e086480271175cf13701a416b3a25618cb850a2ac",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 87,
+        "priority_groups": false,
+        "canonical_instance_signature": "97fdcaa1469e57857376acb1e91464f6ea25ababd363c9a0d4ab3800c978fa46",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 10,
+        "historical_case_key": "CV|10-10|data10-10-11"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-15",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-15",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-15.dat",
+        "sha256": "8429a789c996da72a9c95b8c7ee18b469fbf96fd7e8dea192fca4fd413c8f269",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 80,
+        "priority_groups": false,
+        "canonical_instance_signature": "df7ad682adaf647aa1ec53201f3bb250bb0205bf67f181e43a3bc66019e2f237",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 14,
+        "historical_case_key": "CV|10-10|data10-10-15"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-16",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-16",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-16.dat",
+        "sha256": "c256d1c139d7b4cec0f524deb5f9676b7abbc889f0dbf2970af5a57d810d113b",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 82,
+        "priority_groups": false,
+        "canonical_instance_signature": "00c25db667fa925e45d9b35ea3a391d4488a095d1c6bdf7ba13a82e124bb1384",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 15,
+        "historical_case_key": "CV|10-10|data10-10-16"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-18",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-18",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-18.dat",
+        "sha256": "230ce9bc5505f2c666e4546fbdb406cdcb337fb329342b5bd9525985afad4976",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 83,
+        "priority_groups": false,
+        "canonical_instance_signature": "18fb446e894f256f0a473c0379732c1f079f17e493fca709989cc6a7fe812465",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 17,
+        "historical_case_key": "CV|10-10|data10-10-18"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-20",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-20",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-20.dat",
+        "sha256": "c5501b6c50e0907d1b8e50cb1a9acd30a0ad207524f50dcb06ee1ee887b18d6e",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 86,
+        "priority_groups": false,
+        "canonical_instance_signature": "f7ff8eb8e3db5a2eca843b74c910015a77cfcc8a501582701739fecace6c4607",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 19,
+        "historical_case_key": "CV|10-10|data10-10-20"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-28",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-28",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-28.dat",
+        "sha256": "947068403460565e3a962cca1e45d498805682dd118ce37ae5f7bfb04d48a488",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 82,
+        "priority_groups": false,
+        "canonical_instance_signature": "744b71437f9328bbe113982505fa9b9e3d895d944aec0aca81ea4a8e90085422",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 27,
+        "historical_case_key": "CV|10-10|data10-10-28"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-32",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-32",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-32.dat",
+        "sha256": "580be2506a1341a975c29275816f6f8078bbec8b8c60eb3867db36fa1d0f80e8",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 81,
+        "priority_groups": false,
+        "canonical_instance_signature": "f8554a9568913acad5193ba1af7596d6253c06a030781255e2b244b5b5a87ae8",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 31,
+        "historical_case_key": "CV|10-10|data10-10-32"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-10__data10-10-7",
+        "dataset": "CV",
+        "family": "10-10",
+        "source_case": "data10-10-7",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-10-7.dat",
+        "sha256": "eacea756fc57b9c0bf92ec80a3743e106fec48ba4a11cf7be089c7463eaba925",
+        "max_height": 12,
+        "stacks": 10,
+        "containers": 100,
+        "initial_n": 84,
+        "priority_groups": false,
+        "canonical_instance_signature": "eb4f6ae8ba1262b1151fbfa34798d85be578c9c241a952915dec2baaf26b8f1e",
+        "split": "development",
+        "diagnostic": false,
+        "family_index": 6,
+        "historical_case_key": "CV|10-10|data10-10-7"
+      },
+      "cohorts": [
+        "known_native_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-17",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-17",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-17.dat",
+        "sha256": "5672dcb5640632e8e612ab83b3b792525c545db84d59dde21ed885583c45d2c6",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 51,
+        "priority_groups": false,
+        "canonical_instance_signature": "e23d77ec3000ae2c0c00df204dc62546d8b15f9e8cfe8664d2557ae59e7b47f4",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 16,
+        "historical_case_key": "CV|10-6|data10-6-17"
+      },
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-26",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-26",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-26.dat",
+        "sha256": "2098b8b76a25b0316b24f30ae7b7b8a23d5a322fd1b5d06e9200a9f18c251b50",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 51,
+        "priority_groups": false,
+        "canonical_instance_signature": "47f2913e41c3b01604bc522a10ba5b6907cac79aedce04fc25bd0dcc056a7e9e",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 25,
+        "historical_case_key": "CV|10-6|data10-6-26"
+      },
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-32",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-32",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-32.dat",
+        "sha256": "cd3ebfc1cc4fcb5059e07ce5bb376dae8391080329bf6abac861b04a51426e7b",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 50,
+        "priority_groups": false,
+        "canonical_instance_signature": "21fdd54cf9bee18b002c2d48e55d9bdf7eb2592263ca04c8e4396a18ad0345a0",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 31,
+        "historical_case_key": "CV|10-6|data10-6-32"
+      },
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-33",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-33",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-33.dat",
+        "sha256": "bee2fd26e4969556f1890719bf5c3193fd17bc1a3cfb0fbaeac7dd6edb45906c",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 51,
+        "priority_groups": false,
+        "canonical_instance_signature": "8bae8525d0bf2e8a0517a69bc0a7eaf89eaa83bc4c70585aa9b66ee2c03e6c01",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 32,
+        "historical_case_key": "CV|10-6|data10-6-33"
+      },
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-34",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-34",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-34.dat",
+        "sha256": "aab543863a6ce5e0fcdeabfc7058beed7ee13b7a3ec467c76055617500183d93",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 51,
+        "priority_groups": false,
+        "canonical_instance_signature": "93db86beb6be90d17040ac4bd2d453f41ad3fe17965ca042d5d570a3d034f908",
+        "split": "evaluation",
+        "diagnostic": false,
+        "family_index": 33,
+        "historical_case_key": "CV|10-6|data10-6-34"
+      },
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ]
+    },
+    {
+      "entry": {
+        "case": "CV__10-6__data10-6-40",
+        "dataset": "CV",
+        "family": "10-6",
+        "source_case": "data10-6-40",
+        "path": "benchmarks/paper/CV/CRPTestcases_Caserta/data10-6-40.dat",
+        "sha256": "02a3cf62321b5db4a2b10cc351d0562606490f375a7430859afb84019e348bcd",
+        "max_height": 12,
+        "stacks": 6,
+        "containers": 60,
+        "initial_n": 51,
+        "priority_groups": false,
+        "canonical_instance_signature": "6f80e5d88f75d54ff6a6c457de13bfd4d8a85fe51be4310873ac7e3924694edd",
+        "split": "evaluation",
+        "diagnostic": true,
+        "family_index": 39,
+        "historical_case_key": "CV|10-6|data10-6-40"
+      },
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ]
+    }
+  ],
+  "modes": [
+    "native",
+    "qubo_cycle",
+    "qubo_pair",
+    "qubo_deferred_pair",
+    "single_deferred_pair"
+  ],
+  "roles": [
+    "prefix",
+    "native",
+    "qubo_cycle",
+    "qubo_pair",
+    "qubo_deferred_pair",
+    "single_deferred_pair"
+  ],
+  "repeats": 2,
+  "cpus": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10
+  ],
+  "cpu_layout": [
+    {
+      "cpu_set_id": 256,
+      "group": 0,
+      "logical_processor": 0,
+      "core_index": 0,
+      "efficiency_class": 1
+    },
+    {
+      "cpu_set_id": 258,
+      "group": 0,
+      "logical_processor": 2,
+      "core_index": 2,
+      "efficiency_class": 1
+    },
+    {
+      "cpu_set_id": 260,
+      "group": 0,
+      "logical_processor": 4,
+      "core_index": 4,
+      "efficiency_class": 1
+    },
+    {
+      "cpu_set_id": 262,
+      "group": 0,
+      "logical_processor": 6,
+      "core_index": 6,
+      "efficiency_class": 1
+    },
+    {
+      "cpu_set_id": 264,
+      "group": 0,
+      "logical_processor": 8,
+      "core_index": 8,
+      "efficiency_class": 1
+    },
+    {
+      "cpu_set_id": 266,
+      "group": 0,
+      "logical_processor": 10,
+      "core_index": 10,
+      "efficiency_class": 1
+    }
+  ],
+  "offsets": [
+    2,
+    2,
+    2,
+    2,
+    1,
+    2,
+    3,
+    1,
+    1,
+    3,
+    0,
+    3,
+    2,
+    4,
+    4,
+    4,
+    0,
+    0,
+    5,
+    3,
+    3,
+    0,
+    3,
+    0,
+    5,
+    1,
+    0,
+    1,
+    5,
+    1,
+    5,
+    0,
+    4,
+    0,
+    5,
+    3,
+    0,
+    5,
+    1,
+    4,
+    4,
+    4,
+    2,
+    1,
+    2,
+    5,
+    5,
+    3,
+    1,
+    4,
+    3,
+    2,
+    4,
+    5
+  ],
+  "budget_sec": 60.0,
+  "reserve_sec": 2.0,
+  "source_sha256": {
+    "scripts/research_paper_v43_panel.py": "b0c618868f0f395badec5d1e6c09f322eaf15bb6139fd4476732834d78063592",
+    "scripts/paper_priority_group_contract.py": "a2095341eb95551ab2ffd8d9b59434fa4d145b42da4750cdeaa17347d61b10da",
+    "scripts/benchmark_compact_paper_set.py": "3275c3dc0430a1652c2fc1aa6cd7d95a3e0c9e5c8952cc7c900aaffd0760ce0f",
+    "scripts/benchmark_compact_beam_qubo_n0.py": "86a49ba95390b3ea3e9ab693123b67a6727302d91ca938af108b10286b36cf45",
+    "scripts/beam_selector_research.py": "d62c788d25af0f2da2733aa04625a8af35398268b49f95e02044070983c79050",
+    "scripts/frg_rollout_coordinates.py": "9bb14142404e1416e796ba92ee9d4d9e701030e1a41fca0c5c11ef63dbf29e85",
+    "scripts/production_selector_factorial.py": "7bfab2d337f269f41282f27919c143c83250dba4c83de9f82ce51ca92bffc695",
+    "scripts/production_selector_replay.py": "ed7bccf396525c7f014a956fabe69831085d472fdad29b068af7414462bcc836",
+    "scripts/production_route_provenance.py": "5edde88b119811015941237c01c3cc96c0b14f05c25377206468fecbae8872b7",
+    "scripts/run_beam_selector_research.py": "42bc76bee00ca5f75cbb03ca98bd6da41f601e3fd3f60b91d23c81b1e8622027",
+    "scripts/run_rollout_contract.py": "485d5cbe1e004986dfc5f5ced511a3ac18f29af07f69b76877a029f3b30f265b",
+    "scripts/benchmark_bs_frg_paper.py": "f0076aad79de5ef758e56ca6e0b9a3c79f3b583b777b295617bdf082c00e9b70",
+    "scripts/open_cpmp_benchmarks.py": "57fc03f467b1225bf2805533f5c7b4266bbb84d7f38ca910c21d77dca40159bc",
+    "container_reshuffle/core.py": "64289f9026f0d1eee1962232a1009b00834a0f2ce7d00347127f6516b4848200",
+    "container_reshuffle/solvers/bs_frg.py": "0686cce14b02a18f6e298a8cb158e4752694504d90d1196bd61deee771fd88d3",
+    "container_reshuffle/solvers/base.py": "affdda8a6976fceaa485bd53042de9a3ff13f035cb0a865e87a51dce8d52bc67",
+    "container_reshuffle/qubo/model.py": "7bae80bb6bbb8da4878ed2d2bbdcf7f360c320bbb38bfd9dc47fa290e51288f5",
+    "container_reshuffle/qubo/sampler.py": "74900502aa58a920c9138c2ee5820fdd9c2774afed21c7e3e66495b18c5778fe",
+    "scripts/action_qubo_beam_supply.py": "d3cf66900f36bd502d8c72f525bcab1a8870bdba85fca2d08a0b14dc4747b6b3",
+    "scripts/action_qubo_witness_supply.py": "052221f5cff468ce5a6074961f3dca565bfde12501670b749a3e3281ad40325a",
+    "scripts/source_option_qubo.py": "984c4662ee04a62d6c21faf648939470482988c2c33316f4b1d7d7d1bea86256",
+    "scripts/two_wave_action_qubo.py": "b3a87f166fa2d7c52778ce97ac98ad3b2f72a82b66bac988a372ba11c8089fc7",
+    "scripts/research_action_beam_supply.py": "d1b45056431e108b21d7488a3bd576dba8a9d37e3f595048654d4320124f8209",
+    "scripts/research_receiver_allocation.py": "62ee78061aed1f3f15c284db5840ee2af55fbc5d288549873adb086125642352",
+    "scripts/research_hardset_qubo_utility.py": "c8af508e009536ebf90e2d6ec27ce1854372bbbe7874978804745c184dd3de24",
+    "scripts/beam_component_ablation.py": "777cc450e6cfb9b3ee29a0cc6fe77a931ef15f29d65fb180e83059f8d3a1aec9",
+    "scripts/macro_prefix_binding.py": "78afd64937a08184291fed20223868504df0f47b37652b9fa7d33e81d3675d43",
+    "scripts/action_qubo_bundle_supply.py": "c68bc4ff029746c46b1c70c460b99c0a44370e328acc7210d87fd9398adb6700",
+    "scripts/research_action_bundle_work.py": "00dc9549097cda784700badb0e6abcbc86801fd544ee7bd2380d8b5a20add0f6",
+    "scripts/hardset_selection_value.py": "15acf4f8ad61ae204ad2ef5f1a92c50f28c314241c053b96f0d5fa80906f5035",
+    "scripts/trajectory_subsequence_qubo.py": "fc8ed11590070c90a591c928dc92ec915128d8fcf501759912feaba2ed2c990a",
+    "scripts/research_trajectory_subsequence.py": "5b61bdd09baddc685ada259c145a4d460f004e86d9ef5cd7887de4c719ebba50",
+    "scripts/trajectory_group_flow_qubo.py": "f9d1810fc9267aff994cdd92e60c3d94ac9f0cc66f065ff5ad3916d7fb0c1b26",
+    "scripts/classical_trajectory_simplify.py": "5256700fbcc324be47149d3213722b766c22f4b303cce7fc927de576e1f211bd",
+    "scripts/trajectory_state_crossover.py": "576c59b7427b5fb0a71c9d6b9ad28dfd70915492aa5063bd46d4abcd317ff141",
+    "scripts/research_group_flow_pilot.py": "e8b52f2aa3caa5bc3d1a49e47e01f3eb41930e9f02254aa318d6d3a9acaa845d",
+    "scripts/complete_trajectory_domains.py": "1ea9fb9015d0945d65f9cd8ed0d471de9e64c69735e4006b8472ef141e001885",
+    "scripts/categorical_qubo_search.py": "5d77e209562cd159d9ca2aaa9bbaff9db210126f02ab9176443e54fcd38c4707",
+    "scripts/research_complete_domain_backend.py": "ec5f18d739a96be6155b7bcf1a59a3bedff27b3bbbf9d7c7f10fe898cd067cde",
+    "scripts/hybrid_trajectory_refiner.py": "3ce4dd5f2b535c60d523eec479d68bed312e3121b7c851393687196b025fb98f",
+    "scripts/categorical_greedy_controls.py": "25477a2aafe80626caf857714ebdec8adbaeb1454d26cbb619f6ae6585c0e4ff",
+    "scripts/research_hybrid_hardset169.py": "84d3b4ea3b3c76f2c8f54389d545fac96da7a7ea203bacc0bc0a600b758d5022",
+    "scripts/categorical_exchange_controls.py": "70668863786d893328eaeb9d17c66a7bf3452bf0a3d2cdde9dc881f7d422d10c",
+    "scripts/categorical_exact_control.py": "c0c5df6058e4502e9c2469b89a4299b936403384f39d2566fbf9164034bf99e5",
+    "scripts/bypass_trajectory_domains.py": "c1392844ad5800a4ac6a38cf7d627f0043127fefa42a719a1076a536f6ea3bd9",
+    "scripts/research_bypass_trajectory_pilot.py": "315e3ab9bc9bbca917537c8c920eb83cc31288e48cb7abe7d0049b1b2fb2f0a9",
+    "scripts/advance_trajectory_domains.py": "32630571563e7267a30477634af28da1c9bd0d0aa92bc743d637e04fbfae6b56",
+    "scripts/research_advance_trajectory_pilot.py": "79a28eae1313475d92cffe637d152335026399da309186e27382a6ac96563967",
+    "scripts/redirect_trajectory_domains.py": "b8ac50378c4453e95714a437d78f08e0b98b8bd28d608485c58c630127c377e4",
+    "scripts/research_redirect_trajectory_pilot.py": "e4f674c99f04b4c559234e95eb8092ba311b9e2ed20ff66424ecaffcba6776e9",
+    "scripts/conditioned_trajectory_domains.py": "8e2b6c9c633f43f3329697f3fb2e2f3a8a5a8bfbe21d67412109ce0d6ac1e673",
+    "scripts/research_conditioned_trajectory_pilot.py": "757be86be81d8e3ca91db2756d6703a922f4e54131f11b07800e6c5ec8017f54",
+    "scripts/sequential_conditioned_refiner.py": "be387f6a501bc0a6f8b3d8707cb2f89171976841df04a2001adb19669a9fbe73",
+    "scripts/research_sequential_conditioned_pilot.py": "49caa7ff046beb75891dc9d1814f63d7c92c6d37008ee6564e2467164a8b9b8a",
+    "scripts/categorical_propagating_qubo.py": "4e679a351fb3d0be97e09fbaf0c28e085b1ed42ec69f50dbe6ae0d498b4abdb8",
+    "scripts/research_propagating_controller_pilot.py": "dd08fd16f8c4aec4f49a24548adabe9d59ab0b5cfce886c806cedf054d7f9269",
+    "scripts/research_propagating_hardset169.py": "17fe925968f9de667177827de1a2658bc12fda1bb4e41ccf947ab977ee68cd21",
+    "scripts/factorized_trajectory_qubo.py": "16046cde3d531032995c89348769e28220bbf70fba02c266d0e9a035c7b39e0c",
+    "scripts/bounded_conditioned_refinement.py": "6f326d9d3972b5a900ce10fa6603f96b86d9e322dab445ee3bb2db729ec35a38",
+    "scripts/deadline_worker_protocol.py": "845028e4958f1c0d95364d01acc1fc7d6db43b1bbe7b7aa925848a5ad3c9a463",
+    "scripts/anytime_trajectory_refinement.py": "99e376c87e9f3fe5ad08ec8828135682c95ad12cb803fd6905dcf450b73577f7",
+    "scripts/research_bounded_conditioned_time.py": "f6929ddd2fc01dc24dbaad7cf1420097d49f5ebc8e06f39d90097ed84f139ed2",
+    "scripts/categorical_budgeted_qubo.py": "4822f51bff8d48676cd7e46a3131b9907394f1c353aa12f2bf3f26d23bdc3694",
+    "scripts/capped_conditioned_refinement.py": "7006838ec72944783432c1857c2c4535eb70e31e375378ccfd636d7ab8be60ac",
+    "scripts/research_capped_full_comparison.py": "4f32295cb79d846d7e97d6f706dcb13db421586f5466d068fcfbbcddaa98ad2e",
+    "scripts/validated_trajectory_archive.py": "9c5067c0f84c3ccc92ba7d8635e0da87f7177d221ca50037a787023f37129fe4",
+    "scripts/wall_budget_cpmp_pipeline.py": "888c4e541e220e1ab29ad6ffae3f4c8f05bd00926cc46e2414e865d48d88df59",
+    "scripts/research_wall_budget_pipeline.py": "fd890e026467064646349f21fe4439c20ecb1643ac73a1d95fe972e179b0a516",
+    "scripts/fast_reduced_trajectory_domains.py": "ac8a9684b106e6dc5fb4665195f2267b348f137b23351ba9f5bf1a98b896bead",
+    "scripts/fast_conditioned_refinement.py": "7b2ec7eb3eb8e8857a4f84c6b86c54dd5b6ed0bfe10cc9d7b6db3f6b7c5adf91",
+    "scripts/research_fast_wall_pipeline.py": "79d8a0c0be1fd2161b954bdae324f1ea4ae6233d30f55af41c9384ea3b22ee11",
+    "scripts/shared_wall_deadline_protocol_full.py": "cd321c1a0f0f101168e381e28f4f1b7ef14a4a35853c8089fa224c3f7ee6d775",
+    "scripts/shared_prefix_cpmp_pipeline.py": "a7f7e938690a59f705cd7de3c55d0bc79c942a4bcab0840542095cdbc44c4659",
+    "scripts/research_shared_prefix_full.py": "4b70e595f6f509dc4a6825badff0ecd9a52a0e25382f6630a9b4c48576c64f02",
+    "scripts/single_seed_conditioned_refinement.py": "b6172b9d8fd3f9f7c284e98aa64540b323352d70cfef5c8e6f54aef2e0d747e1",
+    "scripts/single_seed_shared_pipeline.py": "555c15adca61c17580a1e807f62784780c6d2e8303827bac2ac990e241e5c06c",
+    "scripts/research_single_seed_fresh.py": "bbee81abca3d28e71d7c1f6516b97469bd503631a0bdfe2865a28230ab273c96",
+    "scripts/research_single_seed_screen.py": "a240f55428ef43e3a771023f883a09fb78e8cb9cceb451cbffda21d780ff0601",
+    "scripts/cyclic_conditioned_refinement.py": "38bdb16bd68d5985a96d9ed63f8f332141b3fde5b938255c99c26ef529a045ae",
+    "scripts/research_cyclic_refinement_screen.py": "e2b57ae65d6f60b5fe3041356230c93cf6974c07c6ca3a6f63d568c4e5ab14ad",
+    "scripts/research_cyclic_residual_budget.py": "c4faae02b5547cb70cbf2a7cf4b95005954a04aa60809d00209eec660af4ed8a",
+    "scripts/paired_trajectory_refinement.py": "2cf1fa8a810b78b27106a63cf275fcf8cac94104fdadfc2fb1a0ec6cb15c1ea9",
+    "scripts/research_paired_trajectory_screen.py": "e761fb3b0f12d34fcce33808c6e1a423659cc3a665d46bd960f75df5a984cd98",
+    "scripts/paired_shared_pipeline.py": "74471f1005148eb4995cd859dafb701ce9097f7d9234f6437b387cc1d5a60b93",
+    "scripts/cpmp_cpu_layout.py": "88a84c3cfb6d30715f2b7e943415677ddccc5ccf6f9d960935358abebb5f36aa",
+    "scripts/research_paired_fresh.py": "b3092464aaf00d6afaccab68015ab3af4ac772f2286897cb17cbd344c148caa5",
+    "scripts/research_paired_fresh_stream.py": "b14ec74484db2413022c37bac9c379e9336f4b98c59d7c3cde417d58683497fa",
+    "scripts/research_paired_fresh_exploratory.py": "02b3cfff3a784bd502e90d902993f5f7bd4d93fdd7775dfd5e53b17993ab6e1f",
+    "scripts/research_paired_solo_fresh.py": "63c3fa5ff46e94403fee16703732238db0eb9871204acf85166d5a8249a6318b",
+    "scripts/deferred_pair_refinement.py": "079c0cb877ecfe8326fb39dcef6d9bf129d463c0361ba9567a3cb32480784cab",
+    "scripts/deferred_pair_shared_pipeline.py": "8e0f34425873a913e88e06f33e8a5826db33888c76fc65e0b2bfe92d601fca8a",
+    "scripts/audit_deferred_pair.py": "8e82349d17f8364c49fedcf4b5619effea695eaa18cdd8e262966006c711504f",
+    "scripts/research_v50_budget_tail.py": "b28d1f287c60beafa51fb20ebe4775bc38a5dc50adf2b33ce40e6ac2b0173383"
+  },
+  "frozen_at": "2026-10-13T10:19:04.386316",
+  "protocol": "Frozen longer-budget and tail development study. Native v4.3 has its entire declared 20/60/120-second budget and receives no handoff. Four continuations use one separately computed fresh v4.3 prefix under the same original clock, retaining the cooperative 2-second reserve. All six actors use different homogeneous physical cores and rotate roles. Imports/source checks precede READY; instance loading, all computation, common physical validation/output cleanup and IPC are charged after START. Only reported INCUMBENT ready AND received by the original deadline is credited. No historical solution, free Pair answer, best-of-repeats or clock reset. Keep original solo Q and alternating Q+Pair unchanged. Candidate runs primary Q to a no-strict-improvement complete pass, then independent Pair from the original common path. Matched classical candidate substitutes three-order Single for Q with identical scheduling. All joint models/seeds/local50ms/50000-node caps remain unchanged. Physical replay every path, audit actual Beam, raw/reported ledgers, first-input identity, branch clocks and deferred switches. Retain all failures, cutoffs and losses. Screen combines the unchanged12 development originals, all9 old mean QP-native losses, and all saved mean-loss-at-least10 scheduling/basin tail originals. Preserve separate cohort labels; this selection is not independent generalization. Two repeats at every budget; original means only when both runs succeed; all attempts remain in coverage. 60/120 screens are completed even after negative20s quality if protocol remains valid. Candidate expansion screen at120: valid audits; no feasibility loss against soloQ, oldQP or native; negative primary mean-total versus native; nonpositive primary and all-screen totals versus soloQ and oldQP; at least2 stable oldQP-relative tail wins. These are development criteria, not full-corpus promotion. On failure retain this candidate; do not modify the frozen sources or rescue it by filtering cases. No default promotion or hardware claim.",
+  "cohorts": {
+    "primary": 12,
+    "known_native_tail": 9,
+    "known_schedule_or_basin_tail": 6
+  },
+  "selection_sources": [
+    "paired_fresh_stream_pilot/manifest.json",
+    "paired_fresh_exploratory_hardset169/summary.json",
+    "paired_solo_fresh_hardset169/tail_mechanism_examples.json"
+  ]
+}

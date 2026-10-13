@@ -1,0 +1,4389 @@
+{
+  "scope": "screen_t20",
+  "budget_sec": 20.0,
+  "originals": 27,
+  "repeats": 2,
+  "budget_gate": true,
+  "audit_pass": true,
+  "budget_failures": [],
+  "audit_errors": [],
+  "missing_common_prefix": [
+    {
+      "case": "CV__10-10__data10-10-15",
+      "repeat": 1,
+      "status": "NO_FRESH_PREFIX_SOLUTION"
+    },
+    {
+      "case": "CV__10-10__data10-10-28",
+      "repeat": 1,
+      "status": "NO_FRESH_PREFIX_SOLUTION"
+    }
+  ],
+  "max_parent_lag_sec": 0.01561230000515934,
+  "physical_path_checks": 5453,
+  "actual_beam_checks": 771,
+  "standalone_beam_checks": 752,
+  "valid_runs": {
+    "native": 54,
+    "qubo_cycle": 52,
+    "qubo_pair": 52,
+    "qubo_deferred_pair": 52,
+    "single_deferred_pair": 52
+  },
+  "role_cpu_counts": {
+    "prefix": {
+      "0": 9,
+      "2": 9,
+      "4": 9,
+      "6": 9,
+      "8": 9,
+      "10": 9
+    },
+    "native": {
+      "0": 9,
+      "2": 9,
+      "4": 9,
+      "6": 9,
+      "8": 9,
+      "10": 9
+    },
+    "qubo_cycle": {
+      "0": 9,
+      "2": 9,
+      "4": 9,
+      "6": 9,
+      "8": 9,
+      "10": 9
+    },
+    "qubo_pair": {
+      "0": 9,
+      "2": 9,
+      "4": 9,
+      "6": 9,
+      "8": 9,
+      "10": 9
+    },
+    "qubo_deferred_pair": {
+      "0": 9,
+      "2": 9,
+      "4": 9,
+      "6": 9,
+      "8": 9,
+      "10": 9
+    },
+    "single_deferred_pair": {
+      "0": 9,
+      "2": 9,
+      "4": 9,
+      "6": 9,
+      "8": 9,
+      "10": 9
+    }
+  },
+  "contrasts": {
+    "all_screen:qubo_deferred_pair:native": {
+      "target": "qubo_deferred_pair",
+      "reference": "native",
+      "common_originals": 25,
+      "wins": 21,
+      "losses": 2,
+      "ties": 2,
+      "net_original_mean": -1313.5,
+      "worst": 30.0,
+      "mean_delta": -52.54,
+      "target_mean": 194.68,
+      "reference_mean": 247.22,
+      "by_repeat": {
+        "0": -1158,
+        "1": -1469
+      },
+      "stable_wins": 19,
+      "stable_wins_with_joint": 15,
+      "bootstrap95_mean": [
+        -73.38,
+        -32.78
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [
+        {
+          "case": "CV__10-10__data10-10-15",
+          "repeat": 1
+        },
+        {
+          "case": "CV__10-10__data10-10-28",
+          "repeat": 1
+        }
+      ],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -37,
+            -20
+          ],
+          "mean": -28.5,
+          "target_mean": 126.0,
+          "reference_mean": 154.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            -4,
+            -15
+          ],
+          "mean": -9.5,
+          "target_mean": 102.0,
+          "reference_mean": 111.5,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            9,
+            -39
+          ],
+          "mean": -15.0,
+          "target_mean": 113.0,
+          "reference_mean": 128.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -16,
+            -21
+          ],
+          "mean": -18.5,
+          "target_mean": 141.5,
+          "reference_mean": 160.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -17,
+            -18
+          ],
+          "mean": -17.5,
+          "target_mean": 124.0,
+          "reference_mean": 141.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -66,
+            -66
+          ],
+          "mean": -66.0,
+          "target_mean": 203.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -139,
+            -67
+          ],
+          "mean": -103.0,
+          "target_mean": 262.0,
+          "reference_mean": 365.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            -29,
+            -1
+          ],
+          "mean": -15.0,
+          "target_mean": 73.0,
+          "reference_mean": 88.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -24,
+            -24
+          ],
+          "mean": -24.0,
+          "target_mean": 172.0,
+          "reference_mean": 196.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -87,
+            -84
+          ],
+          "mean": -85.5,
+          "target_mean": 213.0,
+          "reference_mean": 298.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 82.0,
+          "reference_mean": 84.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            -108,
+            -108
+          ],
+          "mean": -108.0,
+          "target_mean": 340.0,
+          "reference_mean": 448.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            63,
+            -170
+          ],
+          "mean": -53.5,
+          "target_mean": 257.0,
+          "reference_mean": 310.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            -51,
+            -164
+          ],
+          "mean": -107.5,
+          "target_mean": 273.0,
+          "reference_mean": 380.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            51,
+            9
+          ],
+          "mean": 30.0,
+          "target_mean": 356.5,
+          "reference_mean": 326.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -99,
+            -134
+          ],
+          "mean": -116.5,
+          "target_mean": 187.0,
+          "reference_mean": 303.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            -25,
+            53
+          ],
+          "mean": 14.0,
+          "target_mean": 394.5,
+          "reference_mean": 380.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -88,
+            -47
+          ],
+          "mean": -67.5,
+          "target_mean": 278.0,
+          "reference_mean": 345.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -113,
+            -93
+          ],
+          "mean": -103.0,
+          "target_mean": 154.5,
+          "reference_mean": 257.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            -91,
+            -91
+          ],
+          "mean": -91.0,
+          "target_mean": 207.0,
+          "reference_mean": 298.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -86,
+            -107
+          ],
+          "mean": -96.5,
+          "target_mean": 246.0,
+          "reference_mean": 342.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -42,
+            -42
+          ],
+          "mean": -42.0,
+          "target_mean": 227.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -157,
+            -218
+          ],
+          "mean": -187.5,
+          "target_mean": 255.0,
+          "reference_mean": 442.5,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "all_screen:qubo_deferred_pair:qubo_cycle": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_cycle",
+      "common_originals": 25,
+      "wins": 1,
+      "losses": 2,
+      "ties": 22,
+      "net_original_mean": 3.5,
+      "worst": 13.0,
+      "mean_delta": 0.14,
+      "target_mean": 194.68,
+      "reference_mean": 194.54,
+      "by_repeat": {
+        "0": 17,
+        "1": -10
+      },
+      "stable_wins": 1,
+      "stable_wins_with_joint": 1,
+      "bootstrap95_mean": [
+        -1.18,
+        1.58
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 126.0,
+          "reference_mean": 126.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 102.0,
+          "reference_mean": 102.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 113.0,
+          "reference_mean": 113.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 141.5,
+          "reference_mean": 141.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 124.0,
+          "reference_mean": 124.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 203.0,
+          "reference_mean": 203.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 262.0,
+          "reference_mean": 262.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 73.0,
+          "reference_mean": 73.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 172.0,
+          "reference_mean": 172.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 213.0,
+          "reference_mean": 213.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 82.0,
+          "reference_mean": 82.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 340.0,
+          "reference_mean": 340.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 257.0,
+          "reference_mean": 257.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 273.0,
+          "reference_mean": 273.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 356.5,
+          "reference_mean": 356.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            1,
+            0
+          ],
+          "mean": 0.5,
+          "target_mean": 187.0,
+          "reference_mean": 186.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            26,
+            0
+          ],
+          "mean": 13.0,
+          "target_mean": 394.5,
+          "reference_mean": 381.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 278.0,
+          "reference_mean": 278.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 154.5,
+          "reference_mean": 154.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 207.0,
+          "reference_mean": 207.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 246.0,
+          "reference_mean": 246.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -10,
+            -10
+          ],
+          "mean": -10.0,
+          "target_mean": 227.0,
+          "reference_mean": 237.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 255.0,
+          "reference_mean": 255.0,
+          "stable_win": false,
+          "joint_all": true
+        }
+      ]
+    },
+    "all_screen:qubo_deferred_pair:qubo_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_pair",
+      "common_originals": 25,
+      "wins": 7,
+      "losses": 2,
+      "ties": 16,
+      "net_original_mean": -16.5,
+      "worst": 22.0,
+      "mean_delta": -0.66,
+      "target_mean": 194.68,
+      "reference_mean": 195.34,
+      "by_repeat": {
+        "0": -9,
+        "1": -24
+      },
+      "stable_wins": 3,
+      "stable_wins_with_joint": 3,
+      "bootstrap95_mean": [
+        -3.64,
+        2.38
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 126.0,
+          "reference_mean": 126.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 102.0,
+          "reference_mean": 102.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 113.0,
+          "reference_mean": 113.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 141.5,
+          "reference_mean": 141.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -2,
+            0
+          ],
+          "mean": -1.0,
+          "target_mean": 124.0,
+          "reference_mean": 125.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -3,
+            -3
+          ],
+          "mean": -3.0,
+          "target_mean": 203.0,
+          "reference_mean": 206.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 262.0,
+          "reference_mean": 262.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 73.0,
+          "reference_mean": 73.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 172.0,
+          "reference_mean": 172.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 213.0,
+          "reference_mean": 215.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 82.0,
+          "reference_mean": 82.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 340.0,
+          "reference_mean": 340.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 257.0,
+          "reference_mean": 257.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 273.0,
+          "reference_mean": 273.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 356.5,
+          "reference_mean": 356.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -6,
+            0
+          ],
+          "mean": -3.0,
+          "target_mean": 187.0,
+          "reference_mean": 190.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            31,
+            0
+          ],
+          "mean": 15.5,
+          "target_mean": 394.5,
+          "reference_mean": 379.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -27,
+            0
+          ],
+          "mean": -13.5,
+          "target_mean": 278.0,
+          "reference_mean": 291.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 154.5,
+          "reference_mean": 154.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            22,
+            22
+          ],
+          "mean": 22.0,
+          "target_mean": 207.0,
+          "reference_mean": 185.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -22,
+            -22
+          ],
+          "mean": -22.0,
+          "target_mean": 246.0,
+          "reference_mean": 268.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 227.0,
+          "reference_mean": 227.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            0,
+            -19
+          ],
+          "mean": -9.5,
+          "target_mean": 255.0,
+          "reference_mean": 264.5,
+          "stable_win": false,
+          "joint_all": true
+        }
+      ]
+    },
+    "all_screen:qubo_deferred_pair:single_deferred_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "single_deferred_pair",
+      "common_originals": 25,
+      "wins": 15,
+      "losses": 3,
+      "ties": 7,
+      "net_original_mean": -70.0,
+      "worst": 21.0,
+      "mean_delta": -2.8,
+      "target_mean": 194.68,
+      "reference_mean": 197.48,
+      "by_repeat": {
+        "0": -105,
+        "1": -35
+      },
+      "stable_wins": 8,
+      "stable_wins_with_joint": 8,
+      "bootstrap95_mean": [
+        -5.1,
+        -0.02
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -30,
+            18
+          ],
+          "mean": -6.0,
+          "target_mean": 126.0,
+          "reference_mean": 132.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 102.0,
+          "reference_mean": 102.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            1,
+            0
+          ],
+          "mean": 0.5,
+          "target_mean": 113.0,
+          "reference_mean": 112.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -3,
+            0
+          ],
+          "mean": -1.5,
+          "target_mean": 141.5,
+          "reference_mean": 143.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -3,
+            0
+          ],
+          "mean": -1.5,
+          "target_mean": 124.0,
+          "reference_mean": 125.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -10,
+            -6
+          ],
+          "mean": -8.0,
+          "target_mean": 203.0,
+          "reference_mean": 211.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -16,
+            -3
+          ],
+          "mean": -9.5,
+          "target_mean": 262.0,
+          "reference_mean": 271.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 73.0,
+          "reference_mean": 73.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 172.0,
+          "reference_mean": 174.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -9,
+            -9
+          ],
+          "mean": -9.0,
+          "target_mean": 213.0,
+          "reference_mean": 222.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 82.0,
+          "reference_mean": 82.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 340.0,
+          "reference_mean": 340.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            0,
+            -9
+          ],
+          "mean": -4.5,
+          "target_mean": 257.0,
+          "reference_mean": 261.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            0,
+            -4
+          ],
+          "mean": -2.0,
+          "target_mean": 273.0,
+          "reference_mean": 275.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            -15,
+            0
+          ],
+          "mean": -7.5,
+          "target_mean": 356.5,
+          "reference_mean": 364.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -12,
+            0
+          ],
+          "mean": -6.0,
+          "target_mean": 187.0,
+          "reference_mean": 193.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 394.5,
+          "reference_mean": 394.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -14,
+            -4
+          ],
+          "mean": -9.0,
+          "target_mean": 278.0,
+          "reference_mean": 287.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -1,
+            -7
+          ],
+          "mean": -4.0,
+          "target_mean": 154.5,
+          "reference_mean": 158.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            20,
+            22
+          ],
+          "mean": 21.0,
+          "target_mean": 207.0,
+          "reference_mean": 186.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -14,
+            -14
+          ],
+          "mean": -14.0,
+          "target_mean": 246.0,
+          "reference_mean": 260.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            4,
+            4
+          ],
+          "mean": 4.0,
+          "target_mean": 227.0,
+          "reference_mean": 223.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -1,
+            -21
+          ],
+          "mean": -11.0,
+          "target_mean": 255.0,
+          "reference_mean": 266.0,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "all_screen:qubo_cycle:native": {
+      "target": "qubo_cycle",
+      "reference": "native",
+      "common_originals": 25,
+      "wins": 21,
+      "losses": 2,
+      "ties": 2,
+      "net_original_mean": -1317.0,
+      "worst": 30.0,
+      "mean_delta": -52.68,
+      "target_mean": 194.54,
+      "reference_mean": 247.22,
+      "by_repeat": {
+        "0": -1175,
+        "1": -1459
+      },
+      "stable_wins": 19,
+      "stable_wins_with_joint": 15,
+      "bootstrap95_mean": [
+        -73.38,
+        -33.18
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [
+        {
+          "case": "CV__10-10__data10-10-15",
+          "repeat": 1
+        },
+        {
+          "case": "CV__10-10__data10-10-28",
+          "repeat": 1
+        }
+      ],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -37,
+            -20
+          ],
+          "mean": -28.5,
+          "target_mean": 126.0,
+          "reference_mean": 154.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            -4,
+            -15
+          ],
+          "mean": -9.5,
+          "target_mean": 102.0,
+          "reference_mean": 111.5,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            9,
+            -39
+          ],
+          "mean": -15.0,
+          "target_mean": 113.0,
+          "reference_mean": 128.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -16,
+            -21
+          ],
+          "mean": -18.5,
+          "target_mean": 141.5,
+          "reference_mean": 160.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -17,
+            -18
+          ],
+          "mean": -17.5,
+          "target_mean": 124.0,
+          "reference_mean": 141.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -66,
+            -66
+          ],
+          "mean": -66.0,
+          "target_mean": 203.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -139,
+            -67
+          ],
+          "mean": -103.0,
+          "target_mean": 262.0,
+          "reference_mean": 365.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            -29,
+            -1
+          ],
+          "mean": -15.0,
+          "target_mean": 73.0,
+          "reference_mean": 88.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -24,
+            -24
+          ],
+          "mean": -24.0,
+          "target_mean": 172.0,
+          "reference_mean": 196.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -87,
+            -84
+          ],
+          "mean": -85.5,
+          "target_mean": 213.0,
+          "reference_mean": 298.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 82.0,
+          "reference_mean": 84.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            -108,
+            -108
+          ],
+          "mean": -108.0,
+          "target_mean": 340.0,
+          "reference_mean": 448.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            63,
+            -170
+          ],
+          "mean": -53.5,
+          "target_mean": 257.0,
+          "reference_mean": 310.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            -51,
+            -164
+          ],
+          "mean": -107.5,
+          "target_mean": 273.0,
+          "reference_mean": 380.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            51,
+            9
+          ],
+          "mean": 30.0,
+          "target_mean": 356.5,
+          "reference_mean": 326.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -100,
+            -134
+          ],
+          "mean": -117.0,
+          "target_mean": 186.5,
+          "reference_mean": 303.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            -51,
+            53
+          ],
+          "mean": 1.0,
+          "target_mean": 381.5,
+          "reference_mean": 380.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -88,
+            -47
+          ],
+          "mean": -67.5,
+          "target_mean": 278.0,
+          "reference_mean": 345.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -113,
+            -93
+          ],
+          "mean": -103.0,
+          "target_mean": 154.5,
+          "reference_mean": 257.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            -91,
+            -91
+          ],
+          "mean": -91.0,
+          "target_mean": 207.0,
+          "reference_mean": 298.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -86,
+            -107
+          ],
+          "mean": -96.5,
+          "target_mean": 246.0,
+          "reference_mean": 342.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -32,
+            -32
+          ],
+          "mean": -32.0,
+          "target_mean": 237.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -157,
+            -218
+          ],
+          "mean": -187.5,
+          "target_mean": 255.0,
+          "reference_mean": 442.5,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "all_screen:qubo_pair:native": {
+      "target": "qubo_pair",
+      "reference": "native",
+      "common_originals": 25,
+      "wins": 22,
+      "losses": 1,
+      "ties": 2,
+      "net_original_mean": -1297.0,
+      "worst": 30.0,
+      "mean_delta": -51.88,
+      "target_mean": 195.34,
+      "reference_mean": 247.22,
+      "by_repeat": {
+        "0": -1149,
+        "1": -1445
+      },
+      "stable_wins": 19,
+      "stable_wins_with_joint": 15,
+      "bootstrap95_mean": [
+        -72.06,
+        -32.84
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [
+        {
+          "case": "CV__10-10__data10-10-15",
+          "repeat": 1
+        },
+        {
+          "case": "CV__10-10__data10-10-28",
+          "repeat": 1
+        }
+      ],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -37,
+            -20
+          ],
+          "mean": -28.5,
+          "target_mean": 126.0,
+          "reference_mean": 154.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            -4,
+            -15
+          ],
+          "mean": -9.5,
+          "target_mean": 102.0,
+          "reference_mean": 111.5,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            9,
+            -39
+          ],
+          "mean": -15.0,
+          "target_mean": 113.0,
+          "reference_mean": 128.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -16,
+            -21
+          ],
+          "mean": -18.5,
+          "target_mean": 141.5,
+          "reference_mean": 160.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -15,
+            -18
+          ],
+          "mean": -16.5,
+          "target_mean": 125.0,
+          "reference_mean": 141.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -63,
+            -63
+          ],
+          "mean": -63.0,
+          "target_mean": 206.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -139,
+            -67
+          ],
+          "mean": -103.0,
+          "target_mean": 262.0,
+          "reference_mean": 365.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            -29,
+            -1
+          ],
+          "mean": -15.0,
+          "target_mean": 73.0,
+          "reference_mean": 88.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -24,
+            -24
+          ],
+          "mean": -24.0,
+          "target_mean": 172.0,
+          "reference_mean": 196.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -85,
+            -82
+          ],
+          "mean": -83.5,
+          "target_mean": 215.0,
+          "reference_mean": 298.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 82.0,
+          "reference_mean": 84.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            -108,
+            -108
+          ],
+          "mean": -108.0,
+          "target_mean": 340.0,
+          "reference_mean": 448.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            63,
+            -170
+          ],
+          "mean": -53.5,
+          "target_mean": 257.0,
+          "reference_mean": 310.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            -51,
+            -164
+          ],
+          "mean": -107.5,
+          "target_mean": 273.0,
+          "reference_mean": 380.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            51,
+            9
+          ],
+          "mean": 30.0,
+          "target_mean": 356.5,
+          "reference_mean": 326.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -93,
+            -134
+          ],
+          "mean": -113.5,
+          "target_mean": 190.0,
+          "reference_mean": 303.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            -56,
+            53
+          ],
+          "mean": -1.5,
+          "target_mean": 379.0,
+          "reference_mean": 380.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -61,
+            -47
+          ],
+          "mean": -54.0,
+          "target_mean": 291.5,
+          "reference_mean": 345.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -113,
+            -93
+          ],
+          "mean": -103.0,
+          "target_mean": 154.5,
+          "reference_mean": 257.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            -113,
+            -113
+          ],
+          "mean": -113.0,
+          "target_mean": 185.0,
+          "reference_mean": 298.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -64,
+            -85
+          ],
+          "mean": -74.5,
+          "target_mean": 268.0,
+          "reference_mean": 342.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -42,
+            -42
+          ],
+          "mean": -42.0,
+          "target_mean": 227.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -157,
+            -199
+          ],
+          "mean": -178.0,
+          "target_mean": 264.5,
+          "reference_mean": 442.5,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "known_native_tail:qubo_deferred_pair:native": {
+      "target": "qubo_deferred_pair",
+      "reference": "native",
+      "common_originals": 7,
+      "wins": 5,
+      "losses": 2,
+      "ties": 0,
+      "net_original_mean": -343.5,
+      "worst": 30.0,
+      "mean_delta": -49.07142857142857,
+      "target_mean": 270.0,
+      "reference_mean": 319.07142857142856,
+      "by_repeat": {
+        "0": -171,
+        "1": -516
+      },
+      "stable_wins": 4,
+      "stable_wins_with_joint": 3,
+      "bootstrap95_mean": [
+        -92.78571428571429,
+        -6.142857142857143
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [
+        {
+          "case": "CV__10-10__data10-10-15",
+          "repeat": 1
+        },
+        {
+          "case": "CV__10-10__data10-10-28",
+          "repeat": 1
+        }
+      ],
+      "originals": [
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 82.0,
+          "reference_mean": 84.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            -108,
+            -108
+          ],
+          "mean": -108.0,
+          "target_mean": 340.0,
+          "reference_mean": 448.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            63,
+            -170
+          ],
+          "mean": -53.5,
+          "target_mean": 257.0,
+          "reference_mean": 310.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            -51,
+            -164
+          ],
+          "mean": -107.5,
+          "target_mean": 273.0,
+          "reference_mean": 380.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            51,
+            9
+          ],
+          "mean": 30.0,
+          "target_mean": 356.5,
+          "reference_mean": 326.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -99,
+            -134
+          ],
+          "mean": -116.5,
+          "target_mean": 187.0,
+          "reference_mean": 303.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            -25,
+            53
+          ],
+          "mean": 14.0,
+          "target_mean": 394.5,
+          "reference_mean": 380.5,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "known_native_tail:qubo_deferred_pair:qubo_cycle": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_cycle",
+      "common_originals": 7,
+      "wins": 0,
+      "losses": 2,
+      "ties": 5,
+      "net_original_mean": 13.5,
+      "worst": 13.0,
+      "mean_delta": 1.9285714285714286,
+      "target_mean": 270.0,
+      "reference_mean": 268.07142857142856,
+      "by_repeat": {
+        "0": 27,
+        "1": 0
+      },
+      "stable_wins": 0,
+      "stable_wins_with_joint": 0,
+      "bootstrap95_mean": [
+        0.0,
+        5.642857142857143
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 82.0,
+          "reference_mean": 82.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 340.0,
+          "reference_mean": 340.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 257.0,
+          "reference_mean": 257.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 273.0,
+          "reference_mean": 273.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 356.5,
+          "reference_mean": 356.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            1,
+            0
+          ],
+          "mean": 0.5,
+          "target_mean": 187.0,
+          "reference_mean": 186.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            26,
+            0
+          ],
+          "mean": 13.0,
+          "target_mean": 394.5,
+          "reference_mean": 381.5,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "known_native_tail:qubo_deferred_pair:qubo_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_pair",
+      "common_originals": 7,
+      "wins": 1,
+      "losses": 1,
+      "ties": 5,
+      "net_original_mean": 12.5,
+      "worst": 15.5,
+      "mean_delta": 1.7857142857142858,
+      "target_mean": 270.0,
+      "reference_mean": 268.2142857142857,
+      "by_repeat": {
+        "0": 25,
+        "1": 0
+      },
+      "stable_wins": 0,
+      "stable_wins_with_joint": 0,
+      "bootstrap95_mean": [
+        -1.2857142857142858,
+        6.642857142857143
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 82.0,
+          "reference_mean": 82.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 340.0,
+          "reference_mean": 340.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 257.0,
+          "reference_mean": 257.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 273.0,
+          "reference_mean": 273.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 356.5,
+          "reference_mean": 356.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -6,
+            0
+          ],
+          "mean": -3.0,
+          "target_mean": 187.0,
+          "reference_mean": 190.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            31,
+            0
+          ],
+          "mean": 15.5,
+          "target_mean": 394.5,
+          "reference_mean": 379.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "known_native_tail:qubo_deferred_pair:single_deferred_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "single_deferred_pair",
+      "common_originals": 7,
+      "wins": 4,
+      "losses": 0,
+      "ties": 3,
+      "net_original_mean": -20.0,
+      "worst": 0.0,
+      "mean_delta": -2.857142857142857,
+      "target_mean": 270.0,
+      "reference_mean": 272.85714285714283,
+      "by_repeat": {
+        "0": -27,
+        "1": -13
+      },
+      "stable_wins": 0,
+      "stable_wins_with_joint": 0,
+      "bootstrap95_mean": [
+        -5.0,
+        -0.8571428571428571
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 82.0,
+          "reference_mean": 82.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 340.0,
+          "reference_mean": 340.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            0,
+            -9
+          ],
+          "mean": -4.5,
+          "target_mean": 257.0,
+          "reference_mean": 261.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            0,
+            -4
+          ],
+          "mean": -2.0,
+          "target_mean": 273.0,
+          "reference_mean": 275.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            -15,
+            0
+          ],
+          "mean": -7.5,
+          "target_mean": 356.5,
+          "reference_mean": 364.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -12,
+            0
+          ],
+          "mean": -6.0,
+          "target_mean": 187.0,
+          "reference_mean": 193.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 394.5,
+          "reference_mean": 394.5,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "known_native_tail:qubo_cycle:native": {
+      "target": "qubo_cycle",
+      "reference": "native",
+      "common_originals": 7,
+      "wins": 5,
+      "losses": 2,
+      "ties": 0,
+      "net_original_mean": -357.0,
+      "worst": 30.0,
+      "mean_delta": -51.0,
+      "target_mean": 268.07142857142856,
+      "reference_mean": 319.07142857142856,
+      "by_repeat": {
+        "0": -198,
+        "1": -516
+      },
+      "stable_wins": 4,
+      "stable_wins_with_joint": 3,
+      "bootstrap95_mean": [
+        -93.57142857142857,
+        -10.357142857142858
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [
+        {
+          "case": "CV__10-10__data10-10-15",
+          "repeat": 1
+        },
+        {
+          "case": "CV__10-10__data10-10-28",
+          "repeat": 1
+        }
+      ],
+      "originals": [
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 82.0,
+          "reference_mean": 84.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            -108,
+            -108
+          ],
+          "mean": -108.0,
+          "target_mean": 340.0,
+          "reference_mean": 448.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            63,
+            -170
+          ],
+          "mean": -53.5,
+          "target_mean": 257.0,
+          "reference_mean": 310.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            -51,
+            -164
+          ],
+          "mean": -107.5,
+          "target_mean": 273.0,
+          "reference_mean": 380.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            51,
+            9
+          ],
+          "mean": 30.0,
+          "target_mean": 356.5,
+          "reference_mean": 326.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -100,
+            -134
+          ],
+          "mean": -117.0,
+          "target_mean": 186.5,
+          "reference_mean": 303.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            -51,
+            53
+          ],
+          "mean": 1.0,
+          "target_mean": 381.5,
+          "reference_mean": 380.5,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "known_native_tail:qubo_pair:native": {
+      "target": "qubo_pair",
+      "reference": "native",
+      "common_originals": 7,
+      "wins": 6,
+      "losses": 1,
+      "ties": 0,
+      "net_original_mean": -356.0,
+      "worst": 30.0,
+      "mean_delta": -50.857142857142854,
+      "target_mean": 268.2142857142857,
+      "reference_mean": 319.07142857142856,
+      "by_repeat": {
+        "0": -196,
+        "1": -516
+      },
+      "stable_wins": 4,
+      "stable_wins_with_joint": 3,
+      "bootstrap95_mean": [
+        -93.21428571428571,
+        -10.642857142857142
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [
+        {
+          "case": "CV__10-10__data10-10-15",
+          "repeat": 1
+        },
+        {
+          "case": "CV__10-10__data10-10-28",
+          "repeat": 1
+        }
+      ],
+      "originals": [
+        {
+          "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 82.0,
+          "reference_mean": 84.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-11",
+          "deltas": [
+            -108,
+            -108
+          ],
+          "mean": -108.0,
+          "target_mean": 340.0,
+          "reference_mean": 448.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-16",
+          "deltas": [
+            63,
+            -170
+          ],
+          "mean": -53.5,
+          "target_mean": 257.0,
+          "reference_mean": 310.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-18",
+          "deltas": [
+            -51,
+            -164
+          ],
+          "mean": -107.5,
+          "target_mean": 273.0,
+          "reference_mean": 380.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-20",
+          "deltas": [
+            51,
+            9
+          ],
+          "mean": 30.0,
+          "target_mean": 356.5,
+          "reference_mean": 326.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-10__data10-10-32",
+          "deltas": [
+            -93,
+            -134
+          ],
+          "mean": -113.5,
+          "target_mean": 190.0,
+          "reference_mean": 303.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-7",
+          "deltas": [
+            -56,
+            53
+          ],
+          "mean": -1.5,
+          "target_mean": 379.0,
+          "reference_mean": 380.5,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "known_schedule_or_basin_tail:qubo_deferred_pair:native": {
+      "target": "qubo_deferred_pair",
+      "reference": "native",
+      "common_originals": 6,
+      "wins": 6,
+      "losses": 0,
+      "ties": 0,
+      "net_original_mean": -587.5,
+      "worst": -42.0,
+      "mean_delta": -97.91666666666667,
+      "target_mean": 227.91666666666666,
+      "reference_mean": 325.8333333333333,
+      "by_repeat": {
+        "0": -577,
+        "1": -598
+      },
+      "stable_wins": 6,
+      "stable_wins_with_joint": 6,
+      "bootstrap95_mean": [
+        -138.25,
+        -66.58333333333333
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -88,
+            -47
+          ],
+          "mean": -67.5,
+          "target_mean": 278.0,
+          "reference_mean": 345.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -113,
+            -93
+          ],
+          "mean": -103.0,
+          "target_mean": 154.5,
+          "reference_mean": 257.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            -91,
+            -91
+          ],
+          "mean": -91.0,
+          "target_mean": 207.0,
+          "reference_mean": 298.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -86,
+            -107
+          ],
+          "mean": -96.5,
+          "target_mean": 246.0,
+          "reference_mean": 342.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -42,
+            -42
+          ],
+          "mean": -42.0,
+          "target_mean": 227.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -157,
+            -218
+          ],
+          "mean": -187.5,
+          "target_mean": 255.0,
+          "reference_mean": 442.5,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "known_schedule_or_basin_tail:qubo_deferred_pair:qubo_cycle": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_cycle",
+      "common_originals": 6,
+      "wins": 1,
+      "losses": 0,
+      "ties": 5,
+      "net_original_mean": -10.0,
+      "worst": 0.0,
+      "mean_delta": -1.6666666666666667,
+      "target_mean": 227.91666666666666,
+      "reference_mean": 229.58333333333334,
+      "by_repeat": {
+        "0": -10,
+        "1": -10
+      },
+      "stable_wins": 1,
+      "stable_wins_with_joint": 1,
+      "bootstrap95_mean": [
+        -5.0,
+        0.0
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 278.0,
+          "reference_mean": 278.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 154.5,
+          "reference_mean": 154.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 207.0,
+          "reference_mean": 207.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 246.0,
+          "reference_mean": 246.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -10,
+            -10
+          ],
+          "mean": -10.0,
+          "target_mean": 227.0,
+          "reference_mean": 237.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 255.0,
+          "reference_mean": 255.0,
+          "stable_win": false,
+          "joint_all": true
+        }
+      ]
+    },
+    "known_schedule_or_basin_tail:qubo_deferred_pair:qubo_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_pair",
+      "common_originals": 6,
+      "wins": 3,
+      "losses": 1,
+      "ties": 2,
+      "net_original_mean": -23.0,
+      "worst": 22.0,
+      "mean_delta": -3.8333333333333335,
+      "target_mean": 227.91666666666666,
+      "reference_mean": 231.75,
+      "by_repeat": {
+        "0": -27,
+        "1": -19
+      },
+      "stable_wins": 1,
+      "stable_wins_with_joint": 1,
+      "bootstrap95_mean": [
+        -14.083333333333334,
+        7.333333333333333
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -27,
+            0
+          ],
+          "mean": -13.5,
+          "target_mean": 278.0,
+          "reference_mean": 291.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 154.5,
+          "reference_mean": 154.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            22,
+            22
+          ],
+          "mean": 22.0,
+          "target_mean": 207.0,
+          "reference_mean": 185.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -22,
+            -22
+          ],
+          "mean": -22.0,
+          "target_mean": 246.0,
+          "reference_mean": 268.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 227.0,
+          "reference_mean": 227.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            0,
+            -19
+          ],
+          "mean": -9.5,
+          "target_mean": 255.0,
+          "reference_mean": 264.5,
+          "stable_win": false,
+          "joint_all": true
+        }
+      ]
+    },
+    "known_schedule_or_basin_tail:qubo_deferred_pair:single_deferred_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "single_deferred_pair",
+      "common_originals": 6,
+      "wins": 4,
+      "losses": 2,
+      "ties": 0,
+      "net_original_mean": -13.0,
+      "worst": 21.0,
+      "mean_delta": -2.1666666666666665,
+      "target_mean": 227.91666666666666,
+      "reference_mean": 230.08333333333334,
+      "by_repeat": {
+        "0": -6,
+        "1": -20
+      },
+      "stable_wins": 4,
+      "stable_wins_with_joint": 4,
+      "bootstrap95_mean": [
+        -10.5,
+        8.166666666666666
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -14,
+            -4
+          ],
+          "mean": -9.0,
+          "target_mean": 278.0,
+          "reference_mean": 287.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -1,
+            -7
+          ],
+          "mean": -4.0,
+          "target_mean": 154.5,
+          "reference_mean": 158.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            20,
+            22
+          ],
+          "mean": 21.0,
+          "target_mean": 207.0,
+          "reference_mean": 186.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -14,
+            -14
+          ],
+          "mean": -14.0,
+          "target_mean": 246.0,
+          "reference_mean": 260.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            4,
+            4
+          ],
+          "mean": 4.0,
+          "target_mean": 227.0,
+          "reference_mean": 223.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -1,
+            -21
+          ],
+          "mean": -11.0,
+          "target_mean": 255.0,
+          "reference_mean": 266.0,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "known_schedule_or_basin_tail:qubo_cycle:native": {
+      "target": "qubo_cycle",
+      "reference": "native",
+      "common_originals": 6,
+      "wins": 6,
+      "losses": 0,
+      "ties": 0,
+      "net_original_mean": -577.5,
+      "worst": -32.0,
+      "mean_delta": -96.25,
+      "target_mean": 229.58333333333334,
+      "reference_mean": 325.8333333333333,
+      "by_repeat": {
+        "0": -567,
+        "1": -588
+      },
+      "stable_wins": 6,
+      "stable_wins_with_joint": 6,
+      "bootstrap95_mean": [
+        -138.25,
+        -61.583333333333336
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -88,
+            -47
+          ],
+          "mean": -67.5,
+          "target_mean": 278.0,
+          "reference_mean": 345.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -113,
+            -93
+          ],
+          "mean": -103.0,
+          "target_mean": 154.5,
+          "reference_mean": 257.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            -91,
+            -91
+          ],
+          "mean": -91.0,
+          "target_mean": 207.0,
+          "reference_mean": 298.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -86,
+            -107
+          ],
+          "mean": -96.5,
+          "target_mean": 246.0,
+          "reference_mean": 342.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -32,
+            -32
+          ],
+          "mean": -32.0,
+          "target_mean": 237.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -157,
+            -218
+          ],
+          "mean": -187.5,
+          "target_mean": 255.0,
+          "reference_mean": 442.5,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "known_schedule_or_basin_tail:qubo_pair:native": {
+      "target": "qubo_pair",
+      "reference": "native",
+      "common_originals": 6,
+      "wins": 6,
+      "losses": 0,
+      "ties": 0,
+      "net_original_mean": -564.5,
+      "worst": -42.0,
+      "mean_delta": -94.08333333333333,
+      "target_mean": 231.75,
+      "reference_mean": 325.8333333333333,
+      "by_repeat": {
+        "0": -550,
+        "1": -579
+      },
+      "stable_wins": 6,
+      "stable_wins_with_joint": 6,
+      "bootstrap95_mean": [
+        -133.0,
+        -61.25
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "CV__10-6__data10-6-17",
+          "deltas": [
+            -61,
+            -47
+          ],
+          "mean": -54.0,
+          "target_mean": 291.5,
+          "reference_mean": 345.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-26",
+          "deltas": [
+            -113,
+            -93
+          ],
+          "mean": -103.0,
+          "target_mean": 154.5,
+          "reference_mean": 257.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-32",
+          "deltas": [
+            -113,
+            -113
+          ],
+          "mean": -113.0,
+          "target_mean": 185.0,
+          "reference_mean": 298.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-33",
+          "deltas": [
+            -64,
+            -85
+          ],
+          "mean": -74.5,
+          "target_mean": 268.0,
+          "reference_mean": 342.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-34",
+          "deltas": [
+            -42,
+            -42
+          ],
+          "mean": -42.0,
+          "target_mean": 227.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-40",
+          "deltas": [
+            -157,
+            -199
+          ],
+          "mean": -178.0,
+          "target_mean": 264.5,
+          "reference_mean": 442.5,
+          "stable_win": true,
+          "joint_all": true
+        }
+      ]
+    },
+    "primary:qubo_deferred_pair:native": {
+      "target": "qubo_deferred_pair",
+      "reference": "native",
+      "common_originals": 12,
+      "wins": 10,
+      "losses": 0,
+      "ties": 2,
+      "net_original_mean": -382.5,
+      "worst": 0.0,
+      "mean_delta": -31.875,
+      "target_mean": 134.125,
+      "reference_mean": 166.0,
+      "by_repeat": {
+        "0": -410,
+        "1": -355
+      },
+      "stable_wins": 9,
+      "stable_wins_with_joint": 6,
+      "bootstrap95_mean": [
+        -51.166666666666664,
+        -15.083333333333334
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -37,
+            -20
+          ],
+          "mean": -28.5,
+          "target_mean": 126.0,
+          "reference_mean": 154.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            -4,
+            -15
+          ],
+          "mean": -9.5,
+          "target_mean": 102.0,
+          "reference_mean": 111.5,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            9,
+            -39
+          ],
+          "mean": -15.0,
+          "target_mean": 113.0,
+          "reference_mean": 128.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -16,
+            -21
+          ],
+          "mean": -18.5,
+          "target_mean": 141.5,
+          "reference_mean": 160.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -17,
+            -18
+          ],
+          "mean": -17.5,
+          "target_mean": 124.0,
+          "reference_mean": 141.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -66,
+            -66
+          ],
+          "mean": -66.0,
+          "target_mean": 203.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -139,
+            -67
+          ],
+          "mean": -103.0,
+          "target_mean": 262.0,
+          "reference_mean": 365.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            -29,
+            -1
+          ],
+          "mean": -15.0,
+          "target_mean": 73.0,
+          "reference_mean": 88.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -24,
+            -24
+          ],
+          "mean": -24.0,
+          "target_mean": 172.0,
+          "reference_mean": 196.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -87,
+            -84
+          ],
+          "mean": -85.5,
+          "target_mean": 213.0,
+          "reference_mean": 298.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "primary:qubo_deferred_pair:qubo_cycle": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_cycle",
+      "common_originals": 12,
+      "wins": 0,
+      "losses": 0,
+      "ties": 12,
+      "net_original_mean": 0.0,
+      "worst": 0.0,
+      "mean_delta": 0.0,
+      "target_mean": 134.125,
+      "reference_mean": 134.125,
+      "by_repeat": {
+        "0": 0,
+        "1": 0
+      },
+      "stable_wins": 0,
+      "stable_wins_with_joint": 0,
+      "bootstrap95_mean": [
+        0.0,
+        0.0
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 126.0,
+          "reference_mean": 126.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 102.0,
+          "reference_mean": 102.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 113.0,
+          "reference_mean": 113.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 141.5,
+          "reference_mean": 141.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 124.0,
+          "reference_mean": 124.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 203.0,
+          "reference_mean": 203.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 262.0,
+          "reference_mean": 262.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 73.0,
+          "reference_mean": 73.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 172.0,
+          "reference_mean": 172.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 213.0,
+          "reference_mean": 213.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "primary:qubo_deferred_pair:qubo_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "qubo_pair",
+      "common_originals": 12,
+      "wins": 3,
+      "losses": 0,
+      "ties": 9,
+      "net_original_mean": -6.0,
+      "worst": 0.0,
+      "mean_delta": -0.5,
+      "target_mean": 134.125,
+      "reference_mean": 134.625,
+      "by_repeat": {
+        "0": -7,
+        "1": -5
+      },
+      "stable_wins": 2,
+      "stable_wins_with_joint": 2,
+      "bootstrap95_mean": [
+        -1.0833333333333333,
+        0.0
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 126.0,
+          "reference_mean": 126.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 102.0,
+          "reference_mean": 102.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 113.0,
+          "reference_mean": 113.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 141.5,
+          "reference_mean": 141.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -2,
+            0
+          ],
+          "mean": -1.0,
+          "target_mean": 124.0,
+          "reference_mean": 125.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -3,
+            -3
+          ],
+          "mean": -3.0,
+          "target_mean": 203.0,
+          "reference_mean": 206.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 262.0,
+          "reference_mean": 262.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 73.0,
+          "reference_mean": 73.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 172.0,
+          "reference_mean": 172.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 213.0,
+          "reference_mean": 215.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "primary:qubo_deferred_pair:single_deferred_pair": {
+      "target": "qubo_deferred_pair",
+      "reference": "single_deferred_pair",
+      "common_originals": 12,
+      "wins": 7,
+      "losses": 1,
+      "ties": 4,
+      "net_original_mean": -37.0,
+      "worst": 0.5,
+      "mean_delta": -3.0833333333333335,
+      "target_mean": 134.125,
+      "reference_mean": 137.20833333333334,
+      "by_repeat": {
+        "0": -72,
+        "1": -2
+      },
+      "stable_wins": 4,
+      "stable_wins_with_joint": 4,
+      "bootstrap95_mean": [
+        -5.25,
+        -1.0833333333333333
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -30,
+            18
+          ],
+          "mean": -6.0,
+          "target_mean": 126.0,
+          "reference_mean": 132.0,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 102.0,
+          "reference_mean": 102.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            1,
+            0
+          ],
+          "mean": 0.5,
+          "target_mean": 113.0,
+          "reference_mean": 112.5,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -3,
+            0
+          ],
+          "mean": -1.5,
+          "target_mean": 141.5,
+          "reference_mean": 143.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -3,
+            0
+          ],
+          "mean": -1.5,
+          "target_mean": 124.0,
+          "reference_mean": 125.5,
+          "stable_win": false,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -10,
+            -6
+          ],
+          "mean": -8.0,
+          "target_mean": 203.0,
+          "reference_mean": 211.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -16,
+            -3
+          ],
+          "mean": -9.5,
+          "target_mean": 262.0,
+          "reference_mean": 271.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 73.0,
+          "reference_mean": 73.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -2,
+            -2
+          ],
+          "mean": -2.0,
+          "target_mean": 172.0,
+          "reference_mean": 174.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -9,
+            -9
+          ],
+          "mean": -9.0,
+          "target_mean": 213.0,
+          "reference_mean": 222.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "primary:qubo_cycle:native": {
+      "target": "qubo_cycle",
+      "reference": "native",
+      "common_originals": 12,
+      "wins": 10,
+      "losses": 0,
+      "ties": 2,
+      "net_original_mean": -382.5,
+      "worst": 0.0,
+      "mean_delta": -31.875,
+      "target_mean": 134.125,
+      "reference_mean": 166.0,
+      "by_repeat": {
+        "0": -410,
+        "1": -355
+      },
+      "stable_wins": 9,
+      "stable_wins_with_joint": 6,
+      "bootstrap95_mean": [
+        -51.166666666666664,
+        -15.083333333333334
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -37,
+            -20
+          ],
+          "mean": -28.5,
+          "target_mean": 126.0,
+          "reference_mean": 154.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            -4,
+            -15
+          ],
+          "mean": -9.5,
+          "target_mean": 102.0,
+          "reference_mean": 111.5,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            9,
+            -39
+          ],
+          "mean": -15.0,
+          "target_mean": 113.0,
+          "reference_mean": 128.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -16,
+            -21
+          ],
+          "mean": -18.5,
+          "target_mean": 141.5,
+          "reference_mean": 160.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -17,
+            -18
+          ],
+          "mean": -17.5,
+          "target_mean": 124.0,
+          "reference_mean": 141.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -66,
+            -66
+          ],
+          "mean": -66.0,
+          "target_mean": 203.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -139,
+            -67
+          ],
+          "mean": -103.0,
+          "target_mean": 262.0,
+          "reference_mean": 365.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            -29,
+            -1
+          ],
+          "mean": -15.0,
+          "target_mean": 73.0,
+          "reference_mean": 88.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -24,
+            -24
+          ],
+          "mean": -24.0,
+          "target_mean": 172.0,
+          "reference_mean": 196.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -87,
+            -84
+          ],
+          "mean": -85.5,
+          "target_mean": 213.0,
+          "reference_mean": 298.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    },
+    "primary:qubo_pair:native": {
+      "target": "qubo_pair",
+      "reference": "native",
+      "common_originals": 12,
+      "wins": 10,
+      "losses": 0,
+      "ties": 2,
+      "net_original_mean": -376.5,
+      "worst": 0.0,
+      "mean_delta": -31.375,
+      "target_mean": 134.625,
+      "reference_mean": 166.0,
+      "by_repeat": {
+        "0": -403,
+        "1": -350
+      },
+      "stable_wins": 9,
+      "stable_wins_with_joint": 6,
+      "bootstrap95_mean": [
+        -50.416666666666664,
+        -14.875
+      ],
+      "gained_solutions": [],
+      "lost_solutions": [],
+      "originals": [
+        {
+          "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+          "deltas": [
+            -37,
+            -20
+          ],
+          "mean": -28.5,
+          "target_mean": 126.0,
+          "reference_mean": 154.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+          "deltas": [
+            -4,
+            -15
+          ],
+          "mean": -9.5,
+          "target_mean": 102.0,
+          "reference_mean": 111.5,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+          "deltas": [
+            9,
+            -39
+          ],
+          "mean": -15.0,
+          "target_mean": 113.0,
+          "reference_mean": 128.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+          "deltas": [
+            -16,
+            -21
+          ],
+          "mean": -18.5,
+          "target_mean": 141.5,
+          "reference_mean": 160.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+          "deltas": [
+            -15,
+            -18
+          ],
+          "mean": -16.5,
+          "target_mean": 125.0,
+          "reference_mean": 141.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-3",
+          "deltas": [
+            -63,
+            -63
+          ],
+          "mean": -63.0,
+          "target_mean": 206.0,
+          "reference_mean": 269.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-10__data10-10-2",
+          "deltas": [
+            -139,
+            -67
+          ],
+          "mean": -103.0,
+          "target_mean": 262.0,
+          "reference_mean": 365.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__6-10__data6-10-1",
+          "deltas": [
+            -29,
+            -1
+          ],
+          "mean": -15.0,
+          "target_mean": 73.0,
+          "reference_mean": 88.0,
+          "stable_win": true,
+          "joint_all": false
+        },
+        {
+          "case": "CV__10-6__data10-6-2",
+          "deltas": [
+            -24,
+            -24
+          ],
+          "mean": -24.0,
+          "target_mean": 172.0,
+          "reference_mean": 196.0,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "CV__10-6__data10-6-8",
+          "deltas": [
+            -85,
+            -82
+          ],
+          "mean": -83.5,
+          "target_mean": 215.0,
+          "reference_mean": 298.5,
+          "stable_win": true,
+          "joint_all": true
+        },
+        {
+          "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        },
+        {
+          "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+          "deltas": [
+            0,
+            0
+          ],
+          "mean": 0.0,
+          "target_mean": 40.0,
+          "reference_mean": 40.0,
+          "stable_win": false,
+          "joint_all": false
+        }
+      ]
+    }
+  },
+  "candidate_development_screen": false,
+  "scope_boundary": "Selected development/tail screen unless explicit full_hardset cohort; no production promotion"
+}

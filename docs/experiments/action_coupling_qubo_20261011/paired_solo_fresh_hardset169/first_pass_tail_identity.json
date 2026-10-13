@@ -1,0 +1,41 @@
+{
+  "scope": "Post-hoc full physical-path identity and recorded local-certificate checks; no new solver execution",
+  "rows": [
+    {
+      "case": "CV__10-6__data10-6-32",
+      "repeat": 0,
+      "first_q_cycle_paths_equal": true,
+      "first_moves": 216,
+      "all_solo_models": 48,
+      "all_solo_cuts": 0,
+      "all_solo_certificates": 48
+    },
+    {
+      "case": "CV__10-6__data10-6-32",
+      "repeat": 1,
+      "first_q_cycle_paths_equal": true,
+      "first_moves": 216,
+      "all_solo_models": 48,
+      "all_solo_cuts": 0,
+      "all_solo_certificates": 48
+    },
+    {
+      "case": "CV__10-6__data10-6-40",
+      "repeat": 0,
+      "first_q_cycle_paths_equal": true,
+      "first_moves": 347,
+      "all_solo_models": 27,
+      "all_solo_cuts": 2,
+      "all_solo_certificates": 25
+    },
+    {
+      "case": "CV__10-6__data10-6-40",
+      "repeat": 1,
+      "first_q_cycle_paths_equal": true,
+      "first_moves": 318,
+      "all_solo_models": 32,
+      "all_solo_cuts": 4,
+      "all_solo_certificates": 28
+    }
+  ]
+}

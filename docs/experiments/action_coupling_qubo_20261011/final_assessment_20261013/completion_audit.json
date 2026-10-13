@@ -1,0 +1,115 @@
+{
+  "assembled_at": "2026-10-13T02:45:56.737158",
+  "requirements": {
+    "both_full169_studies_complete": true,
+    "full_corpus_and_independent_accounting": true,
+    "frozen_budget_physical_cpu_and_stream_checks": true,
+    "actual_producer_and_standalone_beam_evidence": true,
+    "same_current_core_sources_in_both_panels": true,
+    "paired_core_gain_in_both_full_panels": true,
+    "actual_matched_joint_lineage_in_both_panels": true,
+    "full_fresh_strong_classical_solo_controls": true,
+    "standalone_native_and_bs_average_quality_and_aggregate_coverage": true,
+    "equivalent_joint_milp_control_measured": true,
+    "physical_multi_group_witnesses": true,
+    "exact_factor_and_reduced_construction_equivalence": true,
+    "focused_energy_deadline_clock_and_pipeline_tests": true,
+    "previous_negative_protocol_and_pilot_records_retained": true,
+    "current_losses_and_unresolved_runs_retained": true
+  },
+  "empirical_objective_evidence_complete": true,
+  "scope": "Reproducible empirical joint-route QUBO module contribution on the specified hardset169, under the two frozen fresh20s protocols and their measured strong controls.",
+  "core_source_identity": {
+    "scripts/paired_trajectory_refinement.py": true,
+    "scripts/paired_shared_pipeline.py": true,
+    "scripts/single_seed_conditioned_refinement.py": true,
+    "scripts/categorical_budgeted_qubo.py": true,
+    "scripts/fast_reduced_trajectory_domains.py": true,
+    "scripts/shared_prefix_cpmp_pipeline.py": true
+  },
+  "matched_stable_originals_per_panel": [
+    51,
+    48
+  ],
+  "matched_stable_originals_in_all_four_executions": [
+    "BF__BF13__cpmp_16_8_103_21_62_15",
+    "BF__BF14__cpmp_16_8_103_21_78_16",
+    "BF__BF14__cpmp_16_8_103_21_78_17",
+    "BF__BF14__cpmp_16_8_103_21_78_6",
+    "BF__BF16__cpmp_16_8_103_42_78_14",
+    "BF__BF16__cpmp_16_8_103_42_78_2",
+    "BF__BF29__cpmp_20_8_128_26_77_17",
+    "BF__BF30__cpmp_20_8_128_26_96_8",
+    "BF__BF31__cpmp_20_8_128_52_77_11",
+    "BF__BF31__cpmp_20_8_128_52_77_14",
+    "CV__10-10__data10-10-27",
+    "CV__10-6__data10-6-1",
+    "CV__10-6__data10-6-10",
+    "CV__10-6__data10-6-12",
+    "CV__10-6__data10-6-13",
+    "CV__10-6__data10-6-14",
+    "CV__10-6__data10-6-2",
+    "CV__10-6__data10-6-20",
+    "CV__10-6__data10-6-23",
+    "CV__10-6__data10-6-25",
+    "CV__10-6__data10-6-26",
+    "CV__10-6__data10-6-27",
+    "CV__10-6__data10-6-28",
+    "CV__10-6__data10-6-29",
+    "CV__10-6__data10-6-3",
+    "CV__10-6__data10-6-30",
+    "CV__10-6__data10-6-33",
+    "CV__10-6__data10-6-37",
+    "CV__10-6__data10-6-4",
+    "CV__10-6__data10-6-5",
+    "CV__10-6__data10-6-7",
+    "CV__10-6__data10-6-8",
+    "CV__10-6__data10-6-9",
+    "CV__6-10__data6-10-17",
+    "Open120__7x5_cv1_test__7x5_cv1_test_18",
+    "Open120__7x5_cv3_test__7x5_cv3_test_18"
+  ],
+  "physical_coupling_witnesses": [
+    {
+      "case": "CV__10-6__data10-6-2",
+      "seed_moves": 183,
+      "joint_moves": 182,
+      "changed_groups": 3,
+      "tested_subsets": 8,
+      "minimum_changed_groups_for_strict_gain": 3
+    },
+    {
+      "case": "CV__10-6__data10-6-8",
+      "seed_moves": 241,
+      "joint_moves": 239,
+      "changed_groups": 6,
+      "tested_subsets": 64,
+      "minimum_changed_groups_for_strict_gain": 4
+    }
+  ],
+  "source_studies": [
+    "docs\\experiments\\action_coupling_qubo_20261011\\paired_fresh_exploratory_hardset169",
+    "docs\\experiments\\action_coupling_qubo_20261011\\paired_solo_fresh_hardset169"
+  ],
+  "selected_test_log": "docs\\experiments\\action_coupling_qubo_20261011\\final_assessment_20261013\\focused_tests.log",
+  "interpretation": {
+    "model": "Joint complete-route choices produce replay-valid path gains beyond strong Single/Pair controls.",
+    "backend": "The executed backend searches exact QUBO factors with classical structure-aware bounds. It does not call a CPMP/MILP oracle; factor storage is energy-equivalent to the explicit matrix. Q-versus-equivalent-MILP superiority remains unproved.",
+    "repair_and_supply": "Q choices are physically replayed. Common cleanup/FRG and the unchanged Beam prefix are separately attributed; no new Beam-core selector or macro-supply claim.",
+    "guard": "All16 paired winning executions against SoloQ end on the paid Pair branch. The paired strategy nevertheless costs117 original-mean total moves in this panel. The overall paired-versus-soloQ interval crosses zero; protection is not uniformly better.",
+    "complete_algorithm": "The paired realization has fresh native/BS comparisons and fresh strong solo-control comparisons in separate panels. Do not splice their scores."
+  },
+  "limitations": {
+    "all_instances_solved": false,
+    "no_tail_losses": false,
+    "global_cpmp_optimality": false,
+    "exclusive_qubo_encoding_advantage": false,
+    "generic_matrix_only_backend_advantage": false,
+    "quantum_hardware_advantage": false,
+    "worldwide_priority_proved": false,
+    "untouched_external_test_set": false,
+    "solo_q_direct_native_bs_comparison_in_this_final_panel": false,
+    "production_default_promotion": false
+  },
+  "future_optional_work": "Improve initial feasibility and time allocation or test matrix-only/hardware solvers as separately scoped future work. These are not established by this empirical result."
+}

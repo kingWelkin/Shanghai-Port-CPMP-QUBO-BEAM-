@@ -1,0 +1,5449 @@
+{
+  "scope": "screen_t60",
+  "budget_sec": 60.0,
+  "credited_paths_replayed": 270,
+  "errors": [],
+  "overlapping_solo_primary_runs": 54,
+  "identical_overlapping_primary_runs": 53,
+  "paid_pair_starts": 52,
+  "rows": [
+    {
+      "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 134,
+        "qubo_cycle": 135,
+        "qubo_pair": 135,
+        "qubo_deferred_pair": 135,
+        "single_deferred_pair": 137
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 143,
+          "signature": "9e2c4e139dbe7b2e9ded03a20e6a5d1072133ec17aa616345ac87ca0aacf3e9b",
+          "elapsed_sec": 23.573758800004725
+        },
+        {
+          "round": 1,
+          "moves": 139,
+          "signature": "782350bc28bb856f9c7aa92d8c5d0016f10b49ed8d554a677e934e6023bcfc74",
+          "elapsed_sec": 25.948081299997284
+        },
+        {
+          "round": 2,
+          "moves": 136,
+          "signature": "f1413f67373d9ff16ed0a1d9c3f8ab74d61c1fe8c7361a208a4dceb4f3307b2d",
+          "elapsed_sec": 28.3560712000035
+        },
+        {
+          "round": 3,
+          "moves": 135,
+          "signature": "b570e665ee4980c46786135f43b47001cf2bc071d315c4db53d0054132ca3f62",
+          "elapsed_sec": 30.72093670000322
+        },
+        {
+          "round": 4,
+          "moves": 135,
+          "signature": "b570e665ee4980c46786135f43b47001cf2bc071d315c4db53d0054132ca3f62",
+          "elapsed_sec": 33.03016690000368
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 143,
+          "signature": "9e2c4e139dbe7b2e9ded03a20e6a5d1072133ec17aa616345ac87ca0aacf3e9b",
+          "elapsed_sec": 22.579527900001267
+        },
+        {
+          "round": 1,
+          "moves": 139,
+          "signature": "782350bc28bb856f9c7aa92d8c5d0016f10b49ed8d554a677e934e6023bcfc74",
+          "elapsed_sec": 31.81045649999578
+        },
+        {
+          "round": 2,
+          "moves": 136,
+          "signature": "f1413f67373d9ff16ed0a1d9c3f8ab74d61c1fe8c7361a208a4dceb4f3307b2d",
+          "elapsed_sec": 38.36287060000177
+        },
+        {
+          "round": 3,
+          "moves": 135,
+          "signature": "b570e665ee4980c46786135f43b47001cf2bc071d315c4db53d0054132ca3f62",
+          "elapsed_sec": 42.52768830000423
+        },
+        {
+          "round": 4,
+          "moves": 135,
+          "signature": "b570e665ee4980c46786135f43b47001cf2bc071d315c4db53d0054132ca3f62",
+          "elapsed_sec": 46.6739227000071
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 143,
+          "signature": "9e2c4e139dbe7b2e9ded03a20e6a5d1072133ec17aa616345ac87ca0aacf3e9b",
+          "elapsed_sec": 22.682472500004224
+        },
+        {
+          "round": 1,
+          "moves": 139,
+          "signature": "782350bc28bb856f9c7aa92d8c5d0016f10b49ed8d554a677e934e6023bcfc74",
+          "elapsed_sec": 24.985903599997982
+        },
+        {
+          "round": 2,
+          "moves": 136,
+          "signature": "f1413f67373d9ff16ed0a1d9c3f8ab74d61c1fe8c7361a208a4dceb4f3307b2d",
+          "elapsed_sec": 27.048668200004613
+        },
+        {
+          "round": 3,
+          "moves": 135,
+          "signature": "b570e665ee4980c46786135f43b47001cf2bc071d315c4db53d0054132ca3f62",
+          "elapsed_sec": 29.19383299999754
+        },
+        {
+          "round": 4,
+          "moves": 135,
+          "signature": "b570e665ee4980c46786135f43b47001cf2bc071d315c4db53d0054132ca3f62",
+          "elapsed_sec": 31.26644490000035
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 31.26698580000084,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 135
+      }
+    },
+    {
+      "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 148,
+        "qubo_cycle": 129,
+        "qubo_pair": 129,
+        "qubo_deferred_pair": 129,
+        "single_deferred_pair": 129
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 129,
+          "signature": "fc8b93a923fa75815e4a9ce35b3ccde7c2f0da987c3a30111aae666e1006d91f",
+          "elapsed_sec": 18.79787260000012
+        },
+        {
+          "round": 1,
+          "moves": 129,
+          "signature": "fc8b93a923fa75815e4a9ce35b3ccde7c2f0da987c3a30111aae666e1006d91f",
+          "elapsed_sec": 20.694106199996895
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 129,
+          "signature": "fc8b93a923fa75815e4a9ce35b3ccde7c2f0da987c3a30111aae666e1006d91f",
+          "elapsed_sec": 18.17672779998975
+        },
+        {
+          "round": 1,
+          "moves": 129,
+          "signature": "fc8b93a923fa75815e4a9ce35b3ccde7c2f0da987c3a30111aae666e1006d91f",
+          "elapsed_sec": 24.91844239999773
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 129,
+          "signature": "fc8b93a923fa75815e4a9ce35b3ccde7c2f0da987c3a30111aae666e1006d91f",
+          "elapsed_sec": 18.129208399986965
+        },
+        {
+          "round": 1,
+          "moves": 129,
+          "signature": "fc8b93a923fa75815e4a9ce35b3ccde7c2f0da987c3a30111aae666e1006d91f",
+          "elapsed_sec": 19.79938559999573
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 19.799868299989612,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 129
+      }
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 117,
+        "qubo_cycle": 102,
+        "qubo_pair": 102,
+        "qubo_deferred_pair": 102,
+        "single_deferred_pair": 102
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 102,
+          "signature": "9b6bb1a66642f6378e39bc598867762a3810323167adba90bbcf5ad26f71b0fd",
+          "elapsed_sec": 9.674523099994985
+        },
+        {
+          "round": 1,
+          "moves": 102,
+          "signature": "9b6bb1a66642f6378e39bc598867762a3810323167adba90bbcf5ad26f71b0fd",
+          "elapsed_sec": 10.34011429999373
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 102,
+          "signature": "9b6bb1a66642f6378e39bc598867762a3810323167adba90bbcf5ad26f71b0fd",
+          "elapsed_sec": 9.527243799995631
+        },
+        {
+          "round": 1,
+          "moves": 102,
+          "signature": "9b6bb1a66642f6378e39bc598867762a3810323167adba90bbcf5ad26f71b0fd",
+          "elapsed_sec": 11.324718599993503
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 102,
+          "signature": "9b6bb1a66642f6378e39bc598867762a3810323167adba90bbcf5ad26f71b0fd",
+          "elapsed_sec": 9.534204399998998
+        },
+        {
+          "round": 1,
+          "moves": 102,
+          "signature": "9b6bb1a66642f6378e39bc598867762a3810323167adba90bbcf5ad26f71b0fd",
+          "elapsed_sec": 10.129192299995339
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 10.129858999993303,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 102
+      }
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 119,
+        "qubo_cycle": 116,
+        "qubo_pair": 116,
+        "qubo_deferred_pair": 116,
+        "single_deferred_pair": 116
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 116,
+          "signature": "54781161a27bfea8ff3e7744a4139b8af4fab4f2b2339c683c976e912e743ae8",
+          "elapsed_sec": 17.575587300001644
+        },
+        {
+          "round": 1,
+          "moves": 116,
+          "signature": "54781161a27bfea8ff3e7744a4139b8af4fab4f2b2339c683c976e912e743ae8",
+          "elapsed_sec": 18.746896900003776
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 116,
+          "signature": "54781161a27bfea8ff3e7744a4139b8af4fab4f2b2339c683c976e912e743ae8",
+          "elapsed_sec": 17.42141539999284
+        },
+        {
+          "round": 1,
+          "moves": 116,
+          "signature": "54781161a27bfea8ff3e7744a4139b8af4fab4f2b2339c683c976e912e743ae8",
+          "elapsed_sec": 19.532776399995782
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 116,
+          "signature": "54781161a27bfea8ff3e7744a4139b8af4fab4f2b2339c683c976e912e743ae8",
+          "elapsed_sec": 17.458694899993134
+        },
+        {
+          "round": 1,
+          "moves": 116,
+          "signature": "54781161a27bfea8ff3e7744a4139b8af4fab4f2b2339c683c976e912e743ae8",
+          "elapsed_sec": 18.53683969999838
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 18.537271499997587,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 116
+      }
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 114,
+        "qubo_cycle": 107,
+        "qubo_pair": 105,
+        "qubo_deferred_pair": 105,
+        "single_deferred_pair": 105
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 107,
+          "signature": "518665bde7dc50a758fd49cc3e5bd5eedc1b84585a7efe2463076b4844ce1593",
+          "elapsed_sec": 6.55567470000824
+        },
+        {
+          "round": 1,
+          "moves": 107,
+          "signature": "518665bde7dc50a758fd49cc3e5bd5eedc1b84585a7efe2463076b4844ce1593",
+          "elapsed_sec": 7.567285800003447
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 107,
+          "signature": "518665bde7dc50a758fd49cc3e5bd5eedc1b84585a7efe2463076b4844ce1593",
+          "elapsed_sec": 6.671047100011492
+        },
+        {
+          "round": 1,
+          "moves": 107,
+          "signature": "518665bde7dc50a758fd49cc3e5bd5eedc1b84585a7efe2463076b4844ce1593",
+          "elapsed_sec": 10.530817300008493
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 107,
+          "signature": "518665bde7dc50a758fd49cc3e5bd5eedc1b84585a7efe2463076b4844ce1593",
+          "elapsed_sec": 6.581045900005847
+        },
+        {
+          "round": 1,
+          "moves": 107,
+          "signature": "518665bde7dc50a758fd49cc3e5bd5eedc1b84585a7efe2463076b4844ce1593",
+          "elapsed_sec": 7.597952399999485
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 7.598363900004188,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 0,
+        "trajectory_policy": "pair",
+        "original_source": "frg_descent",
+        "raw_source": "branch1:frg_descent",
+        "raw_moves": 105
+      }
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 147,
+        "qubo_cycle": 111,
+        "qubo_pair": 111,
+        "qubo_deferred_pair": 111,
+        "single_deferred_pair": 111
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 111,
+          "signature": "39406cd7d5fbafbd6393db2b627c9aa61bdff35658fc2fee94c32e6d46041d90",
+          "elapsed_sec": 7.520265600003768
+        },
+        {
+          "round": 1,
+          "moves": 111,
+          "signature": "39406cd7d5fbafbd6393db2b627c9aa61bdff35658fc2fee94c32e6d46041d90",
+          "elapsed_sec": 8.928631400005543
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 111,
+          "signature": "39406cd7d5fbafbd6393db2b627c9aa61bdff35658fc2fee94c32e6d46041d90",
+          "elapsed_sec": 7.446603900010814
+        },
+        {
+          "round": 1,
+          "moves": 111,
+          "signature": "39406cd7d5fbafbd6393db2b627c9aa61bdff35658fc2fee94c32e6d46041d90",
+          "elapsed_sec": 10.169031900004484
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 111,
+          "signature": "39406cd7d5fbafbd6393db2b627c9aa61bdff35658fc2fee94c32e6d46041d90",
+          "elapsed_sec": 7.450760000006994
+        },
+        {
+          "round": 1,
+          "moves": 111,
+          "signature": "39406cd7d5fbafbd6393db2b627c9aa61bdff35658fc2fee94c32e6d46041d90",
+          "elapsed_sec": 8.842462000000523
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 8.84286940000311,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 111
+      }
+    },
+    {
+      "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 165,
+        "qubo_cycle": 135,
+        "qubo_pair": 135,
+        "qubo_deferred_pair": 135,
+        "single_deferred_pair": 135
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 138,
+          "signature": "953e380f8343edb12332b0dc7a7d4e08b54b27e7839490d23a2096d28e00c246",
+          "elapsed_sec": 21.2768805000087
+        },
+        {
+          "round": 1,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 23.587568700007978
+        },
+        {
+          "round": 2,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 25.913913900003536
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 138,
+          "signature": "953e380f8343edb12332b0dc7a7d4e08b54b27e7839490d23a2096d28e00c246",
+          "elapsed_sec": 21.826256900007138
+        },
+        {
+          "round": 1,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 32.04668210000091
+        },
+        {
+          "round": 2,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 37.07393250000314
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 138,
+          "signature": "953e380f8343edb12332b0dc7a7d4e08b54b27e7839490d23a2096d28e00c246",
+          "elapsed_sec": 21.44356680000783
+        },
+        {
+          "round": 1,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 23.733984000005876
+        },
+        {
+          "round": 2,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 26.03588850000233
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 26.0364081000007,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 135
+      }
+    },
+    {
+      "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 151,
+        "qubo_cycle": 135,
+        "qubo_pair": 135,
+        "qubo_deferred_pair": 135,
+        "single_deferred_pair": 135
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 138,
+          "signature": "953e380f8343edb12332b0dc7a7d4e08b54b27e7839490d23a2096d28e00c246",
+          "elapsed_sec": 28.126143999994383
+        },
+        {
+          "round": 1,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 30.716544599999906
+        },
+        {
+          "round": 2,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 33.38719170000695
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 138,
+          "signature": "953e380f8343edb12332b0dc7a7d4e08b54b27e7839490d23a2096d28e00c246",
+          "elapsed_sec": 27.143476800003555
+        },
+        {
+          "round": 1,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 37.210493899998255
+        },
+        {
+          "round": 2,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 42.295882899998105
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 138,
+          "signature": "953e380f8343edb12332b0dc7a7d4e08b54b27e7839490d23a2096d28e00c246",
+          "elapsed_sec": 26.766387900002883
+        },
+        {
+          "round": 1,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 29.162799700003234
+        },
+        {
+          "round": 2,
+          "moves": 135,
+          "signature": "09e67ae97204b4c8ade0a63b0fbcf98b8efed6e395ff2d1c48b839c9408e977b",
+          "elapsed_sec": 31.55514910000784
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 31.55569100000139,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 135
+      }
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 156,
+        "qubo_cycle": 121,
+        "qubo_pair": 114,
+        "qubo_deferred_pair": 114,
+        "single_deferred_pair": 114
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 121,
+          "signature": "4b9052ef85d0b2eb0057b1759faf300ab056a920e08b4bcecc46151ea5daa3fe",
+          "elapsed_sec": 16.900917000006302
+        },
+        {
+          "round": 1,
+          "moves": 121,
+          "signature": "4b9052ef85d0b2eb0057b1759faf300ab056a920e08b4bcecc46151ea5daa3fe",
+          "elapsed_sec": 18.56387110000651
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 121,
+          "signature": "4b9052ef85d0b2eb0057b1759faf300ab056a920e08b4bcecc46151ea5daa3fe",
+          "elapsed_sec": 16.794563599993126
+        },
+        {
+          "round": 1,
+          "moves": 121,
+          "signature": "4b9052ef85d0b2eb0057b1759faf300ab056a920e08b4bcecc46151ea5daa3fe",
+          "elapsed_sec": 22.524914599998738
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 121,
+          "signature": "4b9052ef85d0b2eb0057b1759faf300ab056a920e08b4bcecc46151ea5daa3fe",
+          "elapsed_sec": 16.779655899998033
+        },
+        {
+          "round": 1,
+          "moves": 121,
+          "signature": "4b9052ef85d0b2eb0057b1759faf300ab056a920e08b4bcecc46151ea5daa3fe",
+          "elapsed_sec": 18.34729150000203
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 18.34776360000251,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 1,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 114
+      }
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 138,
+        "qubo_cycle": 118,
+        "qubo_pair": 118,
+        "qubo_deferred_pair": 118,
+        "single_deferred_pair": 118
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 125,
+          "signature": "af3c206004c2ba603f8e49d810174e4f5d06baf452c621d33947529bde21b89f",
+          "elapsed_sec": 14.52804059999471
+        },
+        {
+          "round": 1,
+          "moves": 119,
+          "signature": "8cd2052d312cf5e3f7468e55d47b33cfdccc5f1cace890effb5264e17133163e",
+          "elapsed_sec": 17.634843100007856
+        },
+        {
+          "round": 2,
+          "moves": 118,
+          "signature": "10b25ed2401b9f33679e01779026f9370816dd8decbfa2bfbead43c38c143424",
+          "elapsed_sec": 19.21012519999931
+        },
+        {
+          "round": 3,
+          "moves": 118,
+          "signature": "10b25ed2401b9f33679e01779026f9370816dd8decbfa2bfbead43c38c143424",
+          "elapsed_sec": 20.836027600002126
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 125,
+          "signature": "af3c206004c2ba603f8e49d810174e4f5d06baf452c621d33947529bde21b89f",
+          "elapsed_sec": 15.136731100006728
+        },
+        {
+          "round": 1,
+          "moves": 119,
+          "signature": "8cd2052d312cf5e3f7468e55d47b33cfdccc5f1cace890effb5264e17133163e",
+          "elapsed_sec": 24.030067200001213
+        },
+        {
+          "round": 2,
+          "moves": 118,
+          "signature": "10b25ed2401b9f33679e01779026f9370816dd8decbfa2bfbead43c38c143424",
+          "elapsed_sec": 29.36491709999973
+        },
+        {
+          "round": 3,
+          "moves": 118,
+          "signature": "10b25ed2401b9f33679e01779026f9370816dd8decbfa2bfbead43c38c143424",
+          "elapsed_sec": 33.03250090000802
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 125,
+          "signature": "af3c206004c2ba603f8e49d810174e4f5d06baf452c621d33947529bde21b89f",
+          "elapsed_sec": 14.592069899998023
+        },
+        {
+          "round": 1,
+          "moves": 119,
+          "signature": "8cd2052d312cf5e3f7468e55d47b33cfdccc5f1cace890effb5264e17133163e",
+          "elapsed_sec": 17.66520610000589
+        },
+        {
+          "round": 2,
+          "moves": 118,
+          "signature": "10b25ed2401b9f33679e01779026f9370816dd8decbfa2bfbead43c38c143424",
+          "elapsed_sec": 19.23874590000196
+        },
+        {
+          "round": 3,
+          "moves": 118,
+          "signature": "10b25ed2401b9f33679e01779026f9370816dd8decbfa2bfbead43c38c143424",
+          "elapsed_sec": 20.8498116999981
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 20.850300300007802,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 118
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-3",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 269,
+        "qubo_cycle": 203,
+        "qubo_pair": 203,
+        "qubo_deferred_pair": 203,
+        "single_deferred_pair": 208
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 235,
+          "signature": "7787c4effe40694705ee74c330b37cf175cfe868863d3a813143890a0afd1aa5",
+          "elapsed_sec": 9.488455900005647
+        },
+        {
+          "round": 1,
+          "moves": 213,
+          "signature": "4630f6795638f33e67c9863d51ab7f646dbf44fcfd74e8f9dd437565def37f93",
+          "elapsed_sec": 11.113113100000191
+        },
+        {
+          "round": 2,
+          "moves": 206,
+          "signature": "23dcf9e451113b9c68cf4420ac95d2343d6d021656a2ec5bffc8b26ad34b3750",
+          "elapsed_sec": 12.375335400007316
+        },
+        {
+          "round": 3,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 13.586734399999841
+        },
+        {
+          "round": 4,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 14.811022900001262
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 235,
+          "signature": "7787c4effe40694705ee74c330b37cf175cfe868863d3a813143890a0afd1aa5",
+          "elapsed_sec": 9.484303999997792
+        },
+        {
+          "round": 1,
+          "moves": 213,
+          "signature": "4630f6795638f33e67c9863d51ab7f646dbf44fcfd74e8f9dd437565def37f93",
+          "elapsed_sec": 14.90262760000769
+        },
+        {
+          "round": 2,
+          "moves": 206,
+          "signature": "23dcf9e451113b9c68cf4420ac95d2343d6d021656a2ec5bffc8b26ad34b3750",
+          "elapsed_sec": 17.355841700002202
+        },
+        {
+          "round": 3,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 19.707020500005456
+        },
+        {
+          "round": 4,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 22.034072900001775
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 235,
+          "signature": "7787c4effe40694705ee74c330b37cf175cfe868863d3a813143890a0afd1aa5",
+          "elapsed_sec": 9.430604400011362
+        },
+        {
+          "round": 1,
+          "moves": 213,
+          "signature": "4630f6795638f33e67c9863d51ab7f646dbf44fcfd74e8f9dd437565def37f93",
+          "elapsed_sec": 10.810875000010128
+        },
+        {
+          "round": 2,
+          "moves": 206,
+          "signature": "23dcf9e451113b9c68cf4420ac95d2343d6d021656a2ec5bffc8b26ad34b3750",
+          "elapsed_sec": 11.982139100000495
+        },
+        {
+          "round": 3,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 13.08763270000054
+        },
+        {
+          "round": 4,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 14.191641600002185
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 14.19275070000731,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 203
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-3",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 242,
+        "qubo_cycle": 203,
+        "qubo_pair": 203,
+        "qubo_deferred_pair": 203,
+        "single_deferred_pair": 208
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 235,
+          "signature": "7787c4effe40694705ee74c330b37cf175cfe868863d3a813143890a0afd1aa5",
+          "elapsed_sec": 13.393866800004616
+        },
+        {
+          "round": 1,
+          "moves": 213,
+          "signature": "4630f6795638f33e67c9863d51ab7f646dbf44fcfd74e8f9dd437565def37f93",
+          "elapsed_sec": 14.77503990000696
+        },
+        {
+          "round": 2,
+          "moves": 206,
+          "signature": "23dcf9e451113b9c68cf4420ac95d2343d6d021656a2ec5bffc8b26ad34b3750",
+          "elapsed_sec": 15.983837300009327
+        },
+        {
+          "round": 3,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 17.130881999997655
+        },
+        {
+          "round": 4,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 18.310017499999958
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 235,
+          "signature": "7787c4effe40694705ee74c330b37cf175cfe868863d3a813143890a0afd1aa5",
+          "elapsed_sec": 13.965795700001763
+        },
+        {
+          "round": 1,
+          "moves": 213,
+          "signature": "4630f6795638f33e67c9863d51ab7f646dbf44fcfd74e8f9dd437565def37f93",
+          "elapsed_sec": 20.336021800001618
+        },
+        {
+          "round": 2,
+          "moves": 206,
+          "signature": "23dcf9e451113b9c68cf4420ac95d2343d6d021656a2ec5bffc8b26ad34b3750",
+          "elapsed_sec": 23.388838900005794
+        },
+        {
+          "round": 3,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 26.212934900002438
+        },
+        {
+          "round": 4,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 29.307779700000538
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 235,
+          "signature": "7787c4effe40694705ee74c330b37cf175cfe868863d3a813143890a0afd1aa5",
+          "elapsed_sec": 13.308439200001885
+        },
+        {
+          "round": 1,
+          "moves": 213,
+          "signature": "4630f6795638f33e67c9863d51ab7f646dbf44fcfd74e8f9dd437565def37f93",
+          "elapsed_sec": 14.664729399999487
+        },
+        {
+          "round": 2,
+          "moves": 206,
+          "signature": "23dcf9e451113b9c68cf4420ac95d2343d6d021656a2ec5bffc8b26ad34b3750",
+          "elapsed_sec": 15.840446900008828
+        },
+        {
+          "round": 3,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 17.03513319999911
+        },
+        {
+          "round": 4,
+          "moves": 203,
+          "signature": "05f971ed2300f28d4e34304eea34e2e70ff11833cef13fe2fac16e1625fe2028",
+          "elapsed_sec": 18.2037180000043
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 18.204695299995365,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 203
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-2",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 336,
+        "qubo_cycle": 204,
+        "qubo_pair": 204,
+        "qubo_deferred_pair": 204,
+        "single_deferred_pair": 243
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 215,
+          "signature": "627f65902548c879afad2d7aa1c9dbc5c9b7b03a0e0cb3ceed184f8ed7aa34c5",
+          "elapsed_sec": 24.012861299997894
+        },
+        {
+          "round": 1,
+          "moves": 204,
+          "signature": "76c7eec43d064e778941be03a799c53f2781989ff8ccbda78cdc2e6885ea9237",
+          "elapsed_sec": 26.987517300003674
+        },
+        {
+          "round": 2,
+          "moves": 204,
+          "signature": "76c7eec43d064e778941be03a799c53f2781989ff8ccbda78cdc2e6885ea9237",
+          "elapsed_sec": 29.73590120000881
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 215,
+          "signature": "627f65902548c879afad2d7aa1c9dbc5c9b7b03a0e0cb3ceed184f8ed7aa34c5",
+          "elapsed_sec": 22.811391700000968
+        },
+        {
+          "round": 1,
+          "moves": 204,
+          "signature": "76c7eec43d064e778941be03a799c53f2781989ff8ccbda78cdc2e6885ea9237",
+          "elapsed_sec": 29.77689590000955
+        },
+        {
+          "round": 2,
+          "moves": 204,
+          "signature": "76c7eec43d064e778941be03a799c53f2781989ff8ccbda78cdc2e6885ea9237",
+          "elapsed_sec": 36.182950000002165
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 215,
+          "signature": "627f65902548c879afad2d7aa1c9dbc5c9b7b03a0e0cb3ceed184f8ed7aa34c5",
+          "elapsed_sec": 22.830176800009212
+        },
+        {
+          "round": 1,
+          "moves": 204,
+          "signature": "76c7eec43d064e778941be03a799c53f2781989ff8ccbda78cdc2e6885ea9237",
+          "elapsed_sec": 25.49899110000115
+        },
+        {
+          "round": 2,
+          "moves": 204,
+          "signature": "76c7eec43d064e778941be03a799c53f2781989ff8ccbda78cdc2e6885ea9237",
+          "elapsed_sec": 28.059173200002988
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 28.06022590000066,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 204
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-2",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 318,
+        "qubo_cycle": 202,
+        "qubo_pair": 202,
+        "qubo_deferred_pair": 202,
+        "single_deferred_pair": 203
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 212,
+          "signature": "f89939b09a45588df6849ec9c3107c7d4d32eddeb8546f774708dc5e9c74187b",
+          "elapsed_sec": 27.9028699999908
+        },
+        {
+          "round": 1,
+          "moves": 202,
+          "signature": "ee4aa84558cfb22220298f1f2411ac9dea5bdca91d3993f71584629b098b74f8",
+          "elapsed_sec": 30.42199960000289
+        },
+        {
+          "round": 2,
+          "moves": 202,
+          "signature": "ee4aa84558cfb22220298f1f2411ac9dea5bdca91d3993f71584629b098b74f8",
+          "elapsed_sec": 33.02736989999539
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 212,
+          "signature": "f89939b09a45588df6849ec9c3107c7d4d32eddeb8546f774708dc5e9c74187b",
+          "elapsed_sec": 27.758679899998242
+        },
+        {
+          "round": 1,
+          "moves": 202,
+          "signature": "ee4aa84558cfb22220298f1f2411ac9dea5bdca91d3993f71584629b098b74f8",
+          "elapsed_sec": 43.89084799999546
+        },
+        {
+          "round": 2,
+          "moves": 202,
+          "signature": "ee4aa84558cfb22220298f1f2411ac9dea5bdca91d3993f71584629b098b74f8",
+          "elapsed_sec": 48.941222699999344
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 212,
+          "signature": "f89939b09a45588df6849ec9c3107c7d4d32eddeb8546f774708dc5e9c74187b",
+          "elapsed_sec": 28.693103300000075
+        },
+        {
+          "round": 1,
+          "moves": 202,
+          "signature": "ee4aa84558cfb22220298f1f2411ac9dea5bdca91d3993f71584629b098b74f8",
+          "elapsed_sec": 31.459770599991316
+        },
+        {
+          "round": 2,
+          "moves": 202,
+          "signature": "ee4aa84558cfb22220298f1f2411ac9dea5bdca91d3993f71584629b098b74f8",
+          "elapsed_sec": 34.55102590000024
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 34.55254269999568,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 202
+      }
+    },
+    {
+      "case": "CV__6-10__data6-10-1",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 74,
+        "qubo_cycle": 73,
+        "qubo_pair": 73,
+        "qubo_deferred_pair": 73,
+        "single_deferred_pair": 73
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 7.924007100009476
+        },
+        {
+          "round": 1,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 8.159002500004135
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 7.917349700001068
+        },
+        {
+          "round": 1,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 8.57826940000814
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 7.958498000007239
+        },
+        {
+          "round": 1,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 8.23600340000121
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 8.236514500007615,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 73
+      }
+    },
+    {
+      "case": "CV__6-10__data6-10-1",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 74,
+        "qubo_cycle": 73,
+        "qubo_pair": 73,
+        "qubo_deferred_pair": 73,
+        "single_deferred_pair": 73
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 5.965308600003482
+        },
+        {
+          "round": 1,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 6.212993299996015
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 5.953297300002305
+        },
+        {
+          "round": 1,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 6.627463600001647
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 5.998459099995671
+        },
+        {
+          "round": 1,
+          "moves": 73,
+          "signature": "7b77a3a9db0f62c0e643fa38d1f45e7ed81723a48326ce1431be1b3b1feb5f0e",
+          "elapsed_sec": 6.30320429999847
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 6.303500699999859,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 73
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-2",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 196,
+        "qubo_cycle": 172,
+        "qubo_pair": 172,
+        "qubo_deferred_pair": 172,
+        "single_deferred_pair": 174
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 182,
+          "signature": "fc29d12999667879f7f98b525bdeffcc5a4e8a66fd330ea54f66c76f325fb764",
+          "elapsed_sec": 8.808676800006651
+        },
+        {
+          "round": 1,
+          "moves": 176,
+          "signature": "18405bc10b1146a43dfe4628602abb1254f9599343f3348d26ae1461f17b34d0",
+          "elapsed_sec": 9.726854900000035
+        },
+        {
+          "round": 2,
+          "moves": 173,
+          "signature": "fbd6dab93b7834e50e224f2127aaa910c3ea1ab73ba2a36966bce43d72b132f1",
+          "elapsed_sec": 10.553718199997093
+        },
+        {
+          "round": 3,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 11.412987400006386
+        },
+        {
+          "round": 4,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 12.259172200007015
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 182,
+          "signature": "fc29d12999667879f7f98b525bdeffcc5a4e8a66fd330ea54f66c76f325fb764",
+          "elapsed_sec": 8.731916999997338
+        },
+        {
+          "round": 1,
+          "moves": 176,
+          "signature": "18405bc10b1146a43dfe4628602abb1254f9599343f3348d26ae1461f17b34d0",
+          "elapsed_sec": 10.557287200004794
+        },
+        {
+          "round": 2,
+          "moves": 173,
+          "signature": "fbd6dab93b7834e50e224f2127aaa910c3ea1ab73ba2a36966bce43d72b132f1",
+          "elapsed_sec": 12.25651230000949
+        },
+        {
+          "round": 3,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 13.937589799999841
+        },
+        {
+          "round": 4,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 15.527973500007647
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 182,
+          "signature": "fc29d12999667879f7f98b525bdeffcc5a4e8a66fd330ea54f66c76f325fb764",
+          "elapsed_sec": 8.732701700006146
+        },
+        {
+          "round": 1,
+          "moves": 176,
+          "signature": "18405bc10b1146a43dfe4628602abb1254f9599343f3348d26ae1461f17b34d0",
+          "elapsed_sec": 9.592955300002359
+        },
+        {
+          "round": 2,
+          "moves": 173,
+          "signature": "fbd6dab93b7834e50e224f2127aaa910c3ea1ab73ba2a36966bce43d72b132f1",
+          "elapsed_sec": 10.373861600004602
+        },
+        {
+          "round": 3,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 11.153217700004461
+        },
+        {
+          "round": 4,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 11.980329600002733
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 11.981149400002323,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 172
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-2",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 196,
+        "qubo_cycle": 172,
+        "qubo_pair": 172,
+        "qubo_deferred_pair": 172,
+        "single_deferred_pair": 174
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 182,
+          "signature": "fc29d12999667879f7f98b525bdeffcc5a4e8a66fd330ea54f66c76f325fb764",
+          "elapsed_sec": 8.74134240001149
+        },
+        {
+          "round": 1,
+          "moves": 176,
+          "signature": "18405bc10b1146a43dfe4628602abb1254f9599343f3348d26ae1461f17b34d0",
+          "elapsed_sec": 9.642231500009075
+        },
+        {
+          "round": 2,
+          "moves": 173,
+          "signature": "fbd6dab93b7834e50e224f2127aaa910c3ea1ab73ba2a36966bce43d72b132f1",
+          "elapsed_sec": 10.458438900008332
+        },
+        {
+          "round": 3,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 11.268082700000377
+        },
+        {
+          "round": 4,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 12.118219600000884
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 182,
+          "signature": "fc29d12999667879f7f98b525bdeffcc5a4e8a66fd330ea54f66c76f325fb764",
+          "elapsed_sec": 8.706182699999772
+        },
+        {
+          "round": 1,
+          "moves": 176,
+          "signature": "18405bc10b1146a43dfe4628602abb1254f9599343f3348d26ae1461f17b34d0",
+          "elapsed_sec": 10.483622200001264
+        },
+        {
+          "round": 2,
+          "moves": 173,
+          "signature": "fbd6dab93b7834e50e224f2127aaa910c3ea1ab73ba2a36966bce43d72b132f1",
+          "elapsed_sec": 12.184568200013018
+        },
+        {
+          "round": 3,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 13.829726500000106
+        },
+        {
+          "round": 4,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 15.439767800009577
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 182,
+          "signature": "fc29d12999667879f7f98b525bdeffcc5a4e8a66fd330ea54f66c76f325fb764",
+          "elapsed_sec": 8.707277500012424
+        },
+        {
+          "round": 1,
+          "moves": 176,
+          "signature": "18405bc10b1146a43dfe4628602abb1254f9599343f3348d26ae1461f17b34d0",
+          "elapsed_sec": 9.549763900009566
+        },
+        {
+          "round": 2,
+          "moves": 173,
+          "signature": "fbd6dab93b7834e50e224f2127aaa910c3ea1ab73ba2a36966bce43d72b132f1",
+          "elapsed_sec": 10.326458900002763
+        },
+        {
+          "round": 3,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 11.095910400006687
+        },
+        {
+          "round": 4,
+          "moves": 172,
+          "signature": "7087c47da427311ec2784636b13ba5721f76a1f2de9f2ef8ff7afd6348a554d4",
+          "elapsed_sec": 11.903462300004321
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 11.904183300008299,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 172
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-8",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 300,
+        "qubo_cycle": 213,
+        "qubo_pair": 213,
+        "qubo_deferred_pair": 213,
+        "single_deferred_pair": 222
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "3a2836bc238e578bb879f9632635422c34ef90d82704deee072e05791ec74693",
+          "elapsed_sec": 12.048276300003636
+        },
+        {
+          "round": 1,
+          "moves": 221,
+          "signature": "5ce56c51830cf3e71bb064db2f7dbf8d638b0aaeb4875ef6ffc0268c08933238",
+          "elapsed_sec": 13.69409399999131
+        },
+        {
+          "round": 2,
+          "moves": 215,
+          "signature": "d6cad6450196368926504f4e8e2ec825aa5ac93b1247af7e232f4a802241d826",
+          "elapsed_sec": 15.11190550000174
+        },
+        {
+          "round": 3,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 16.492285699991044
+        },
+        {
+          "round": 4,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 17.945093699992867
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "3a2836bc238e578bb879f9632635422c34ef90d82704deee072e05791ec74693",
+          "elapsed_sec": 12.05460679999669
+        },
+        {
+          "round": 1,
+          "moves": 221,
+          "signature": "5ce56c51830cf3e71bb064db2f7dbf8d638b0aaeb4875ef6ffc0268c08933238",
+          "elapsed_sec": 17.39771859999746
+        },
+        {
+          "round": 2,
+          "moves": 215,
+          "signature": "d6cad6450196368926504f4e8e2ec825aa5ac93b1247af7e232f4a802241d826",
+          "elapsed_sec": 20.371071100002155
+        },
+        {
+          "round": 3,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 23.22231529999408
+        },
+        {
+          "round": 4,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 24.561574599996675
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "3a2836bc238e578bb879f9632635422c34ef90d82704deee072e05791ec74693",
+          "elapsed_sec": 12.023934600001667
+        },
+        {
+          "round": 1,
+          "moves": 221,
+          "signature": "5ce56c51830cf3e71bb064db2f7dbf8d638b0aaeb4875ef6ffc0268c08933238",
+          "elapsed_sec": 13.656098999999813
+        },
+        {
+          "round": 2,
+          "moves": 215,
+          "signature": "d6cad6450196368926504f4e8e2ec825aa5ac93b1247af7e232f4a802241d826",
+          "elapsed_sec": 15.106228399992688
+        },
+        {
+          "round": 3,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 16.460952499997802
+        },
+        {
+          "round": 4,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 17.893318200003705
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 17.894376700001885,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 213
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-8",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 297,
+        "qubo_cycle": 213,
+        "qubo_pair": 213,
+        "qubo_deferred_pair": 213,
+        "single_deferred_pair": 222
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "3a2836bc238e578bb879f9632635422c34ef90d82704deee072e05791ec74693",
+          "elapsed_sec": 13.10304349999933
+        },
+        {
+          "round": 1,
+          "moves": 221,
+          "signature": "5ce56c51830cf3e71bb064db2f7dbf8d638b0aaeb4875ef6ffc0268c08933238",
+          "elapsed_sec": 14.659702899996773
+        },
+        {
+          "round": 2,
+          "moves": 215,
+          "signature": "d6cad6450196368926504f4e8e2ec825aa5ac93b1247af7e232f4a802241d826",
+          "elapsed_sec": 16.02128139999695
+        },
+        {
+          "round": 3,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 17.345562199989217
+        },
+        {
+          "round": 4,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 18.67800129999523
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "3a2836bc238e578bb879f9632635422c34ef90d82704deee072e05791ec74693",
+          "elapsed_sec": 13.396502099989448
+        },
+        {
+          "round": 1,
+          "moves": 221,
+          "signature": "5ce56c51830cf3e71bb064db2f7dbf8d638b0aaeb4875ef6ffc0268c08933238",
+          "elapsed_sec": 18.86943339998834
+        },
+        {
+          "round": 2,
+          "moves": 215,
+          "signature": "d6cad6450196368926504f4e8e2ec825aa5ac93b1247af7e232f4a802241d826",
+          "elapsed_sec": 21.963418100000126
+        },
+        {
+          "round": 3,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 24.958154499996454
+        },
+        {
+          "round": 4,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 26.38823609999963
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "3a2836bc238e578bb879f9632635422c34ef90d82704deee072e05791ec74693",
+          "elapsed_sec": 13.118979199993191
+        },
+        {
+          "round": 1,
+          "moves": 221,
+          "signature": "5ce56c51830cf3e71bb064db2f7dbf8d638b0aaeb4875ef6ffc0268c08933238",
+          "elapsed_sec": 14.679961699992418
+        },
+        {
+          "round": 2,
+          "moves": 215,
+          "signature": "d6cad6450196368926504f4e8e2ec825aa5ac93b1247af7e232f4a802241d826",
+          "elapsed_sec": 16.05256759999611
+        },
+        {
+          "round": 3,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 17.365752399986377
+        },
+        {
+          "round": 4,
+          "moves": 213,
+          "signature": "fd14d54628ff518ac0612f40007a11417deb470373b28c5d1a08bbc1a99669b0",
+          "elapsed_sec": 18.68618159998732
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 18.687207099996158,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 213
+      }
+    },
+    {
+      "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 40,
+        "qubo_cycle": 40,
+        "qubo_pair": 40,
+        "qubo_deferred_pair": 40,
+        "single_deferred_pair": 40
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "4843a02bec24a397bf70b6a1dc9df66dfc743dacd409b799102ae6b37fcb2c5f",
+          "elapsed_sec": 6.200505200002226
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "4843a02bec24a397bf70b6a1dc9df66dfc743dacd409b799102ae6b37fcb2c5f",
+          "elapsed_sec": 6.202552200003993
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "4843a02bec24a397bf70b6a1dc9df66dfc743dacd409b799102ae6b37fcb2c5f",
+          "elapsed_sec": 6.2008826000092085
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 6.201073300006101,
+      "final_provenance": null
+    },
+    {
+      "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 40,
+        "qubo_cycle": 40,
+        "qubo_pair": 40,
+        "qubo_deferred_pair": 40,
+        "single_deferred_pair": 40
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "4843a02bec24a397bf70b6a1dc9df66dfc743dacd409b799102ae6b37fcb2c5f",
+          "elapsed_sec": 6.587787399999797
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "4843a02bec24a397bf70b6a1dc9df66dfc743dacd409b799102ae6b37fcb2c5f",
+          "elapsed_sec": 6.588090399993234
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "4843a02bec24a397bf70b6a1dc9df66dfc743dacd409b799102ae6b37fcb2c5f",
+          "elapsed_sec": 6.587971200002357
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 6.588164400003734,
+      "final_provenance": null
+    },
+    {
+      "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+      "repeat": 0,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 40,
+        "qubo_cycle": 40,
+        "qubo_pair": 40,
+        "qubo_deferred_pair": 40,
+        "single_deferred_pair": 40
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "de7f5dd4f7ee488bb921037eb32ee9cb9073a9cc599f7b3f61d4a7ec481f26ea",
+          "elapsed_sec": 5.953556100008427
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "de7f5dd4f7ee488bb921037eb32ee9cb9073a9cc599f7b3f61d4a7ec481f26ea",
+          "elapsed_sec": 5.958984800003236
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "de7f5dd4f7ee488bb921037eb32ee9cb9073a9cc599f7b3f61d4a7ec481f26ea",
+          "elapsed_sec": 5.956856700009666
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 5.95705930000986,
+      "final_provenance": null
+    },
+    {
+      "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+      "repeat": 1,
+      "cohorts": [
+        "primary"
+      ],
+      "moves": {
+        "native": 40,
+        "qubo_cycle": 40,
+        "qubo_pair": 40,
+        "qubo_deferred_pair": 40,
+        "single_deferred_pair": 40
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "de7f5dd4f7ee488bb921037eb32ee9cb9073a9cc599f7b3f61d4a7ec481f26ea",
+          "elapsed_sec": 6.3503868999978295
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "de7f5dd4f7ee488bb921037eb32ee9cb9073a9cc599f7b3f61d4a7ec481f26ea",
+          "elapsed_sec": 6.345805699995253
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 40,
+          "signature": "de7f5dd4f7ee488bb921037eb32ee9cb9073a9cc599f7b3f61d4a7ec481f26ea",
+          "elapsed_sec": 6.344798399994033
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 1,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 6.344985999996425,
+      "final_provenance": null
+    },
+    {
+      "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 84,
+        "qubo_cycle": 82,
+        "qubo_pair": 82,
+        "qubo_deferred_pair": 82,
+        "single_deferred_pair": 82
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.554644899995765
+        },
+        {
+          "round": 1,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.924186299991561
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.548853600004804
+        },
+        {
+          "round": 1,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 11.318930599998566
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.543976400003885
+        },
+        {
+          "round": 1,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.90193239999644
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 10.902258999994956,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 82
+      }
+    },
+    {
+      "case": "BF__BF15__cpmp_16_8_103_42_62_16",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 110,
+        "qubo_cycle": 82,
+        "qubo_pair": 82,
+        "qubo_deferred_pair": 82,
+        "single_deferred_pair": 82
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.191652499997872
+        },
+        {
+          "round": 1,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.564164499999606
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.181071099999826
+        },
+        {
+          "round": 1,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.959420800005319
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.199735500005772
+        },
+        {
+          "round": 1,
+          "moves": 82,
+          "signature": "d35d9476a222968eb7bb9dc811077640f480b783e713439d5dd639499d0a4a65",
+          "elapsed_sec": 10.573103600007016
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 10.573511499998858,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 82
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-11",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 360,
+        "qubo_cycle": 354,
+        "qubo_pair": 354,
+        "qubo_deferred_pair": 354,
+        "single_deferred_pair": 350
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 369,
+          "signature": "073f7cda40543d3eea79c8a9292dad0bc79de747aaa050601ad4076edb9e30a2",
+          "elapsed_sec": 37.084216799994465
+        },
+        {
+          "round": 1,
+          "moves": 369,
+          "signature": "073f7cda40543d3eea79c8a9292dad0bc79de747aaa050601ad4076edb9e30a2",
+          "elapsed_sec": 45.5477666999941
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 369,
+          "signature": "073f7cda40543d3eea79c8a9292dad0bc79de747aaa050601ad4076edb9e30a2",
+          "elapsed_sec": 36.823327499994775
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 369,
+          "signature": "073f7cda40543d3eea79c8a9292dad0bc79de747aaa050601ad4076edb9e30a2",
+          "elapsed_sec": 36.60931709999568
+        },
+        {
+          "round": 1,
+          "moves": 369,
+          "signature": "073f7cda40543d3eea79c8a9292dad0bc79de747aaa050601ad4076edb9e30a2",
+          "elapsed_sec": 44.86984689999372
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 44.8711592000036,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 369
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-11",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 387,
+        "qubo_cycle": 274,
+        "qubo_pair": 274,
+        "qubo_deferred_pair": 274,
+        "single_deferred_pair": 289
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 304,
+          "signature": "727e5b79d44a8687900b287a6bcc58d3a2e5229bae766cc054b54118a9a00392",
+          "elapsed_sec": 36.28491990000475
+        },
+        {
+          "round": 1,
+          "moves": 290,
+          "signature": "006119d8b098549a0bae050486c4839c452f85df33412e012eb18e8557a9580c",
+          "elapsed_sec": 41.77878740000597
+        },
+        {
+          "round": 2,
+          "moves": 276,
+          "signature": "e5c123d9c00871f314d456c4e18046d9ed642b29b147022c7b8697e306681f23",
+          "elapsed_sec": 46.534208600001875
+        },
+        {
+          "round": 3,
+          "moves": 276,
+          "signature": "e5c123d9c00871f314d456c4e18046d9ed642b29b147022c7b8697e306681f23",
+          "elapsed_sec": 51.31310980000126
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 304,
+          "signature": "727e5b79d44a8687900b287a6bcc58d3a2e5229bae766cc054b54118a9a00392",
+          "elapsed_sec": 35.57244079999509
+        },
+        {
+          "round": 1,
+          "moves": 290,
+          "signature": "006119d8b098549a0bae050486c4839c452f85df33412e012eb18e8557a9580c",
+          "elapsed_sec": 52.41182910000498
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 304,
+          "signature": "727e5b79d44a8687900b287a6bcc58d3a2e5229bae766cc054b54118a9a00392",
+          "elapsed_sec": 35.91615590000583
+        },
+        {
+          "round": 1,
+          "moves": 290,
+          "signature": "006119d8b098549a0bae050486c4839c452f85df33412e012eb18e8557a9580c",
+          "elapsed_sec": 41.295393599997624
+        },
+        {
+          "round": 2,
+          "moves": 276,
+          "signature": "e5c123d9c00871f314d456c4e18046d9ed642b29b147022c7b8697e306681f23",
+          "elapsed_sec": 45.996942800004035
+        },
+        {
+          "round": 3,
+          "moves": 276,
+          "signature": "e5c123d9c00871f314d456c4e18046d9ed642b29b147022c7b8697e306681f23",
+          "elapsed_sec": 50.63037379999878
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 50.631630699994275,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 276
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-15",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 412,
+        "qubo_cycle": 222,
+        "qubo_pair": 210,
+        "qubo_deferred_pair": 210,
+        "single_deferred_pair": 210
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 228,
+          "signature": "7624d57a83e4cc0fd728804b1d88096683b60d0833624b8ccbed046ac55dfc43",
+          "elapsed_sec": 30.56195580000349
+        },
+        {
+          "round": 1,
+          "moves": 222,
+          "signature": "ae5ea4efe403f71148affd703c015cb8e594d39eab7efc3b264e270a2ca536b8",
+          "elapsed_sec": 33.759398300011526
+        },
+        {
+          "round": 2,
+          "moves": 222,
+          "signature": "ae5ea4efe403f71148affd703c015cb8e594d39eab7efc3b264e270a2ca536b8",
+          "elapsed_sec": 36.94875150000735
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 228,
+          "signature": "7624d57a83e4cc0fd728804b1d88096683b60d0833624b8ccbed046ac55dfc43",
+          "elapsed_sec": 30.489093800002593
+        },
+        {
+          "round": 1,
+          "moves": 222,
+          "signature": "ae5ea4efe403f71148affd703c015cb8e594d39eab7efc3b264e270a2ca536b8",
+          "elapsed_sec": 44.8428988000087
+        },
+        {
+          "round": 2,
+          "moves": 222,
+          "signature": "ae5ea4efe403f71148affd703c015cb8e594d39eab7efc3b264e270a2ca536b8",
+          "elapsed_sec": 50.90531890001148
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 228,
+          "signature": "7624d57a83e4cc0fd728804b1d88096683b60d0833624b8ccbed046ac55dfc43",
+          "elapsed_sec": 30.629293300007703
+        },
+        {
+          "round": 1,
+          "moves": 222,
+          "signature": "ae5ea4efe403f71148affd703c015cb8e594d39eab7efc3b264e270a2ca536b8",
+          "elapsed_sec": 33.884504900008324
+        },
+        {
+          "round": 2,
+          "moves": 222,
+          "signature": "ae5ea4efe403f71148affd703c015cb8e594d39eab7efc3b264e270a2ca536b8",
+          "elapsed_sec": 37.15939620000427
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 37.16051690001041,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 1,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 210
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-15",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 359,
+        "qubo_cycle": 184,
+        "qubo_pair": 184,
+        "qubo_deferred_pair": 184,
+        "single_deferred_pair": 184
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 188,
+          "signature": "0fd37ee181fae5201f929249f569a1af7c88fbc4e6a958cd99039cbe41019ccd",
+          "elapsed_sec": 31.129063000000315
+        },
+        {
+          "round": 1,
+          "moves": 184,
+          "signature": "f0704419f18ee4a56947fbca691331a37d6daa1258b80b726b75987388b84145",
+          "elapsed_sec": 33.47033929999452
+        },
+        {
+          "round": 2,
+          "moves": 184,
+          "signature": "f0704419f18ee4a56947fbca691331a37d6daa1258b80b726b75987388b84145",
+          "elapsed_sec": 35.801760899994406
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 188,
+          "signature": "0fd37ee181fae5201f929249f569a1af7c88fbc4e6a958cd99039cbe41019ccd",
+          "elapsed_sec": 31.057051800002228
+        },
+        {
+          "round": 1,
+          "moves": 184,
+          "signature": "f0704419f18ee4a56947fbca691331a37d6daa1258b80b726b75987388b84145",
+          "elapsed_sec": 43.328401199993095
+        },
+        {
+          "round": 2,
+          "moves": 184,
+          "signature": "f0704419f18ee4a56947fbca691331a37d6daa1258b80b726b75987388b84145",
+          "elapsed_sec": 47.953302599999006
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 188,
+          "signature": "0fd37ee181fae5201f929249f569a1af7c88fbc4e6a958cd99039cbe41019ccd",
+          "elapsed_sec": 30.95428049999464
+        },
+        {
+          "round": 1,
+          "moves": 184,
+          "signature": "f0704419f18ee4a56947fbca691331a37d6daa1258b80b726b75987388b84145",
+          "elapsed_sec": 33.20037209999282
+        },
+        {
+          "round": 2,
+          "moves": 184,
+          "signature": "f0704419f18ee4a56947fbca691331a37d6daa1258b80b726b75987388b84145",
+          "elapsed_sec": 35.44077859999379
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 35.44174209999619,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 184
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-16",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 405,
+        "qubo_cycle": 197,
+        "qubo_pair": 197,
+        "qubo_deferred_pair": 197,
+        "single_deferred_pair": 203
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 203,
+          "signature": "061d0fedc4e93a19b9a0b5417c9113436b69b5353fe5c3e98615461f5f2107d3",
+          "elapsed_sec": 21.680952599999728
+        },
+        {
+          "round": 1,
+          "moves": 197,
+          "signature": "5c56413416445d4fde604903769de4180896e58a55c3badae5716d2f1f99d924",
+          "elapsed_sec": 26.549277700003586
+        },
+        {
+          "round": 2,
+          "moves": 197,
+          "signature": "5c56413416445d4fde604903769de4180896e58a55c3badae5716d2f1f99d924",
+          "elapsed_sec": 29.04427119999309
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 203,
+          "signature": "061d0fedc4e93a19b9a0b5417c9113436b69b5353fe5c3e98615461f5f2107d3",
+          "elapsed_sec": 21.7513520999928
+        },
+        {
+          "round": 1,
+          "moves": 197,
+          "signature": "5c56413416445d4fde604903769de4180896e58a55c3badae5716d2f1f99d924",
+          "elapsed_sec": 29.527284299998428
+        },
+        {
+          "round": 2,
+          "moves": 197,
+          "signature": "5c56413416445d4fde604903769de4180896e58a55c3badae5716d2f1f99d924",
+          "elapsed_sec": 34.616471999994246
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 203,
+          "signature": "061d0fedc4e93a19b9a0b5417c9113436b69b5353fe5c3e98615461f5f2107d3",
+          "elapsed_sec": 21.642936499993084
+        },
+        {
+          "round": 1,
+          "moves": 197,
+          "signature": "5c56413416445d4fde604903769de4180896e58a55c3badae5716d2f1f99d924",
+          "elapsed_sec": 26.32755940000061
+        },
+        {
+          "round": 2,
+          "moves": 197,
+          "signature": "5c56413416445d4fde604903769de4180896e58a55c3badae5716d2f1f99d924",
+          "elapsed_sec": 28.748832400000538
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 28.749766199995065,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 197
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-16",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 333,
+        "qubo_cycle": 214,
+        "qubo_pair": 305,
+        "qubo_deferred_pair": 214,
+        "single_deferred_pair": 228
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 307,
+          "signature": "1a8cd79e46da0608a3170776cd1bbe55bf48d60a84e7ed5541f34a82f01c166e",
+          "elapsed_sec": 50.85398740001256
+        },
+        {
+          "round": 1,
+          "moves": 230,
+          "signature": "2254dfd026f29cf96324a52f984f5532da39ef6f45cae3f1df77e93f75b0c1ad",
+          "elapsed_sec": 55.725069300009636
+        },
+        {
+          "round": 2,
+          "moves": 219,
+          "signature": "31d68a824d66d8e9bdaf37d2d0bdba3b7517ca10e35898b9e0fc36b8907b5cab",
+          "elapsed_sec": 59.03343500000483
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 307,
+          "signature": "1a8cd79e46da0608a3170776cd1bbe55bf48d60a84e7ed5541f34a82f01c166e",
+          "elapsed_sec": 49.482936700005666
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 307,
+          "signature": "1a8cd79e46da0608a3170776cd1bbe55bf48d60a84e7ed5541f34a82f01c166e",
+          "elapsed_sec": 49.53268110001227
+        },
+        {
+          "round": 1,
+          "moves": 230,
+          "signature": "2254dfd026f29cf96324a52f984f5532da39ef6f45cae3f1df77e93f75b0c1ad",
+          "elapsed_sec": 54.22026850000839
+        },
+        {
+          "round": 2,
+          "moves": 219,
+          "signature": "31d68a824d66d8e9bdaf37d2d0bdba3b7517ca10e35898b9e0fc36b8907b5cab",
+          "elapsed_sec": 57.37097380000341
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": false,
+      "pair_start_sec": null,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 216
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-18",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 378,
+        "qubo_cycle": 241,
+        "qubo_pair": 236,
+        "qubo_deferred_pair": 241,
+        "single_deferred_pair": 246
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 267,
+          "signature": "5c215b77f6f59949b88f60a2e1ba5116278baffd8d1b1d3892bcb624244d805b",
+          "elapsed_sec": 27.089711599997827
+        },
+        {
+          "round": 1,
+          "moves": 244,
+          "signature": "f0b91992b46984fd88288219ef2b032b83358433ad5f6ba1f63759588ba3fca0",
+          "elapsed_sec": 30.708275299999514
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "9abf7a4971b318ae99b3f34372b1889d016bc0bb4b8379dd0787991163220d79",
+          "elapsed_sec": 34.331733700004406
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "9abf7a4971b318ae99b3f34372b1889d016bc0bb4b8379dd0787991163220d79",
+          "elapsed_sec": 38.06032660001074
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 267,
+          "signature": "5c215b77f6f59949b88f60a2e1ba5116278baffd8d1b1d3892bcb624244d805b",
+          "elapsed_sec": 26.90257489999931
+        },
+        {
+          "round": 1,
+          "moves": 244,
+          "signature": "f0b91992b46984fd88288219ef2b032b83358433ad5f6ba1f63759588ba3fca0",
+          "elapsed_sec": 50.09080800000811
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "9abf7a4971b318ae99b3f34372b1889d016bc0bb4b8379dd0787991163220d79",
+          "elapsed_sec": 57.25912960000278
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 267,
+          "signature": "5c215b77f6f59949b88f60a2e1ba5116278baffd8d1b1d3892bcb624244d805b",
+          "elapsed_sec": 27.899257800003397
+        },
+        {
+          "round": 1,
+          "moves": 244,
+          "signature": "f0b91992b46984fd88288219ef2b032b83358433ad5f6ba1f63759588ba3fca0",
+          "elapsed_sec": 31.842005400001653
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "9abf7a4971b318ae99b3f34372b1889d016bc0bb4b8379dd0787991163220d79",
+          "elapsed_sec": 36.17527510000218
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "9abf7a4971b318ae99b3f34372b1889d016bc0bb4b8379dd0787991163220d79",
+          "elapsed_sec": 40.27825770000345
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 40.27963260000979,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 241
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-18",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 367,
+        "qubo_cycle": 211,
+        "qubo_pair": 211,
+        "qubo_deferred_pair": 211,
+        "single_deferred_pair": 219
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "00b8ffda8e813782c3982d00ff1dbfd4be6a0bf311daa79083d84d263a752578",
+          "elapsed_sec": 25.922532299999148
+        },
+        {
+          "round": 1,
+          "moves": 211,
+          "signature": "bbbe03d77bdefbc2b7635c7ee83e6a53aec65b1a41e8e5cc5d3ca406d4cf5cfb",
+          "elapsed_sec": 31.423531300009927
+        },
+        {
+          "round": 2,
+          "moves": 211,
+          "signature": "bbbe03d77bdefbc2b7635c7ee83e6a53aec65b1a41e8e5cc5d3ca406d4cf5cfb",
+          "elapsed_sec": 34.26474009999947
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "00b8ffda8e813782c3982d00ff1dbfd4be6a0bf311daa79083d84d263a752578",
+          "elapsed_sec": 25.534660100005567
+        },
+        {
+          "round": 1,
+          "moves": 211,
+          "signature": "bbbe03d77bdefbc2b7635c7ee83e6a53aec65b1a41e8e5cc5d3ca406d4cf5cfb",
+          "elapsed_sec": 37.408133800010546
+        },
+        {
+          "round": 2,
+          "moves": 211,
+          "signature": "bbbe03d77bdefbc2b7635c7ee83e6a53aec65b1a41e8e5cc5d3ca406d4cf5cfb",
+          "elapsed_sec": 45.707497100011096
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "00b8ffda8e813782c3982d00ff1dbfd4be6a0bf311daa79083d84d263a752578",
+          "elapsed_sec": 25.612836300002527
+        },
+        {
+          "round": 1,
+          "moves": 211,
+          "signature": "bbbe03d77bdefbc2b7635c7ee83e6a53aec65b1a41e8e5cc5d3ca406d4cf5cfb",
+          "elapsed_sec": 30.617625300001237
+        },
+        {
+          "round": 2,
+          "moves": 211,
+          "signature": "bbbe03d77bdefbc2b7635c7ee83e6a53aec65b1a41e8e5cc5d3ca406d4cf5cfb",
+          "elapsed_sec": 33.35709580000548
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 33.35811500001,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 212
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-20",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 340,
+        "qubo_cycle": 189,
+        "qubo_pair": 190,
+        "qubo_deferred_pair": 189,
+        "single_deferred_pair": 197
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 228,
+          "signature": "a2b7651613f4d0ae831e189ec8de4732f244af13bf7cc8c2a457d9863e5156cb",
+          "elapsed_sec": 38.30455249999068
+        },
+        {
+          "round": 1,
+          "moves": 190,
+          "signature": "90368f3463fe4128b7bcf8e29f3eccd87ab696eb13cb901212750d9b9088027f",
+          "elapsed_sec": 40.77489380000043
+        },
+        {
+          "round": 2,
+          "moves": 189,
+          "signature": "69a2892d73598661564601917a901c3e58bf5089047b9a7077b472237264eb94",
+          "elapsed_sec": 43.08035219999147
+        },
+        {
+          "round": 3,
+          "moves": 189,
+          "signature": "69a2892d73598661564601917a901c3e58bf5089047b9a7077b472237264eb94",
+          "elapsed_sec": 45.211226100000204
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 228,
+          "signature": "a2b7651613f4d0ae831e189ec8de4732f244af13bf7cc8c2a457d9863e5156cb",
+          "elapsed_sec": 38.88837089999288
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 228,
+          "signature": "a2b7651613f4d0ae831e189ec8de4732f244af13bf7cc8c2a457d9863e5156cb",
+          "elapsed_sec": 38.697175599998445
+        },
+        {
+          "round": 1,
+          "moves": 190,
+          "signature": "90368f3463fe4128b7bcf8e29f3eccd87ab696eb13cb901212750d9b9088027f",
+          "elapsed_sec": 41.236785299988696
+        },
+        {
+          "round": 2,
+          "moves": 189,
+          "signature": "69a2892d73598661564601917a901c3e58bf5089047b9a7077b472237264eb94",
+          "elapsed_sec": 43.57265760000155
+        },
+        {
+          "round": 3,
+          "moves": 189,
+          "signature": "69a2892d73598661564601917a901c3e58bf5089047b9a7077b472237264eb94",
+          "elapsed_sec": 45.69870309998805
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 45.69959839999501,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 189
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-20",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 409,
+        "qubo_cycle": 180,
+        "qubo_pair": 180,
+        "qubo_deferred_pair": 180,
+        "single_deferred_pair": 180
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 210,
+          "signature": "7740dabff900eaf0c102f77f5158d52400e6c8607d0c9f08adc5e6ef25f1d157",
+          "elapsed_sec": 31.649196999991545
+        },
+        {
+          "round": 1,
+          "moves": 181,
+          "signature": "5b551d179ea8b9316612310efc0f14824950681281795d20eb53605cdc353a34",
+          "elapsed_sec": 33.75145879999036
+        },
+        {
+          "round": 2,
+          "moves": 180,
+          "signature": "cd2eea64cd30204f7d3d3cbba73bb5c4cbbff11bffa964ce9ff3a6b99d996f98",
+          "elapsed_sec": 35.78466710000066
+        },
+        {
+          "round": 3,
+          "moves": 180,
+          "signature": "cd2eea64cd30204f7d3d3cbba73bb5c4cbbff11bffa964ce9ff3a6b99d996f98",
+          "elapsed_sec": 37.78076369999326
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 210,
+          "signature": "7740dabff900eaf0c102f77f5158d52400e6c8607d0c9f08adc5e6ef25f1d157",
+          "elapsed_sec": 33.73794609999459
+        },
+        {
+          "round": 1,
+          "moves": 181,
+          "signature": "5b551d179ea8b9316612310efc0f14824950681281795d20eb53605cdc353a34",
+          "elapsed_sec": 54.09319509999477
+        },
+        {
+          "round": 2,
+          "moves": 180,
+          "signature": "cd2eea64cd30204f7d3d3cbba73bb5c4cbbff11bffa964ce9ff3a6b99d996f98",
+          "elapsed_sec": 58.75713559999713
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 210,
+          "signature": "7740dabff900eaf0c102f77f5158d52400e6c8607d0c9f08adc5e6ef25f1d157",
+          "elapsed_sec": 31.537232000002405
+        },
+        {
+          "round": 1,
+          "moves": 181,
+          "signature": "5b551d179ea8b9316612310efc0f14824950681281795d20eb53605cdc353a34",
+          "elapsed_sec": 33.62498239999695
+        },
+        {
+          "round": 2,
+          "moves": 180,
+          "signature": "cd2eea64cd30204f7d3d3cbba73bb5c4cbbff11bffa964ce9ff3a6b99d996f98",
+          "elapsed_sec": 35.663174999994226
+        },
+        {
+          "round": 3,
+          "moves": 180,
+          "signature": "cd2eea64cd30204f7d3d3cbba73bb5c4cbbff11bffa964ce9ff3a6b99d996f98",
+          "elapsed_sec": 37.66917529999046
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 37.67044069999247,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 180
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-28",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 356,
+        "qubo_cycle": 258,
+        "qubo_pair": 288,
+        "qubo_deferred_pair": 258,
+        "single_deferred_pair": 232
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 290,
+          "signature": "3a9e4b09ff8cfffe625de031a0579d6c8ea5a86ecd2f609cf5e3101fd665d731",
+          "elapsed_sec": 40.89807779999683
+        },
+        {
+          "round": 1,
+          "moves": 262,
+          "signature": "124add6e7d1617d86b04a609e5ad1296e25f1d71a132b5c3c489960441159fa6",
+          "elapsed_sec": 54.58687590000045
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 290,
+          "signature": "3a9e4b09ff8cfffe625de031a0579d6c8ea5a86ecd2f609cf5e3101fd665d731",
+          "elapsed_sec": 39.25220940000145
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 290,
+          "signature": "3a9e4b09ff8cfffe625de031a0579d6c8ea5a86ecd2f609cf5e3101fd665d731",
+          "elapsed_sec": 39.63922949999687
+        },
+        {
+          "round": 1,
+          "moves": 262,
+          "signature": "124add6e7d1617d86b04a609e5ad1296e25f1d71a132b5c3c489960441159fa6",
+          "elapsed_sec": 52.511203800007934
+        },
+        {
+          "round": 2,
+          "moves": 258,
+          "signature": "fb7f0dee83bdbe14a25b6f8c7c0b9f2944288e4491a55c8a4dae8867c90ac3ef",
+          "elapsed_sec": 58.737882100002025
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": false,
+      "pair_start_sec": null,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 258
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-28",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 406,
+        "qubo_cycle": 285,
+        "qubo_pair": 282,
+        "qubo_deferred_pair": 283,
+        "single_deferred_pair": 283
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 291,
+          "signature": "eb5fbd93257437bbbe89f23a5f90fe9299f5d554a7b0c8ad18af973570c9ace6",
+          "elapsed_sec": 30.7957877000008
+        },
+        {
+          "round": 1,
+          "moves": 286,
+          "signature": "5cd7920f5e8c96609bb85d79adabc9f983739e95e31922513cce307e031db1a1",
+          "elapsed_sec": 35.54324670000642
+        },
+        {
+          "round": 2,
+          "moves": 285,
+          "signature": "d519a0e18d1682a897a549cfb3493768e718e430998aeb33d9eb80ca5f27ab30",
+          "elapsed_sec": 40.28323359999922
+        },
+        {
+          "round": 3,
+          "moves": 285,
+          "signature": "d519a0e18d1682a897a549cfb3493768e718e430998aeb33d9eb80ca5f27ab30",
+          "elapsed_sec": 46.30731150000065
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 291,
+          "signature": "eb5fbd93257437bbbe89f23a5f90fe9299f5d554a7b0c8ad18af973570c9ace6",
+          "elapsed_sec": 30.71392740000738
+        },
+        {
+          "round": 1,
+          "moves": 286,
+          "signature": "5cd7920f5e8c96609bb85d79adabc9f983739e95e31922513cce307e031db1a1",
+          "elapsed_sec": 47.10118620000139
+        },
+        {
+          "round": 2,
+          "moves": 285,
+          "signature": "d519a0e18d1682a897a549cfb3493768e718e430998aeb33d9eb80ca5f27ab30",
+          "elapsed_sec": 58.295989600010216
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 291,
+          "signature": "eb5fbd93257437bbbe89f23a5f90fe9299f5d554a7b0c8ad18af973570c9ace6",
+          "elapsed_sec": 30.502742700002273
+        },
+        {
+          "round": 1,
+          "moves": 286,
+          "signature": "5cd7920f5e8c96609bb85d79adabc9f983739e95e31922513cce307e031db1a1",
+          "elapsed_sec": 35.177432299999055
+        },
+        {
+          "round": 2,
+          "moves": 285,
+          "signature": "d519a0e18d1682a897a549cfb3493768e718e430998aeb33d9eb80ca5f27ab30",
+          "elapsed_sec": 39.88245440000901
+        },
+        {
+          "round": 3,
+          "moves": 285,
+          "signature": "d519a0e18d1682a897a549cfb3493768e718e430998aeb33d9eb80ca5f27ab30",
+          "elapsed_sec": 45.82637880000402
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 45.82770520000486,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 1,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 283
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-32",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 300,
+        "qubo_cycle": 165,
+        "qubo_pair": 165,
+        "qubo_deferred_pair": 165,
+        "single_deferred_pair": 165
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 173,
+          "signature": "a9f31ab9bfe88f788eea9da9fdd7fcc4545cb23e7fd766966e41f6c30c2fe112",
+          "elapsed_sec": 19.95763689999876
+        },
+        {
+          "round": 1,
+          "moves": 166,
+          "signature": "0336f30b4152ddb93209c3763deff9d6fe9ca941c71da8576634cf0f784d161a",
+          "elapsed_sec": 21.420855399992433
+        },
+        {
+          "round": 2,
+          "moves": 165,
+          "signature": "00d8a97223044901000d171639f131214a1607a2c179301337a58bec05a09519",
+          "elapsed_sec": 22.786443499993766
+        },
+        {
+          "round": 3,
+          "moves": 165,
+          "signature": "00d8a97223044901000d171639f131214a1607a2c179301337a58bec05a09519",
+          "elapsed_sec": 24.168905400001677
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 173,
+          "signature": "a9f31ab9bfe88f788eea9da9fdd7fcc4545cb23e7fd766966e41f6c30c2fe112",
+          "elapsed_sec": 19.79294669999217
+        },
+        {
+          "round": 1,
+          "moves": 166,
+          "signature": "0336f30b4152ddb93209c3763deff9d6fe9ca941c71da8576634cf0f784d161a",
+          "elapsed_sec": 28.895332200001576
+        },
+        {
+          "round": 2,
+          "moves": 165,
+          "signature": "00d8a97223044901000d171639f131214a1607a2c179301337a58bec05a09519",
+          "elapsed_sec": 31.71699849999277
+        },
+        {
+          "round": 3,
+          "moves": 165,
+          "signature": "00d8a97223044901000d171639f131214a1607a2c179301337a58bec05a09519",
+          "elapsed_sec": 34.52791559998877
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 173,
+          "signature": "a9f31ab9bfe88f788eea9da9fdd7fcc4545cb23e7fd766966e41f6c30c2fe112",
+          "elapsed_sec": 19.876778399993782
+        },
+        {
+          "round": 1,
+          "moves": 166,
+          "signature": "0336f30b4152ddb93209c3763deff9d6fe9ca941c71da8576634cf0f784d161a",
+          "elapsed_sec": 21.31565999999293
+        },
+        {
+          "round": 2,
+          "moves": 165,
+          "signature": "00d8a97223044901000d171639f131214a1607a2c179301337a58bec05a09519",
+          "elapsed_sec": 22.680244699993636
+        },
+        {
+          "round": 3,
+          "moves": 165,
+          "signature": "00d8a97223044901000d171639f131214a1607a2c179301337a58bec05a09519",
+          "elapsed_sec": 24.04940170000191
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 24.050202899990836,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 165
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-32",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 300,
+        "qubo_cycle": 193,
+        "qubo_pair": 193,
+        "qubo_deferred_pair": 193,
+        "single_deferred_pair": 196
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 201,
+          "signature": "06f577b7c17f4d23f60b3426f97b58875321b8769660681e9952fd7224d6bcb8",
+          "elapsed_sec": 15.822255599996424
+        },
+        {
+          "round": 1,
+          "moves": 193,
+          "signature": "865a3f4e8439c9f8d2e704da0b0ad1acfab61fcfda6a62ac43ea951eab80f2b3",
+          "elapsed_sec": 18.06473999998707
+        },
+        {
+          "round": 2,
+          "moves": 193,
+          "signature": "865a3f4e8439c9f8d2e704da0b0ad1acfab61fcfda6a62ac43ea951eab80f2b3",
+          "elapsed_sec": 20.293835699994816
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 201,
+          "signature": "06f577b7c17f4d23f60b3426f97b58875321b8769660681e9952fd7224d6bcb8",
+          "elapsed_sec": 15.738124799987418
+        },
+        {
+          "round": 1,
+          "moves": 193,
+          "signature": "865a3f4e8439c9f8d2e704da0b0ad1acfab61fcfda6a62ac43ea951eab80f2b3",
+          "elapsed_sec": 22.723163599992404
+        },
+        {
+          "round": 2,
+          "moves": 193,
+          "signature": "865a3f4e8439c9f8d2e704da0b0ad1acfab61fcfda6a62ac43ea951eab80f2b3",
+          "elapsed_sec": 27.18125669998699
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 201,
+          "signature": "06f577b7c17f4d23f60b3426f97b58875321b8769660681e9952fd7224d6bcb8",
+          "elapsed_sec": 16.169185699996888
+        },
+        {
+          "round": 1,
+          "moves": 193,
+          "signature": "865a3f4e8439c9f8d2e704da0b0ad1acfab61fcfda6a62ac43ea951eab80f2b3",
+          "elapsed_sec": 18.581433399987873
+        },
+        {
+          "round": 2,
+          "moves": 193,
+          "signature": "865a3f4e8439c9f8d2e704da0b0ad1acfab61fcfda6a62ac43ea951eab80f2b3",
+          "elapsed_sec": 20.968761699987226
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 20.969679199988605,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 193
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-7",
+      "repeat": 0,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 435,
+        "qubo_cycle": 309,
+        "qubo_pair": 309,
+        "qubo_deferred_pair": 309,
+        "single_deferred_pair": 311
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 315,
+          "signature": "76f7b8daacb5d1e8492f3baedadba092237dbd6ba52eb28b54df7d01234d6348",
+          "elapsed_sec": 44.00579189999553
+        },
+        {
+          "round": 1,
+          "moves": 315,
+          "signature": "76f7b8daacb5d1e8492f3baedadba092237dbd6ba52eb28b54df7d01234d6348",
+          "elapsed_sec": 53.85774039999524
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 315,
+          "signature": "76f7b8daacb5d1e8492f3baedadba092237dbd6ba52eb28b54df7d01234d6348",
+          "elapsed_sec": 43.467460600004415
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 315,
+          "signature": "76f7b8daacb5d1e8492f3baedadba092237dbd6ba52eb28b54df7d01234d6348",
+          "elapsed_sec": 47.10826750000706
+        },
+        {
+          "round": 1,
+          "moves": 315,
+          "signature": "76f7b8daacb5d1e8492f3baedadba092237dbd6ba52eb28b54df7d01234d6348",
+          "elapsed_sec": 58.01558649999788
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 2,
+        "right_completed": 2,
+        "compared": 2,
+        "matched_leading_paths": 2,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 2,
+        "right_completed": 1,
+        "compared": 1,
+        "matched_leading_paths": 1,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 58.016906200005906,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 0,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 315
+      }
+    },
+    {
+      "case": "CV__10-10__data10-10-7",
+      "repeat": 1,
+      "cohorts": [
+        "known_native_tail"
+      ],
+      "moves": {
+        "native": 275,
+        "qubo_cycle": 222,
+        "qubo_pair": 223,
+        "qubo_deferred_pair": 222,
+        "single_deferred_pair": 238
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 259,
+          "signature": "bd49c5091778322577cfbea9a5ce1e1ac15ee7bd0ee9f06b5e6aa0f2ee9eee91",
+          "elapsed_sec": 25.9198633999913
+        },
+        {
+          "round": 1,
+          "moves": 231,
+          "signature": "87b63694a45d326f4be1fc0d3c5426dcd549b9735ade2fb0725ae574ece61825",
+          "elapsed_sec": 29.436130699992646
+        },
+        {
+          "round": 2,
+          "moves": 224,
+          "signature": "b13a66ddd3aaa376ca46684401c8f7223e2c36498fd07e41b9b8036b4cbdad0a",
+          "elapsed_sec": 32.57327680000162
+        },
+        {
+          "round": 3,
+          "moves": 223,
+          "signature": "93d55e94ebba778f2786c20ce6d9342f2bd09c7cb48c82b00b8df1a329735ef5",
+          "elapsed_sec": 35.73421709999093
+        },
+        {
+          "round": 4,
+          "moves": 222,
+          "signature": "52d3f530c39a68c298451bd6ba76ee4787cbb87f82ee9a917ee57b2cd1ab38cb",
+          "elapsed_sec": 38.889545300000464
+        },
+        {
+          "round": 5,
+          "moves": 222,
+          "signature": "52d3f530c39a68c298451bd6ba76ee4787cbb87f82ee9a917ee57b2cd1ab38cb",
+          "elapsed_sec": 42.045660499992664
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 259,
+          "signature": "bd49c5091778322577cfbea9a5ce1e1ac15ee7bd0ee9f06b5e6aa0f2ee9eee91",
+          "elapsed_sec": 25.64953830000013
+        },
+        {
+          "round": 1,
+          "moves": 231,
+          "signature": "87b63694a45d326f4be1fc0d3c5426dcd549b9735ade2fb0725ae574ece61825",
+          "elapsed_sec": 46.89729179999267
+        },
+        {
+          "round": 2,
+          "moves": 224,
+          "signature": "b13a66ddd3aaa376ca46684401c8f7223e2c36498fd07e41b9b8036b4cbdad0a",
+          "elapsed_sec": 54.36931179999374
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 259,
+          "signature": "bd49c5091778322577cfbea9a5ce1e1ac15ee7bd0ee9f06b5e6aa0f2ee9eee91",
+          "elapsed_sec": 27.07183509999595
+        },
+        {
+          "round": 1,
+          "moves": 231,
+          "signature": "87b63694a45d326f4be1fc0d3c5426dcd549b9735ade2fb0725ae574ece61825",
+          "elapsed_sec": 30.840947999997297
+        },
+        {
+          "round": 2,
+          "moves": 224,
+          "signature": "b13a66ddd3aaa376ca46684401c8f7223e2c36498fd07e41b9b8036b4cbdad0a",
+          "elapsed_sec": 34.33589000000211
+        },
+        {
+          "round": 3,
+          "moves": 223,
+          "signature": "93d55e94ebba778f2786c20ce6d9342f2bd09c7cb48c82b00b8df1a329735ef5",
+          "elapsed_sec": 37.94027269999788
+        },
+        {
+          "round": 4,
+          "moves": 222,
+          "signature": "52d3f530c39a68c298451bd6ba76ee4787cbb87f82ee9a917ee57b2cd1ab38cb",
+          "elapsed_sec": 41.50352519999433
+        },
+        {
+          "round": 5,
+          "moves": 222,
+          "signature": "52d3f530c39a68c298451bd6ba76ee4787cbb87f82ee9a917ee57b2cd1ab38cb",
+          "elapsed_sec": 44.95415599999251
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 6,
+        "right_completed": 6,
+        "compared": 6,
+        "matched_leading_paths": 6,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 6,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 44.95546959999774,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 4,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 222
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-17",
+      "repeat": 0,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 281,
+        "qubo_cycle": 181,
+        "qubo_pair": 181,
+        "qubo_deferred_pair": 181,
+        "single_deferred_pair": 189
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 219,
+          "signature": "9c5827fa0edafaae52557c74f61ae54d1c739e7681e1c1cd17a427a5c0b57f0c",
+          "elapsed_sec": 17.53889349999372
+        },
+        {
+          "round": 1,
+          "moves": 183,
+          "signature": "d66ac932659be4c2179a2bb6f4df2d18f7273106a5e7b32b202347aa716900aa",
+          "elapsed_sec": 19.838447000001906
+        },
+        {
+          "round": 2,
+          "moves": 181,
+          "signature": "e958a83f636ab1e4ea0dec57aebbe63e3622eb57e5166048dfeb9cd7f7c48233",
+          "elapsed_sec": 21.0879477999988
+        },
+        {
+          "round": 3,
+          "moves": 181,
+          "signature": "e958a83f636ab1e4ea0dec57aebbe63e3622eb57e5166048dfeb9cd7f7c48233",
+          "elapsed_sec": 22.190767899999628
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "234ddebccf2c829fd7583844397e87e2203a252f8be28b85bdaa67473202b8dc",
+          "elapsed_sec": 17.201076500001363
+        },
+        {
+          "round": 1,
+          "moves": 202,
+          "signature": "5bb9635fab60292bd68f6b06d74aaf62bf2e7b613fd10da026f58e99cc00c455",
+          "elapsed_sec": 28.432637399993837
+        },
+        {
+          "round": 2,
+          "moves": 182,
+          "signature": "fc979125badfe0e12bd295ee1bebb50ea2784c3c11e804d78183f9955c357708",
+          "elapsed_sec": 32.02799529999902
+        },
+        {
+          "round": 3,
+          "moves": 181,
+          "signature": "6409abd2044da655d2ef2e8af03cdeed75212f3f329eab31a7f99d6fae434215",
+          "elapsed_sec": 34.35551680000208
+        },
+        {
+          "round": 4,
+          "moves": 181,
+          "signature": "6409abd2044da655d2ef2e8af03cdeed75212f3f329eab31a7f99d6fae434215",
+          "elapsed_sec": 36.65403829999559
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 224,
+          "signature": "234ddebccf2c829fd7583844397e87e2203a252f8be28b85bdaa67473202b8dc",
+          "elapsed_sec": 16.95895990000281
+        },
+        {
+          "round": 1,
+          "moves": 202,
+          "signature": "5bb9635fab60292bd68f6b06d74aaf62bf2e7b613fd10da026f58e99cc00c455",
+          "elapsed_sec": 18.294838499990874
+        },
+        {
+          "round": 2,
+          "moves": 182,
+          "signature": "fc979125badfe0e12bd295ee1bebb50ea2784c3c11e804d78183f9955c357708",
+          "elapsed_sec": 20.270611799991457
+        },
+        {
+          "round": 3,
+          "moves": 181,
+          "signature": "6409abd2044da655d2ef2e8af03cdeed75212f3f329eab31a7f99d6fae434215",
+          "elapsed_sec": 21.392250699995202
+        },
+        {
+          "round": 4,
+          "moves": 181,
+          "signature": "6409abd2044da655d2ef2e8af03cdeed75212f3f329eab31a7f99d6fae434215",
+          "elapsed_sec": 22.43351659999462
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 0,
+        "all_overlapping_paths_identical": false
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 22.434335500001907,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 181
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-17",
+      "repeat": 1,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 288,
+        "qubo_cycle": 242,
+        "qubo_pair": 242,
+        "qubo_deferred_pair": 242,
+        "single_deferred_pair": 194
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "8879cd19c437d605e4c64d6e2fa2ca0bbebcbf7bbdd20cd303157ec9be585607",
+          "elapsed_sec": 24.093018200001097
+        },
+        {
+          "round": 1,
+          "moves": 253,
+          "signature": "babfd7db95cffc064c52876918a611ac8d53e510a9af7eb281894a6642f5216e",
+          "elapsed_sec": 26.679882900003577
+        },
+        {
+          "round": 2,
+          "moves": 252,
+          "signature": "060fb45b02283ed22556b96cd81aeab89b1cd2a075e3fc383c03df82c4da0086",
+          "elapsed_sec": 28.70009929999651
+        },
+        {
+          "round": 3,
+          "moves": 252,
+          "signature": "060fb45b02283ed22556b96cd81aeab89b1cd2a075e3fc383c03df82c4da0086",
+          "elapsed_sec": 30.67651869999827
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "8879cd19c437d605e4c64d6e2fa2ca0bbebcbf7bbdd20cd303157ec9be585607",
+          "elapsed_sec": 24.484227900000405
+        },
+        {
+          "round": 1,
+          "moves": 253,
+          "signature": "babfd7db95cffc064c52876918a611ac8d53e510a9af7eb281894a6642f5216e",
+          "elapsed_sec": 39.06314559999737
+        },
+        {
+          "round": 2,
+          "moves": 252,
+          "signature": "060fb45b02283ed22556b96cd81aeab89b1cd2a075e3fc383c03df82c4da0086",
+          "elapsed_sec": 43.78963329999533
+        },
+        {
+          "round": 3,
+          "moves": 252,
+          "signature": "060fb45b02283ed22556b96cd81aeab89b1cd2a075e3fc383c03df82c4da0086",
+          "elapsed_sec": 47.82656390000193
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "8879cd19c437d605e4c64d6e2fa2ca0bbebcbf7bbdd20cd303157ec9be585607",
+          "elapsed_sec": 23.863431300007505
+        },
+        {
+          "round": 1,
+          "moves": 253,
+          "signature": "babfd7db95cffc064c52876918a611ac8d53e510a9af7eb281894a6642f5216e",
+          "elapsed_sec": 26.361730100004934
+        },
+        {
+          "round": 2,
+          "moves": 252,
+          "signature": "060fb45b02283ed22556b96cd81aeab89b1cd2a075e3fc383c03df82c4da0086",
+          "elapsed_sec": 28.346189899995807
+        },
+        {
+          "round": 3,
+          "moves": 252,
+          "signature": "060fb45b02283ed22556b96cd81aeab89b1cd2a075e3fc383c03df82c4da0086",
+          "elapsed_sec": 30.31806510000024
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 30.319838299998082,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 252
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-26",
+      "repeat": 0,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 260,
+        "qubo_cycle": 153,
+        "qubo_pair": 153,
+        "qubo_deferred_pair": 153,
+        "single_deferred_pair": 160
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 187,
+          "signature": "19d2b7d6ca96c31faff8d0a8d9effa03c743f095b1a1fb241d985034215ffa2b",
+          "elapsed_sec": 10.92194039998867
+        },
+        {
+          "round": 1,
+          "moves": 153,
+          "signature": "520e49516bea7dbc79ba2ba69e582df2042cce8a733c2991d9cbc65b72056d8e",
+          "elapsed_sec": 12.337668099993607
+        },
+        {
+          "round": 2,
+          "moves": 153,
+          "signature": "520e49516bea7dbc79ba2ba69e582df2042cce8a733c2991d9cbc65b72056d8e",
+          "elapsed_sec": 13.076544299998204
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 187,
+          "signature": "19d2b7d6ca96c31faff8d0a8d9effa03c743f095b1a1fb241d985034215ffa2b",
+          "elapsed_sec": 10.747872599997208
+        },
+        {
+          "round": 1,
+          "moves": 153,
+          "signature": "520e49516bea7dbc79ba2ba69e582df2042cce8a733c2991d9cbc65b72056d8e",
+          "elapsed_sec": 15.400418299992452
+        },
+        {
+          "round": 2,
+          "moves": 153,
+          "signature": "520e49516bea7dbc79ba2ba69e582df2042cce8a733c2991d9cbc65b72056d8e",
+          "elapsed_sec": 16.922670999992988
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 187,
+          "signature": "19d2b7d6ca96c31faff8d0a8d9effa03c743f095b1a1fb241d985034215ffa2b",
+          "elapsed_sec": 10.705742599995574
+        },
+        {
+          "round": 1,
+          "moves": 153,
+          "signature": "520e49516bea7dbc79ba2ba69e582df2042cce8a733c2991d9cbc65b72056d8e",
+          "elapsed_sec": 12.023819599999115
+        },
+        {
+          "round": 2,
+          "moves": 153,
+          "signature": "520e49516bea7dbc79ba2ba69e582df2042cce8a733c2991d9cbc65b72056d8e",
+          "elapsed_sec": 12.687468699994497
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 12.688151199996355,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "frg_descent",
+        "raw_source": "branch0:frg_descent",
+        "raw_moves": 153
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-26",
+      "repeat": 1,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 317,
+        "qubo_cycle": 166,
+        "qubo_pair": 166,
+        "qubo_deferred_pair": 166,
+        "single_deferred_pair": 167
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 180,
+          "signature": "64c4096434430295dbbdc6f4f38993e5448863cb7f328705b8da4d4520c35e27",
+          "elapsed_sec": 10.787471500007086
+        },
+        {
+          "round": 1,
+          "moves": 167,
+          "signature": "7fd405c98daa1e7e4ed20b5a0398c894790356618e6e9fcba8c8bc7274ad0cd5",
+          "elapsed_sec": 11.605616000000737
+        },
+        {
+          "round": 2,
+          "moves": 166,
+          "signature": "7f942d4515001570e6566c6ebd0c86f6798e99b125e293c752354fc23987207c",
+          "elapsed_sec": 12.42430030000105
+        },
+        {
+          "round": 3,
+          "moves": 166,
+          "signature": "7f942d4515001570e6566c6ebd0c86f6798e99b125e293c752354fc23987207c",
+          "elapsed_sec": 13.211616600005073
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 180,
+          "signature": "64c4096434430295dbbdc6f4f38993e5448863cb7f328705b8da4d4520c35e27",
+          "elapsed_sec": 10.77934500000265
+        },
+        {
+          "round": 1,
+          "moves": 167,
+          "signature": "7fd405c98daa1e7e4ed20b5a0398c894790356618e6e9fcba8c8bc7274ad0cd5",
+          "elapsed_sec": 15.259839400008786
+        },
+        {
+          "round": 2,
+          "moves": 166,
+          "signature": "7f942d4515001570e6566c6ebd0c86f6798e99b125e293c752354fc23987207c",
+          "elapsed_sec": 16.915405399995507
+        },
+        {
+          "round": 3,
+          "moves": 166,
+          "signature": "7f942d4515001570e6566c6ebd0c86f6798e99b125e293c752354fc23987207c",
+          "elapsed_sec": 18.618249200007995
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 180,
+          "signature": "64c4096434430295dbbdc6f4f38993e5448863cb7f328705b8da4d4520c35e27",
+          "elapsed_sec": 10.714189499994973
+        },
+        {
+          "round": 1,
+          "moves": 167,
+          "signature": "7fd405c98daa1e7e4ed20b5a0398c894790356618e6e9fcba8c8bc7274ad0cd5",
+          "elapsed_sec": 11.507330199994612
+        },
+        {
+          "round": 2,
+          "moves": 166,
+          "signature": "7f942d4515001570e6566c6ebd0c86f6798e99b125e293c752354fc23987207c",
+          "elapsed_sec": 12.276804399996763
+        },
+        {
+          "round": 3,
+          "moves": 166,
+          "signature": "7f942d4515001570e6566c6ebd0c86f6798e99b125e293c752354fc23987207c",
+          "elapsed_sec": 13.064594399998896
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 13.065379299994675,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 2,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 166
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-32",
+      "repeat": 0,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 298,
+        "qubo_cycle": 207,
+        "qubo_pair": 184,
+        "qubo_deferred_pair": 184,
+        "single_deferred_pair": 184
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 216,
+          "signature": "82a410a0bc0407bc7e97de90e3418504b13ea3260f079929a30d7c607b22c405",
+          "elapsed_sec": 11.239995600000839
+        },
+        {
+          "round": 1,
+          "moves": 208,
+          "signature": "506ac2feba94361241f64848bb2e16a60c29d3b8350b8d365d675da9a75fe639",
+          "elapsed_sec": 12.533298299997114
+        },
+        {
+          "round": 2,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 13.819583999997121
+        },
+        {
+          "round": 3,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 15.09914839999692
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 216,
+          "signature": "82a410a0bc0407bc7e97de90e3418504b13ea3260f079929a30d7c607b22c405",
+          "elapsed_sec": 11.284554199999548
+        },
+        {
+          "round": 1,
+          "moves": 208,
+          "signature": "506ac2feba94361241f64848bb2e16a60c29d3b8350b8d365d675da9a75fe639",
+          "elapsed_sec": 17.725932000001194
+        },
+        {
+          "round": 2,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 20.159510800003773
+        },
+        {
+          "round": 3,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 22.48210380000819
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 216,
+          "signature": "82a410a0bc0407bc7e97de90e3418504b13ea3260f079929a30d7c607b22c405",
+          "elapsed_sec": 11.235385499996482
+        },
+        {
+          "round": 1,
+          "moves": 208,
+          "signature": "506ac2feba94361241f64848bb2e16a60c29d3b8350b8d365d675da9a75fe639",
+          "elapsed_sec": 12.555124100006651
+        },
+        {
+          "round": 2,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 13.819844500001636
+        },
+        {
+          "round": 3,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 15.150876400002744
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 15.151878800010309,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 2,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 184
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-32",
+      "repeat": 1,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 298,
+        "qubo_cycle": 207,
+        "qubo_pair": 184,
+        "qubo_deferred_pair": 184,
+        "single_deferred_pair": 184
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 216,
+          "signature": "82a410a0bc0407bc7e97de90e3418504b13ea3260f079929a30d7c607b22c405",
+          "elapsed_sec": 11.068733300009626
+        },
+        {
+          "round": 1,
+          "moves": 208,
+          "signature": "506ac2feba94361241f64848bb2e16a60c29d3b8350b8d365d675da9a75fe639",
+          "elapsed_sec": 12.408465000000433
+        },
+        {
+          "round": 2,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 13.723383000004105
+        },
+        {
+          "round": 3,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 15.051925300009316
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 216,
+          "signature": "82a410a0bc0407bc7e97de90e3418504b13ea3260f079929a30d7c607b22c405",
+          "elapsed_sec": 11.29312810000556
+        },
+        {
+          "round": 1,
+          "moves": 208,
+          "signature": "506ac2feba94361241f64848bb2e16a60c29d3b8350b8d365d675da9a75fe639",
+          "elapsed_sec": 18.076294500002405
+        },
+        {
+          "round": 2,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 20.714126799997757
+        },
+        {
+          "round": 3,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 23.262626399999135
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 216,
+          "signature": "82a410a0bc0407bc7e97de90e3418504b13ea3260f079929a30d7c607b22c405",
+          "elapsed_sec": 11.07748459999857
+        },
+        {
+          "round": 1,
+          "moves": 208,
+          "signature": "506ac2feba94361241f64848bb2e16a60c29d3b8350b8d365d675da9a75fe639",
+          "elapsed_sec": 12.389662900008261
+        },
+        {
+          "round": 2,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 13.684753399997135
+        },
+        {
+          "round": 3,
+          "moves": 207,
+          "signature": "ffe5b4b0746be5310f0fc3768dc84234c0604ce158728bdcda2ff39cebed6420",
+          "elapsed_sec": 14.985060899998643
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 14.986109200006467,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 2,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 184
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-33",
+      "repeat": 0,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 214,
+        "qubo_cycle": 241,
+        "qubo_pair": 240,
+        "qubo_deferred_pair": 240,
+        "single_deferred_pair": 240
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "3fbcde28ff3a63bc296224a13305a43b3616dafa61a359a1016d73722621172c",
+          "elapsed_sec": 18.74754580001172
+        },
+        {
+          "round": 1,
+          "moves": 246,
+          "signature": "97d7d30ac8fc0921ff7407b6e98a28a2b27ecf3563647b4f04ef10840096899b",
+          "elapsed_sec": 20.878218900004867
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 22.841712500012363
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 24.861803600011626
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "3fbcde28ff3a63bc296224a13305a43b3616dafa61a359a1016d73722621172c",
+          "elapsed_sec": 18.67862390000664
+        },
+        {
+          "round": 1,
+          "moves": 246,
+          "signature": "97d7d30ac8fc0921ff7407b6e98a28a2b27ecf3563647b4f04ef10840096899b",
+          "elapsed_sec": 32.21330950000265
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 38.563895300001604
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 42.67886670000735
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "3fbcde28ff3a63bc296224a13305a43b3616dafa61a359a1016d73722621172c",
+          "elapsed_sec": 18.853188200009754
+        },
+        {
+          "round": 1,
+          "moves": 246,
+          "signature": "97d7d30ac8fc0921ff7407b6e98a28a2b27ecf3563647b4f04ef10840096899b",
+          "elapsed_sec": 20.963167500012787
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 22.934157200012123
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 24.958360700009507
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 24.959385599999223,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 2,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 240
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-33",
+      "repeat": 1,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 353,
+        "qubo_cycle": 241,
+        "qubo_pair": 240,
+        "qubo_deferred_pair": 240,
+        "single_deferred_pair": 240
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "3fbcde28ff3a63bc296224a13305a43b3616dafa61a359a1016d73722621172c",
+          "elapsed_sec": 18.419358099999954
+        },
+        {
+          "round": 1,
+          "moves": 246,
+          "signature": "97d7d30ac8fc0921ff7407b6e98a28a2b27ecf3563647b4f04ef10840096899b",
+          "elapsed_sec": 20.503181699998095
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 22.434304399997927
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 24.39472830000159
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "3fbcde28ff3a63bc296224a13305a43b3616dafa61a359a1016d73722621172c",
+          "elapsed_sec": 18.030060199991567
+        },
+        {
+          "round": 1,
+          "moves": 246,
+          "signature": "97d7d30ac8fc0921ff7407b6e98a28a2b27ecf3563647b4f04ef10840096899b",
+          "elapsed_sec": 31.280614699993748
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 37.75367130000086
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 41.89661490000435
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 268,
+          "signature": "3fbcde28ff3a63bc296224a13305a43b3616dafa61a359a1016d73722621172c",
+          "elapsed_sec": 19.175657300002058
+        },
+        {
+          "round": 1,
+          "moves": 246,
+          "signature": "97d7d30ac8fc0921ff7407b6e98a28a2b27ecf3563647b4f04ef10840096899b",
+          "elapsed_sec": 21.501450399999158
+        },
+        {
+          "round": 2,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 23.57411709999724
+        },
+        {
+          "round": 3,
+          "moves": 241,
+          "signature": "bc8694a97aa7609562d867bab0742ce595442ee4d2398f545c22dde4c1d34b27",
+          "elapsed_sec": 25.665228700003354
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 25.666508900001645,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 2,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 240
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-34",
+      "repeat": 0,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 269,
+        "qubo_cycle": 237,
+        "qubo_pair": 223,
+        "qubo_deferred_pair": 223,
+        "single_deferred_pair": 223
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 244,
+          "signature": "03044573eef40804cb887e984c6d3abe71d5e66ccf64f13ec35a5fa4a48fe30e",
+          "elapsed_sec": 9.47050229999877
+        },
+        {
+          "round": 1,
+          "moves": 238,
+          "signature": "d39d0f18fbea6f93c3cd41a56b49e05bfeebae00dccbee77532cb637453fa39f",
+          "elapsed_sec": 12.153289399997448
+        },
+        {
+          "round": 2,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 13.575461300002644
+        },
+        {
+          "round": 3,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 15.0712041999941
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 244,
+          "signature": "03044573eef40804cb887e984c6d3abe71d5e66ccf64f13ec35a5fa4a48fe30e",
+          "elapsed_sec": 9.528035399998771
+        },
+        {
+          "round": 1,
+          "moves": 238,
+          "signature": "d39d0f18fbea6f93c3cd41a56b49e05bfeebae00dccbee77532cb637453fa39f",
+          "elapsed_sec": 13.936310200006119
+        },
+        {
+          "round": 2,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 18.35075019999931
+        },
+        {
+          "round": 3,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 22.62743560000672
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 244,
+          "signature": "03044573eef40804cb887e984c6d3abe71d5e66ccf64f13ec35a5fa4a48fe30e",
+          "elapsed_sec": 9.432236499997089
+        },
+        {
+          "round": 1,
+          "moves": 238,
+          "signature": "d39d0f18fbea6f93c3cd41a56b49e05bfeebae00dccbee77532cb637453fa39f",
+          "elapsed_sec": 11.99894449999556
+        },
+        {
+          "round": 2,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 13.349722300001304
+        },
+        {
+          "round": 3,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 14.79235950000293
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 14.793252999996184,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 3,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 223
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-34",
+      "repeat": 1,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 269,
+        "qubo_cycle": 237,
+        "qubo_pair": 223,
+        "qubo_deferred_pair": 223,
+        "single_deferred_pair": 223
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 244,
+          "signature": "03044573eef40804cb887e984c6d3abe71d5e66ccf64f13ec35a5fa4a48fe30e",
+          "elapsed_sec": 9.413614200006123
+        },
+        {
+          "round": 1,
+          "moves": 238,
+          "signature": "d39d0f18fbea6f93c3cd41a56b49e05bfeebae00dccbee77532cb637453fa39f",
+          "elapsed_sec": 12.121483199996874
+        },
+        {
+          "round": 2,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 13.572143400000641
+        },
+        {
+          "round": 3,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 15.01512750000984
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 244,
+          "signature": "03044573eef40804cb887e984c6d3abe71d5e66ccf64f13ec35a5fa4a48fe30e",
+          "elapsed_sec": 9.266944100003457
+        },
+        {
+          "round": 1,
+          "moves": 238,
+          "signature": "d39d0f18fbea6f93c3cd41a56b49e05bfeebae00dccbee77532cb637453fa39f",
+          "elapsed_sec": 13.274644700009958
+        },
+        {
+          "round": 2,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 17.316450300000724
+        },
+        {
+          "round": 3,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 21.41884330000903
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 244,
+          "signature": "03044573eef40804cb887e984c6d3abe71d5e66ccf64f13ec35a5fa4a48fe30e",
+          "elapsed_sec": 9.242303799997899
+        },
+        {
+          "round": 1,
+          "moves": 238,
+          "signature": "d39d0f18fbea6f93c3cd41a56b49e05bfeebae00dccbee77532cb637453fa39f",
+          "elapsed_sec": 11.730777500008116
+        },
+        {
+          "round": 2,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 13.051144800003385
+        },
+        {
+          "round": 3,
+          "moves": 237,
+          "signature": "217007c1a54e67991e99a151c784d4ca2c4939d413fdc01fcb0f444044a18652",
+          "elapsed_sec": 14.377543499998865
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 4,
+        "right_completed": 4,
+        "compared": 4,
+        "matched_leading_paths": 4,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 14.3784258000087,
+      "final_provenance": {
+        "trajectory_branch": 1,
+        "trajectory_round": 3,
+        "trajectory_policy": "pair",
+        "original_source": "pair_seed",
+        "raw_source": "branch1:pair_seed",
+        "raw_moves": 223
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-40",
+      "repeat": 0,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 403,
+        "qubo_cycle": 264,
+        "qubo_pair": 264,
+        "qubo_deferred_pair": 264,
+        "single_deferred_pair": 273
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 307,
+          "signature": "74930133511ffe977db104269a87c89c8e941f9671d920a3b5a4b4ba8b64e809",
+          "elapsed_sec": 14.421853699997882
+        },
+        {
+          "round": 1,
+          "moves": 270,
+          "signature": "ce0260ea709c82a7cd3e8694ae8fa17db1a8089603d60378a971bc32338f8e84",
+          "elapsed_sec": 17.299129299994092
+        },
+        {
+          "round": 2,
+          "moves": 265,
+          "signature": "c625f6371cddd94e404fd65aa605974618ed54e79d97041615f76d1c076fcf53",
+          "elapsed_sec": 19.80532050000329
+        },
+        {
+          "round": 3,
+          "moves": 264,
+          "signature": "4c9cd1e4504842e8f921a3b09e9505112ac51ab31c6368c6fc4c934995318a10",
+          "elapsed_sec": 22.215326899997308
+        },
+        {
+          "round": 4,
+          "moves": 264,
+          "signature": "4c9cd1e4504842e8f921a3b09e9505112ac51ab31c6368c6fc4c934995318a10",
+          "elapsed_sec": 24.6530167000019
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 307,
+          "signature": "74930133511ffe977db104269a87c89c8e941f9671d920a3b5a4b4ba8b64e809",
+          "elapsed_sec": 14.613746599992737
+        },
+        {
+          "round": 1,
+          "moves": 270,
+          "signature": "ce0260ea709c82a7cd3e8694ae8fa17db1a8089603d60378a971bc32338f8e84",
+          "elapsed_sec": 25.311449899993022
+        },
+        {
+          "round": 2,
+          "moves": 265,
+          "signature": "c625f6371cddd94e404fd65aa605974618ed54e79d97041615f76d1c076fcf53",
+          "elapsed_sec": 30.711657699997886
+        },
+        {
+          "round": 3,
+          "moves": 264,
+          "signature": "4c9cd1e4504842e8f921a3b09e9505112ac51ab31c6368c6fc4c934995318a10",
+          "elapsed_sec": 35.85515580000356
+        },
+        {
+          "round": 4,
+          "moves": 264,
+          "signature": "4c9cd1e4504842e8f921a3b09e9505112ac51ab31c6368c6fc4c934995318a10",
+          "elapsed_sec": 40.97716500000388
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 307,
+          "signature": "74930133511ffe977db104269a87c89c8e941f9671d920a3b5a4b4ba8b64e809",
+          "elapsed_sec": 15.255801299994346
+        },
+        {
+          "round": 1,
+          "moves": 270,
+          "signature": "ce0260ea709c82a7cd3e8694ae8fa17db1a8089603d60378a971bc32338f8e84",
+          "elapsed_sec": 18.58537939999951
+        },
+        {
+          "round": 2,
+          "moves": 265,
+          "signature": "c625f6371cddd94e404fd65aa605974618ed54e79d97041615f76d1c076fcf53",
+          "elapsed_sec": 21.239604699992924
+        },
+        {
+          "round": 3,
+          "moves": 264,
+          "signature": "4c9cd1e4504842e8f921a3b09e9505112ac51ab31c6368c6fc4c934995318a10",
+          "elapsed_sec": 23.900591800003895
+        },
+        {
+          "round": 4,
+          "moves": 264,
+          "signature": "4c9cd1e4504842e8f921a3b09e9505112ac51ab31c6368c6fc4c934995318a10",
+          "elapsed_sec": 26.658839299998363
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 5,
+        "right_completed": 5,
+        "compared": 5,
+        "matched_leading_paths": 5,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 26.660153599994374,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 3,
+        "trajectory_policy": "single_qubo",
+        "original_source": "single_seed",
+        "raw_source": "branch0:single_seed",
+        "raw_moves": 264
+      }
+    },
+    {
+      "case": "CV__10-6__data10-6-40",
+      "repeat": 1,
+      "cohorts": [
+        "known_schedule_or_basin_tail"
+      ],
+      "moves": {
+        "native": 327,
+        "qubo_cycle": 274,
+        "qubo_pair": 274,
+        "qubo_deferred_pair": 274,
+        "single_deferred_pair": 283
+      },
+      "solo_q_cycles": [
+        {
+          "round": 0,
+          "moves": 291,
+          "signature": "0279f9d15f52b28820dfc927a0a7a51d534f4011e71a86a7a68ee8bc74efd933",
+          "elapsed_sec": 21.455761399993207
+        },
+        {
+          "round": 1,
+          "moves": 274,
+          "signature": "da0c56f9c32960e67c4060edde20a56bd2e9d7bacd22dc0d865bb4bf5d1f49e8",
+          "elapsed_sec": 23.56526610000583
+        },
+        {
+          "round": 2,
+          "moves": 274,
+          "signature": "da0c56f9c32960e67c4060edde20a56bd2e9d7bacd22dc0d865bb4bf5d1f49e8",
+          "elapsed_sec": 25.626201399994898
+        }
+      ],
+      "original_qp_primary": [
+        {
+          "round": 0,
+          "moves": 291,
+          "signature": "0279f9d15f52b28820dfc927a0a7a51d534f4011e71a86a7a68ee8bc74efd933",
+          "elapsed_sec": 21.432830199992168
+        },
+        {
+          "round": 1,
+          "moves": 274,
+          "signature": "da0c56f9c32960e67c4060edde20a56bd2e9d7bacd22dc0d865bb4bf5d1f49e8",
+          "elapsed_sec": 33.78119799999695
+        },
+        {
+          "round": 2,
+          "moves": 274,
+          "signature": "da0c56f9c32960e67c4060edde20a56bd2e9d7bacd22dc0d865bb4bf5d1f49e8",
+          "elapsed_sec": 38.19083180000598
+        }
+      ],
+      "deferred_primary": [
+        {
+          "round": 0,
+          "moves": 291,
+          "signature": "0279f9d15f52b28820dfc927a0a7a51d534f4011e71a86a7a68ee8bc74efd933",
+          "elapsed_sec": 21.320828700001584
+        },
+        {
+          "round": 1,
+          "moves": 274,
+          "signature": "da0c56f9c32960e67c4060edde20a56bd2e9d7bacd22dc0d865bb4bf5d1f49e8",
+          "elapsed_sec": 23.394470100000035
+        },
+        {
+          "round": 2,
+          "moves": 274,
+          "signature": "da0c56f9c32960e67c4060edde20a56bd2e9d7bacd22dc0d865bb4bf5d1f49e8",
+          "elapsed_sec": 25.394865399997798
+        }
+      ],
+      "deferred_vs_solo": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "deferred_vs_qp": {
+        "left_completed": 3,
+        "right_completed": 3,
+        "compared": 3,
+        "matched_leading_paths": 3,
+        "all_overlapping_paths_identical": true
+      },
+      "pair_started": true,
+      "pair_start_sec": 25.39618779999728,
+      "final_provenance": {
+        "trajectory_branch": 0,
+        "trajectory_round": 1,
+        "trajectory_policy": "single_qubo",
+        "original_source": "qubo_joint",
+        "raw_source": "branch0:qubo_joint",
+        "raw_moves": 274
+      }
+    }
+  ]
+}

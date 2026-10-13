@@ -1,0 +1,112 @@
+{
+  "originals": 19,
+  "models": 154,
+  "checks": [
+    {
+      "case": "BF__BF14__cpmp_16_8_103_21_78_1",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_3",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "BF__BF30__cpmp_20_8_128_26_96_2",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_4",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-6__data10-6-3",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-10__data10-10-2",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__6-10__data6-10-1",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-6__data10-6-2",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-6__data10-6-8",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "Open120__7x5_cv2_test__7x5_cv2_test_2",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "Open120__7x5_cv1_test__7x5_cv1_test_2",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-10__data10-10-18",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-10__data10-10-7",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-10__data10-10-22",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-10__data10-10-26",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-10__data10-10-39",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-6__data10-6-22",
+      "status": "COMPLETE",
+      "repeat": true
+    },
+    {
+      "case": "CV__10-6__data10-6-24",
+      "status": "COMPLETE",
+      "repeat": true
+    }
+  ],
+  "qualified": true,
+  "assignment_checks": 719,
+  "max_variables": 4070,
+  "max_terms": 6447107,
+  "mean_summed_sec": {
+    "explicit_build_sec": 68.53497774817515,
+    "factorized_build_sec": 0.021708500455133617,
+    "explicit_eval_sec": 9.29802504798863,
+    "factorized_eval_sec": 0.19075479882303625
+  },
+  "decision": "EXACT_QUBO_REPRESENTATION_EQUIVALENCE_NOT_OPTIMIZER_GAIN"
+}

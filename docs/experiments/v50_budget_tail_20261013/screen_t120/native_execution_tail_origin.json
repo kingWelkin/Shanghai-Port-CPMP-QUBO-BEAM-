@@ -1,0 +1,47 @@
+{
+  "scope": "All three positive native-relative execution deltas; descriptive provenance, not a restart repair experiment.",
+  "rows": [
+    {
+      "case": "BF__BF16__cpmp_16_8_103_42_78_1",
+      "repeat": 0,
+      "independent_native": 115,
+      "own_native": 147,
+      "handoff": 143,
+      "refined": 119,
+      "native_end_sec": {
+        "prefix": 9.493936600003508,
+        "native": 4.5524334000074305
+      },
+      "reserve_switched": false,
+      "scalar_settings_differences": {}
+    },
+    {
+      "case": "CV__10-10__data10-10-11",
+      "repeat": 1,
+      "independent_native": 293,
+      "own_native": 454,
+      "handoff": 436,
+      "refined": 340,
+      "native_end_sec": {
+        "prefix": 39.754813099993044,
+        "native": 25.040065199995297
+      },
+      "reserve_switched": false,
+      "scalar_settings_differences": {}
+    },
+    {
+      "case": "CV__10-10__data10-10-28",
+      "repeat": 1,
+      "independent_native": 341,
+      "own_native": 556,
+      "handoff": 549,
+      "refined": 432,
+      "native_end_sec": {
+        "prefix": 17.13050650000514,
+        "native": 14.565037200009101
+      },
+      "reserve_switched": false,
+      "scalar_settings_differences": {}
+    }
+  ]
+}
